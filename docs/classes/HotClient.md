@@ -32,7 +32,7 @@ A client connected to a server.
 
 #### Defined in
 
-HotClient.ts:32
+[HotClient.ts:32](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotClient.ts#L32)
 
 ## Properties
 
@@ -44,7 +44,7 @@ The API to use.
 
 #### Defined in
 
-HotClient.ts:18
+[HotClient.ts:18](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotClient.ts#L18)
 
 ___
 
@@ -56,7 +56,7 @@ The logger.
 
 #### Defined in
 
-HotClient.ts:30
+[HotClient.ts:30](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotClient.ts#L30)
 
 ___
 
@@ -68,7 +68,7 @@ The processor to use.
 
 #### Defined in
 
-HotClient.ts:14
+[HotClient.ts:14](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotClient.ts#L14)
 
 ___
 
@@ -80,7 +80,7 @@ The tester API to use.
 
 #### Defined in
 
-HotClient.ts:22
+[HotClient.ts:22](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotClient.ts#L22)
 
 ___
 
@@ -92,4 +92,4 @@ The type of server.
 
 #### Defined in
 
-HotClient.ts:26
+[HotClient.ts:26](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotClient.ts#L26)

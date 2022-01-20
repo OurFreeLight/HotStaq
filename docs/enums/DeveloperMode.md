@@ -22,7 +22,7 @@ be collected and executed if necessary.
 
 #### Defined in
 
-Hot.ts:24
+[Hot.ts:24](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/Hot.ts#L24)
 
 ___
 
@@ -35,4 +35,4 @@ any test related data will be ignored.
 
 #### Defined in
 
-Hot.ts:19
+[Hot.ts:19](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/Hot.ts#L19)

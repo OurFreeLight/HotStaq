@@ -54,7 +54,7 @@ The MySQL database connection.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:27
+[schemas/HotDBMySQL.ts:27](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L27)
 
 ## Properties
 
@@ -70,7 +70,7 @@ The connection status.
 
 #### Defined in
 
-HotDB.ts:30
+[HotDB.ts:30](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L30)
 
 ___
 
@@ -86,7 +86,7 @@ The connection to the database (or the driver).
 
 #### Defined in
 
-HotDB.ts:26
+[HotDB.ts:26](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L26)
 
 ___
 
@@ -103,7 +103,7 @@ and keep it maintained as needed.
 
 #### Defined in
 
-HotDB.ts:35
+[HotDB.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L35)
 
 ___
 
@@ -119,7 +119,7 @@ The database type.
 
 #### Defined in
 
-HotDB.ts:22
+[HotDB.ts:22](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L22)
 
 ## Methods
 
@@ -145,7 +145,7 @@ Connect to the database.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:35
+[schemas/HotDBMySQL.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L35)
 
 ___
 
@@ -161,7 +161,7 @@ Checks to see if this has a database connection.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:65
+[schemas/HotDBMySQL.ts:65](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L65)
 
 ___
 
@@ -181,7 +181,7 @@ Disconnect from the server.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:306
+[schemas/HotDBMySQL.ts:306](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L306)
 
 ___
 
@@ -210,7 +210,7 @@ guaranteed to be done in order.**
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:267
+[schemas/HotDBMySQL.ts:267](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L267)
 
 ___
 
@@ -237,7 +237,7 @@ The query to make.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:218
+[schemas/HotDBMySQL.ts:218](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L218)
 
 ___
 
@@ -264,7 +264,7 @@ Make a single query. If there are no results, null will be in MySQLResults.resul
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:237
+[schemas/HotDBMySQL.ts:237](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L237)
 
 ___
 
@@ -281,7 +281,7 @@ If the "migrations" table is missing, it will be created.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:177
+[schemas/HotDBMySQL.ts:177](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L177)
 
 ___
 
@@ -307,4 +307,4 @@ Checks if the table exists.
 
 #### Defined in
 
-schemas/HotDBMySQL.ts:191
+[schemas/HotDBMySQL.ts:191](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBMySQL.ts#L191)

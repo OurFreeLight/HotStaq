@@ -96,7 +96,7 @@ Create a test path for later execution.
 
 #### Defined in
 
-HotTestMap.ts:8
+[HotTestMap.ts:8](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestMap.ts#L8)
 
 ___
 
@@ -129,7 +129,7 @@ executed.
 
 #### Defined in
 
-HotRouteMethod.ts:36
+[HotRouteMethod.ts:36](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotRouteMethod.ts#L36)
 
 ___
 
@@ -159,4 +159,4 @@ A function that will be executed by the server.
 
 #### Defined in
 
-HotRouteMethod.ts:23
+[HotRouteMethod.ts:23](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotRouteMethod.ts#L23)

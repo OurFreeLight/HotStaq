@@ -55,7 +55,7 @@ The API to use.
 
 #### Defined in
 
-HotAPI.ts:70
+[HotAPI.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L70)
 
 ## Properties
 
@@ -67,7 +67,7 @@ The authorization credentials to use throughout the application.
 
 #### Defined in
 
-HotAPI.ts:50
+[HotAPI.ts:50](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L50)
 
 ___
 
@@ -79,7 +79,7 @@ The base url for the server.
 
 #### Defined in
 
-HotAPI.ts:33
+[HotAPI.ts:33](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L33)
 
 ___
 
@@ -91,7 +91,7 @@ The server connection.
 
 #### Defined in
 
-HotAPI.ts:29
+[HotAPI.ts:29](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L29)
 
 ___
 
@@ -104,7 +104,7 @@ easy client/server calling.
 
 #### Defined in
 
-HotAPI.ts:38
+[HotAPI.ts:38](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L38)
 
 ___
 
@@ -116,7 +116,7 @@ The database connection.
 
 #### Defined in
 
-HotAPI.ts:46
+[HotAPI.ts:46](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L46)
 
 ___
 
@@ -128,7 +128,7 @@ The database connection.
 
 #### Defined in
 
-HotAPI.ts:42
+[HotAPI.ts:42](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L42)
 
 ___
 
@@ -149,7 +149,7 @@ this function returns false, the server will not start.
 
 #### Defined in
 
-HotAPI.ts:68
+[HotAPI.ts:68](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L68)
 
 ___
 
@@ -170,7 +170,7 @@ this function returns false, the server will not start.
 
 #### Defined in
 
-HotAPI.ts:63
+[HotAPI.ts:63](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L63)
 
 ___
 
@@ -186,7 +186,7 @@ The database connection.
 
 #### Defined in
 
-HotAPI.ts:58
+[HotAPI.ts:58](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L58)
 
 ___
 
@@ -198,7 +198,7 @@ The function used for user authentication.
 
 #### Defined in
 
-HotAPI.ts:54
+[HotAPI.ts:54](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L54)
 
 ## Methods
 
@@ -250,7 +250,7 @@ Additionally it would create the endpoint: ```http://127.0.0.1:8080/v1/user/crea
 
 #### Defined in
 
-HotAPI.ts:159
+[HotAPI.ts:159](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L159)
 
 ___
 
@@ -274,7 +274,7 @@ Make a call to the API.
 
 #### Defined in
 
-HotAPI.ts:335
+[HotAPI.ts:335](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L335)
 
 ___
 
@@ -290,7 +290,7 @@ Get the database being used.
 
 #### Defined in
 
-HotAPI.ts:101
+[HotAPI.ts:101](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L101)
 
 ___
 
@@ -306,7 +306,7 @@ Get the database schema being used.
 
 #### Defined in
 
-HotAPI.ts:112
+[HotAPI.ts:112](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L112)
 
 ___
 
@@ -328,7 +328,7 @@ Register a route with the server.
 
 #### Defined in
 
-HotAPI.ts:313
+[HotAPI.ts:313](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L313)
 
 ___
 
@@ -344,7 +344,7 @@ Register all routes with the server.
 
 #### Defined in
 
-HotAPI.ts:322
+[HotAPI.ts:322](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L322)
 
 ___
 
@@ -366,4 +366,4 @@ Set the database schema for use.
 
 #### Defined in
 
-HotAPI.ts:87
+[HotAPI.ts:87](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L87)

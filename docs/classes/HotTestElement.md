@@ -36,7 +36,7 @@ A test element.
 
 #### Defined in
 
-HotTestElement.ts:82
+[HotTestElement.ts:82](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L82)
 
 ## Properties
 
@@ -53,7 +53,7 @@ while executing the test.
 
 #### Defined in
 
-HotTestElement.ts:76
+[HotTestElement.ts:76](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L76)
 
 ___
 
@@ -69,7 +69,7 @@ The name of the element.
 
 #### Defined in
 
-HotTestElement.ts:71
+[HotTestElement.ts:71](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L71)
 
 ___
 
@@ -85,4 +85,4 @@ The value to use.
 
 #### Defined in
 
-HotTestElement.ts:80
+[HotTestElement.ts:80](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L80)

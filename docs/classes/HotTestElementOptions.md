@@ -33,7 +33,7 @@ Hot test element options.
 
 #### Defined in
 
-HotTestElement.ts:36
+[HotTestElement.ts:36](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L36)
 
 ## Properties
 
@@ -51,7 +51,7 @@ without any exceptions being thrown.
 
 #### Defined in
 
-HotTestElement.ts:34
+[HotTestElement.ts:34](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L34)
 
 ___
 
@@ -68,4 +68,4 @@ order to select it.
 
 #### Defined in
 
-HotTestElement.ts:28
+[HotTestElement.ts:28](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestElement.ts#L28)

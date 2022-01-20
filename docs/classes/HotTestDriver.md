@@ -49,7 +49,7 @@ This actually executes the tests.
 
 #### Defined in
 
-HotTestDriver.ts:15
+[HotTestDriver.ts:15](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L15)
 
 ## Properties
 
@@ -61,7 +61,7 @@ The current page.
 
 #### Defined in
 
-HotTestDriver.ts:13
+[HotTestDriver.ts:13](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L13)
 
 ## Methods
 
@@ -84,7 +84,7 @@ An expression to test.
 
 #### Defined in
 
-HotTestDriver.ts:107
+[HotTestDriver.ts:107](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L107)
 
 ___
 
@@ -109,7 +109,7 @@ An expression to test.
 
 #### Defined in
 
-HotTestDriver.ts:102
+[HotTestDriver.ts:102](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L102)
 
 ___
 
@@ -125,7 +125,7 @@ Disconnect this server or destroy anything associated with this HotTestDriver.
 
 #### Defined in
 
-HotTestDriver.ts:81
+[HotTestDriver.ts:81](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L81)
 
 ___
 
@@ -148,7 +148,7 @@ Find a HotTestElement to utilize.
 
 #### Defined in
 
-HotTestDriver.ts:94
+[HotTestDriver.ts:94](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L94)
 
 ___
 
@@ -170,7 +170,7 @@ Navigate to a url.
 
 #### Defined in
 
-HotTestDriver.ts:86
+[HotTestDriver.ts:86](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L86)
 
 ___
 
@@ -194,7 +194,7 @@ be treated as a CSS selector.
 
 #### Defined in
 
-HotTestDriver.ts:25
+[HotTestDriver.ts:25](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L25)
 
 ___
 
@@ -216,7 +216,7 @@ Print a message.
 
 #### Defined in
 
-HotTestDriver.ts:65
+[HotTestDriver.ts:65](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L65)
 
 ___
 
@@ -238,7 +238,7 @@ Print a message line.
 
 #### Defined in
 
-HotTestDriver.ts:73
+[HotTestDriver.ts:73](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L73)
 
 ___
 
@@ -260,7 +260,7 @@ Run a series of test elements.
 
 #### Defined in
 
-HotTestDriver.ts:116
+[HotTestDriver.ts:116](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L116)
 
 ___
 
@@ -284,7 +284,7 @@ Run a HotTestElement command.
 
 #### Defined in
 
-HotTestDriver.ts:98
+[HotTestDriver.ts:98](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L98)
 
 ___
 
@@ -306,7 +306,7 @@ Wait for a number of milliseconds.
 
 #### Defined in
 
-HotTestDriver.ts:51
+[HotTestDriver.ts:51](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L51)
 
 ___
 
@@ -329,4 +329,4 @@ Wait for a HotTestElement to load.
 
 #### Defined in
 
-HotTestDriver.ts:90
+[HotTestDriver.ts:90](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L90)

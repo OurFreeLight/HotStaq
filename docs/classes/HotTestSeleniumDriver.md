@@ -62,7 +62,7 @@ Runs and executes tests using Selenium.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:54
+[HotTestSeleniumDriver.ts:54](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L54)
 
 ## Properties
 
@@ -74,7 +74,7 @@ The browser to use.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:27
+[HotTestSeleniumDriver.ts:27](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L27)
 
 ___
 
@@ -86,7 +86,7 @@ The selenium webdriver.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:23
+[HotTestSeleniumDriver.ts:23](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L23)
 
 ___
 
@@ -98,7 +98,7 @@ Run the tests headless.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:31
+[HotTestSeleniumDriver.ts:31](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L31)
 
 ___
 
@@ -110,7 +110,7 @@ Automatically open the developer tools on start.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:35
+[HotTestSeleniumDriver.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L35)
 
 ___
 
@@ -126,7 +126,7 @@ The current page.
 
 #### Defined in
 
-HotTestDriver.ts:13
+[HotTestDriver.ts:13](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L13)
 
 ___
 
@@ -138,7 +138,7 @@ Set the remote server to use for testing.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:39
+[HotTestSeleniumDriver.ts:39](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L39)
 
 ___
 
@@ -150,7 +150,7 @@ The current selenium session running.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:19
+[HotTestSeleniumDriver.ts:19](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L19)
 
 ___
 
@@ -169,7 +169,7 @@ Set the window size on start.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:43
+[HotTestSeleniumDriver.ts:43](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L43)
 
 ## Methods
 
@@ -196,7 +196,7 @@ An expression to test.
 
 #### Defined in
 
-HotTestDriver.ts:107
+[HotTestDriver.ts:107](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L107)
 
 ___
 
@@ -225,7 +225,7 @@ An expression to test.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:323
+[HotTestSeleniumDriver.ts:323](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L323)
 
 ___
 
@@ -245,7 +245,7 @@ Disconnect this server or destroy anything associated with this HotTestDriver.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:70
+[HotTestSeleniumDriver.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L70)
 
 ___
 
@@ -272,7 +272,7 @@ Get a test element using selenium webdriver.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:226
+[HotTestSeleniumDriver.ts:226](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L226)
 
 ___
 
@@ -296,7 +296,7 @@ be treated as a CSS selector.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:171
+[HotTestSeleniumDriver.ts:171](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L171)
 
 ___
 
@@ -312,7 +312,7 @@ Load the selenium driver.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:84
+[HotTestSeleniumDriver.ts:84](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L84)
 
 ___
 
@@ -338,7 +338,7 @@ Navigate to a url.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:181
+[HotTestSeleniumDriver.ts:181](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L181)
 
 ___
 
@@ -366,7 +366,7 @@ be treated as a CSS selector.
 
 #### Defined in
 
-HotTestDriver.ts:25
+[HotTestDriver.ts:25](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L25)
 
 ___
 
@@ -392,7 +392,7 @@ Print a message.
 
 #### Defined in
 
-HotTestDriver.ts:65
+[HotTestDriver.ts:65](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L65)
 
 ___
 
@@ -418,7 +418,7 @@ Print a message line.
 
 #### Defined in
 
-HotTestDriver.ts:73
+[HotTestDriver.ts:73](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L73)
 
 ___
 
@@ -444,7 +444,7 @@ Run a series of test elements.
 
 #### Defined in
 
-HotTestDriver.ts:116
+[HotTestDriver.ts:116](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L116)
 
 ___
 
@@ -473,7 +473,7 @@ Run a command using Selenium Webdriver.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:268
+[HotTestSeleniumDriver.ts:268](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L268)
 
 ___
 
@@ -499,7 +499,7 @@ Wait for a number of milliseconds.
 
 #### Defined in
 
-HotTestDriver.ts:51
+[HotTestDriver.ts:51](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestDriver.ts#L51)
 
 ___
 
@@ -526,4 +526,4 @@ Wait for a test element using Selenium Webdriver.
 
 #### Defined in
 
-HotTestSeleniumDriver.ts:189
+[HotTestSeleniumDriver.ts:189](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTestSeleniumDriver.ts#L189)

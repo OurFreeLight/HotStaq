@@ -39,7 +39,7 @@ The database table.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:31
+[schemas/mysql/MySQLSchemaTable.ts:31](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L31)
 
 ## Properties
 
@@ -51,7 +51,7 @@ The table's charset to use.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:29
+[schemas/mysql/MySQLSchemaTable.ts:29](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L29)
 
 ___
 
@@ -63,7 +63,7 @@ The table's description.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:17
+[schemas/mysql/MySQLSchemaTable.ts:17](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L17)
 
 ___
 
@@ -75,7 +75,7 @@ The table's engine to use.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:25
+[schemas/mysql/MySQLSchemaTable.ts:25](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L25)
 
 ___
 
@@ -87,7 +87,7 @@ The fields in the table.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:21
+[schemas/mysql/MySQLSchemaTable.ts:21](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L21)
 
 ___
 
@@ -99,7 +99,7 @@ The name of the table.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:13
+[schemas/mysql/MySQLSchemaTable.ts:13](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L13)
 
 ## Methods
 
@@ -121,7 +121,7 @@ Add a field.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:43
+[schemas/mysql/MySQLSchemaTable.ts:43](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L43)
 
 ___
 
@@ -143,7 +143,7 @@ Add a field.
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:51
+[schemas/mysql/MySQLSchemaTable.ts:51](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L51)
 
 ___
 
@@ -173,4 +173,4 @@ skip checking for:
 
 #### Defined in
 
-schemas/mysql/MySQLSchemaTable.ts:70
+[schemas/mysql/MySQLSchemaTable.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaTable.ts#L70)

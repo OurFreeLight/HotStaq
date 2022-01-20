@@ -17,7 +17,7 @@
 
 #### Defined in
 
-schemas/HotDBSchema.ts:3
+[schemas/HotDBSchema.ts:3](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBSchema.ts#L3)
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 #### Defined in
 
-schemas/HotDBSchema.ts:4
+[schemas/HotDBSchema.ts:4](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/HotDBSchema.ts#L4)

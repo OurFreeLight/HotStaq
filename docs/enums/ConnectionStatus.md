@@ -20,7 +20,7 @@ The database connection status.
 
 #### Defined in
 
-HotDB.ts:11
+[HotDB.ts:11](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L11)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-HotDB.ts:10
+[HotDB.ts:10](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L10)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-HotDB.ts:9
+[HotDB.ts:9](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDB.ts#L9)

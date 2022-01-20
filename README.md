@@ -1,5 +1,7 @@
 # HotStaq
-HotStaq is a client-side HTML preprocessor, with a design similar to that of PHP. Tech stacks have grown in size significantly over the years, and it can be hard for small teams to efficiently utilize all the different tech stacks properly. HotStaq helps reduce the headache of maintaining all the various tech while ensuring the application's security and quality.
+HotStaq is a frontend/backend app framework that plays nicely with DevOps.
+
+More specifically, it's a client-side HTML preprocessor, with a design similar to that of PHP. Tech stacks have grown in size significantly over the years, and it can be hard for small teams to efficiently utilize all the different tech stacks properly. HotStaq helps reduce the headache of maintaining all the various tech while ensuring the application's security and quality.
 
 Developers can quickly create their frontend and backends securely while adding their unit tests along the way in code During development, HotStaq developers know they can generate Dockerfiles to easily deploy their application to Kubernetes or Docker Swarm.
 

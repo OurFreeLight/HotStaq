@@ -27,7 +27,7 @@ The database to use.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:39
+[HotDBConnectionInterface.ts:39](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L39)
 
 ___
 
@@ -39,7 +39,7 @@ The org to use.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:35
+[HotDBConnectionInterface.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L35)
 
 ___
 
@@ -51,7 +51,7 @@ The password to use.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:27
+[HotDBConnectionInterface.ts:27](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L27)
 
 ___
 
@@ -63,7 +63,7 @@ The server's port.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:19
+[HotDBConnectionInterface.ts:19](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L19)
 
 ___
 
@@ -75,7 +75,7 @@ The server's address.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:15
+[HotDBConnectionInterface.ts:15](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L15)
 
 ___
 
@@ -87,7 +87,7 @@ The token to use.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:31
+[HotDBConnectionInterface.ts:31](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L31)
 
 ___
 
@@ -101,7 +101,7 @@ The type of database. Can be:
 
 #### Defined in
 
-HotDBConnectionInterface.ts:11
+[HotDBConnectionInterface.ts:11](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L11)
 
 ___
 
@@ -113,4 +113,4 @@ The username to use to connect.
 
 #### Defined in
 
-HotDBConnectionInterface.ts:23
+[HotDBConnectionInterface.ts:23](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotDBConnectionInterface.ts#L23)
