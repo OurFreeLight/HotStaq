@@ -30,30 +30,6 @@ Open `public/index.hott` and change your landing page. Refresh your browser to s
 
 That's it!
 
-## Web browser processing example
-When used in a browser, HotStaq is meant to replace the entire page it's on, and continue to control the navigation of the pages. To use it, create a new HTML file and enter:
-
-	<!DOCTYPE html>
-	<html>
-
-	<head>
-		<title>Page</title>
-
-		<script type = "text/javascript" src = "./HotStaq.js"></script>
-
-		<script type = "text/javascript">
-			var HotStaq = HotStaqWeb.HotStaq;
-			HotStaq.displayUrl ("./HelloWorld.hott");
-		</script>
-	</head>
-
-	<body>
-	</body>
-
-	</html>
-
-You can find a pre-built ```HotStaq.js``` in ```node_modules/hotstaq/build-web/HotStaq.js```
-
 ## Running database tests
 Make sure you have Docker installed, then do:
 ```console
@@ -141,7 +117,7 @@ You can configure how HotStaq starts by using:
 ## Developing
 To get started developing you'll need to install:
 ```console
-npm -g install typescript webpack-cli typedoc
+npm -g install typescript webpack-cli@4 typedoc
 ```
 
 To run browser tests, you'll need to have the correct version of [chromedriver](https://chromedriver.chromium.org/) installed for the version of Chrome you are running on your machine.
