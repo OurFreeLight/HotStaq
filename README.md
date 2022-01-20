@@ -1,17 +1,9 @@
 # HotStaq
-Need something similar to PHP in Node.js? We got you barely covered then ;)
+HotStaq is a client-side HTML preprocessor, with a design similar to that of PHP. Tech stacks have grown in size significantly over the years, and it can be hard for small teams to efficiently utilize all the different tech stacks properly. HotStaq helps reduce the headache of maintaining all the various tech while ensuring the application's security and quality.
 
-HotStaq is a server-side or client-side HTML preprocessor. In order to keep Node.js running efficiently, it's best to have HotStaq execute hott scripts client-side in the client's web browser. Unfortunately, ES6 is currently required in the client's web browser in order to execute. This of course will be fixed eventually, so Internet Explorer 11 will be able to execute as well. Gross, yes, I know.
+Developers can quickly create their frontend and backends securely while adding their unit tests along the way in code During development, HotStaq developers know they can generate Dockerfiles to easily deploy their application to Kubernetes or Docker Swarm.
 
-It's important to keep the number of dependencies required for HotStaq down to a minimum, so as it can be used in secure environments.
-
-HotStaq is capable of processing code server-side and client-side.
-
-This project started off originally as just a simple HTML preprocessor, but has grown into something much much more.
-
-[Hott Reference](./docs/modules/hot.md)
-
-[Server Reference](./docs/modules.md)
+For more information, please visit: [HotStaq](https://hotstaq.com)
 
 ## Getting started
 First you gotta install like so:
@@ -21,36 +13,22 @@ npm -g install hotstaq
 
 Now you can create your project by entering:
 ```console
-hotstaq create app
+hotstaq create my-app
 ```
 
+Run the development web server:
 
+```console
+cd my-app
 
-Then you can create your first hott script! Create a file called ```HelloWorld.hott```, inside it, enter your HTML:
+hotstaq start
+```
 
-	<!DOCTYPE html>
-	<html>
+Your site starts at `http://localhost:8080`.
 
-	<head>
-		<title>Hello World Page</title>
-	</head>
-	
-	<body>
-	<*
-		Hot.echo ("Hello");
-	*>
-	<*
-		Hot.echo ("World!");
-	*>
-	</body>
-	
-	</html>
+Open `public/index.hott` and change your landing page. Refresh your browser to see your changes immediately.
 
-Save the file as index.hott, then start serving the current directory by using:
-
-	import { HotHTTPServer } from "hotstaq";
-
-	HotHTTPServer.startServer ();
+That's it!
 
 ## Web browser processing example
 When used in a browser, HotStaq is meant to replace the entire page it's on, and continue to control the navigation of the pages. To use it, create a new HTML file and enter:
