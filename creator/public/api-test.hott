@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HotStaq site</title>
+
+    <script type = "text/javascript">
+        async function sendMessage ()
+        {
+            const msg = document.getElementById ("message");
+            let msgStr = msg.value;
+
+            let result = await Hot.apiCall ('/v1/hello_world/echo', { message: msgStr });
+			const response = document.getElementById ("response");
+            response.value = result;
+        }
+    </script>
+</head>
+
+<body>
+    HotStaq API test site! <br />
+    Send a message to the Hello World API in this box.<br />
+    <textarea id = "message">hi</textarea><button onclick = "sendMessage ();">Send</button><br />
+    API response will echo your message here:<br />
+    <textarea id = "response"></textarea>
+</body>
+
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hello World Page</title>
+
+	<script type = "text/javascript">
+		async function sayHello ()
+		{
+			let result = await Hot.apiCall ('/v1/hello_world/hello', { message: 'hi' });
+			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
+		}
+
+		async function sayHelloDifferently ()
+		{
+			let api = Hot.CurrentPage.getAPI ();
+			let result = await api.hello_world.hello ({ message: 'hi' });
+			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
+		}
+	</script>
+</head>
+
+<body>
+	<button id = "test">test</button>
+<*
+	Hot.echo (`<button id = "helloWorld" onclick = "document.getElementById ('buttonClicked').innerHTML='Clicked';">Hello`);
+*>
+<*
+	Hot.echo (`World!</button>`);
+*>
+	<div ?("apiResult") id = "buttonClicked"></div>
+	<input id = "message" data-test = "${'TESTING'}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
+	<button ?("testHelloWorldAPIButton") id = "testHelloWorldAPI" onclick = "sayHello ();">Send</button>
+	<button id = "testHelloWorldAPI2" onclick = "sayHelloDifferently ();">Send2</button>
+</body>
+
+</html>
+<*
+	Hot.CurrentPage.createTestPath ("Testing-Test", async (driver) =>
+		{
+			await driver.waitForTestElement ("messageTestObjectName");
+			await driver.run ([
+					["messageTestObjectName", "sendKeys", "hi1"],
+					[">#message", "sendKeys", "hi"],
+					["*APIButton", "click"]
+				]);
+			await driver.assertElementValue (
+				"apiResult", `"Hello!"`, "Element result is incorrect!");
+		});
+*>

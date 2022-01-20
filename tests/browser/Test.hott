@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<HTML>
+
+<HEAD>
+</HEAD>
+
+<BODY>
+<*
+    Hot.echo (`<input id = "testButton" type = "button" value = "Test Button" onclick = "this.value = 'Worked!';" />`);
+*>
+</BODY>
+
+</HTML>

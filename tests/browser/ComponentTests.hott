@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Component Tests</title>
+</head>
+
+<body>
+	<hello-world id = "helloWorld"></hello-world><div id = "buttonClicked"></div>
+	<input id = "message" value = "" />
+</body>
+
+</html>

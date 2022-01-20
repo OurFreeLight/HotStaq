@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hot Tests</title>
+
+	<script type = "text/javascript">
+		async function httpCall1 ()
+		{
+			document.getElementById ('message').value = "";
+
+			let result = await Hot.apiCall ('/v1/hello_world/hello', { message: 'hi' });
+			document.getElementById ('message').value = result;
+		}
+
+		async function httpCall2 ()
+		{
+			document.getElementById ('message').value = "";
+
+			let result = await Hot.jsonRequest ('/v1/hello_world/hello', { message: 'hi' });
+			document.getElementById ('message').value = result;
+		}
+
+		async function httpCall3 ()
+		{
+			document.getElementById ('message').value = "";
+
+			let result = await Hot.httpRequest ('/v1/hello_world/hello', {
+					"method": "POST",
+					"headers": {
+							"Accept": "application/json",
+							"Content-Type": "application/json"
+						},
+					"body": JSON.stringify ({ message: 'hi' })
+				});
+			document.getElementById ('message').value = await result.json ();
+		}
+	</script>
+</head>
+
+<body>
+	<input id = "message" value = "" />
+	<button id = "httpCall1" onclick = "httpCall1 ();">httpCall1</button>
+	<button id = "httpCall2" onclick = "httpCall2 ();">httpCall2</button>
+	<button id = "httpCall3" onclick = "httpCall3 ();">httpCall3</button>
+
+<*
+	await Hot.include ("./FooterTest.hott");
+*>
+</body>
+
+</html>

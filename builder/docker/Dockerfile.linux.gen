@@ -1,0 +1,42 @@
+FROM node:lts-alpine3.14 AS builder
+
+# Install build dependencies
+RUN apk update && \
+	apk add git && \
+	npm install -g typescript hotstaq && \
+	mkdir -p /tmp/app/${HOTSITE_NAME} && \
+	mkdir -p /app/${HOTSITE_NAME}
+
+COPY ./ /tmp/app/${HOTSITE_NAME}
+
+RUN cd /tmp/app/${HOTSITE_NAME} && \
+	npm install && \
+	npm run build && \
+	npm run build-web
+
+FROM node:lts-alpine3.14
+
+COPY --from=builder /tmp/app/${HOTSITE_NAME} /app/${HOTSITE_NAME}
+COPY ./docker/${HOTSITE_NAME}/app/start.sh /app/start.sh
+
+RUN chmod 500 /app/start.sh
+
+RUN npm install -g hotstaq
+
+${DOCKERFILE_PORTS}
+${HARDEN_SECURITY}
+
+ARG NODEJS_START_ARGS=""
+ENV NODEJS_START_ARGS=${NODEJS_START_ARGS}
+
+ARG HOT_RUN_ARGS=""
+ENV HOT_RUN_ARGS=${HOT_RUN_ARGS}
+
+ARG SERVER_TYPE="web-api"
+ENV SERVER_TYPE=${SERVER_TYPE}
+
+ENV HOTSITE_PATH=${HOTSITE_PATH}
+
+WORKDIR /app/${HOTSITE_NAME}
+ENTRYPOINT [ "/app/start.sh" ]
+

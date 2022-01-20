@@ -1,0 +1,78 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "typescript",
+			"tsconfig": "tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"label": "Build"
+		},
+		{
+			"type": "shell",
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [],
+			"label": "Build web debug",
+			"command": "npx webpack --mode=development --watch"
+		},
+		{
+			"type": "shell",
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [],
+			"label": "Build web tests",
+			"command": "npx webpack --mode=development --config=webpack.config.tests.js --watch"
+		},
+		{
+			"type": "process",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"runOptions": {
+				"instanceLimit": 1,
+				"runOn": "folderOpen"
+			},
+			"problemMatcher": [],
+			"label": "Build all",
+			"dependsOn": [
+				"Build",
+				"Build web debug",
+				"Build web tests"
+			]
+		},
+		{
+			"type": "process",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [],
+			"label": "Run Temp DBs",
+			"command": "${workspaceFolder}/dbstart.sh",
+			"args": [
+			]
+		},
+		{
+			"type": "process",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [],
+			"label": "Stop Temp DBs",
+			"command": "${workspaceFolder}/dbstop.sh",
+			"args": [
+			]
+		}
+	]
+}

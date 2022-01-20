@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Testing</title>
+
+		<script type = "text/javascript">
+			async function sayHelloDifferently ()
+			{
+				let username = document.getElementById ('usernameText').value;
+				let api = Hot.CurrentPage.getAPI ();
+				let result = await api.hello_world.hello ({ message: username });
+				document.getElementById ('resultText').value = JSON.stringify (result);
+			}
+		</script>
+	</head>
+
+	<body>
+		<input ?("username") id = "usernameText" type = "text" value = "" /><br />
+		<input ?("password") id = "passwordText" type = "password" value = "" /><br />
+		<button ?("signIn") id = "signInButton" onclick = "sayHelloDifferently ();">Sign In</button>
+		<input ?("result") id = "resultText" type = "text" value = "" readonly /><br />
+	</body>
+</html>
+<*
+	Hot.CurrentPage.createTestPath ("Form-SignIn-FillOut", async (driver) =>
+		{
+			await driver.waitForTestElement ("username");
+			await driver.run ([
+					["username", "sendKeys", "hi"],
+					["password", "sendKeys", "f"],
+					["signIn", "click"],
+				]);
+			await driver.wait (50);
+			await driver.assertElementValue ("result", "\"Hello!\"", "Element result is incorrect!");
+		});
+	Hot.CurrentPage.createTestPath ("Form-SignIn-FillOut2", async (driver) =>
+		{
+			await driver.waitForTestElement ("username");
+			await driver.run ([
+					["username", "sendKeys", "a"],
+					["password", "sendKeys", "a"],
+					["signIn", "click"],
+				]);
+			await driver.wait (50);
+			await driver.assertElementValue (
+				"result", `{"error":"You didn't say hi."}`, "Element result is incorrect!");
+		});
+*>

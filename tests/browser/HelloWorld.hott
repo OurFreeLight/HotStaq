@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hello World Page</title>
+
+	<script type = "text/javascript">
+		async function sayHello ()
+		{
+			let result = await Hot.apiCall ('/v1/hello_world/hello', { message: 'hi' });
+			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
+		}
+
+		async function sayHelloDifferently ()
+		{
+			let api = Hot.CurrentPage.getAPI ();
+			let result = await api.hello_world.hello ({ message: 'hi' });
+			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
+		}
+	</script>
+</head>
+
+<body>
+<*
+	Hot.echo (`<button id = "helloWorld" onclick = "document.getElementById ('buttonClicked').innerHTML='Clicked';">Hello`);
+*>
+<*
+	Hot.echo (`World!</button><div id = "buttonClicked"></div>`);
+*>
+	<input id = "message" data-test = "${testData}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
+	<button id = "testHelloWorldAPI" onclick = "sayHello ();">Send</button>
+	<button id = "testHelloWorldAPI2" onclick = "sayHelloDifferently ();">Send2</button>
+<*
+	await Hot.include ("./TestButton.hott", {
+			Parent: testData
+		});
+*>
+</body>
+
+</html>

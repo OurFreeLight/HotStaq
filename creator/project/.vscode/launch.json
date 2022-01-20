@@ -1,0 +1,59 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Web Server",
+			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+                "--development-mode",
+				"--hot-site",
+				"./HotSite.json",
+				"run",
+				"--web-http-port",
+				"8080"
+			],
+			"env": {
+			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Run Web Tests",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+			"args": [
+                "--development-mode",
+				"--hot-site",
+                "./HotSite.json",
+				"test",
+				"--web-http-port",
+				"8080"
+			],
+			"env": {
+			}
+		},
+		{
+			"localRoot": "${workspaceFolder}",
+			"name": "Remote Debugger",
+			"address": "127.0.0.1",
+			"port": 9229,
+			"remoteRoot": "/app/${HOTSITE_NAME}",
+			"request": "attach",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"type": "pwa-node"
+		}
+	]
+}

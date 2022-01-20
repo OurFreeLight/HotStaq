@@ -1,0 +1,17 @@
+db/
+
+build/
+build-web/
+builder/
+creator/
+docs/
+node_modules/
+output/
+
+client/
+tests/
+
+create-test-temp/
+
+./HotSite.json
+./*.config.js

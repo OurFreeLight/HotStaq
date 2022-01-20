@@ -1,0 +1,30 @@
+OFFCONTENT0${JSON.stringify({FOUND0: 1})}
+OFFCONTENT1
+${JSON.stringify( "FOUND1" )} OFFCONTENT2 ${JSON.stringify("FOUND2")} OFFCONTENT3 ${JSON.stringify("FOUND3")}
+OFFCONTENT4 OFFCONTENT5
+
+${JSON.stringify(
+    { FOUND4: "FOUND5", FOUND6: "FOUND7" }
+)}
+${JSON.stringify(
+    {
+        FOUND8: "FOUND9",
+        FOUND10: "FOUND11",
+        FOUND12: {
+            {
+                "FOUND13"
+            }
+        }
+    }
+)}
+OFFCONTENT6
+${JSON.stringify(
+
+    "FOUND14
+
+FOUND15")}
+OFFCONTENT7
+${JSON.stringify("FOUND16")} OFFCONTENT8
+OFFCONTENT9${JSON.stringify("FOUND17")}
+OFFCONTENT10${JSON.stringify("FOUND18")}OFFCONTENT11${JSON.stringify("FOUND19")}${JSON.stringify("FOUND20")}OFFCONTENT12
+OFFCONTENT13

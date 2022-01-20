@@ -1,0 +1,199 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"name": "Debug Web Server",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"request": "launch",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"run",
+				"--web-route",
+				"/=${workspaceFolder}",
+				"--web-dont-redirect-http-to-https",
+				"--web-js-url",
+				"/build-web/HotStaq.js",
+				"--web-serve-hott-files",
+				"--web-http-port",
+				"8080"
+			]
+		},
+		{
+			"type": "node",
+			"name": "Debug API Server",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"request": "launch",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"run",
+				"--server-type",
+				"api",
+				"--api-load",
+				"HelloWorldAPI=${workspaceFolder}/build/tests/server/HelloWorldAPI.js",
+				"--api-dont-redirect-http-to-https",
+				"--api-http-port",
+				"8181"
+			]
+		},
+		{
+			"type": "node",
+			"name": "Debug Web-API Server",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"request": "launch",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"run",
+				"--server-type",
+				"web-api",
+				"--api-load",
+				"HelloWorldAPI=${workspaceFolder}/build/tests/server/HelloWorldAPI.js",
+				"--web-route",
+				"/=${workspaceFolder}",
+				"--web-dont-redirect-http-to-https",
+				"--web-js-url",
+				"/build-web/HotStaq.js",
+				"--web-serve-hott-files",
+				"--web-http-port",
+				"8080",
+				"--api-dont-redirect-http-to-https",
+				"--api-http-port",
+				"8181"
+			]
+		},
+		{
+			"type": "node",
+			"name": "Debug Web Server - HotSite",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"request": "launch",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"run",
+				"--hotsite",
+				"./tests/hotsite/HotSite.json",
+				"--web-dont-redirect-http-to-https",
+				"--web-js-url",
+				"/build-web/HotStaq.js",
+				"--web-http-port",
+				"8080"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Web Server - Development",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"run",
+				"--web-dont-redirect-http-to-https",
+				"--development-mode",
+				"--web-js-url",
+				"/build-web/HotStaq.js",
+				"--web-serve-hott-files",
+				"--web-http-port",
+				"8080"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Build from HotSite",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"build",
+				"--hotsite",
+				"./tests/hotsite/HotSite.json",
+				"--docker"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Create an App",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"cwd": "/home/squigglet/temp2/app",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"create",
+				"--overwrite-cmd-create-transpile",
+				"npm link hotstaq && npm run build",
+				"app"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Create an App API",
+			"program": "${workspaceFolder}/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"create",
+				"--type",
+				"api",
+				"--overwrite-cmd-create-transpile",
+				"npm link hotstaq && npm run build",
+				"app"
+			]
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Run Tests",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
+			"args": [
+				"--timeout", "15", 
+				"--inspect=127.0.0.1:7478", 
+				"--colors", 
+				"./build/tests/db/*.js"
+			],
+			"attachSimplePort": 7478,
+			"cwd": "${workspaceFolder}",
+			"env": {
+				"HTTP_PORT": "3123",
+				"DATABASE_SERVER": "192.168.1.195",
+				"DATABASE_PORT": "3310",
+				"DATABASE_USERNAME": "5NKVBAt7OrzrumQyQVs",
+				"DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
+				"DATABASE_SCHEMA": "hotstaq",
+				"INFLUX_DATABASE_SERVER": "http://192.168.1.195:8088",
+				"INFLUX_DATABASE_USERNAME": "5NKVBAt7OrzrumQyQVs",
+				"INFLUX_DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
+				"INFLUX_DATABASE_ORG": "freelight",
+				"INFLUX_DATABASE_TOKEN": "Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e",
+				"INFLUX_DATABASE_SCHEMA": "hotstaq"
+			}
+		}
+	]
+}

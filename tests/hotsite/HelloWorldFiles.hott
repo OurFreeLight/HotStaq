@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Hello World Files</title>
+</head>
+
+<body>
+<*
+	Hot.runFile ("Button");
+	Hot.runFile ("Content");
+*>
+</body>
+
+</html>

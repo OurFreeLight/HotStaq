@@ -1,0 +1,24 @@
+<*
+    function doNothing (str)
+    {
+        return (str);
+    }
+*>
+OFFCONTENT1
+<* doNothing ("FOUND1"); *> OFFCONTENT2 <* doNothing ("FOUND2"); *> OFFCONTENT3 <* doNothing ("FOUND3"); *>
+OFFCONTENT4 OFFCONTENT5
+
+<*
+    doNothing ("FOUND4");
+*>
+OFFCONTENT6
+<*
+
+    doNothing ("FOUND5");
+
+doNothing ("FOUND6");*>
+OFFCONTENT7
+<*doNothing("FOUND7");*> OFFCONTENT8
+OFFCONTENT9<*doNothing("FOUND8");*>
+OFFCONTENT10<*doNothing("FOUND9");*>OFFCONTENT11<*doNothing ( "FOUND10" );*><*doNothing("FOUND11");*>OFFCONTENT12
+OFFCONTENT13

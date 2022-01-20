@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+
+<*
+	await Hot.include ("./tests/local/header.hott");
+*>
+
+	This is the main body!
+
+<*
+	await Hot.include ("./tests/local/footer.hott");
+*>
+
+</html>
