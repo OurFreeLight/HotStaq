@@ -1,5 +1,5 @@
 # ${APPNAME}
-This application was bootstrapped with [HotStaq](https://www.github.com/HigherEdgeSoftware/HotStaq)
+This application was bootstrapped with [HotStaq](https://www.github.com/OurFreeLight/HotStaq)
 
 ## Getting Started
 Navigate to the project's directory then enter:
