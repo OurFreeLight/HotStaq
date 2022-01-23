@@ -49,7 +49,7 @@ A file to process.
 
 #### Defined in
 
-[HotFile.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L70)
+[HotFile.ts:70](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L70)
 
 ## Properties
 
@@ -65,7 +65,7 @@ IHotFile.content
 
 #### Defined in
 
-[HotFile.ts:64](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L64)
+[HotFile.ts:64](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L64)
 
 ___
 
@@ -81,7 +81,7 @@ IHotFile.localFile
 
 #### Defined in
 
-[HotFile.ts:60](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L60)
+[HotFile.ts:60](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L60)
 
 ___
 
@@ -97,7 +97,7 @@ IHotFile.name
 
 #### Defined in
 
-[HotFile.ts:52](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L52)
+[HotFile.ts:52](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L52)
 
 ___
 
@@ -113,7 +113,7 @@ IHotFile.page
 
 #### Defined in
 
-[HotFile.ts:48](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L48)
+[HotFile.ts:48](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L48)
 
 ___
 
@@ -129,7 +129,7 @@ IHotFile.throwAllErrors
 
 #### Defined in
 
-[HotFile.ts:68](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L68)
+[HotFile.ts:68](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L68)
 
 ___
 
@@ -145,7 +145,7 @@ IHotFile.url
 
 #### Defined in
 
-[HotFile.ts:56](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L56)
+[HotFile.ts:56](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L56)
 
 ## Methods
 
@@ -161,7 +161,7 @@ Get the content of this file.
 
 #### Defined in
 
-[HotFile.ts:91](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L91)
+[HotFile.ts:91](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L91)
 
 ___
 
@@ -177,7 +177,7 @@ Load the contents of the file.
 
 #### Defined in
 
-[HotFile.ts:154](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L154)
+[HotFile.ts:154](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L154)
 
 ___
 
@@ -193,7 +193,7 @@ Load content from a local file.
 
 #### Defined in
 
-[HotFile.ts:131](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L131)
+[HotFile.ts:131](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L131)
 
 ___
 
@@ -209,7 +209,7 @@ Load content from a url.
 
 #### Defined in
 
-[HotFile.ts:121](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L121)
+[HotFile.ts:121](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L121)
 
 ___
 
@@ -237,7 +237,7 @@ test cases where they will fail.
 
 #### Defined in
 
-[HotFile.ts:330](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L330)
+[HotFile.ts:330](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L330)
 
 ___
 
@@ -259,7 +259,7 @@ Set the content of this file.
 
 #### Defined in
 
-[HotFile.ts:83](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L83)
+[HotFile.ts:83](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L83)
 
 ___
 
@@ -281,7 +281,7 @@ Make a HTTP get request.
 
 #### Defined in
 
-[HotFile.ts:99](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L99)
+[HotFile.ts:99](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L99)
 
 ___
 
@@ -312,7 +312,7 @@ the content outside of the regex.
 
 #### Defined in
 
-[HotFile.ts:183](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L183)
+[HotFile.ts:183](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L183)
 
 ___
 
@@ -350,4 +350,4 @@ will error out.
 
 #### Defined in
 
-[HotFile.ts:241](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotFile.ts#L241)
+[HotFile.ts:241](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotFile.ts#L241)

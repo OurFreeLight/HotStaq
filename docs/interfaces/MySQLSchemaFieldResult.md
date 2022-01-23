@@ -24,7 +24,7 @@ The constraint to be added.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:23](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L23)
+[schemas/mysql/MySQLSchemaField.ts:23](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L23)
 
 ___
 
@@ -36,7 +36,7 @@ The field to be entered.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:11](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L11)
+[schemas/mysql/MySQLSchemaField.ts:11](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L11)
 
 ___
 
@@ -48,7 +48,7 @@ The foreign key to be added.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:27](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L27)
+[schemas/mysql/MySQLSchemaField.ts:27](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L27)
 
 ___
 
@@ -60,7 +60,7 @@ The key to be added.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:19](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L19)
+[schemas/mysql/MySQLSchemaField.ts:19](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L19)
 
 ___
 
@@ -72,4 +72,4 @@ The primary key to be added.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:15](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L15)
+[schemas/mysql/MySQLSchemaField.ts:15](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L15)

@@ -82,7 +82,7 @@ The tester that uses Mocha to executes all tests.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:52](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L52)
+[HotTesterMochaSelenium.ts:52](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L52)
 
 ## Properties
 
@@ -102,7 +102,7 @@ The Mocha afterAll event to call before any tests are executed.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:39](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L39)
+[HotTesterMochaSelenium.ts:39](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L39)
 
 ___
 
@@ -118,7 +118,7 @@ The base url that will construct future urls.
 
 #### Defined in
 
-[HotTester.ts:74](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L74)
+[HotTester.ts:74](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L74)
 
 ___
 
@@ -138,7 +138,7 @@ The Mocha beforeAll event to call before any tests are executed.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L35)
+[HotTesterMochaSelenium.ts:35](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L35)
 
 ___
 
@@ -154,7 +154,7 @@ The driver to use when running tests.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:19](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L19)
+[HotTesterMochaSelenium.ts:19](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L19)
 
 ___
 
@@ -170,7 +170,7 @@ Has this tester finished loading?
 
 #### Defined in
 
-[HotTester.ts:90](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L90)
+[HotTester.ts:90](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L90)
 
 ___
 
@@ -186,7 +186,7 @@ Has this tester finished setting up?
 
 #### Defined in
 
-[HotTester.ts:98](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L98)
+[HotTester.ts:98](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L98)
 
 ___
 
@@ -202,7 +202,7 @@ Has this tester finished setting up?
 
 #### Defined in
 
-[HotTester.ts:94](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L94)
+[HotTester.ts:94](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L94)
 
 ___
 
@@ -214,7 +214,7 @@ The mocha instance to run.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:23](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L23)
+[HotTesterMochaSelenium.ts:23](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L23)
 
 ___
 
@@ -230,7 +230,7 @@ The tester name.
 
 #### Defined in
 
-[HotTester.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L70)
+[HotTester.ts:70](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L70)
 
 ___
 
@@ -258,7 +258,7 @@ been loaded. If this returns true, Selenium will load the url.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:44](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L44)
+[HotTesterMochaSelenium.ts:44](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L44)
 
 ___
 
@@ -274,7 +274,7 @@ The associated processor.
 
 #### Defined in
 
-[HotTester.ts:78](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L78)
+[HotTester.ts:78](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L78)
 
 ___
 
@@ -286,7 +286,7 @@ The suite to execute.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:31](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L31)
+[HotTesterMochaSelenium.ts:31](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L31)
 
 ___
 
@@ -306,7 +306,7 @@ The test maps to test.
 
 #### Defined in
 
-[HotTester.ts:82](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L82)
+[HotTester.ts:82](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L82)
 
 ___
 
@@ -318,7 +318,7 @@ The timeout for each test.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:27](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L27)
+[HotTesterMochaSelenium.ts:27](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L27)
 
 ___
 
@@ -332,7 +332,7 @@ wait for the tester data.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:50](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L50)
+[HotTesterMochaSelenium.ts:50](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L50)
 
 ## Methods
 
@@ -352,7 +352,7 @@ Executed when destroying this tester.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:112](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L112)
+[HotTesterMochaSelenium.ts:112](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L112)
 
 ___
 
@@ -378,7 +378,7 @@ Execute the tests.
 
 #### Defined in
 
-[HotTester.ts:562](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L562)
+[HotTester.ts:561](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L561)
 
 ___
 
@@ -407,7 +407,7 @@ Execute a command.
 
 #### Defined in
 
-[HotTester.ts:381](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L381)
+[HotTester.ts:380](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L380)
 
 ___
 
@@ -437,7 +437,7 @@ Execute an API's test path.
 
 #### Defined in
 
-[HotTester.ts:256](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L256)
+[HotTester.ts:256](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L256)
 
 ___
 
@@ -465,7 +465,7 @@ Execute all test paths in an API route.
 
 #### Defined in
 
-[HotTester.ts:294](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L294)
+[HotTester.ts:294](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L294)
 
 ___
 
@@ -494,7 +494,7 @@ Execute a test page path.
 
 #### Defined in
 
-[HotTester.ts:329](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L329)
+[HotTester.ts:329](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L329)
 
 ___
 
@@ -521,7 +521,7 @@ Execute all test paths in a page.
 
 #### Defined in
 
-[HotTester.ts:516](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L516)
+[HotTester.ts:515](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L515)
 
 ___
 
@@ -547,7 +547,7 @@ Get a test page.
 
 #### Defined in
 
-[HotTester.ts:181](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L181)
+[HotTester.ts:181](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L181)
 
 ___
 
@@ -574,7 +574,7 @@ Get a test path.
 
 #### Defined in
 
-[HotTester.ts:191](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L191)
+[HotTester.ts:191](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L191)
 
 ___
 
@@ -605,7 +605,7 @@ Executed when a command is executed.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:167](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L167)
+[HotTesterMochaSelenium.ts:167](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L167)
 
 ___
 
@@ -625,7 +625,7 @@ Executed when this tester has been executed from the API.
 
 #### Defined in
 
-[HotTester.ts:163](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L163)
+[HotTester.ts:163](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L163)
 
 ___
 
@@ -645,7 +645,7 @@ Executed when this tester has finished loading all data from the API.
 
 #### Defined in
 
-[HotTester.ts:167](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L167)
+[HotTester.ts:167](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L167)
 
 ___
 
@@ -675,7 +675,7 @@ Executed when an API test path has ended.
 
 #### Defined in
 
-[HotTester.ts:137](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L137)
+[HotTester.ts:137](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L137)
 
 ___
 
@@ -705,7 +705,7 @@ the testPath will not be immediately executed afterwards.
 
 #### Defined in
 
-[HotTester.ts:132](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L132)
+[HotTester.ts:132](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L132)
 
 ___
 
@@ -731,7 +731,7 @@ Executed when tests are finished.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:176](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L176)
+[HotTesterMochaSelenium.ts:176](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L176)
 
 ___
 
@@ -760,7 +760,7 @@ Executed when a page test has ended.
 
 #### Defined in
 
-[HotTester.ts:148](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L148)
+[HotTester.ts:148](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L148)
 
 ___
 
@@ -790,7 +790,7 @@ immediately executed afterwards.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:138](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L138)
+[HotTesterMochaSelenium.ts:138](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L138)
 
 ___
 
@@ -818,7 +818,7 @@ Executed when tests are started.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:121](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L121)
+[HotTesterMochaSelenium.ts:121](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L121)
 
 ___
 
@@ -846,7 +846,7 @@ Setup the Mocha/Selenium frameworks.
 
 #### Defined in
 
-[HotTesterMochaSelenium.ts:77](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTesterMochaSelenium.ts#L77)
+[HotTesterMochaSelenium.ts:77](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterMochaSelenium.ts#L77)
 
 ___
 
@@ -866,7 +866,7 @@ Waits for the API to finish loading all data.
 
 #### Defined in
 
-[HotTester.ts:172](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L172)
+[HotTester.ts:172](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L172)
 
 ___
 
@@ -893,4 +893,4 @@ Get a destination JSON object to use.
 
 #### Defined in
 
-[HotTester.ts:201](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotTester.ts#L201)
+[HotTester.ts:201](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTester.ts#L201)

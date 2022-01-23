@@ -60,7 +60,7 @@ The database field.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:145](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L145)
+[schemas/mysql/MySQLSchemaField.ts:145](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L145)
 
 ## Properties
 
@@ -76,7 +76,7 @@ IMySQLSchemaField.autoIncrement
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:129](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L129)
+[schemas/mysql/MySQLSchemaField.ts:129](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L129)
 
 ___
 
@@ -92,7 +92,7 @@ IMySQLSchemaField.binaryColumn
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:117](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L117)
+[schemas/mysql/MySQLSchemaField.ts:117](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L117)
 
 ___
 
@@ -109,7 +109,7 @@ IMySQLSchemaField.dataType
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:101](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L101)
+[schemas/mysql/MySQLSchemaField.ts:101](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L101)
 
 ___
 
@@ -126,7 +126,7 @@ IMySQLSchemaField.defaultValue
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:138](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L138)
+[schemas/mysql/MySQLSchemaField.ts:138](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L138)
 
 ___
 
@@ -142,7 +142,7 @@ IMySQLSchemaField.fillZeroes
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:125](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L125)
+[schemas/mysql/MySQLSchemaField.ts:125](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L125)
 
 ___
 
@@ -158,7 +158,7 @@ IMySQLSchemaField.generatedColumn
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:133](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L133)
+[schemas/mysql/MySQLSchemaField.ts:133](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L133)
 
 ___
 
@@ -174,7 +174,7 @@ IMySQLSchemaField.name
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:96](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L96)
+[schemas/mysql/MySQLSchemaField.ts:96](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L96)
 
 ___
 
@@ -190,7 +190,7 @@ IMySQLSchemaField.notNull
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:109](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L109)
+[schemas/mysql/MySQLSchemaField.ts:109](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L109)
 
 ___
 
@@ -206,7 +206,7 @@ IMySQLSchemaField.primaryKey
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:105](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L105)
+[schemas/mysql/MySQLSchemaField.ts:105](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L105)
 
 ___
 
@@ -223,7 +223,7 @@ IMySQLSchemaField.strAroundDefaultValue
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:143](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L143)
+[schemas/mysql/MySQLSchemaField.ts:143](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L143)
 
 ___
 
@@ -239,7 +239,7 @@ IMySQLSchemaField.uniqueIndex
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:113](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L113)
+[schemas/mysql/MySQLSchemaField.ts:113](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L113)
 
 ___
 
@@ -255,7 +255,7 @@ IMySQLSchemaField.unsignedDataType
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:121](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L121)
+[schemas/mysql/MySQLSchemaField.ts:121](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L121)
 
 ## Methods
 
@@ -271,7 +271,7 @@ Generate the db command.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:326](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L326)
+[schemas/mysql/MySQLSchemaField.ts:326](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L326)
 
 ___
 
@@ -299,7 +299,7 @@ compare to any undefined/null on the other side, and treat them as the same.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:201](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L201)
+[schemas/mysql/MySQLSchemaField.ts:201](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L201)
 
 ___
 
@@ -327,4 +327,4 @@ the following fields:
 
 #### Defined in
 
-[schemas/mysql/MySQLSchemaField.ts:266](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/schemas/mysql/MySQLSchemaField.ts#L266)
+[schemas/mysql/MySQLSchemaField.ts:266](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/schemas/mysql/MySQLSchemaField.ts#L266)

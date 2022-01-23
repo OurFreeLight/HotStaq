@@ -20,7 +20,7 @@ The type of object to use during event executions.
 
 #### Defined in
 
-[HotAPI.ts:18](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L18)
+[HotAPI.ts:26](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotAPI.ts#L26)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-[HotAPI.ts:17](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L17)
+[HotAPI.ts:25](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotAPI.ts#L25)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[HotAPI.ts:16](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotAPI.ts#L16)
+[HotAPI.ts:24](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotAPI.ts#L24)

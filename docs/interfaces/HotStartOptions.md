@@ -27,7 +27,7 @@ Any arguments to pass to the new page.
 
 #### Defined in
 
-[HotStaq.ts:313](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L313)
+[HotStaq.ts:313](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L313)
 
 ___
 
@@ -39,7 +39,7 @@ The name of the page to load.
 
 #### Defined in
 
-[HotStaq.ts:305](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L305)
+[HotStaq.ts:305](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L305)
 
 ___
 
@@ -51,7 +51,7 @@ The processor to use to load the page.
 
 #### Defined in
 
-[HotStaq.ts:309](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L309)
+[HotStaq.ts:309](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L309)
 
 ___
 
@@ -63,7 +63,7 @@ The base url for the tester api.
 
 #### Defined in
 
-[HotStaq.ts:325](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L325)
+[HotStaq.ts:325](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L325)
 
 ___
 
@@ -76,7 +76,7 @@ pointed at the url above.
 
 #### Defined in
 
-[HotStaq.ts:330](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L330)
+[HotStaq.ts:330](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L330)
 
 ___
 
@@ -88,7 +88,7 @@ The name of the tester map to use.
 
 #### Defined in
 
-[HotStaq.ts:321](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L321)
+[HotStaq.ts:321](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L321)
 
 ___
 
@@ -100,7 +100,7 @@ The name of the tester to use.
 
 #### Defined in
 
-[HotStaq.ts:317](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L317)
+[HotStaq.ts:317](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L317)
 
 ___
 
@@ -112,4 +112,4 @@ The Hott site to load.
 
 #### Defined in
 
-[HotStaq.ts:301](https://github.com/OurFreeLight/HotStaq/blob/3f2c5d8/src/HotStaq.ts#L301)
+[HotStaq.ts:301](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L301)
