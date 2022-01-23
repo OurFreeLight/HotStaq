@@ -30,6 +30,10 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	 */
 	headless: boolean;
 	/**
+	 * Disable GPU usage and the Chrome Sandbox. Mostly for usage within Docker.
+	 */
+	disableGPUAndSandbox: boolean;
+	/**
 	 * Automatically open the developer tools on start.
 	 */
 	openDevTools: boolean;
@@ -59,6 +63,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		this.session = null;
 		this.browser = "chrome";
 		this.headless = false;
+		this.disableGPUAndSandbox = false;
 		this.openDevTools = false;
 		this.remoteServer = "";
 		this.windowSize = null;
@@ -140,7 +145,9 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		{
 			let options = new chrome.Options ();
 
+			if (this.disableGPUAndSandbox === true)
 				options = options.addArguments ("--disable-gpu", "--no-sandbox");
+
 			if (this.openDevTools === true)
 				options = options.addArguments ("--auto-open-devtools-for-tabs");
 

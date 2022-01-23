@@ -171,14 +171,15 @@
 			"skipFiles": [
 				"<node_internals>/**"
 			],
+			"preLaunchTask": "Build web test api",
 			"program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
 			"args": [
 				"--timeout", "15", 
-				"--inspect=127.0.0.1:7478", 
+				"--inspect=127.0.0.1:7479", 
 				"--colors", 
-				"./build/tests/db/*.js"
+				"./build/tests/**/*.js"
 			],
-			"attachSimplePort": 7478,
+			"attachSimplePort": 7479,
 			"cwd": "${workspaceFolder}",
 			"env": {
 				"HTTP_PORT": "3123",
@@ -192,7 +193,8 @@
 				"INFLUX_DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
 				"INFLUX_DATABASE_ORG": "freelight",
 				"INFLUX_DATABASE_TOKEN": "Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e",
-				"INFLUX_DATABASE_SCHEMA": "hotstaq"
+				"INFLUX_DATABASE_SCHEMA": "hotstaq",
+				"TESTING_DEVTOOLS": "1"
 			}
 		}
 	]

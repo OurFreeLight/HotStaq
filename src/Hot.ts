@@ -206,7 +206,7 @@ export class Hot
 			throw new Error ("Current page's processor api is null!");
 
 		if (Hot.CurrentPage.processor.api != null)
-			result = await Hot.CurrentPage.processor.api.call (route, data, httpMethod);
+			result = await Hot.CurrentPage.processor.api.makeCall (route, data, httpMethod);
 
 		return (result);
 	}

@@ -7,7 +7,7 @@ import { HotLog, HotLogLevel } from "./HotLog";
 import { HotPage } from "./HotPage";
 
 // Server stuff
-import { HotAPI, EventExecutionType } from "./HotAPI";
+import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HTTPMethod, ServerAuthorizationFunction, ServerExecutionFunction } from "./HotRouteMethod";
 import { HotServer } from "./HotServer";
@@ -56,6 +56,7 @@ export {
 		IHotComponent,
 		HotAPI,
 		EventExecutionType,
+		APItoLoad,
 		HotFile,
 		HotLog,
 		HotLogLevel,

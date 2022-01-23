@@ -9,9 +9,10 @@ import { HotLogLevel } from "./HotLog";
 import { DeveloperMode } from "./Hot";
 import { HotTesterServer } from "./HotTesterServer";
 import { HotBuilder } from "./HotBuilder";
+import { HotGenerator } from "./HotGenerator";
 import { HotCreator } from "./HotCreator";
 import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
-import { HotAPI } from "./HotAPI";
+import { APItoLoad, HotAPI } from "./HotAPI";
 import { HotTesterMochaSelenium } from "./HotTesterMochaSelenium";
 import { HotDBMySQL } from "./schemas/HotDBMySQL";
 import { HotIO } from "./HotIO";
@@ -27,14 +28,6 @@ processor.logger.logLevel = HotLogLevel.All;
 
 let hotsitePath: string = "";
 let globalLogLevel: HotLogLevel = null;
-
-/**
- * The API to load.
- */
-type APItoLoad = {
-	exportedClassName: string;
-	path: string;
- };
 
 /**
  * Start the API server.
@@ -110,7 +103,7 @@ async function handleBuildCommands (): Promise<commander.Command>
 	let createHotBuilder = () =>
 		{
 			if (builder == null)
-				builder = new HotBuilder ();
+				builder = new HotBuilder (processor.logger);
 		};
 
 	const buildCmd: commander.Command = new commander.Command ("build");
@@ -134,7 +127,8 @@ async function handleBuildCommands (): Promise<commander.Command>
 			if (hotsitePath !== "")
 				await processor.loadHotSite (hotsitePath);
 
-			await builder.build ([processor.hotSite]);
+			builder.hotsites = [processor.hotSite];
+			await builder.build ();
 		});
 
 	/*buildCmd.option ("--watch, -w", "Watch the associated files and rebuild when changes are detected.", 
@@ -198,7 +192,7 @@ async function handleCreateCommands (): Promise<commander.Command>
 	let createHotCreator = () =>
 		{
 			if (creator == null)
-				creator = new HotCreator ();
+				creator = new HotCreator (processor.logger);
 		};
 
 	let copyLibrariesPath: string = "";
@@ -311,6 +305,38 @@ async function handleCreateCommands (): Promise<commander.Command>
 }
 
 /**
+ * Load the APIs from the processor.
+ */
+function loadAPIs (processor: HotStaq): { [name: string]: APItoLoad; }
+{
+	let apis: { [name: string]: APItoLoad; } = {};
+
+	if (processor.hotSite != null)
+	{
+		if (processor.hotSite.apis != null)
+		{
+			for (let key in processor.hotSite.apis)
+			{
+				let tempapi = processor.hotSite.apis[key];
+
+				if (tempapi.libraryName != null)
+				{
+					let path: string = tempapi.filepath;
+
+					let apiToLoad: APItoLoad = {
+							exportedClassName: tempapi.apiName,
+							path: path
+						};
+					apis[key] = apiToLoad;
+				}
+			}
+		}
+	}
+
+	return (apis);
+}
+
+/**
  * Handle run commands.
  */
 async function handleRunCommands (): Promise<commander.Command>
@@ -336,7 +362,7 @@ async function handleRunCommands (): Promise<commander.Command>
 			http: 8183,
 			https: 4143
 		};
-	let apis: APItoLoad[] = [];
+	let apis: { [name: string]: APItoLoad; } = {};
 	let dbinfo: HotDBConnectionInterface = null;
 	let setupDB = () =>
 		{
@@ -413,28 +439,7 @@ async function handleRunCommands (): Promise<commander.Command>
 			if (hotsitePath !== "")
 			{
 				await processor.loadHotSite (hotsitePath);
-
-				if (processor.hotSite != null)
-				{
-					if (processor.hotSite.apis != null)
-					{
-						for (let key in processor.hotSite.apis)
-						{
-							let tempapi = processor.hotSite.apis[key];
-
-							if (tempapi.libraryName != null)
-							{
-								let path: string = tempapi.filepath;
-
-								let apiToLoad: APItoLoad = {
-										exportedClassName: tempapi.apiName,
-										path: path
-									};
-								apis.push (apiToLoad);
-							}
-						}
-					}
-				}
+				apis = loadAPIs (processor);
 			}
 
 			// Setup the DB if it hasn't already been setup.
@@ -521,10 +526,9 @@ async function handleRunCommands (): Promise<commander.Command>
 
 			/// @fixme Allow for multiple APIs to be loaded, and have their 
 			/// servers start in the future.
-			let loadAPI = apis[0];
-			let getBaseUrlFromHotSite = () =>
+			let getBaseUrlFromHotSite = (loadAPI: APItoLoad, baseUrl: string = ""): string =>
 				{
-					let foundAPIUrl: string = null;
+					let foundAPIUrl: string = baseUrl;
 
 					// Attempt to find the base url from the HotSite's API.
 					if (processor.hotSite != null)
@@ -548,48 +552,43 @@ async function handleRunCommands (): Promise<commander.Command>
 							}
 						}
 					}
-		
-					if (foundAPIUrl != null)
-						baseAPIUrl = foundAPIUrl;
+
+					return (foundAPIUrl);
+				};
+
+			let loadAndStartAPIServer = async (serverType: string) =>
+				{
+					if (Object.keys (apis).length < 1)
+						throw new Error (`No APIs are loaded! Try using --api-load`);
+	
+					for (let key in apis)
+					{
+						let loadAPI: APItoLoad = apis[key];
+	
+						if (baseAPIUrl === "")
+							baseAPIUrl = getBaseUrlFromHotSite (loadAPI);
+	
+						if (baseAPIUrl === "")
+							baseAPIUrl = `http://127.0.0.1:${apiServer.ports.http}`;
+	
+						// Only run the api server.
+						await startAPIServer (apiServer, loadAPI, baseAPIUrl, dbinfo, true);
+	
+						if (globalLogLevel != null)
+							apiServer.logger.logLevel = globalLogLevel;
+	
+						apiServer.serverType = serverType;
+						await apiServer.listen ();
+					}
 				};
 
 			if (serverType === "api")
-			{
-				if (apis.length < 1)
-					throw new Error (`No APIs are loaded! Try using --api-load`);
-
-				if (baseAPIUrl === "")
-					getBaseUrlFromHotSite ();
-
-				if (baseAPIUrl === "")
-					baseAPIUrl = `http://127.0.0.1:${apiServer.ports.http}`;
-
-				// Only run the api server.
-				await startAPIServer (apiServer, loadAPI, baseAPIUrl, dbinfo, true);
-
-				if (globalLogLevel != null)
-					apiServer.logger.logLevel = globalLogLevel;
-
-				apiServer.serverType = "API Server";
-				await apiServer.listen ();
-			}
+				await loadAndStartAPIServer ("API Server");
 
 			if (runWebServer === true)
 			{
 				if (runAPIServer === true)
-				{
-					if (apis.length < 1)
-						throw new Error (`No APIs are loaded! Try using --api-load`);
-
-					if (baseAPIUrl === "")
-						getBaseUrlFromHotSite ();
-
-					if (baseAPIUrl === "")
-						baseAPIUrl = `http://127.0.0.1:${webServer.ports.http}`;
-
-					await startAPIServer (webServer, loadAPI, baseAPIUrl, dbinfo, false);
-					webServer.serverType = "Web-API Server";
-				}
+					await loadAndStartAPIServer ("Web-API Server");
 				else
 					webServer.serverType = "Web Server";
 
@@ -875,7 +874,7 @@ async function handleRunCommands (): Promise<commander.Command>
 					const exportedClassName: string = keyValuePair.key;
 					const path: string = keyValuePair.value;
 
-					apis.push ({ exportedClassName: exportedClassName, path: path });
+					apis[exportedClassName] = { exportedClassName: exportedClassName, path: path };
 				});
 		}
 	}
@@ -1018,6 +1017,82 @@ async function handleAgentCommands (): Promise<commander.Command>
 }
 
 /**
+ * Handle any generate commands.
+ */
+async function handleGenerateCommands (): Promise<commander.Command>
+{
+	let generator: HotGenerator = null;
+	let createHotBuilder = () =>
+		{
+			if (generator == null)
+				generator = new HotGenerator (processor.logger);
+		};
+
+	const generateCmd: commander.Command = new commander.Command ("generate");
+	generateCmd.description (`API Generation commands.`);
+	generateCmd.action (async () =>
+		{
+			createHotBuilder ();
+
+			if (hotsitePath === "")
+			{
+				let tempHotsitePath: string = ppath.normalize (`${process.cwd ()}/HotSite.json`);
+
+				/// @fixme Do this check without caps sensitivity.
+				if (await HotIO.exists (tempHotsitePath) === true)
+					hotsitePath = tempHotsitePath;
+			}
+
+			if (hotsitePath === "")
+				throw new Error (`When building, you must specify a HotSite.json!`);
+
+			let apis: { [name: string]: APItoLoad; } = {};
+
+			if (hotsitePath !== "")
+			{
+				await processor.loadHotSite (hotsitePath);
+				apis = loadAPIs (processor);
+			}
+
+			generator.hotsites = [processor.hotSite];
+			await generator.generateAPI (processor, apis);
+		});
+
+	generateCmd.option ("--tsconfig <path>", "Specify the tsconfig.json file to use.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generator.tsconfigPath = arg;
+		});
+	generateCmd.option ("--webpack-config <path>", "Specify the webpack config javascript file to use.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generator.webpackConfigPath = arg;
+		});
+	generateCmd.option ("--optimize", "Optimize the compiled JavaScript using the Google Closure Compiler.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generator.optimizeJS = true;
+		});
+	generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: typescript,javascript", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generator.generateType = arg;
+		});
+	generateCmd.option ("--output <path>", "The directory path to place all files.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generator.outputDir = arg;
+		});
+
+	return (generateCmd);
+}
+
+/**
  * Check if the path exists.
  */
 function checkIfPathExists (path: string): boolean
@@ -1131,6 +1206,9 @@ async function start ()
 
 		let buildCmd: commander.Command = await handleBuildCommands ();
 		command.addCommand (buildCmd);
+
+		let generateCmd: commander.Command = await handleGenerateCommands ();
+		command.addCommand (generateCmd);
 
 		let agentCmd: commander.Command = await handleAgentCommands ();
 		command.addCommand (agentCmd);

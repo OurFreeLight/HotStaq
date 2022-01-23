@@ -8,7 +8,7 @@ const packageJSON = JSON.parse (packageStr);
 let packageVersion = packageJSON.version.toString ();
 
 module.exports = {
-		entry: "./src/HotStaqWeb.ts",
+		entry: "./src/api-web.ts",
 		devtool: "inline-source-map",
 		target: "web",
 		module: {
@@ -32,7 +32,7 @@ module.exports = {
 					Cookies: "js-cookie/src/js.cookie.js"
 				}),
 			new webpack.IgnorePlugin ({
-					resourceRegExp: /HotTesterMochaSelenium|HotTestSeleniumDriver|HotTesterMocha/
+					resourceRegExp: /HotHTTPServer|HotTesterMochaSelenium|HotTestSeleniumDriver|HotTesterMocha|express|mysql/
 				})
 		],
 		resolve: {
@@ -40,12 +40,14 @@ module.exports = {
 		},
 		node: {
 			fs: "empty",
-			path: "empty"
+			path: "empty",
+			net: "empty",
+			tls: "empty"
 		},
 		output: {
 			filename: "HotStaq.js",
 			path: ppath.resolve (process.cwd (), "build-web"),
 			library: "HotStaqWeb",
-			libraryTarget: "umd"
+			libraryTarget: "var"
 		}
 	};

@@ -107,7 +107,7 @@ export class HelloWorldAPI extends HotAPI
 	 */
 	async sayHello (message: string = "hello"): Promise<string>
 	{
-		let result: any = await this.connection.api.call ("/v1/hello_world/hello", { message: message });
+		let result: any = await this.connection.api.makeCall ("/v1/hello_world/hello", { message: message });
 
 		if (result.error != null)
 			result = result.error;

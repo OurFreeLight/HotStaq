@@ -35,6 +35,16 @@
 			"command": "npx webpack --mode=development --config=webpack.config.tests.js --watch"
 		},
 		{
+			"type": "shell",
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [],
+			"label": "Build web test api",
+			"command": "hotstaq --hotsite ${workspaceFolder}/tests/hotsite/HotSite.json generate"
+		},
+		{
 			"type": "process",
 			"group": {
 				"kind": "build",

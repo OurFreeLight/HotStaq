@@ -4,7 +4,8 @@ import { By, until, WebDriver } from "selenium-webdriver";
 
 import { Common } from "./Common";
 
-import { DeveloperMode, HotHTTPServer, HotLogLevel, HotStaq, HotTester, HotTesterMochaSelenium, HotTesterServer, HotTestMap, HotTestSeleniumDriver } from "../../src/api";
+import { DeveloperMode, HotHTTPServer, HotLogLevel, HotStaq, HotTester, 
+	HotTesterMochaSelenium, HotTesterServer, HotTestMap, HotTestSeleniumDriver } from "../../src/api";
 import { HelloWorldAPI } from "../server/HelloWorldAPI";
 
 describe ("Hotsite Testing Multi Tests", () =>
@@ -40,6 +41,13 @@ describe ("Hotsite Testing Multi Tests", () =>
 				testerServer = serverStarter.server;
 
 				tester = new HotTesterMochaSelenium (processor, "HotTesterMochaSelenium", common.getUrl (server));
+
+				if (process.env["TESTING_DEVTOOLS"] != null)
+				{
+					if (process.env["TESTING_DEVTOOLS"] === "1")
+						tester.driver.openDevTools = true;
+				}
+
 				testerServer.addTester (tester);
 
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);

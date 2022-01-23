@@ -1,6 +1,4 @@
 import * as ppath from "path";
-const util = require ("util");
-const asyncExec = util.promisify (require ("child_process").exec);
 
 import { HotIO } from "./HotIO";
 import { HotStaq, HotSite } from "./HotStaq";
@@ -78,7 +76,7 @@ export class HotCreator
 			buildWebAPIDebug: string;
 		};
 
-	constructor (name: string = "", logger: HotLog = new HotLog ())
+	constructor (logger: HotLog, name: string = "")
 	{
 		this.name = name;
 		this.type = "web-api";
@@ -97,16 +95,6 @@ export class HotCreator
 				buildWebAPI: "",
 				buildWebAPIDebug: ""
 			};
-	}
-
-	/**
-	 * Execute a command.
-	 */
-	protected static async exec (cmd: string): Promise<string>
-	{
-		let output = await asyncExec (cmd);
-
-		return (output.stdout);
 	}
 
 	/**
@@ -450,13 +438,13 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		this.logger.info (`Finished creating VSCode files...`);
 
 		this.logger.info (`Creating git repo and installing modules...`);
-		await HotCreator.exec (`cd ${this.outputDir} && ${this.createCommands.init}`);
+		await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.init}`);
 		this.logger.info (`Finished creating git repo and installing modules...`);
 
 		if (this.language === "ts")
 		{
 			this.logger.info (`Transpiling TypeScript...`);
-			await HotCreator.exec (`cd ${this.outputDir} && ${this.createCommands.transpileTS}`);
+			await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.transpileTS}`);
 			this.logger.info (`Finished transpiling TypeScript...`);
 		}
 

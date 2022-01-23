@@ -1,6 +1,9 @@
 import * as fs from "fs";
 import * as fse from "fs-extra";
 
+const util = require ("util");
+const asyncExec = util.promisify (require ("child_process").exec);
+
 /**
  * Handles IO for the server.
  */
@@ -54,6 +57,25 @@ export class HotIO
 			{
 				fs.mkdir (path, { recursive: true }, 
 					(err: NodeJS.ErrnoException, path: string) => 
+					{
+						if (err != null)
+							throw err;
+
+						resolve ();
+					});
+			}));
+	}
+
+	/**
+	 * Delete a file.
+	 */
+	static async rm (path: string): Promise<void>
+	{
+		return (await new Promise (
+			(resolve: any, reject: any): void =>
+			{
+				fs.rm (path, 
+					(err: NodeJS.ErrnoException) => 
 					{
 						if (err != null)
 							throw err;
@@ -125,4 +147,14 @@ export class HotIO
 					});
 			}));
     }
+
+	/**
+	 * Execute a command.
+	 */
+	static async exec (cmd: string): Promise<string>
+	{
+		let output = await asyncExec (cmd);
+
+		return (output.stdout);
+	}
 }

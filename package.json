@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.24",
+  "version": "0.5.3",
   "description": "",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -8,7 +8,7 @@
   "main": "./build/src/api.js",
   "types": "./build/src/api.d.js",
   "scripts": {
-    "test": "mocha --timeout 999999 --colors ./build/tests/**/*.js",
+    "test": "hotstaq --hotsite ./tests/hotsite/HotSite.json generate && mocha --timeout 999999 --colors ./build/tests/**/*.js",
     "prepublishOnly": "npm run builddoc && npm run build && npm run buildweb",
     "builddoc": "typedoc --theme markdown --tsconfig ./tsconfig.json --entryPoints './src/api.ts' --readme README.md --out ./docs/ ./src",
     "build": "tsc --build ./tsconfig.json",

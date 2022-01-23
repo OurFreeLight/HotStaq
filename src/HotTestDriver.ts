@@ -1,4 +1,3 @@
-import { HotTester } from "./HotStaqWeb";
 import { HotTestElement, HotTestElementOptions } from "./HotTestElement";
 import { HotTestPage } from "./HotTestMap";
 

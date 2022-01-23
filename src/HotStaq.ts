@@ -466,6 +466,12 @@ export class HotStaq implements IHotStaq
 	<title>%title%</title>
 
 	<script type = "text/javascript" src = "%hotstaq_js_src%"></script>
+	<script type = "text/javascript">
+		window.HotStaq = HotStaqWeb.HotStaq;
+		window.HotClient = HotStaqWeb.HotClient;
+		window.HotAPI = HotStaqWeb.HotAPI;
+		window.Hot = HotStaqWeb.Hot;
+	</script>
 
 %apis_to_load%
 
@@ -476,10 +482,6 @@ export class HotStaq implements IHotStaq
 
 			if (window["Hot"] != null)
 				tempMode = Hot.Mode;
-
-			window.HotStaq = HotStaqWeb.HotStaq;
-			window.HotClient = HotStaqWeb.HotClient;
-			window.Hot = HotStaqWeb.Hot;
 
 			%load_hot_site%
 
@@ -806,11 +808,13 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
-	 * Replace a key in a ${KEY} with a value.
+	 * In the supplied content, replace a key in a ${KEY} with a value.
+	 * 
+	 * @returns The content with the correct values.
 	 */
-	static replaceKey (str: string, key: string, value: string): string
+	static replaceKey (content: string, key: string, value: string): string
 	{
-		const finalStr: string = str.replace (new RegExp (`\\$\\{${key}\\}`, "g"), value);
+		const finalStr: string = content.replace (new RegExp (`\\$\\{${key}\\}`, "g"), value);
 
 		return (finalStr);
 	}

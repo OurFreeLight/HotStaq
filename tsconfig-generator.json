@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "none",
+    "lib": ["DOM","ES2015"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./build-web/",
+    "noImplicitAny": true,
+    "esModuleInterop": true
+  },
+  "include": [],
+  "exclude": [
+    "node_modules"
+  ]
+}

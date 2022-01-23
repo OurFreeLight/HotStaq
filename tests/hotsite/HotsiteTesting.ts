@@ -40,6 +40,13 @@ describe ("Hotsite Testing Tests", () =>
 				testerServer = serverStarter.server;
 	
 				tester = new HotTesterMochaSelenium (processor, "HotTesterMochaSelenium", common.getUrl (server));
+
+				if (process.env["TESTING_DEVTOOLS"] != null)
+				{
+					if (process.env["TESTING_DEVTOOLS"] === "1")
+						tester.driver.openDevTools = true;
+				}
+
 				testerServer.addTester (tester);
 
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);

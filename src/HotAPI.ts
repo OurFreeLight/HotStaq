@@ -9,6 +9,14 @@ import { HotDB } from "./HotDB";
 import { HotDBSchema } from "./schemas/HotDBSchema";
 
 /**
+ * The API to load.
+ */
+export type APItoLoad = {
+	exportedClassName: string;
+	path: string;
+ };
+
+/**
  * The type of object to use during event executions.
  */
 export enum EventExecutionType
@@ -296,7 +304,7 @@ export abstract class HotAPI
 
 								let args: any[] = [routeStr, data, httpMethod];
 
-								return (this.call.apply (this, args));
+								return (this.makeCall.apply (this, args));
 							};
 					//}
 				}
@@ -332,7 +340,7 @@ export abstract class HotAPI
 	/**
 	 * Make a call to the API.
 	 */
-	async call (route: string, data: any, httpMethod: string = "POST"): Promise<any>
+	async makeCall (route: string, data: any, httpMethod: string = "POST"): Promise<any>
 	{
 		let url: string = this.baseUrl;
 

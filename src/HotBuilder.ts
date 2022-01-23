@@ -12,7 +12,7 @@ export class HotBuilder
 	/**
 	 * The HotSites to build from.
 	 */
-	protected hotsites: HotSite[];
+	hotsites: HotSite[];
 	/**
 	 * Will build the web api.
 	 * @default true
@@ -47,7 +47,7 @@ export class HotBuilder
 	 */
 	outputDir: string;
 
-	constructor (logger: HotLog = new HotLog ())
+	constructor (logger: HotLog)
 	{
 		this.api = true;
 		this.dockerFiles = true;
@@ -65,10 +65,8 @@ export class HotBuilder
 	 * 
 	 * @fixme Needs tests!
 	 */
-	async build (hotsites: HotSite[]): Promise<void>
+	async build (): Promise<void>
 	{
-		this.hotsites = hotsites;
-
 		if (this.api === true)
 		{
 			this.logger.info ("Building web API...");
@@ -179,6 +177,8 @@ ports:
 				await HotIO.writeTextFile (`${outputDir}/docker/${hotsiteName}/Dockerfile`, newDockerfileContent);
 				await HotIO.copyFiles (`${dockerDir}/scripts/`, `${outputDir}/`);
 				await HotIO.writeTextFile (`${outputDir}/docker/${hotsiteName}/app/start.sh`, newStartFileContent);
+				await HotIO.writeTextFile (`${outputDir}/start-app.sh`, 
+					await HotIO.readTextFile (ppath.normalize (`${outputDir}/start-app.sh`)));
 				await HotIO.copyFile (`${dockerDir}/dockerignore`, `${outputDir}/.dockerignore`);
 
 				if (await HotIO.exists (`${outputDir}/README.md`) === true)

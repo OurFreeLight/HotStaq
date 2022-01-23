@@ -1,5 +1,5 @@
 import { DeveloperMode } from "./Hot";
-import { HotTestDriver } from "./HotStaqWeb";
+import { HotTestDriver } from "./HotTestDriver";
 import { HotRoute } from "./HotRoute";
 import { HotServer } from "./HotServer";
 

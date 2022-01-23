@@ -54,7 +54,7 @@ describe ("Server Tests", () =>
 				api = new HelloWorldAPI (common.getUrl (), server);
 				await server.setAPI (api);
 
-				let result: any = await api.call ("/v1/hello_world/hello", {});
+				let result: any = await api.makeCall ("/v1/hello_world/hello", {});
 
 				expect (result.error).to.equal ("You didn't say hi.");
 			});

@@ -359,7 +359,6 @@ export abstract class HotTester
 		{
 			if (testPath == null)
 			{
-				debugger;
 				throw new Error (`HotTester: Test path ${testPathName} does not have a function!`);
 			}
 
