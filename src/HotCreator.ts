@@ -175,7 +175,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		if (this.npmCommands.buildWebAPI === "")
 		{
 			if (this.language === "ts")
-				this.npmCommands.buildWebAPI = "webpack --mode=production --config ./webpack-api.config.js";
+				this.npmCommands.buildWebAPI = "hotstaq generate";
 		}
 
 		if (this.npmCommands.buildWebAPI !== "")
@@ -184,7 +184,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		if (this.npmCommands.buildWebAPIDebug === "")
 		{
 			if (this.language === "ts")
-				this.npmCommands.buildWebAPIDebug = "webpack --mode=development --debug --config ./webpack-api.config.js";
+				this.npmCommands.buildWebAPIDebug = "hotstaq generate";
 		}
 
 		if (this.npmCommands.buildWebAPIDebug !== "")

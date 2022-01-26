@@ -20,7 +20,7 @@ The database results.
 
 #### Defined in
 
-[schemas/HotDBMySQL.ts:17](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMySQL.ts#L17)
+[schemas/HotDBMySQL.ts:17](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMySQL.ts#L17)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-[schemas/HotDBMySQL.ts:19](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMySQL.ts#L19)
+[schemas/HotDBMySQL.ts:19](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMySQL.ts#L19)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[schemas/HotDBMySQL.ts:18](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMySQL.ts#L18)
+[schemas/HotDBMySQL.ts:18](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMySQL.ts#L18)

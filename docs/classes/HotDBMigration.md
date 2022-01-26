@@ -33,7 +33,7 @@ Migration data related to table changes.
 
 #### Defined in
 
-[schemas/HotDBMigration.ts:11](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMigration.ts#L11)
+[schemas/HotDBMigration.ts:11](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMigration.ts#L11)
 
 ## Properties
 
@@ -45,7 +45,7 @@ The version of this migration. **NOTE USE WHOLE INTEGERS ONLY**
 
 #### Defined in
 
-[schemas/HotDBMigration.ts:9](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMigration.ts#L9)
+[schemas/HotDBMigration.ts:9](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMigration.ts#L9)
 
 ## Methods
 
@@ -61,7 +61,7 @@ Executes when migrating the table downwards, or undoing actions.
 
 #### Defined in
 
-[schemas/HotDBMigration.ts:23](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMigration.ts#L23)
+[schemas/HotDBMigration.ts:23](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMigration.ts#L23)
 
 ___
 
@@ -77,4 +77,4 @@ Executes when migrating the table upwards.
 
 #### Defined in
 
-[schemas/HotDBMigration.ts:19](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBMigration.ts#L19)
+[schemas/HotDBMigration.ts:19](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBMigration.ts#L19)

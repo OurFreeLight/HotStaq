@@ -36,7 +36,7 @@ The logger.
 
 #### Defined in
 
-[HotLog.ts:42](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L42)
+[HotLog.ts:42](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L42)
 
 ## Properties
 
@@ -48,7 +48,7 @@ The logging level.
 
 #### Defined in
 
-[HotLog.ts:40](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L40)
+[HotLog.ts:40](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L40)
 
 ## Methods
 
@@ -70,7 +70,7 @@ Log an error message.
 
 #### Defined in
 
-[HotLog.ts:136](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L136)
+[HotLog.ts:136](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L136)
 
 ___
 
@@ -92,7 +92,7 @@ Log a message.
 
 #### Defined in
 
-[HotLog.ts:110](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L110)
+[HotLog.ts:110](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L110)
 
 ___
 
@@ -115,7 +115,7 @@ Log a message.
 
 #### Defined in
 
-[HotLog.ts:50](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L50)
+[HotLog.ts:50](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L50)
 
 ___
 
@@ -137,7 +137,7 @@ Log a verbose message.
 
 #### Defined in
 
-[HotLog.ts:101](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L101)
+[HotLog.ts:101](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L101)
 
 ___
 
@@ -159,4 +159,4 @@ Log a warning.
 
 #### Defined in
 
-[HotLog.ts:123](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L123)
+[HotLog.ts:123](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L123)

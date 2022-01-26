@@ -24,7 +24,7 @@ The name of the API to interface with.
 
 #### Defined in
 
-[HotStaq.ts:58](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L58)
+[HotStaq.ts:58](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L58)
 
 ___
 
@@ -37,7 +37,7 @@ ignored if the destinations are an array.
 
 #### Defined in
 
-[HotStaq.ts:63](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L63)
+[HotStaq.ts:63](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L63)
 
 ___
 
@@ -52,7 +52,7 @@ create a new map.
 
 #### Defined in
 
-[HotStaq.ts:70](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L70)
+[HotStaq.ts:70](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L70)
 
 ___
 
@@ -64,7 +64,7 @@ The name of the route. Will appear in the title.
 
 #### Defined in
 
-[HotStaq.ts:50](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L50)
+[HotStaq.ts:50](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L50)
 
 ___
 
@@ -76,4 +76,4 @@ The url to the file to load.
 
 #### Defined in
 
-[HotStaq.ts:54](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L54)
+[HotStaq.ts:54](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L54)

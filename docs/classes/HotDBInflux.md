@@ -61,7 +61,7 @@ The Influx database connection.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:21](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L21)
+[schemas/HotDBInflux.ts:21](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L21)
 
 ## Properties
 
@@ -77,7 +77,7 @@ The connection status.
 
 #### Defined in
 
-[HotDB.ts:30](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotDB.ts#L30)
+[HotDB.ts:30](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotDB.ts#L30)
 
 ___
 
@@ -93,7 +93,7 @@ The connection to the database (or the driver).
 
 #### Defined in
 
-[HotDB.ts:26](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotDB.ts#L26)
+[HotDB.ts:26](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotDB.ts#L26)
 
 ___
 
@@ -107,7 +107,7 @@ ___
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:69](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L69)
+[schemas/HotDBInflux.ts:69](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L69)
 
 ___
 
@@ -119,7 +119,7 @@ The Influx query api.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:19](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L19)
+[schemas/HotDBInflux.ts:19](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L19)
 
 ___
 
@@ -133,7 +133,7 @@ ___
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:70](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L70)
+[schemas/HotDBInflux.ts:70](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L70)
 
 ___
 
@@ -150,7 +150,7 @@ and keep it maintained as needed.
 
 #### Defined in
 
-[HotDB.ts:35](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotDB.ts#L35)
+[HotDB.ts:35](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotDB.ts#L35)
 
 ___
 
@@ -160,7 +160,7 @@ ___
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:72](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L72)
+[schemas/HotDBInflux.ts:72](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L72)
 
 ___
 
@@ -174,7 +174,7 @@ ___
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:73](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L73)
+[schemas/HotDBInflux.ts:73](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L73)
 
 ___
 
@@ -190,7 +190,7 @@ The database type.
 
 #### Defined in
 
-[HotDB.ts:22](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotDB.ts#L22)
+[HotDB.ts:22](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotDB.ts#L22)
 
 ___
 
@@ -202,7 +202,7 @@ The Influx write api.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:15](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L15)
+[schemas/HotDBInflux.ts:15](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L15)
 
 ## Methods
 
@@ -225,7 +225,7 @@ unless sendPoints is called.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:88](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L88)
+[schemas/HotDBInflux.ts:88](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L88)
 
 ___
 
@@ -248,7 +248,7 @@ unless sendPoints is called.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:100](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L100)
+[schemas/HotDBInflux.ts:100](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L100)
 
 ___
 
@@ -274,7 +274,7 @@ Connect to the database.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:29](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L29)
+[schemas/HotDBInflux.ts:29](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L29)
 
 ___
 
@@ -290,7 +290,7 @@ Checks to see if this has a database connection.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:78](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L78)
+[schemas/HotDBInflux.ts:78](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L78)
 
 ___
 
@@ -310,7 +310,7 @@ Disconnect from the server.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:203](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L203)
+[schemas/HotDBInflux.ts:203](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L203)
 
 ___
 
@@ -339,7 +339,7 @@ The query to make.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:160](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L160)
+[schemas/HotDBInflux.ts:160](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L160)
 
 ___
 
@@ -355,7 +355,7 @@ Writes all stored points to the database.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:111](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L111)
+[schemas/HotDBInflux.ts:111](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L111)
 
 ___
 
@@ -379,7 +379,7 @@ writePoints.
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:134](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L134)
+[schemas/HotDBInflux.ts:134](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L134)
 
 ___
 
@@ -401,4 +401,4 @@ Write points to the database. This will call close and send the point immediatel
 
 #### Defined in
 
-[schemas/HotDBInflux.ts:147](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/schemas/HotDBInflux.ts#L147)
+[schemas/HotDBInflux.ts:147](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBInflux.ts#L147)

@@ -1325,10 +1325,13 @@ export class HotStaq implements IHotStaq
 					{
 						if (this.hotSite.testing != null)
 						{
-							if (this.hotSite.testing.web.testerAPIUrl == null)
-								this.hotSite.testing.web.testerAPIUrl = "http://127.0.0.1:8182";
+							if (this.hotSite.testing.web != null)
+							{
+								if (this.hotSite.testing.web.testerAPIUrl == null)
+									this.hotSite.testing.web.testerAPIUrl = "http://127.0.0.1:8182";
 
-							testerAPIStr = testerAPIStr.replace (/\%base\_tester\_url\%/g, `\"${this.hotSite.testing.web.testerAPIUrl}\"`);
+								testerAPIStr = testerAPIStr.replace (/\%base\_tester\_url\%/g, `\"${this.hotSite.testing.web.testerAPIUrl}\"`);
+							}
 						}
 					}
 				}
@@ -1380,17 +1383,20 @@ export class HotStaq implements IHotStaq
 				{
 					if (this.hotSite.testing != null)
 					{
-						if (this.hotSite.testing.web.tester != null)
-							testerName = this.hotSite.testing.web.tester;
+						if (this.hotSite.testing.web != null)
+						{
+							if (this.hotSite.testing.web.tester != null)
+								testerName = this.hotSite.testing.web.tester;
 
-						if (this.hotSite.testing.web.testerName != null)
-							testerName = this.hotSite.testing.web.testerName;
+							if (this.hotSite.testing.web.testerName != null)
+								testerName = this.hotSite.testing.web.testerName;
 
-						if (this.hotSite.testing.web.testerAPIUrl != null)
-							testerUrl = this.hotSite.testing.web.testerAPIUrl;
+							if (this.hotSite.testing.web.testerAPIUrl != null)
+								testerUrl = this.hotSite.testing.web.testerAPIUrl;
 
-						if (this.hotSite.testing.web.launchpadUrl != null)
-							testerLaunchpadUrl = this.hotSite.testing.web.launchpadUrl;
+							if (this.hotSite.testing.web.launchpadUrl != null)
+								testerLaunchpadUrl = this.hotSite.testing.web.launchpadUrl;
+						}
 					}
 
 					if (this.hotSite.routes != null)

@@ -25,7 +25,7 @@ Prints all messages, except verbose.
 
 #### Defined in
 
-[HotLog.ts:25](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L25)
+[HotLog.ts:25](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L25)
 
 ___
 
@@ -37,7 +37,7 @@ Prints only error messages.
 
 #### Defined in
 
-[HotLog.ts:17](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L17)
+[HotLog.ts:17](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L17)
 
 ___
 
@@ -49,7 +49,7 @@ Prints only info messages.
 
 #### Defined in
 
-[HotLog.ts:9](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L9)
+[HotLog.ts:9](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L9)
 
 ___
 
@@ -61,7 +61,7 @@ Doesn't print any message.
 
 #### Defined in
 
-[HotLog.ts:29](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L29)
+[HotLog.ts:29](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L29)
 
 ___
 
@@ -73,7 +73,7 @@ Prints all messages.
 
 #### Defined in
 
-[HotLog.ts:21](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L21)
+[HotLog.ts:21](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L21)
 
 ___
 
@@ -85,4 +85,4 @@ Prints only warning messages.
 
 #### Defined in
 
-[HotLog.ts:13](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotLog.ts#L13)
+[HotLog.ts:13](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotLog.ts#L13)

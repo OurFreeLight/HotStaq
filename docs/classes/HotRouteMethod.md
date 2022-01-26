@@ -51,7 +51,7 @@ An API method to make.
 
 #### Defined in
 
-[HotRouteMethod.ts:95](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L95)
+[HotRouteMethod.ts:95](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L95)
 
 ## Properties
 
@@ -64,7 +64,7 @@ when connecting to the server.
 
 #### Defined in
 
-[HotRouteMethod.ts:87](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L87)
+[HotRouteMethod.ts:87](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L87)
 
 ___
 
@@ -77,7 +77,7 @@ prevents the method from being reregistered.
 
 #### Defined in
 
-[HotRouteMethod.ts:82](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L82)
+[HotRouteMethod.ts:82](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L82)
 
 ___
 
@@ -90,7 +90,7 @@ prevents the method from being reregistered.
 
 #### Defined in
 
-[HotRouteMethod.ts:77](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L77)
+[HotRouteMethod.ts:77](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L77)
 
 ___
 
@@ -102,7 +102,7 @@ The api call name.
 
 #### Defined in
 
-[HotRouteMethod.ts:68](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L68)
+[HotRouteMethod.ts:68](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L68)
 
 ___
 
@@ -116,7 +116,7 @@ Executes when executing a called method from the client side.
 
 #### Defined in
 
-[HotRouteMethod.ts:178](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L178)
+[HotRouteMethod.ts:178](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L178)
 
 ___
 
@@ -136,7 +136,7 @@ Executes after all routes have been registered.
 
 #### Defined in
 
-[HotRouteMethod.ts:151](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L151)
+[HotRouteMethod.ts:151](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L151)
 
 ___
 
@@ -156,7 +156,7 @@ Executes before all routes have been registered.
 
 #### Defined in
 
-[HotRouteMethod.ts:142](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L142)
+[HotRouteMethod.ts:142](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L142)
 
 ___
 
@@ -169,7 +169,7 @@ this returns false, the method will not be registered.
 
 #### Defined in
 
-[HotRouteMethod.ts:147](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L147)
+[HotRouteMethod.ts:147](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L147)
 
 ___
 
@@ -187,7 +187,7 @@ message as the error.
 
 #### Defined in
 
-[HotRouteMethod.ts:162](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L162)
+[HotRouteMethod.ts:162](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L162)
 
 ___
 
@@ -205,7 +205,7 @@ message as the error.
 
 #### Defined in
 
-[HotRouteMethod.ts:173](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L173)
+[HotRouteMethod.ts:173](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L173)
 
 ___
 
@@ -217,7 +217,7 @@ The parent route.
 
 #### Defined in
 
-[HotRouteMethod.ts:64](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L64)
+[HotRouteMethod.ts:64](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L64)
 
 ___
 
@@ -233,7 +233,7 @@ The test case objects to execute during tests.
 
 #### Defined in
 
-[HotRouteMethod.ts:91](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L91)
+[HotRouteMethod.ts:91](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L91)
 
 ___
 
@@ -245,7 +245,7 @@ The api call name.
 
 #### Defined in
 
-[HotRouteMethod.ts:72](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L72)
+[HotRouteMethod.ts:72](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L72)
 
 ## Methods
 
@@ -268,4 +268,4 @@ Add a new test case.
 
 #### Defined in
 
-[HotRouteMethod.ts:183](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L183)
+[HotRouteMethod.ts:183](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L183)

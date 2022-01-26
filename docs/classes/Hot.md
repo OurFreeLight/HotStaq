@@ -59,7 +59,7 @@ The current API used on this page. This is cleared between every file processed.
 
 #### Defined in
 
-[Hot.ts:73](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L73)
+[Hot.ts:73](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L73)
 
 ___
 
@@ -71,7 +71,7 @@ The arguments passed.
 
 #### Defined in
 
-[Hot.ts:54](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L54)
+[Hot.ts:54](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L54)
 
 ___
 
@@ -86,7 +86,7 @@ the integrity hashes as well.
 
 #### Defined in
 
-[Hot.ts:104](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L104)
+[Hot.ts:104](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L104)
 
 ___
 
@@ -98,7 +98,7 @@ The cookies to use between pages.
 
 #### Defined in
 
-[Hot.ts:89](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L89)
+[Hot.ts:89](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L89)
 
 ___
 
@@ -110,7 +110,7 @@ The currently generated page being displayed. This is cleared between every file
 
 #### Defined in
 
-[Hot.ts:50](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L50)
+[Hot.ts:50](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L50)
 
 ___
 
@@ -122,7 +122,7 @@ The data to share across all the different files and pages. This data will be pu
 
 #### Defined in
 
-[Hot.ts:85](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L85)
+[Hot.ts:85](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L85)
 
 ___
 
@@ -135,7 +135,7 @@ related data will be collected, parsed, and executed if necessary.
 
 #### Defined in
 
-[Hot.ts:59](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L59)
+[Hot.ts:59](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L59)
 
 ___
 
@@ -148,7 +148,7 @@ related data will be collected, parsed, and executed if necessary.
 
 #### Defined in
 
-[Hot.ts:64](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L64)
+[Hot.ts:64](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L64)
 
 ___
 
@@ -163,7 +163,7 @@ the integrity hashes as well.
 
 #### Defined in
 
-[Hot.ts:111](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L111)
+[Hot.ts:111](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L111)
 
 ___
 
@@ -175,7 +175,7 @@ The JavaScript inline code to use in the current page being generated.
 
 #### Defined in
 
-[Hot.ts:115](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L115)
+[Hot.ts:115](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L115)
 
 ___
 
@@ -188,7 +188,7 @@ related data will be collected, parsed, and executed if necessary.
 
 #### Defined in
 
-[Hot.ts:69](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L69)
+[Hot.ts:69](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L69)
 
 ___
 
@@ -200,7 +200,7 @@ Contains the buffer to output. This is cleared between every file processed.
 
 #### Defined in
 
-[Hot.ts:81](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L81)
+[Hot.ts:81](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L81)
 
 ___
 
@@ -212,7 +212,7 @@ Any secrets that can be shown publicly. These can be passed from HotSite.json.
 
 #### Defined in
 
-[Hot.ts:93](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L93)
+[Hot.ts:93](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L93)
 
 ___
 
@@ -224,7 +224,7 @@ The API being used by the tester.
 
 #### Defined in
 
-[Hot.ts:77](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L77)
+[Hot.ts:77](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L77)
 
 ___
 
@@ -236,7 +236,7 @@ The CSS string to use when echoing out the CSS files.
 
 #### Defined in
 
-[Hot.ts:97](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L97)
+[Hot.ts:97](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L97)
 
 ___
 
@@ -248,7 +248,7 @@ The JavaScript string to use when echoing out the Scripts files.
 
 #### Defined in
 
-[Hot.ts:119](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L119)
+[Hot.ts:119](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L119)
 
 ___
 
@@ -260,7 +260,7 @@ The JavaScript string to use when echoing out the Scripts files.
 
 #### Defined in
 
-[Hot.ts:123](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L123)
+[Hot.ts:123](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L123)
 
 ## Methods
 
@@ -284,7 +284,7 @@ Make an api call.
 
 #### Defined in
 
-[Hot.ts:195](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L195)
+[Hot.ts:195](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L195)
 
 ___
 
@@ -300,7 +300,7 @@ Echo out the CSS for the current page being generated.
 
 #### Defined in
 
-[Hot.ts:275](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L275)
+[Hot.ts:275](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L275)
 
 ___
 
@@ -316,7 +316,7 @@ Echo out the JS files for the current page being generated.
 
 #### Defined in
 
-[Hot.ts:291](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L291)
+[Hot.ts:291](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L291)
 
 ___
 
@@ -332,7 +332,7 @@ Echo out the JS scripts for the current page being generated.
 
 #### Defined in
 
-[Hot.ts:307](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L307)
+[Hot.ts:307](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L307)
 
 ___
 
@@ -354,7 +354,7 @@ Echo out some output.
 
 #### Defined in
 
-[Hot.ts:267](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L267)
+[Hot.ts:267](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L267)
 
 ___
 
@@ -377,7 +377,7 @@ Get the content of a file.
 
 #### Defined in
 
-[Hot.ts:168](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L168)
+[Hot.ts:168](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L168)
 
 ___
 
@@ -402,7 +402,7 @@ The HTTP response.
 
 #### Defined in
 
-[Hot.ts:257](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L257)
+[Hot.ts:257](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L257)
 
 ___
 
@@ -425,7 +425,7 @@ Retrieve a file and echo out it's contents.
 
 #### Defined in
 
-[Hot.ts:128](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L128)
+[Hot.ts:128](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L128)
 
 ___
 
@@ -451,7 +451,7 @@ The parsed JSON object.
 
 #### Defined in
 
-[Hot.ts:223](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L223)
+[Hot.ts:223](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L223)
 
 ___
 
@@ -474,4 +474,4 @@ Run an already loaded file and echo out it's contents.
 
 #### Defined in
 
-[Hot.ts:152](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/Hot.ts#L152)
+[Hot.ts:152](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/Hot.ts#L152)

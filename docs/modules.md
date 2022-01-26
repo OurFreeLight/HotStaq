@@ -89,7 +89,7 @@ The API to load.
 
 #### Defined in
 
-[HotAPI.ts:14](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotAPI.ts#L14)
+[HotAPI.ts:14](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotAPI.ts#L14)
 
 ___
 
@@ -116,7 +116,7 @@ Create a test path for later execution.
 
 #### Defined in
 
-[HotTestMap.ts:8](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTestMap.ts#L8)
+[HotTestMap.ts:8](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTestMap.ts#L8)
 
 ___
 
@@ -149,7 +149,7 @@ executed.
 
 #### Defined in
 
-[HotRouteMethod.ts:36](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L36)
+[HotRouteMethod.ts:36](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L36)
 
 ___
 
@@ -179,4 +179,4 @@ A function that will be executed by the server.
 
 #### Defined in
 
-[HotRouteMethod.ts:23](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotRouteMethod.ts#L23)
+[HotRouteMethod.ts:23](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L23)
