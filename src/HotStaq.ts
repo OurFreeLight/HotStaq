@@ -11,7 +11,7 @@ import { HotComponent } from "./HotComponent";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
-import { DeveloperMode } from "./Hot";
+import { DeveloperMode, Hot } from "./Hot";
 import { HotClient } from "./HotClient";
 
 import { HotTester } from "./HotTester";
@@ -1879,3 +1879,34 @@ export class HotStaq implements IHotStaq
 	}
 }
 
+if (typeof (document) !== "undefined")
+{
+	let hotstaqElms = document.getElementsByTagName ("hotstaq");
+
+	if (hotstaqElms.length > 0)
+	{
+		let tempMode = 0;
+
+		// @ts-ignore
+		if (window["Hot"] != null)
+			tempMode = Hot.Mode;
+
+		// @ts-ignore
+		let hotstaqElm: HTMLElement = hotstaqElms[0];
+
+		let processor = new HotStaq ();
+		let promises: any[] = [];
+
+		processor.mode = tempMode;
+
+		Promise.all (promises).then (function ()
+			{
+				HotStaq.displayUrl ({
+						url: hotstaqElm.dataset.loadPage,
+						name: "",
+						processor: processor,
+						args: Hot.Arguments
+					});
+			});
+	}
+}

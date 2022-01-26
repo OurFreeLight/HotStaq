@@ -75,7 +75,7 @@ A HTTP server.
 
 #### Defined in
 
-[HotHTTPServer.ts:100](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L100)
+[HotHTTPServer.ts:100](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L100)
 
 ## Properties
 
@@ -91,7 +91,7 @@ The API to use.
 
 #### Defined in
 
-[HotServer.ts:94](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L94)
+[HotServer.ts:94](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L94)
 
 ___
 
@@ -103,7 +103,7 @@ The express app to use.
 
 #### Defined in
 
-[HotHTTPServer.ts:40](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L40)
+[HotHTTPServer.ts:40](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L40)
 
 ___
 
@@ -124,7 +124,7 @@ overwritten by whatever values are set in the server object in HotSite.json.
 
 #### Defined in
 
-[HotHTTPServer.ts:85](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L85)
+[HotHTTPServer.ts:85](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L85)
 
 ___
 
@@ -136,7 +136,7 @@ The HTTP listener to use.
 
 #### Defined in
 
-[HotHTTPServer.ts:44](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L44)
+[HotHTTPServer.ts:44](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L44)
 
 ___
 
@@ -148,7 +148,7 @@ The HTTPS listener to use.
 
 #### Defined in
 
-[HotHTTPServer.ts:48](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L48)
+[HotHTTPServer.ts:48](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L48)
 
 ___
 
@@ -164,7 +164,7 @@ Do not serve these hott files.
 
 #### Defined in
 
-[HotHTTPServer.ts:80](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L80)
+[HotHTTPServer.ts:80](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L80)
 
 ___
 
@@ -180,7 +180,7 @@ The network address to listen on.
 
 #### Defined in
 
-[HotServer.ts:98](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L98)
+[HotServer.ts:98](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L98)
 
 ___
 
@@ -196,7 +196,7 @@ The logger.
 
 #### Defined in
 
-[HotServer.ts:134](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L134)
+[HotServer.ts:134](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L134)
 
 ___
 
@@ -219,7 +219,7 @@ The ports to use.
 
 #### Defined in
 
-[HotServer.ts:102](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L102)
+[HotServer.ts:102](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L102)
 
 ___
 
@@ -235,7 +235,7 @@ The processor to use.
 
 #### Defined in
 
-[HotServer.ts:86](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L86)
+[HotServer.ts:86](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L86)
 
 ___
 
@@ -251,7 +251,7 @@ Redirect HTTP traffic to HTTPS.
 
 #### Defined in
 
-[HotServer.ts:126](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L126)
+[HotServer.ts:126](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L126)
 
 ___
 
@@ -265,7 +265,7 @@ all API routes are added.
 
 #### Defined in
 
-[HotHTTPServer.ts:58](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L58)
+[HotHTTPServer.ts:58](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L58)
 
 ___
 
@@ -281,7 +281,7 @@ Any secrets associated with this server.
 
 #### Defined in
 
-[HotServer.ts:138](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L138)
+[HotServer.ts:138](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L138)
 
 ___
 
@@ -294,7 +294,7 @@ value is set to server.serveHottFiles in HotSite.json.
 
 #### Defined in
 
-[HotHTTPServer.ts:76](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L76)
+[HotHTTPServer.ts:76](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L76)
 
 ___
 
@@ -310,7 +310,7 @@ The server type.
 
 #### Defined in
 
-[HotServer.ts:90](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L90)
+[HotServer.ts:90](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L90)
 
 ___
 
@@ -334,7 +334,7 @@ SSL settings.
 
 #### Defined in
 
-[HotServer.ts:109](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L109)
+[HotServer.ts:109](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L109)
 
 ___
 
@@ -346,7 +346,7 @@ The static files and folders to serve.
 
 #### Defined in
 
-[HotHTTPServer.ts:52](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L52)
+[HotHTTPServer.ts:52](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L52)
 
 ___
 
@@ -362,7 +362,7 @@ The type of server.
 
 #### Defined in
 
-[HotServer.ts:130](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L130)
+[HotServer.ts:130](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L130)
 
 ## Methods
 
@@ -386,7 +386,7 @@ Add a route. This will be registered before any APIs are registered.
 
 #### Defined in
 
-[HotHTTPServer.ts:215](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L215)
+[HotHTTPServer.ts:215](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L215)
 
 ___
 
@@ -409,7 +409,7 @@ Add a static route.
 
 #### Defined in
 
-[HotHTTPServer.ts:194](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L194)
+[HotHTTPServer.ts:194](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L194)
 
 ___
 
@@ -426,7 +426,7 @@ error handlers.
 
 #### Defined in
 
-[HotHTTPServer.ts:683](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L683)
+[HotHTTPServer.ts:683](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L683)
 
 ___
 
@@ -448,7 +448,7 @@ Get a static route.
 
 #### Defined in
 
-[HotHTTPServer.ts:252](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L252)
+[HotHTTPServer.ts:252](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L252)
 
 ___
 
@@ -468,7 +468,7 @@ Start listening for requests.
 
 #### Defined in
 
-[HotHTTPServer.ts:711](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L711)
+[HotHTTPServer.ts:711](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L711)
 
 ___
 
@@ -484,7 +484,7 @@ The routes to add before registering a route.
 
 #### Defined in
 
-[HotHTTPServer.ts:440](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L440)
+[HotHTTPServer.ts:440](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L440)
 
 ___
 
@@ -510,7 +510,7 @@ Register a route.
 
 #### Defined in
 
-[HotHTTPServer.ts:274](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L274)
+[HotHTTPServer.ts:274](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L274)
 
 ___
 
@@ -532,7 +532,7 @@ Register a static route with Express.
 
 #### Defined in
 
-[HotHTTPServer.ts:238](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L238)
+[HotHTTPServer.ts:238](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L238)
 
 ___
 
@@ -555,7 +555,7 @@ Serve a directory. This is an alias for addStaticRoute.
 
 #### Defined in
 
-[HotHTTPServer.ts:230](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L230)
+[HotHTTPServer.ts:230](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L230)
 
 ___
 
@@ -582,7 +582,7 @@ processor to this API as well.
 
 #### Defined in
 
-[HotServer.ts:188](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L188)
+[HotServer.ts:188](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L188)
 
 ___
 
@@ -607,7 +607,7 @@ catch any remaining errors.
 
 #### Defined in
 
-[HotHTTPServer.ts:643](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L643)
+[HotHTTPServer.ts:643](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L643)
 
 ___
 
@@ -627,7 +627,7 @@ Shutdown the server.
 
 #### Defined in
 
-[HotHTTPServer.ts:937](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L937)
+[HotHTTPServer.ts:937](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L937)
 
 ___
 
@@ -649,7 +649,7 @@ Check if a file exists.
 
 #### Defined in
 
-[HotHTTPServer.ts:423](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L423)
+[HotHTTPServer.ts:423](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L423)
 
 ___
 
@@ -672,7 +672,7 @@ Get all files uploaded.
 
 #### Defined in
 
-[HotHTTPServer.ts:622](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L622)
+[HotHTTPServer.ts:622](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L622)
 
 ___
 
@@ -697,4 +697,4 @@ Start the server.
 
 #### Defined in
 
-[HotHTTPServer.ts:904](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotHTTPServer.ts#L904)
+[HotHTTPServer.ts:904](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotHTTPServer.ts#L904)

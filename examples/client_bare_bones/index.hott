@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Client Side Only Bare Bones Example</title>
+</head>
+
+<body>
+	<* await Hot.include ("./header.hott"); *>
+<br />
+	This is the main body. There's not much to it, but it's a body generated only using the client side browser.<br />
+<br />
+	<* await Hot.include ("./footer.hott"); *>
+</body>
+
+</html>

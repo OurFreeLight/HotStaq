@@ -50,7 +50,7 @@ A page to preprocess.
 
 #### Defined in
 
-[HotPage.ts:87](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L87)
+[HotPage.ts:87](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L87)
 
 ## Properties
 
@@ -67,7 +67,7 @@ IHotPage.files
 
 #### Defined in
 
-[HotPage.ts:69](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L69)
+[HotPage.ts:69](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L69)
 
 ___
 
@@ -83,7 +83,7 @@ IHotPage.name
 
 #### Defined in
 
-[HotPage.ts:60](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L60)
+[HotPage.ts:60](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L60)
 
 ___
 
@@ -99,7 +99,7 @@ IHotPage.processor
 
 #### Defined in
 
-[HotPage.ts:56](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L56)
+[HotPage.ts:56](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L56)
 
 ___
 
@@ -115,7 +115,7 @@ IHotPage.route
 
 #### Defined in
 
-[HotPage.ts:64](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L64)
+[HotPage.ts:64](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L64)
 
 ___
 
@@ -135,7 +135,7 @@ IHotPage.testElements
 
 #### Defined in
 
-[HotPage.ts:81](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L81)
+[HotPage.ts:81](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L81)
 
 ___
 
@@ -155,7 +155,7 @@ IHotPage.testPaths
 
 #### Defined in
 
-[HotPage.ts:85](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L85)
+[HotPage.ts:85](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L85)
 
 ___
 
@@ -171,7 +171,7 @@ IHotPage.testerMap
 
 #### Defined in
 
-[HotPage.ts:77](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L77)
+[HotPage.ts:77](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L77)
 
 ___
 
@@ -187,7 +187,7 @@ IHotPage.testerName
 
 #### Defined in
 
-[HotPage.ts:73](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L73)
+[HotPage.ts:73](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L73)
 
 ## Methods
 
@@ -210,7 +210,7 @@ adding it to a page if it's about to be used.
 
 #### Defined in
 
-[HotPage.ts:117](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L117)
+[HotPage.ts:117](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L117)
 
 ___
 
@@ -232,7 +232,7 @@ Add a test element.
 
 #### Defined in
 
-[HotPage.ts:177](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L177)
+[HotPage.ts:177](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L177)
 
 ___
 
@@ -255,7 +255,7 @@ Create a test path.
 
 #### Defined in
 
-[HotPage.ts:199](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L199)
+[HotPage.ts:199](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L199)
 
 ___
 
@@ -271,7 +271,7 @@ Get the API associated with this page.
 
 #### Defined in
 
-[HotPage.ts:127](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L127)
+[HotPage.ts:127](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L127)
 
 ___
 
@@ -293,7 +293,7 @@ Get a test element.
 
 #### Defined in
 
-[HotPage.ts:188](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L188)
+[HotPage.ts:188](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L188)
 
 ___
 
@@ -309,7 +309,7 @@ Get the tester API associated with this page.
 
 #### Defined in
 
-[HotPage.ts:135](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L135)
+[HotPage.ts:135](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L135)
 
 ___
 
@@ -332,7 +332,7 @@ It's recommend to load the file prior to adding it to a page.
 
 #### Defined in
 
-[HotPage.ts:144](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L144)
+[HotPage.ts:144](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L144)
 
 ___
 
@@ -354,4 +354,4 @@ Process a page and get the result.
 
 #### Defined in
 
-[HotPage.ts:157](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotPage.ts#L157)
+[HotPage.ts:157](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotPage.ts#L157)

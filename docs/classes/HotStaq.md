@@ -87,7 +87,7 @@ results.
 
 #### Defined in
 
-[HotStaq.ts:440](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L440)
+[HotStaq.ts:440](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L440)
 
 ## Properties
 
@@ -103,7 +103,7 @@ The api that's used to communicate with.
 
 #### Defined in
 
-[HotStaq.ts:394](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L394)
+[HotStaq.ts:394](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L394)
 
 ___
 
@@ -115,7 +115,7 @@ The api content to use when about to load HotStaq.
 
 #### Defined in
 
-[HotStaq.ts:418](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L418)
+[HotStaq.ts:418](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L418)
 
 ___
 
@@ -135,7 +135,7 @@ The components that can be constructed.
 
 #### Defined in
 
-[HotStaq.ts:406](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L406)
+[HotStaq.ts:406](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L406)
 
 ___
 
@@ -155,7 +155,7 @@ The files that can be stored for later use.
 
 #### Defined in
 
-[HotStaq.ts:410](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L410)
+[HotStaq.ts:410](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L410)
 
 ___
 
@@ -171,7 +171,7 @@ The loaded hotsite.
 
 #### Defined in
 
-[HotStaq.ts:414](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L414)
+[HotStaq.ts:414](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L414)
 
 ___
 
@@ -183,7 +183,7 @@ The logger.
 
 #### Defined in
 
-[HotStaq.ts:430](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L430)
+[HotStaq.ts:430](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L430)
 
 ___
 
@@ -199,7 +199,7 @@ Indicates what type of execution this is.
 
 #### Defined in
 
-[HotStaq.ts:390](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L390)
+[HotStaq.ts:390](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L390)
 
 ___
 
@@ -211,7 +211,7 @@ The page content to use when about to load HotStaq.
 
 #### Defined in
 
-[HotStaq.ts:426](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L426)
+[HotStaq.ts:426](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L426)
 
 ___
 
@@ -231,7 +231,7 @@ The pages that can be constructed.
 
 #### Defined in
 
-[HotStaq.ts:402](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L402)
+[HotStaq.ts:402](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L402)
 
 ___
 
@@ -243,7 +243,7 @@ The secrets that can be exposed publicly.
 
 #### Defined in
 
-[HotStaq.ts:434](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L434)
+[HotStaq.ts:434](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L434)
 
 ___
 
@@ -259,7 +259,7 @@ The tester api that's used to communicate with.
 
 #### Defined in
 
-[HotStaq.ts:398](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L398)
+[HotStaq.ts:398](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L398)
 
 ___
 
@@ -271,7 +271,7 @@ The tester api content to use when about to load HotStaq.
 
 #### Defined in
 
-[HotStaq.ts:422](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L422)
+[HotStaq.ts:422](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L422)
 
 ___
 
@@ -287,7 +287,7 @@ The secrets that can be exposed publicly.
 
 #### Defined in
 
-[HotStaq.ts:438](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L438)
+[HotStaq.ts:438](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L438)
 
 ___
 
@@ -299,7 +299,7 @@ Indicates if this is ready for testing.
 
 #### Defined in
 
-[HotStaq.ts:382](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L382)
+[HotStaq.ts:382](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L382)
 
 ___
 
@@ -311,7 +311,7 @@ Indicates if this is a web build.
 
 #### Defined in
 
-[HotStaq.ts:378](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L378)
+[HotStaq.ts:378](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L378)
 
 ___
 
@@ -331,7 +331,7 @@ Executes this event when this page is ready for testing.
 
 #### Defined in
 
-[HotStaq.ts:386](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L386)
+[HotStaq.ts:386](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L386)
 
 ## Methods
 
@@ -353,7 +353,7 @@ Add and register a component.
 
 #### Defined in
 
-[HotStaq.ts:676](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L676)
+[HotStaq.ts:676](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L676)
 
 ___
 
@@ -375,7 +375,7 @@ Add a file.
 
 #### Defined in
 
-[HotStaq.ts:649](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L649)
+[HotStaq.ts:649](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L649)
 
 ___
 
@@ -397,7 +397,7 @@ Add a page.
 
 #### Defined in
 
-[HotStaq.ts:633](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L633)
+[HotStaq.ts:633](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L633)
 
 ___
 
@@ -419,7 +419,7 @@ Add a tester for use later.
 
 #### Defined in
 
-[HotStaq.ts:1451](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1451)
+[HotStaq.ts:1451](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1451)
 
 ___
 
@@ -446,7 +446,7 @@ the loadHotSite method in HotHTTPServer.
 
 #### Defined in
 
-[HotStaq.ts:1434](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1434)
+[HotStaq.ts:1434](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1434)
 
 ___
 
@@ -468,7 +468,7 @@ Execute all api tests from the HotSite testing api object.
 
 #### Defined in
 
-[HotStaq.ts:1580](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1580)
+[HotStaq.ts:1580](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1580)
 
 ___
 
@@ -490,7 +490,7 @@ Execute all web tests from the HotSite testing web object.
 
 #### Defined in
 
-[HotStaq.ts:1559](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1559)
+[HotStaq.ts:1559](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1559)
 
 ___
 
@@ -513,7 +513,7 @@ Execute tests.
 
 #### Defined in
 
-[HotStaq.ts:1544](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1544)
+[HotStaq.ts:1544](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1544)
 
 ___
 
@@ -540,7 +540,7 @@ Generate the content to send to a client.
 
 #### Defined in
 
-[HotStaq.ts:1149](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1149)
+[HotStaq.ts:1149](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1149)
 
 ___
 
@@ -556,7 +556,7 @@ Get the list of maps for testing from the HotSite.
 
 #### Defined in
 
-[HotStaq.ts:1479](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1479)
+[HotStaq.ts:1479](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1479)
 
 ___
 
@@ -578,7 +578,7 @@ Get a component to process.
 
 #### Defined in
 
-[HotStaq.ts:746](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L746)
+[HotStaq.ts:746](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L746)
 
 ___
 
@@ -600,7 +600,7 @@ Get a file.
 
 #### Defined in
 
-[HotStaq.ts:665](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L665)
+[HotStaq.ts:665](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L665)
 
 ___
 
@@ -622,7 +622,7 @@ Get a page to process.
 
 #### Defined in
 
-[HotStaq.ts:641](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L641)
+[HotStaq.ts:641](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L641)
 
 ___
 
@@ -644,7 +644,7 @@ Get a route from a route's name.
 
 #### Defined in
 
-[HotStaq.ts:1527](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1527)
+[HotStaq.ts:1527](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1527)
 
 ___
 
@@ -666,7 +666,7 @@ Get a route's key from a route's name.
 
 #### Defined in
 
-[HotStaq.ts:1499](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1499)
+[HotStaq.ts:1499](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1499)
 
 ___
 
@@ -682,7 +682,7 @@ Get the list of maps for testing from the HotSite.
 
 #### Defined in
 
-[HotStaq.ts:1459](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1459)
+[HotStaq.ts:1459](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1459)
 
 ___
 
@@ -706,7 +706,7 @@ unless forceContentLoading is set to true.
 
 #### Defined in
 
-[HotStaq.ts:1098](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1098)
+[HotStaq.ts:1098](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1098)
 
 ___
 
@@ -729,7 +729,7 @@ loading a HotSite.
 
 #### Defined in
 
-[HotStaq.ts:862](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L862)
+[HotStaq.ts:862](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L862)
 
 ___
 
@@ -752,7 +752,7 @@ Process a page and get the result.
 
 #### Defined in
 
-[HotStaq.ts:1599](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1599)
+[HotStaq.ts:1599](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1599)
 
 ___
 
@@ -774,7 +774,7 @@ Register a component for use as a HTML tag.
 
 #### Defined in
 
-[HotStaq.ts:685](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L685)
+[HotStaq.ts:685](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L685)
 
 ___
 
@@ -797,7 +797,7 @@ Add a new HTML element(s) to the current document.
 
 #### Defined in
 
-[HotStaq.ts:754](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L754)
+[HotStaq.ts:754](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L754)
 
 ___
 
@@ -820,7 +820,7 @@ Check if a HotSite's name is valid.
 
 #### Defined in
 
-[HotStaq.ts:791](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L791)
+[HotStaq.ts:791](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L791)
 
 ___
 
@@ -845,7 +845,7 @@ This is meant for web browser use only.
 
 #### Defined in
 
-[HotStaq.ts:1864](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1864)
+[HotStaq.ts:1864](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1864)
 
 ___
 
@@ -871,7 +871,7 @@ This is meant for web browser use only.
 
 #### Defined in
 
-[HotStaq.ts:1714](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1714)
+[HotStaq.ts:1714](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1714)
 
 ___
 
@@ -896,7 +896,7 @@ Check if a required parameter exists inside an object. If it exists, return the 
 
 #### Defined in
 
-[HotStaq.ts:568](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L568)
+[HotStaq.ts:568](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L568)
 
 ___
 
@@ -921,7 +921,7 @@ If it does not exist, return a default value instead.
 
 #### Defined in
 
-[HotStaq.ts:600](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L600)
+[HotStaq.ts:600](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L600)
 
 ___
 
@@ -946,7 +946,7 @@ Returns the value from the hotsite object. Returns null if it doesn't exist.
 
 #### Defined in
 
-[HotStaq.ts:827](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L827)
+[HotStaq.ts:827](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L827)
 
 ___
 
@@ -969,7 +969,7 @@ This is meant for web browser use only.
 
 #### Defined in
 
-[HotStaq.ts:1676](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1676)
+[HotStaq.ts:1676](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1676)
 
 ___
 
@@ -991,7 +991,7 @@ Parse a boolean value.
 
 #### Defined in
 
-[HotStaq.ts:531](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L531)
+[HotStaq.ts:531](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L531)
 
 ___
 
@@ -1016,7 +1016,7 @@ Process content and get the result.
 
 #### Defined in
 
-[HotStaq.ts:1654](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1654)
+[HotStaq.ts:1654](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1654)
 
 ___
 
@@ -1040,7 +1040,7 @@ Process a local file and get the result.
 
 #### Defined in
 
-[HotStaq.ts:1610](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1610)
+[HotStaq.ts:1610](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1610)
 
 ___
 
@@ -1062,7 +1062,7 @@ Process a url and get the result.
 
 #### Defined in
 
-[HotStaq.ts:1631](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1631)
+[HotStaq.ts:1631](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1631)
 
 ___
 
@@ -1088,7 +1088,7 @@ The content with the correct values.
 
 #### Defined in
 
-[HotStaq.ts:815](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L815)
+[HotStaq.ts:815](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L815)
 
 ___
 
@@ -1111,7 +1111,7 @@ This is meant for web browser use only.
 
 #### Defined in
 
-[HotStaq.ts:1688](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1688)
+[HotStaq.ts:1688](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1688)
 
 ___
 
@@ -1133,7 +1133,7 @@ Wait for a number of milliseconds.
 
 #### Defined in
 
-[HotStaq.ts:619](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L619)
+[HotStaq.ts:619](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L619)
 
 ___
 
@@ -1152,4 +1152,4 @@ the first one.
 
 #### Defined in
 
-[HotStaq.ts:1701](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotStaq.ts#L1701)
+[HotStaq.ts:1701](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotStaq.ts#L1701)

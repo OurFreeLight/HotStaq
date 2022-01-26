@@ -71,7 +71,7 @@ An API server for use during testing.
 
 #### Defined in
 
-[HotTesterServer.ts:55](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L55)
+[HotTesterServer.ts:55](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L55)
 
 ## Properties
 
@@ -87,7 +87,7 @@ The API to use.
 
 #### Defined in
 
-[HotServer.ts:94](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L94)
+[HotServer.ts:94](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L94)
 
 ___
 
@@ -99,7 +99,7 @@ The express app to use.
 
 #### Defined in
 
-[HotTesterServer.ts:26](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L26)
+[HotTesterServer.ts:26](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L26)
 
 ___
 
@@ -111,7 +111,7 @@ The HTTP listener to use.
 
 #### Defined in
 
-[HotTesterServer.ts:30](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L30)
+[HotTesterServer.ts:30](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L30)
 
 ___
 
@@ -123,7 +123,7 @@ The HTTPS listener to use.
 
 #### Defined in
 
-[HotTesterServer.ts:34](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L34)
+[HotTesterServer.ts:34](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L34)
 
 ___
 
@@ -139,7 +139,7 @@ The network address to listen on.
 
 #### Defined in
 
-[HotServer.ts:98](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L98)
+[HotServer.ts:98](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L98)
 
 ___
 
@@ -155,7 +155,7 @@ The logger.
 
 #### Defined in
 
-[HotServer.ts:134](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L134)
+[HotServer.ts:134](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L134)
 
 ___
 
@@ -178,7 +178,7 @@ The ports to use.
 
 #### Defined in
 
-[HotServer.ts:102](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L102)
+[HotServer.ts:102](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L102)
 
 ___
 
@@ -194,7 +194,7 @@ The processor to use.
 
 #### Defined in
 
-[HotServer.ts:86](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L86)
+[HotServer.ts:86](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L86)
 
 ___
 
@@ -210,7 +210,7 @@ Redirect HTTP traffic to HTTPS.
 
 #### Defined in
 
-[HotServer.ts:126](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L126)
+[HotServer.ts:126](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L126)
 
 ___
 
@@ -224,7 +224,7 @@ all API routes are added.
 
 #### Defined in
 
-[HotTesterServer.ts:40](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L40)
+[HotTesterServer.ts:40](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L40)
 
 ___
 
@@ -240,7 +240,7 @@ Any secrets associated with this server.
 
 #### Defined in
 
-[HotServer.ts:138](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L138)
+[HotServer.ts:138](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L138)
 
 ___
 
@@ -256,7 +256,7 @@ The server type.
 
 #### Defined in
 
-[HotServer.ts:90](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L90)
+[HotServer.ts:90](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L90)
 
 ___
 
@@ -280,7 +280,7 @@ SSL settings.
 
 #### Defined in
 
-[HotServer.ts:109](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L109)
+[HotServer.ts:109](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L109)
 
 ___
 
@@ -296,7 +296,7 @@ The type of server.
 
 #### Defined in
 
-[HotServer.ts:130](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L130)
+[HotServer.ts:130](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L130)
 
 ## Methods
 
@@ -320,7 +320,7 @@ Add a route. This will be registered before any APIs are registered.
 
 #### Defined in
 
-[HotTesterServer.ts:177](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L177)
+[HotTesterServer.ts:177](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L177)
 
 ___
 
@@ -342,7 +342,7 @@ Add a tester for use later.
 
 #### Defined in
 
-[HotTesterServer.ts:143](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L143)
+[HotTesterServer.ts:143](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L143)
 
 ___
 
@@ -359,7 +359,7 @@ error handlers.
 
 #### Defined in
 
-[HotTesterServer.ts:397](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L397)
+[HotTesterServer.ts:397](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L397)
 
 ___
 
@@ -381,7 +381,7 @@ Execute all api tests for all maps in the HotSite testing api object.
 
 #### Defined in
 
-[HotTesterServer.ts:169](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L169)
+[HotTesterServer.ts:169](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L169)
 
 ___
 
@@ -403,7 +403,7 @@ Execute all web tests for all maps in the HotSite testing web object.
 
 #### Defined in
 
-[HotTesterServer.ts:161](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L161)
+[HotTesterServer.ts:161](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L161)
 
 ___
 
@@ -426,7 +426,7 @@ Execute tests.
 
 #### Defined in
 
-[HotTesterServer.ts:152](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L152)
+[HotTesterServer.ts:152](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L152)
 
 ___
 
@@ -446,7 +446,7 @@ Start listening for requests.
 
 #### Defined in
 
-[HotTesterServer.ts:425](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L425)
+[HotTesterServer.ts:425](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L425)
 
 ___
 
@@ -462,7 +462,7 @@ The routes to add before registering a route.
 
 #### Defined in
 
-[HotTesterServer.ts:334](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L334)
+[HotTesterServer.ts:334](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L334)
 
 ___
 
@@ -488,7 +488,7 @@ Register a route.
 
 #### Defined in
 
-[HotTesterServer.ts:193](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L193)
+[HotTesterServer.ts:193](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L193)
 
 ___
 
@@ -515,7 +515,7 @@ processor to this API as well.
 
 #### Defined in
 
-[HotServer.ts:188](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotServer.ts#L188)
+[HotServer.ts:188](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotServer.ts#L188)
 
 ___
 
@@ -540,7 +540,7 @@ catch any remaining errors.
 
 #### Defined in
 
-[HotTesterServer.ts:357](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L357)
+[HotTesterServer.ts:357](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L357)
 
 ___
 
@@ -562,7 +562,7 @@ Setup the tester api.
 
 #### Defined in
 
-[HotTesterServer.ts:505](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L505)
+[HotTesterServer.ts:505](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L505)
 
 ___
 
@@ -582,7 +582,7 @@ Shutdown the server.
 
 #### Defined in
 
-[HotTesterServer.ts:546](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L546)
+[HotTesterServer.ts:546](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L546)
 
 ___
 
@@ -604,7 +604,7 @@ Check if a file exists.
 
 #### Defined in
 
-[HotTesterServer.ts:317](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L317)
+[HotTesterServer.ts:317](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L317)
 
 ___
 
@@ -630,4 +630,4 @@ Start the server.
 
 #### Defined in
 
-[HotTesterServer.ts:520](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTesterServer.ts#L520)
+[HotTesterServer.ts:520](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTesterServer.ts#L520)

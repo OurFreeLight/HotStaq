@@ -32,7 +32,7 @@ Maps the paths that are taken to complete a test.
 
 #### Defined in
 
-[HotTestMap.ts:100](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTestMap.ts#L100)
+[HotTestMap.ts:100](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTestMap.ts#L100)
 
 ## Properties
 
@@ -45,7 +45,7 @@ ignored if the destinations are an array.
 
 #### Defined in
 
-[HotTestMap.ts:92](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTestMap.ts#L92)
+[HotTestMap.ts:92](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTestMap.ts#L92)
 
 ___
 
@@ -73,7 +73,7 @@ when chaining addtional ->'s.
 
 #### Defined in
 
-[HotTestMap.ts:87](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTestMap.ts#L87)
+[HotTestMap.ts:87](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTestMap.ts#L87)
 
 ___
 
@@ -89,4 +89,4 @@ The test pages to execute.
 
 #### Defined in
 
-[HotTestMap.ts:96](https://github.com/OurFreeLight/HotStaq/blob/b031357/src/HotTestMap.ts#L96)
+[HotTestMap.ts:96](https://github.com/OurFreeLight/HotStaq/blob/1bc3620/src/HotTestMap.ts#L96)
