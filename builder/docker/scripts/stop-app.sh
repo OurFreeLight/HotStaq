@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 HOTSITE_NAME="${HOTSITE_NAME}"
 

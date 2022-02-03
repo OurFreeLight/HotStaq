@@ -31,7 +31,7 @@ The api that's used to communicate with.
 
 #### Defined in
 
-[HotStaq.ts:342](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L342)
+[HotStaq.ts:350](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L350)
 
 ___
 
@@ -47,7 +47,7 @@ The components that can be constructed.
 
 #### Defined in
 
-[HotStaq.ts:358](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L358)
+[HotStaq.ts:366](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L366)
 
 ___
 
@@ -63,7 +63,7 @@ The files that can be stored for later use.
 
 #### Defined in
 
-[HotStaq.ts:362](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L362)
+[HotStaq.ts:370](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L370)
 
 ___
 
@@ -75,7 +75,7 @@ The loaded hotsite.
 
 #### Defined in
 
-[HotStaq.ts:366](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L366)
+[HotStaq.ts:374](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L374)
 
 ___
 
@@ -87,7 +87,7 @@ Indicates what type of execution this is.
 
 #### Defined in
 
-[HotStaq.ts:350](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L350)
+[HotStaq.ts:358](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L358)
 
 ___
 
@@ -103,7 +103,7 @@ The pages that can be constructed.
 
 #### Defined in
 
-[HotStaq.ts:354](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L354)
+[HotStaq.ts:362](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L362)
 
 ___
 
@@ -115,4 +115,4 @@ The tester api that's used to communicate with.
 
 #### Defined in
 
-[HotStaq.ts:346](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L346)
+[HotStaq.ts:354](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L354)

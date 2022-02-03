@@ -14,6 +14,7 @@ The route to use.
 
 - [authCredentials](HotRoute.md#authcredentials)
 - [connection](HotRoute.md#connection)
+- [description](HotRoute.md#description)
 - [errors](HotRoute.md#errors)
 - [logger](HotRoute.md#logger)
 - [methods](HotRoute.md#methods)
@@ -47,7 +48,7 @@ The route to use.
 
 #### Defined in
 
-[HotRoute.ts:46](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L46)
+[HotRoute.ts:50](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L50)
 
 ## Properties
 
@@ -60,7 +61,7 @@ when connecting to the server.
 
 #### Defined in
 
-[HotRoute.ts:35](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L35)
+[HotRoute.ts:39](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L39)
 
 ___
 
@@ -72,7 +73,19 @@ The server that maintains the connections.
 
 #### Defined in
 
-[HotRoute.ts:14](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L14)
+[HotRoute.ts:14](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L14)
+
+___
+
+### description
+
+• **description**: `string`
+
+The description of the route.
+
+#### Defined in
+
+[HotRoute.ts:26](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L26)
 
 ___
 
@@ -89,7 +102,7 @@ The errors and their JSON that can be thrown. Can be:
 
 #### Defined in
 
-[HotRoute.ts:44](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L44)
+[HotRoute.ts:48](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L48)
 
 ___
 
@@ -101,7 +114,7 @@ The associated logger.
 
 #### Defined in
 
-[HotRoute.ts:18](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L18)
+[HotRoute.ts:18](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L18)
 
 ___
 
@@ -113,7 +126,7 @@ The calls that can be made.
 
 #### Defined in
 
-[HotRoute.ts:39](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L39)
+[HotRoute.ts:43](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L43)
 
 ___
 
@@ -143,7 +156,7 @@ the authorization failed.
 
 #### Defined in
 
-[HotRoute.ts:136](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L136)
+[HotRoute.ts:150](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L150)
 
 ___
 
@@ -163,7 +176,7 @@ Executes after all routes have been registered.
 
 #### Defined in
 
-[HotRoute.ts:128](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L128)
+[HotRoute.ts:142](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L142)
 
 ___
 
@@ -183,7 +196,7 @@ Executes before all routes have been registered.
 
 #### Defined in
 
-[HotRoute.ts:119](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L119)
+[HotRoute.ts:133](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L133)
 
 ___
 
@@ -204,7 +217,7 @@ this returns false, the route will not be registered.
 
 #### Defined in
 
-[HotRoute.ts:124](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L124)
+[HotRoute.ts:138](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L138)
 
 ___
 
@@ -216,7 +229,7 @@ The prefix to add to the beginning of each route method.
 
 #### Defined in
 
-[HotRoute.ts:30](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L30)
+[HotRoute.ts:34](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L34)
 
 ___
 
@@ -228,7 +241,7 @@ The route.
 
 #### Defined in
 
-[HotRoute.ts:22](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L22)
+[HotRoute.ts:22](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L22)
 
 ___
 
@@ -240,7 +253,7 @@ The version.
 
 #### Defined in
 
-[HotRoute.ts:26](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L26)
+[HotRoute.ts:30](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L30)
 
 ## Methods
 
@@ -254,7 +267,7 @@ Add an API method to this route.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `method` | `string` \| [`HotRouteMethod`](HotRouteMethod.md) | `undefined` | The name of the method to add. If a HotRouteMethod is supplied, the rest of the arguments supplied will be ignored. |
+| `method` | `string` \| [`HotRouteMethod`](HotRouteMethod.md) \| `IHotRouteMethod` | `undefined` | The name of the method to add. If a HotRouteMethod is supplied, the rest of the arguments supplied will be ignored. |
 | `executeFunction` | [`ServerExecutionFunction`](../modules.md#serverexecutionfunction) | `null` | - |
 | `type` | [`HTTPMethod`](../enums/HTTPMethod.md) | `HTTPMethod.POST` | - |
 | `testCases` | (`string` \| `TestCaseFunction`)[] \| `TestCaseFunction`[] \| `TestCaseObject`[] | `null` | - |
@@ -265,7 +278,7 @@ Add an API method to this route.
 
 #### Defined in
 
-[HotRoute.ts:81](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L81)
+[HotRoute.ts:86](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L86)
 
 ___
 
@@ -287,7 +300,7 @@ Get a method by it's name.
 
 #### Defined in
 
-[HotRoute.ts:97](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L97)
+[HotRoute.ts:111](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L111)
 
 ___
 
@@ -309,4 +322,4 @@ Create an error JSON object.
 
 #### Defined in
 
-[HotRoute.ts:70](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRoute.ts#L70)
+[HotRoute.ts:75](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRoute.ts#L75)

@@ -29,10 +29,16 @@ describe ("API Generator Tests", () =>
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
 				apis = Common.loadAPIs (processor);
 			});
-		it ("should load the HotSite", async () =>
+		it ("should generate the API", async () =>
 			{
 				generator = new HotGenerator (processor.logger);
 				generator.hotsites = [processor.hotSite];
 				await generator.generateAPI (processor, apis);
+			});
+		it ("should generate the API documentation", async () =>
+			{
+				generator.generateType = "openapi-3.0.0-yaml";
+
+				await generator.generateAPIDocumentation (processor, apis);
 			});
 	});

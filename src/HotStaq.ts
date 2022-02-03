@@ -83,6 +83,14 @@ export interface HotSite
 	 */
 	name: string;
 	/**
+	 * The version of this HotSite.
+	 */
+	version?: string;
+	/**
+	 * The description of this HotSite.
+	 */
+	description?: string;
+	/**
 	 * The path to the current HotSite. This is filled in during parsing.
 	 */
 	hotsitePath?: string;

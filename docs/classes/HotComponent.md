@@ -48,7 +48,7 @@ A component to preprocess.
 
 #### Defined in
 
-[HotComponent.ts:101](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L101)
+[HotComponent.ts:101](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L101)
 
 ## Properties
 
@@ -64,7 +64,7 @@ The connected API.
 
 #### Defined in
 
-[HotComponent.ts:77](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L77)
+[HotComponent.ts:77](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L77)
 
 ___
 
@@ -80,7 +80,7 @@ The options to include with registering this component.
 
 #### Defined in
 
-[HotComponent.ts:81](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L81)
+[HotComponent.ts:81](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L81)
 
 ___
 
@@ -100,7 +100,7 @@ The events to trigger.
 
 #### Defined in
 
-[HotComponent.ts:93](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L93)
+[HotComponent.ts:93](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L93)
 
 ___
 
@@ -116,7 +116,7 @@ The associated HTMLElement.
 
 #### Defined in
 
-[HotComponent.ts:65](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L65)
+[HotComponent.ts:65](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L65)
 
 ___
 
@@ -132,7 +132,7 @@ The name of the component.
 
 #### Defined in
 
-[HotComponent.ts:69](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L69)
+[HotComponent.ts:69](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L69)
 
 ___
 
@@ -148,7 +148,7 @@ The processor to use.
 
 #### Defined in
 
-[HotComponent.ts:61](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L61)
+[HotComponent.ts:61](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L61)
 
 ___
 
@@ -164,7 +164,7 @@ The name of the tag.
 
 #### Defined in
 
-[HotComponent.ts:73](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L73)
+[HotComponent.ts:73](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L73)
 
 ___
 
@@ -180,7 +180,7 @@ The type of component.
 
 #### Defined in
 
-[HotComponent.ts:85](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L85)
+[HotComponent.ts:85](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L85)
 
 ___
 
@@ -196,7 +196,7 @@ The value of the component.
 
 #### Defined in
 
-[HotComponent.ts:89](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L89)
+[HotComponent.ts:89](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L89)
 
 ## Methods
 
@@ -212,7 +212,7 @@ Handle a click event.
 
 #### Defined in
 
-[HotComponent.ts:152](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L152)
+[HotComponent.ts:152](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L152)
 
 ___
 
@@ -234,7 +234,7 @@ Handle the attributes manually.
 
 #### Defined in
 
-[HotComponent.ts:147](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L147)
+[HotComponent.ts:147](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L147)
 
 ___
 
@@ -260,7 +260,7 @@ overwritten, use the handleAttributes method to handle them.
 
 #### Defined in
 
-[HotComponent.ts:139](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L139)
+[HotComponent.ts:139](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L139)
 
 ___
 
@@ -276,4 +276,4 @@ Output the component.
 
 #### Defined in
 
-[HotComponent.ts:157](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotComponent.ts#L157)
+[HotComponent.ts:157](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotComponent.ts#L157)

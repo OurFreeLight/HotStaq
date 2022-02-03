@@ -1,5 +1,9 @@
 build/
 build-web/
+./app/
+
+create-test-temp/
+temp/
 
 # Logs
 logs

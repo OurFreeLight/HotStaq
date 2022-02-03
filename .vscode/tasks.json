@@ -41,6 +41,14 @@
 				"instanceLimit": 1
 			},
 			"problemMatcher": [],
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
 			"label": "Build web test api",
 			"command": "hotstaq --hotsite ${workspaceFolder}/tests/hotsite/HotSite.json generate"
 		},

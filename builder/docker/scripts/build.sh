@@ -1,11 +1,14 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 NAMESPACE="${NAMESPACE}"
 HOTSITE_NAME="${HOTSITE_NAME}"
 VERSION="$(cat ./package.json | jq -r .version)"
 
-docker build -t $NAMESPACE/$HOTSITE_NAME:$VERSION -f ./docker/$HOTSITE_NAME/Dockerfile .
-docker tag $HOTSITE_NAME:$VERSION $HOTSITE_NAME:latest
+WEB_IMAGE="$NAMESPACE/$HOTSITE_NAME"
+API_IMAGE="$NAMESPACE/$HOTSITE_NAME-api"
 
-docker tag $HOTSITE_NAME:$VERSION $HOTSITE_NAME-api:$VERSION
-docker tag $HOTSITE_NAME-api:$VERSION $HOTSITE_NAME-api:latest
+docker build -t $WEB_IMAGE:$VERSION -f ./docker/$HOTSITE_NAME/Dockerfile .
+docker tag $WEB_IMAGE:$VERSION $WEB_IMAGE:latest
+
+docker tag $WEB_IMAGE:$VERSION $API_IMAGE:$VERSION
+docker tag $API_IMAGE:$VERSION $API_IMAGE:latest

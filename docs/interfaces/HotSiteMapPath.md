@@ -22,7 +22,7 @@ The default is true.
 
 #### Defined in
 
-[HotStaq.ts:35](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L35)
+[HotStaq.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L35)
 
 ___
 
@@ -34,4 +34,4 @@ The path to the
 
 #### Defined in
 
-[HotStaq.ts:39](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L39)
+[HotStaq.ts:39](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L39)

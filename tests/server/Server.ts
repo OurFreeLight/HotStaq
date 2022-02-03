@@ -11,6 +11,7 @@ import { Common } from "./Common";
 import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HelloWorldAPI } from "./HelloWorldAPI";
+import { DeveloperMode } from "../../src/Hot";
 
 describe ("Server Tests", () =>
 	{

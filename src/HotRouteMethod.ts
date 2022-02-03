@@ -54,18 +54,131 @@ export interface TestCaseObject
 }
 
 /**
+ * A method parameter.
+ */
+export interface HotRouteMethodParameter
+{
+	/**
+	 * The type of parameter.
+	 */
+	type: string;
+	/**
+	 * The description of the parameter.
+	 */
+	description: string;
+	/**
+	 * Is this parameter required?
+	 */
+	required: boolean;
+}
+
+/**
  * An API method to make.
  */
-export class HotRouteMethod
+export interface IHotRouteMethod
 {
 	/**
 	 * The parent route.
 	 */
-	parentRoute: HotRoute;
+	route?: HotRoute;
 	/**
 	 * The api call name.
 	 */
 	name: string;
+	/**
+	 * The description of the api method.
+	 */
+	description?: string;
+	/**
+	 * The description of what returns from the api method.
+	 */
+	returns?: string;
+	/**
+	 * The parameters in the api method.
+	 */
+	parameters?: { [name: string]: string | HotRouteMethodParameter; };
+	/**
+	 * The api call name.
+	 */
+	type?: HTTPMethod;
+	/**
+	 * The authorization credentials to be used by the client 
+	 * when connecting to the server.
+	 */
+	authCredentials?: any;
+	/**
+	 * The test case objects to execute during tests.
+	 */
+	testCases?: {
+			[name: string]: TestCaseObject;
+		} | (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[];
+	/**
+	 * Executes before all routes have been registered.
+	 */
+	onPreRegister?: () => Promise<void>;
+	/**
+	 * Executes when first registering this method with Express. If 
+	 * this returns false, the method will not be registered.
+	 */
+	onRegister?: ServerRegistrationFunction;
+	/**
+	 * Executes after all routes have been registered.
+	 */
+	onPostRegister?: () => Promise<void>;
+
+	/**
+	 * Executes when authorizing a called method. If this method 
+	 * is set, this will not call onAuthorize for the parent HotRoute.
+	 * The value returned from here will be passed to onExecute. 
+	 * Undefined returning from here will mean the authorization failed.
+	 * If any exceptions are thrown from this function, they will be sent 
+	 * to the server as an { error: string; } object with the exception 
+	 * message as the error.
+	 */
+	onServerAuthorize?: ServerAuthorizationFunction;
+
+	/**
+	 * Executes when executing a called method from the server side. 
+	 * This will stringify any JSON object and send it as a JSON response. 
+	 * If undefined is returned no response will be sent to the server. 
+	 * So the developer would have to send a response using "res".
+	 * If any exceptions are thrown from this function, they will be sent 
+	 * to the server as an { error: string; } object with the exception 
+	 * message as the error.
+	 */
+	onServerExecute?: ServerExecutionFunction;
+	/**
+	 * Executes when executing a called method from the client side.
+	 * @fixme Is this necessary?
+	 */
+	onClientExecute?: ClientExecutionFunction;
+}
+
+/**
+ * An API method to make.
+ */
+export class HotRouteMethod implements IHotRouteMethod
+{
+	/**
+	 * The parent route.
+	 */
+	route: HotRoute;
+	/**
+	 * The api call name.
+	 */
+	name: string;
+	/**
+	 * The description of the api method.
+	 */
+	description: string;
+	/**
+	 * The description of what returns from the api method.
+	 */
+	returns: string;
+	/**
+	 * The parameters in the api method.
+	 */
+	parameters: { [name: string]: HotRouteMethodParameter; };
 	/**
 	 * The api call name.
 	 */
@@ -91,51 +204,6 @@ export class HotRouteMethod
 	testCases: {
 			[name: string]: TestCaseObject;
 		};
-
-	constructor (route: HotRoute, name: string, 
-		onExecute: ServerExecutionFunction | ClientExecutionFunction = null, 
-		type: HTTPMethod = HTTPMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
-		onRegister: ServerRegistrationFunction = null, authCredentials: any = null, 
-		testCases: (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null)
-	{
-		this.parentRoute = route;
-		this.name = name;
-		this.type = type;
-		this.isRegistered = false;
-		this.executeSetup = false;
-		this.authCredentials = authCredentials;
-		this.onServerAuthorize = onServerAuthorize;
-		this.onRegister = onRegister;
-		this.testCases = {};
-
-		if (this.parentRoute.connection.processor.mode === DeveloperMode.Development)
-		{
-			if (testCases != null)
-			{
-				for (let iIdx = 0; iIdx < testCases.length; iIdx++)
-				{
-					let obj = testCases[iIdx];
-
-					if (typeof (obj) === "string")
-					{
-						const name: string = obj;
-						const func: TestCaseFunction = (<TestCaseFunction>testCases[iIdx + 1]);
-
-						this.addTestCase (name, func);
-						iIdx++;
-					}
-					else
-						this.addTestCase (obj);
-				}
-			}
-		}
-
-		if (this.parentRoute.connection instanceof HotServer)
-			this.onServerExecute = onExecute;
-		//else
-			//this.onClientExecute = onExecute;
-	}
-
 	/**
 	 * Executes before all routes have been registered.
 	 */
@@ -177,6 +245,128 @@ export class HotRouteMethod
 	 */
 	onClientExecute?: ClientExecutionFunction;
 
+	constructor (route: HotRoute | IHotRouteMethod, name: string = "", 
+		onExecute: ServerExecutionFunction | ClientExecutionFunction = null, 
+		type: HTTPMethod = HTTPMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
+		onRegister: ServerRegistrationFunction = null, authCredentials: any = null, 
+		testCases: { [name: string]: TestCaseObject; } | (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null)
+	{
+		let newRoute: HotRoute = null;
+
+		if (route instanceof HotRoute)
+			newRoute = route;
+		else
+		{
+			newRoute = route.route;
+
+			if (route.type != null)
+				type = route.type;
+
+			if (route.name != null)
+				name = route.name;
+
+			if (route.description != null)
+				this.description = route.description;
+
+			if (route.returns != null)
+				this.returns = route.returns;
+
+			if (route.parameters != null)
+			{
+				this.parameters = {};
+
+				for (let key in route.parameters)
+				{
+					let param = route.parameters[key];
+
+					if (typeof (param) === "string")
+					{
+						this.parameters[key] = {
+								"type": param,
+								"required": false,
+								"description": ""
+							};
+					}
+					else
+						this.parameters[key] = param;
+				}
+			}
+
+			if (route.authCredentials != null)
+				authCredentials = route.authCredentials;
+
+			if (route.onServerAuthorize != null)
+				onServerAuthorize = route.onServerAuthorize;
+
+			if (route.onRegister != null)
+				onRegister = route.onRegister;
+
+			if (route.onPostRegister != null)
+				this.onPostRegister = route.onPostRegister;
+
+			if (route.onServerExecute != null)
+				this.onServerExecute = route.onServerExecute;
+
+			if (route.onClientExecute != null)
+				this.onClientExecute = route.onClientExecute;
+
+			if (route.testCases != null)
+				testCases = route.testCases;
+		}
+
+		if (name === "")
+			throw new Error (`All route methods must have a name!`);
+
+		this.route = newRoute;
+		this.name = name;
+		this.type = type;
+		this.isRegistered = false;
+		this.executeSetup = false;
+		this.authCredentials = authCredentials;
+		this.onServerAuthorize = onServerAuthorize;
+		this.onRegister = onRegister;
+		this.testCases = {};
+
+		if (this.route.connection.processor.mode === DeveloperMode.Development)
+		{
+			if (testCases != null)
+			{
+				if (testCases instanceof Array)
+				{
+					for (let iIdx = 0; iIdx < testCases.length; iIdx++)
+					{
+						let obj = testCases[iIdx];
+
+						if (typeof (obj) === "string")
+						{
+							const testCaseName: string = obj;
+							const func: TestCaseFunction = (<TestCaseFunction>testCases[iIdx + 1]);
+
+							this.addTestCase (testCaseName, func);
+							iIdx++;
+						}
+						else
+							this.addTestCase (obj);
+					}
+				}
+				else
+				{
+					for (let key in testCases)
+					{
+						let obj = testCases[key];
+
+						this.addTestCase (obj);
+					}
+				}
+			}
+		}
+
+		if (this.route.connection instanceof HotServer)
+			this.onServerExecute = onExecute;
+		//else
+			//this.onClientExecute = onExecute;
+	}
+
 	/**
 	 * Add a new test case.
 	 */
@@ -199,7 +389,7 @@ export class HotRouteMethod
 		if (typeof (newTestCase) === "function")
 		{
 			const testCaseId: number = Object.keys (this.testCases).length;
-			const name: string = `${this.parentRoute.route}/${this.name} test case ${testCaseId}`;
+			const name: string = `${this.route.route}/${this.name} test case ${testCaseId}`;
 			const func: TestCaseFunction = (<TestCaseFunction>newTestCase);
 
 			this.testCases[name] = {

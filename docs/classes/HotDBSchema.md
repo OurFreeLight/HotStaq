@@ -36,7 +36,7 @@ The parent database schema.
 
 #### Defined in
 
-[schemas/HotDBSchema.ts:17](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBSchema.ts#L17)
+[schemas/HotDBSchema.ts:17](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/HotDBSchema.ts#L17)
 
 ## Properties
 
@@ -48,4 +48,4 @@ The name of this schema.
 
 #### Defined in
 
-[schemas/HotDBSchema.ts:15](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBSchema.ts#L15)
+[schemas/HotDBSchema.ts:15](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/HotDBSchema.ts#L15)

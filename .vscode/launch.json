@@ -165,21 +165,20 @@
 			]
 		},
 		{
-			"type": "node",
+			"type": "pwa-node",
 			"request": "launch",
 			"name": "Run Tests",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
+			"autoAttachChildProcesses": true,
 			"preLaunchTask": "Build web test api",
 			"program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
 			"args": [
-				"--timeout", "15", 
-				"--inspect=127.0.0.1:7479", 
+				"--timeout", "5000", 
 				"--colors", 
-				"./build/tests/**/*.js"
+				"./build/tests/generator/*.js"
 			],
-			"attachSimplePort": 7479,
 			"cwd": "${workspaceFolder}",
 			"env": {
 				"HTTP_PORT": "3123",

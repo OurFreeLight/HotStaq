@@ -36,6 +36,10 @@ export abstract class HotAPI
 	 */
 	connection: HotServer | HotClient;
 	/**
+	 * The description of the API.
+	 */
+	description: string;
+	/**
 	 * The base url for the server.
 	 */
 	baseUrl: string;
@@ -78,6 +82,7 @@ export abstract class HotAPI
 	constructor (baseUrl: string, connection: HotServer | HotClient = null, db: HotDB = null)
 	{
 		this.connection = connection;
+		this.description = "";
 		this.baseUrl = baseUrl;
 		this.createFunctions = true;
 		this.executeEventsUsing = EventExecutionType.HotRoute;
@@ -258,8 +263,8 @@ export abstract class HotAPI
 									authCredentials = newRouteMethod.authCredentials;
 								else
 								{
-									if (newRouteMethod.parentRoute.authCredentials != null)
-										authCredentials = newRouteMethod.parentRoute.authCredentials;
+									if (newRouteMethod.route.authCredentials != null)
+										authCredentials = newRouteMethod.route.authCredentials;
 								}
 
 								if (authCredentials == null)

@@ -28,7 +28,19 @@ export class HelloWorldAPI extends HotAPI
 		super(baseUrl, connection, db);
 
 		let route: HotRoute = new HotRoute (connection, "hello_world");
-		route.addMethod ("hello", this.helloCalled);
+		route.addMethod ({
+				name: "hello",
+				description: "Say hello to the server and it will respond.",
+				onServerExecute: this.helloCalled,
+				parameters: {
+					message: {
+						type: "string",
+						required: true,
+						description: "The message to send to the server. Can be: hi, hello"
+					}
+				},
+				returns: "The server says Hello World!"
+			});
 		route.addMethod ("is_up", 
 			async (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any> =>
 			{
@@ -37,6 +49,15 @@ export class HelloWorldAPI extends HotAPI
 		route.addMethod ("file_upload", this.fileUpload);
 		route.addMethod ("test_response", this.testResponse, HTTPMethod.POST, [
 						"TestAPIResponse",
+						async (driver: HotTestDriver): Promise<any> =>
+						{
+							// @ts-ignore
+							let resp = await this.hello_world.test_response ({
+									message: "YAY!"
+								});
+							driver.assert (resp === "received", "Response was not received!");
+						},
+						"TestAPIResponseAgain",
 						async (driver: HotTestDriver): Promise<any> =>
 						{
 							// @ts-ignore

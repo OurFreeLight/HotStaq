@@ -1,5 +1,5 @@
 import { HotServer } from "./HotServer";
-import { HotRouteMethod, HTTPMethod, ServerExecutionFunction, TestCaseFunction, TestCaseObject } from "./HotRouteMethod";
+import { HotRouteMethod, HTTPMethod, IHotRouteMethod, ServerExecutionFunction, TestCaseFunction, TestCaseObject } from "./HotRouteMethod";
 import { HotClient } from "./HotClient";
 import { HotLog } from "./HotLog";
 
@@ -20,6 +20,10 @@ export class HotRoute
 	 * The route.
 	 */
 	route: string;
+	/**
+	 * The description of the route.
+	 */
+	description: string;
 	/**
 	 * The version.
 	 */
@@ -55,6 +59,7 @@ export class HotRoute
 		}
 
 		this.route = route;
+		this.description = "";
 		this.version = "v1";
 		this.prefix = "";
 		this.authCredentials = null;
@@ -79,7 +84,7 @@ export class HotRoute
 	 * rest of the arguments supplied will be ignored.
 	 */
 	addMethod (
-		method: HotRouteMethod | string,
+		method: HotRouteMethod | IHotRouteMethod | string,
 		executeFunction: ServerExecutionFunction = null,
 		type: HTTPMethod = HTTPMethod.POST,
 		testCases: (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null
@@ -88,7 +93,16 @@ export class HotRoute
 		if (typeof (method) === "string")
 			method = new HotRouteMethod (this, method, executeFunction, type, null, null, null, testCases);
 
-		this.methods.push (method);
+		if (method instanceof HotRouteMethod)
+			this.methods.push (method);
+		else
+		{
+			if (method.route == null)
+				method.route = this;
+
+			method = new HotRouteMethod (method);
+			this.methods.push ((<HotRouteMethod>method));
+		}
 	}
 
 	/**

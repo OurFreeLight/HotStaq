@@ -4,6 +4,10 @@
 
 An API method to make.
 
+## Implements
+
+- `IHotRouteMethod`
+
 ## Table of contents
 
 ### Constructors
@@ -13,6 +17,7 @@ An API method to make.
 ### Properties
 
 - [authCredentials](HotRouteMethod.md#authcredentials)
+- [description](HotRouteMethod.md#description)
 - [executeSetup](HotRouteMethod.md#executesetup)
 - [isRegistered](HotRouteMethod.md#isregistered)
 - [name](HotRouteMethod.md#name)
@@ -22,7 +27,9 @@ An API method to make.
 - [onRegister](HotRouteMethod.md#onregister)
 - [onServerAuthorize](HotRouteMethod.md#onserverauthorize)
 - [onServerExecute](HotRouteMethod.md#onserverexecute)
-- [parentRoute](HotRouteMethod.md#parentroute)
+- [parameters](HotRouteMethod.md#parameters)
+- [returns](HotRouteMethod.md#returns)
+- [route](HotRouteMethod.md#route)
 - [testCases](HotRouteMethod.md#testcases)
 - [type](HotRouteMethod.md#type)
 
@@ -34,24 +41,24 @@ An API method to make.
 
 ### constructor
 
-• **new HotRouteMethod**(`route`, `name`, `onExecute?`, `type?`, `onServerAuthorize?`, `onRegister?`, `authCredentials?`, `testCases?`)
+• **new HotRouteMethod**(`route`, `name?`, `onExecute?`, `type?`, `onServerAuthorize?`, `onRegister?`, `authCredentials?`, `testCases?`)
 
 #### Parameters
 
 | Name | Type | Default value |
 | :------ | :------ | :------ |
-| `route` | [`HotRoute`](HotRoute.md) | `undefined` |
-| `name` | `string` | `undefined` |
+| `route` | [`HotRoute`](HotRoute.md) \| `IHotRouteMethod` | `undefined` |
+| `name` | `string` | `""` |
 | `onExecute` | [`ServerExecutionFunction`](../modules.md#serverexecutionfunction) \| `ClientExecutionFunction` | `null` |
 | `type` | [`HTTPMethod`](../enums/HTTPMethod.md) | `HTTPMethod.POST` |
 | `onServerAuthorize` | [`ServerAuthorizationFunction`](../modules.md#serverauthorizationfunction) | `null` |
 | `onRegister` | `ServerRegistrationFunction` | `null` |
 | `authCredentials` | `any` | `null` |
-| `testCases` | (`string` \| `TestCaseFunction`)[] \| `TestCaseFunction`[] \| `TestCaseObject`[] | `null` |
+| `testCases` | (`string` \| `TestCaseFunction`)[] \| `TestCaseFunction`[] \| `TestCaseObject`[] \| { [name: string]: `TestCaseObject`;  } | `null` |
 
 #### Defined in
 
-[HotRouteMethod.ts:95](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L95)
+[HotRouteMethod.ts:248](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L248)
 
 ## Properties
 
@@ -62,9 +69,29 @@ An API method to make.
 The authorization credentials to be used by the client
 when connecting to the server.
 
+#### Implementation of
+
+IHotRouteMethod.authCredentials
+
 #### Defined in
 
-[HotRouteMethod.ts:87](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L87)
+[HotRouteMethod.ts:200](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L200)
+
+___
+
+### description
+
+• **description**: `string`
+
+The description of the api method.
+
+#### Implementation of
+
+IHotRouteMethod.description
+
+#### Defined in
+
+[HotRouteMethod.ts:173](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L173)
 
 ___
 
@@ -77,7 +104,7 @@ prevents the method from being reregistered.
 
 #### Defined in
 
-[HotRouteMethod.ts:82](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L82)
+[HotRouteMethod.ts:195](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L195)
 
 ___
 
@@ -90,7 +117,7 @@ prevents the method from being reregistered.
 
 #### Defined in
 
-[HotRouteMethod.ts:77](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L77)
+[HotRouteMethod.ts:190](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L190)
 
 ___
 
@@ -100,9 +127,13 @@ ___
 
 The api call name.
 
+#### Implementation of
+
+IHotRouteMethod.name
+
 #### Defined in
 
-[HotRouteMethod.ts:68](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L68)
+[HotRouteMethod.ts:169](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L169)
 
 ___
 
@@ -114,9 +145,13 @@ Executes when executing a called method from the client side.
 
 **`fixme`** Is this necessary?
 
+#### Implementation of
+
+IHotRouteMethod.onClientExecute
+
 #### Defined in
 
-[HotRouteMethod.ts:178](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L178)
+[HotRouteMethod.ts:246](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L246)
 
 ___
 
@@ -134,9 +169,13 @@ Executes after all routes have been registered.
 
 `Promise`<`void`\>
 
+#### Implementation of
+
+IHotRouteMethod.onPostRegister
+
 #### Defined in
 
-[HotRouteMethod.ts:151](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L151)
+[HotRouteMethod.ts:219](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L219)
 
 ___
 
@@ -154,9 +193,13 @@ Executes before all routes have been registered.
 
 `Promise`<`void`\>
 
+#### Implementation of
+
+IHotRouteMethod.onPreRegister
+
 #### Defined in
 
-[HotRouteMethod.ts:142](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L142)
+[HotRouteMethod.ts:210](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L210)
 
 ___
 
@@ -167,9 +210,13 @@ ___
 Executes when first registering this method with Express. If
 this returns false, the method will not be registered.
 
+#### Implementation of
+
+IHotRouteMethod.onRegister
+
 #### Defined in
 
-[HotRouteMethod.ts:147](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L147)
+[HotRouteMethod.ts:215](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L215)
 
 ___
 
@@ -185,9 +232,13 @@ If any exceptions are thrown from this function, they will be sent
 to the server as an { error: string; } object with the exception
 message as the error.
 
+#### Implementation of
+
+IHotRouteMethod.onServerAuthorize
+
 #### Defined in
 
-[HotRouteMethod.ts:162](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L162)
+[HotRouteMethod.ts:230](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L230)
 
 ___
 
@@ -203,21 +254,65 @@ If any exceptions are thrown from this function, they will be sent
 to the server as an { error: string; } object with the exception
 message as the error.
 
+#### Implementation of
+
+IHotRouteMethod.onServerExecute
+
 #### Defined in
 
-[HotRouteMethod.ts:173](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L173)
+[HotRouteMethod.ts:241](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L241)
 
 ___
 
-### parentRoute
+### parameters
 
-• **parentRoute**: [`HotRoute`](HotRoute.md)
+• **parameters**: `Object`
 
-The parent route.
+The parameters in the api method.
+
+#### Index signature
+
+▪ [name: `string`]: `HotRouteMethodParameter`
+
+#### Implementation of
+
+IHotRouteMethod.parameters
 
 #### Defined in
 
-[HotRouteMethod.ts:64](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L64)
+[HotRouteMethod.ts:181](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L181)
+
+___
+
+### returns
+
+• **returns**: `string`
+
+The description of what returns from the api method.
+
+#### Implementation of
+
+IHotRouteMethod.returns
+
+#### Defined in
+
+[HotRouteMethod.ts:177](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L177)
+
+___
+
+### route
+
+• **route**: [`HotRoute`](HotRoute.md)
+
+The parent route.
+
+#### Implementation of
+
+IHotRouteMethod.route
+
+#### Defined in
+
+[HotRouteMethod.ts:165](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L165)
 
 ___
 
@@ -231,9 +326,13 @@ The test case objects to execute during tests.
 
 ▪ [name: `string`]: `TestCaseObject`
 
+#### Implementation of
+
+IHotRouteMethod.testCases
+
 #### Defined in
 
-[HotRouteMethod.ts:91](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L91)
+[HotRouteMethod.ts:204](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L204)
 
 ___
 
@@ -243,9 +342,13 @@ ___
 
 The api call name.
 
+#### Implementation of
+
+IHotRouteMethod.type
+
 #### Defined in
 
-[HotRouteMethod.ts:72](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L72)
+[HotRouteMethod.ts:185](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L185)
 
 ## Methods
 
@@ -268,4 +371,4 @@ Add a new test case.
 
 #### Defined in
 
-[HotRouteMethod.ts:183](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotRouteMethod.ts#L183)
+[HotRouteMethod.ts:373](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L373)

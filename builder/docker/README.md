@@ -19,7 +19,10 @@ To stop it enter:
     * Type: string
     * Default:
 * SERVER_TYPE
-    * Description: The type of server to start.
+    * Description: The type of server to start. Can be:
+        * web
+        * api
+        * web-api
     * Type: string
     * Default: web-api
 * BASE_URL

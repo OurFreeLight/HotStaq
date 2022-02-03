@@ -27,7 +27,7 @@ while executing the test.
 
 #### Defined in
 
-[HotTestElement.ts:56](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTestElement.ts#L56)
+[HotTestElement.ts:56](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestElement.ts#L56)
 
 ___
 
@@ -39,7 +39,7 @@ The name of the element.
 
 #### Defined in
 
-[HotTestElement.ts:51](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTestElement.ts#L51)
+[HotTestElement.ts:51](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestElement.ts#L51)
 
 ___
 
@@ -51,4 +51,4 @@ The value to use.
 
 #### Defined in
 
-[HotTestElement.ts:60](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTestElement.ts#L60)
+[HotTestElement.ts:60](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestElement.ts#L60)

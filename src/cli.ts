@@ -43,6 +43,7 @@ async function startAPIServer (server: HotHTTPServer, loadedAPI: APItoLoad, base
 
 	server.logger.info (`Loaded API class: ${loadedAPI.exportedClassName}`);
 
+	processor.api = api;
 	server.processor.api = api;
 	server.api = api;
 
@@ -161,13 +162,13 @@ async function handleBuildCommands (): Promise<commander.Command>
 			createHotBuilder ();
 			builder.appendReadMe = true;
 		});
-	/*buildCmd.option ("--docker-compose", "Build the docker compose file from the given HotSite.json.", 
+	buildCmd.option ("--docker-compose", "Build the docker compose file from the given HotSite.json.", 
 		(arg: string, previous: any) =>
 		{
 			createHotBuilder ();
 			builder.dockerCompose = true;
 		});
-	buildCmd.option ("--kubernetes", "Build a Kubernetes cluster from the given HotSite.json.", 
+	/*buildCmd.option ("--kubernetes", "Build a Kubernetes cluster from the given HotSite.json.", 
 		(arg: string, previous: any) =>
 		{
 			createHotBuilder ();
@@ -338,8 +339,12 @@ function loadAPIs (processor: HotStaq): { [name: string]: APItoLoad; }
 
 /**
  * Handle run commands.
+ * 
+ * @param cmdName The name of the command to use. Can be:
+ * * run
+ * * start
  */
-async function handleRunCommands (): Promise<commander.Command>
+async function handleRunCommands (cmdName: string): Promise<commander.Command>
 {
 	let webServer: HotHTTPServer = new HotHTTPServer (processor);
 	let apiServer: HotHTTPServer = new HotHTTPServer (processor);
@@ -399,7 +404,7 @@ async function handleRunCommands (): Promise<commander.Command>
 	let runWebTestMap: boolean = false;
 	let runAPITestMap: boolean = false;
 
-	const runCmd: commander.Command = new commander.Command ("run");
+	const runCmd: commander.Command = new commander.Command (cmdName);
 	runCmd.description (`Run commands.`);
 	runCmd.action (async () =>
 		{
@@ -603,6 +608,9 @@ async function handleRunCommands (): Promise<commander.Command>
 				if (testerServer == null)
 					throw new Error (`Unable to execute tests! Is --development-mode missing?`);
 
+				if (serverType === "api")
+					throw new Error (`In order to execute web tests, you must set the server type to either web or web-api.`);
+
 				await testerServer.executeAllWebTests (testerSettings.tester);
 			}
 
@@ -610,6 +618,9 @@ async function handleRunCommands (): Promise<commander.Command>
 			{
 				if (testerServer == null)
 					throw new Error (`Unable to execute tests! Is --development-mode missing?`);
+
+				if (serverType === "web")
+					throw new Error (`In order to execute API tests, you must set the server type to either api or web-api.`);
 
 				await testerServer.executeAllAPITests (testerSettings.tester);
 			}
@@ -1022,6 +1033,7 @@ async function handleAgentCommands (): Promise<commander.Command>
 async function handleGenerateCommands (): Promise<commander.Command>
 {
 	let generator: HotGenerator = null;
+	let generateType: string = "api";
 	let createHotBuilder = () =>
 		{
 			if (generator == null)
@@ -1055,9 +1067,26 @@ async function handleGenerateCommands (): Promise<commander.Command>
 			}
 
 			generator.hotsites = [processor.hotSite];
-			await generator.generateAPI (processor, apis);
+
+			if (generateType === "api")
+				await generator.generateAPI (processor, apis);
+
+			if (generateType === "api-documentation")
+				await generator.generateAPIDocumentation (processor, apis);
 		});
 
+	generateCmd.option ("--api", "Generate an API to use.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generateType = "api";
+		});
+	generateCmd.option ("--api-documentation", "Generate API documentation to use.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generateType = "api-documentation";
+		});
 	generateCmd.option ("--tsconfig <path>", "Specify the tsconfig.json file to use.", 
 		(arg: string, previous: any) =>
 		{
@@ -1076,7 +1105,7 @@ async function handleGenerateCommands (): Promise<commander.Command>
 			createHotBuilder ();
 			generator.optimizeJS = true;
 		});
-	generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: typescript,javascript", 
+	generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: typescript,javascript,openapi-3.0.0-json,openapi-3.0.0-yaml", 
 		(arg: string, previous: any) =>
 		{
 			createHotBuilder ();
@@ -1201,7 +1230,10 @@ async function start ()
 		let createCmd: commander.Command = await handleCreateCommands ();
 		command.addCommand (createCmd);
 
-		let runCmd: commander.Command = await handleRunCommands ();
+		let runCmd: commander.Command = await handleRunCommands ("run");
+		command.addCommand (runCmd);
+
+		runCmd = await handleRunCommands ("start");
 		command.addCommand (runCmd);
 
 		let buildCmd: commander.Command = await handleBuildCommands ();

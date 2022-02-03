@@ -13,6 +13,7 @@ connection info.
 
 - [apis](HotSite.md#apis)
 - [components](HotSite.md#components)
+- [description](HotSite.md#description)
 - [files](HotSite.md#files)
 - [hotsitePath](HotSite.md#hotsitepath)
 - [name](HotSite.md#name)
@@ -20,6 +21,7 @@ connection info.
 - [routes](HotSite.md#routes)
 - [server](HotSite.md#server)
 - [testing](HotSite.md#testing)
+- [version](HotSite.md#version)
 
 ## Properties
 
@@ -36,7 +38,7 @@ loaded.
 
 #### Defined in
 
-[HotStaq.ts:221](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L221)
+[HotStaq.ts:229](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L229)
 
 ___
 
@@ -52,7 +54,19 @@ The components to load and register.
 
 #### Defined in
 
-[HotStaq.ts:272](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L272)
+[HotStaq.ts:280](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L280)
+
+___
+
+### description
+
+• `Optional` **description**: `string`
+
+The description of this HotSite.
+
+#### Defined in
+
+[HotStaq.ts:92](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L92)
 
 ___
 
@@ -68,7 +82,7 @@ The files to load and save in memory.
 
 #### Defined in
 
-[HotStaq.ts:283](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L283)
+[HotStaq.ts:291](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L291)
 
 ___
 
@@ -80,7 +94,7 @@ The path to the current HotSite. This is filled in during parsing.
 
 #### Defined in
 
-[HotStaq.ts:88](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L88)
+[HotStaq.ts:96](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L96)
 
 ___
 
@@ -92,7 +106,7 @@ The name of this HotSite.
 
 #### Defined in
 
-[HotStaq.ts:84](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L84)
+[HotStaq.ts:84](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L84)
 
 ___
 
@@ -108,7 +122,7 @@ Secrets that can be publicly embedded into the page.
 
 #### Defined in
 
-[HotStaq.ts:256](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L256)
+[HotStaq.ts:264](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L264)
 
 ___
 
@@ -124,7 +138,7 @@ The routes to load.
 
 #### Defined in
 
-[HotStaq.ts:214](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L214)
+[HotStaq.ts:222](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L222)
 
 ___
 
@@ -151,7 +165,7 @@ Additional web server configuration.
 
 #### Defined in
 
-[HotStaq.ts:92](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L92)
+[HotStaq.ts:100](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L100)
 
 ___
 
@@ -184,4 +198,16 @@ Testing related functionality.
 
 #### Defined in
 
-[HotStaq.ts:147](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotStaq.ts#L147)
+[HotStaq.ts:155](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L155)
+
+___
+
+### version
+
+• `Optional` **version**: `string`
+
+The version of this HotSite.
+
+#### Defined in
+
+[HotStaq.ts:88](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotStaq.ts#L88)

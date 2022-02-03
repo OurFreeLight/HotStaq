@@ -47,7 +47,7 @@ The MySQL schema.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:16](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L16)
+[schemas/mysql/MySQLSchema.ts:16](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L16)
 
 ## Properties
 
@@ -63,7 +63,7 @@ The name of this schema.
 
 #### Defined in
 
-[schemas/HotDBSchema.ts:15](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/HotDBSchema.ts#L15)
+[schemas/HotDBSchema.ts:15](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/HotDBSchema.ts#L15)
 
 ___
 
@@ -79,7 +79,7 @@ The tables in this schema.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:14](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L14)
+[schemas/mysql/MySQLSchema.ts:14](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L14)
 
 ## Methods
 
@@ -102,7 +102,7 @@ Add a field to a table.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:34](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L34)
+[schemas/mysql/MySQLSchema.ts:34](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L34)
 
 ___
 
@@ -125,7 +125,7 @@ Add a field to a table.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:45](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L45)
+[schemas/mysql/MySQLSchema.ts:45](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L45)
 
 ___
 
@@ -147,7 +147,7 @@ Add a table to this schema.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:26](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L26)
+[schemas/mysql/MySQLSchema.ts:26](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L26)
 
 ___
 
@@ -171,7 +171,7 @@ active connection.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:77](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L77)
+[schemas/mysql/MySQLSchema.ts:77](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L77)
 
 ___
 
@@ -196,4 +196,4 @@ active connection.
 
 #### Defined in
 
-[schemas/mysql/MySQLSchema.ts:61](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/schemas/mysql/MySQLSchema.ts#L61)
+[schemas/mysql/MySQLSchema.ts:61](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/mysql/MySQLSchema.ts#L61)

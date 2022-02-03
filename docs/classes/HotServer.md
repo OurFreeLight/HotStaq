@@ -56,7 +56,7 @@ The server.
 
 #### Defined in
 
-[HotServer.ts:140](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L140)
+[HotServer.ts:140](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L140)
 
 ## Properties
 
@@ -72,7 +72,7 @@ IHotServer.api
 
 #### Defined in
 
-[HotServer.ts:94](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L94)
+[HotServer.ts:94](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L94)
 
 ___
 
@@ -88,7 +88,7 @@ IHotServer.listenAddress
 
 #### Defined in
 
-[HotServer.ts:98](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L98)
+[HotServer.ts:98](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L98)
 
 ___
 
@@ -104,7 +104,7 @@ IHotServer.logger
 
 #### Defined in
 
-[HotServer.ts:134](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L134)
+[HotServer.ts:134](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L134)
 
 ___
 
@@ -127,7 +127,7 @@ IHotServer.ports
 
 #### Defined in
 
-[HotServer.ts:102](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L102)
+[HotServer.ts:102](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L102)
 
 ___
 
@@ -143,7 +143,7 @@ IHotServer.processor
 
 #### Defined in
 
-[HotServer.ts:86](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L86)
+[HotServer.ts:86](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L86)
 
 ___
 
@@ -159,7 +159,7 @@ IHotServer.redirectHTTPtoHTTPS
 
 #### Defined in
 
-[HotServer.ts:126](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L126)
+[HotServer.ts:126](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L126)
 
 ___
 
@@ -175,7 +175,7 @@ IHotServer.secrets
 
 #### Defined in
 
-[HotServer.ts:138](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L138)
+[HotServer.ts:138](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L138)
 
 ___
 
@@ -191,7 +191,7 @@ IHotServer.serverType
 
 #### Defined in
 
-[HotServer.ts:90](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L90)
+[HotServer.ts:90](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L90)
 
 ___
 
@@ -215,7 +215,7 @@ IHotServer.ssl
 
 #### Defined in
 
-[HotServer.ts:109](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L109)
+[HotServer.ts:109](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L109)
 
 ___
 
@@ -231,7 +231,7 @@ IHotServer.type
 
 #### Defined in
 
-[HotServer.ts:130](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L130)
+[HotServer.ts:130](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L130)
 
 ## Methods
 
@@ -247,7 +247,7 @@ Start listening for requests.
 
 #### Defined in
 
-[HotServer.ts:205](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L205)
+[HotServer.ts:205](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L205)
 
 ___
 
@@ -269,7 +269,7 @@ Register a route with the server.
 
 #### Defined in
 
-[HotServer.ts:200](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L200)
+[HotServer.ts:200](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L200)
 
 ___
 
@@ -292,7 +292,7 @@ processor to this API as well.
 
 #### Defined in
 
-[HotServer.ts:188](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L188)
+[HotServer.ts:188](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L188)
 
 ___
 
@@ -308,4 +308,4 @@ Shutdown the server.
 
 #### Defined in
 
-[HotServer.ts:210](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotServer.ts#L210)
+[HotServer.ts:210](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotServer.ts#L210)

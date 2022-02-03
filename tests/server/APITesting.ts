@@ -31,7 +31,7 @@ describe ("API Testing Tests", () =>
 				common = new Common (processor);
 				await common.startServer ();
 
-				let testMap: HotTestMap = new HotTestMap (["api:hello_world -> test_response -> TestAPIResponse"]);
+				let testMap: HotTestMap = new HotTestMap (["api:hello_world -> test_response -> TestAPIResponse -> test_response -> TestAPIResponseAgain"]);
 				let tester: HotTesterMocha = new HotTesterMocha (processor, 
 					"Tester", common.getUrl (), new HotTestSeleniumDriver (), { testMap: testMap });
 

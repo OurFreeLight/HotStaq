@@ -35,7 +35,7 @@ A command to execute. Can be:
 
 #### Defined in
 
-[HotTester.ts:28](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTester.ts#L28)
+[HotTester.ts:28](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L28)
 
 ___
 
@@ -47,7 +47,7 @@ The destination to execute.
 
 #### Defined in
 
-[HotTester.ts:32](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTester.ts#L32)
+[HotTester.ts:32](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L32)
 
 ___
 
@@ -59,4 +59,4 @@ The path to execute.
 
 #### Defined in
 
-[HotTester.ts:36](https://github.com/OurFreeLight/HotStaq/blob/c443819/src/HotTester.ts#L36)
+[HotTester.ts:36](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L36)
