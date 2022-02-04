@@ -103,14 +103,10 @@
 			],
 			"outputCapture": "std",
 			"args": [
+				"--dev",
+				"--verbose",
 				"run",
-				"--web-dont-redirect-http-to-https",
-				"--development-mode",
-				"--web-js-url",
-				"/build-web/HotStaq.js",
-				"--web-serve-hott-files",
-				"--web-http-port",
-				"8080"
+				"--list-api-routes"
 			]
 		},
 		{
@@ -177,7 +173,7 @@
 			"args": [
 				"--timeout", "5000", 
 				"--colors", 
-				"./build/tests/generator/*.js"
+				"./build/tests/**/*.js"
 			],
 			"cwd": "${workspaceFolder}",
 			"env": {

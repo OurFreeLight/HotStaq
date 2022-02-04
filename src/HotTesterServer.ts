@@ -299,6 +299,11 @@ export class HotTesterServer extends HotServer
 								res.json ({ error: ex.message });
 							}
 						}
+						else
+						{
+							res.json (route.errors["no_server_execute_function"]);
+							this.logger.verbose (`${req.method} ${methodName}, no_server_execute_function`);
+						}
 					}
 					else
 					{

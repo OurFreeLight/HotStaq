@@ -59,17 +59,17 @@ export interface TestCaseObject
 export interface HotRouteMethodParameter
 {
 	/**
-	 * The type of parameter.
+	 * The type of parameter. Default: string
 	 */
-	type: string;
+	type?: string;
 	/**
-	 * The description of the parameter.
+	 * The description of the parameter. Default: ""
 	 */
-	description: string;
+	description?: string;
 	/**
-	 * Is this parameter required?
+	 * Is this parameter required? Default: false
 	 */
-	required: boolean;
+	required?: boolean;
 }
 
 /**
@@ -288,12 +288,20 @@ export class HotRouteMethod implements IHotRouteMethod
 							};
 					}
 					else
+					{
+						if (param.type == null)
+							param.type = "string";
+
 						this.parameters[key] = param;
+					}
 				}
 			}
 
 			if (route.authCredentials != null)
 				authCredentials = route.authCredentials;
+
+			if (route.onServerExecute != null)
+				onExecute = route.onServerExecute;
 
 			if (route.onServerAuthorize != null)
 				onServerAuthorize = route.onServerAuthorize;

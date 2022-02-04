@@ -30,7 +30,7 @@ The destination to take in a map.
 
 #### Defined in
 
-[HotTestMap.ts:25](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestMap.ts#L25)
+[HotTestMap.ts:25](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestMap.ts#L25)
 
 ## Properties
 
@@ -43,7 +43,7 @@ tests when it's time.
 
 #### Defined in
 
-[HotTestMap.ts:23](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestMap.ts#L23)
+[HotTestMap.ts:23](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestMap.ts#L23)
 
 ___
 
@@ -55,4 +55,4 @@ The destination to take.
 
 #### Defined in
 
-[HotTestMap.ts:18](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestMap.ts#L18)
+[HotTestMap.ts:18](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestMap.ts#L18)

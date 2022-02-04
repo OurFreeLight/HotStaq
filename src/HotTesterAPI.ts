@@ -5,6 +5,7 @@ import { HotServer } from "./HotServer";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotTester } from "./HotTester";
 import { HotTestMap, HotTestPath, HotTestPage } from "./HotTestMap";
+import { HTTPMethod } from "./HotRouteMethod";
 
 export class HotTesterAPI extends HotAPI
 {
@@ -15,8 +16,61 @@ export class HotTesterAPI extends HotAPI
 		this.executeEventsUsing = EventExecutionType.HotAPI;
 
 		let route: HotRoute = new HotRoute (connection, "tester");
-		route.addMethod ("pageLoaded", this.pageLoaded);
-		route.addMethod ("executeTests", this.executeTests);
+		route.addMethod ({
+				"name": "pageLoaded", 
+				"onServerExecute": this.pageLoaded,
+				"parameters": {
+						"testerName": {
+							"required": true,
+							"type": "string",
+							"description": "The name of the tester executing the test."
+						},
+						"testerMap": {
+							"required": true,
+							"type": "string",
+							"description": "The tester map executing the test."
+						},
+						"pageName": {
+							"required": true,
+							"type": "string",
+							"description": "The name of the page executing the test."
+						},
+						"testElements": {
+							"required": true,
+							"type": "array",
+							"description": "The test elements on the page."
+						},
+						"testPaths": {
+							"required": true,
+							"type": "array",
+							"description": "The test paths on the page."
+						}
+					},
+				"returns": "Returns true as an acknowledgement."
+			});
+		route.addMethod ({
+				"name": "executeTests",
+				"onServerExecute": this.executeTests,
+				"parameters": {
+					"testerName": {
+						"required": true,
+						"type": "string",
+						"description": "The name of the tester executing the test."
+					},
+					"testerMap": {
+						"required": true,
+						"type": "object",
+						"description": "The tester map to execute."
+					}
+				},
+				"returns": "Returns true when tests are complete."
+			});
+		route.addMethod ({
+				"name": "heartbeat",
+				"type": HTTPMethod.GET,
+				"onServerExecute": this.heartbeat,
+				"returns": "Returns true as an acknowledgement."
+			});
 		this.addRoute (route);
 	}
 
@@ -121,6 +175,14 @@ export class HotTesterAPI extends HotAPI
 			await server.executeTests (testerName, testerMap);
 		}
 
+		return (true);
+	}
+
+	/**
+	 * Responds with true to heartbeat requests.
+	 */
+	async heartbeat (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	{
 		return (true);
 	}
 }

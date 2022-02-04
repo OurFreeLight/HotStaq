@@ -19,7 +19,7 @@ Available HTTP methods.
 
 #### Defined in
 
-[HotRouteMethod.ts:11](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L11)
+[HotRouteMethod.ts:11](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L11)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[HotRouteMethod.ts:12](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L12)
+[HotRouteMethod.ts:12](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L12)

@@ -23,7 +23,7 @@ The API route to start using.
 
 #### Defined in
 
-[HotTester.ts:55](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L55)
+[HotTester.ts:55](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L55)
 
 ___
 
@@ -35,7 +35,7 @@ The name of the map.
 
 #### Defined in
 
-[HotTester.ts:47](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L47)
+[HotTester.ts:47](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L47)
 
 ___
 
@@ -47,7 +47,7 @@ The page to start at.
 
 #### Defined in
 
-[HotTester.ts:51](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L51)
+[HotTester.ts:51](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L51)
 
 ___
 
@@ -59,4 +59,4 @@ The paths to take on the page.
 
 #### Defined in
 
-[HotTester.ts:59](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L59)
+[HotTester.ts:59](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L59)

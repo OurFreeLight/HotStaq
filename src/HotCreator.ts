@@ -218,7 +218,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				testing: {
 					web: {
 						tester: "HotTesterMochaSelenium",
-						testerAPIUrl: "http://127.0.0.1:8183"
+						testerAPIUrl: "http://127.0.0.1:8182"
 					}
 				}
 			};

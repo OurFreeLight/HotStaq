@@ -58,7 +58,7 @@ An API method to make.
 
 #### Defined in
 
-[HotRouteMethod.ts:248](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L248)
+[HotRouteMethod.ts:248](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L248)
 
 ## Properties
 
@@ -75,7 +75,7 @@ IHotRouteMethod.authCredentials
 
 #### Defined in
 
-[HotRouteMethod.ts:200](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L200)
+[HotRouteMethod.ts:200](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L200)
 
 ___
 
@@ -91,7 +91,7 @@ IHotRouteMethod.description
 
 #### Defined in
 
-[HotRouteMethod.ts:173](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L173)
+[HotRouteMethod.ts:173](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L173)
 
 ___
 
@@ -104,7 +104,7 @@ prevents the method from being reregistered.
 
 #### Defined in
 
-[HotRouteMethod.ts:195](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L195)
+[HotRouteMethod.ts:195](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L195)
 
 ___
 
@@ -117,7 +117,7 @@ prevents the method from being reregistered.
 
 #### Defined in
 
-[HotRouteMethod.ts:190](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L190)
+[HotRouteMethod.ts:190](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L190)
 
 ___
 
@@ -133,7 +133,7 @@ IHotRouteMethod.name
 
 #### Defined in
 
-[HotRouteMethod.ts:169](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L169)
+[HotRouteMethod.ts:169](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L169)
 
 ___
 
@@ -151,7 +151,7 @@ IHotRouteMethod.onClientExecute
 
 #### Defined in
 
-[HotRouteMethod.ts:246](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L246)
+[HotRouteMethod.ts:246](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L246)
 
 ___
 
@@ -175,7 +175,7 @@ IHotRouteMethod.onPostRegister
 
 #### Defined in
 
-[HotRouteMethod.ts:219](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L219)
+[HotRouteMethod.ts:219](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L219)
 
 ___
 
@@ -199,7 +199,7 @@ IHotRouteMethod.onPreRegister
 
 #### Defined in
 
-[HotRouteMethod.ts:210](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L210)
+[HotRouteMethod.ts:210](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L210)
 
 ___
 
@@ -216,7 +216,7 @@ IHotRouteMethod.onRegister
 
 #### Defined in
 
-[HotRouteMethod.ts:215](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L215)
+[HotRouteMethod.ts:215](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L215)
 
 ___
 
@@ -238,7 +238,7 @@ IHotRouteMethod.onServerAuthorize
 
 #### Defined in
 
-[HotRouteMethod.ts:230](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L230)
+[HotRouteMethod.ts:230](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L230)
 
 ___
 
@@ -260,7 +260,7 @@ IHotRouteMethod.onServerExecute
 
 #### Defined in
 
-[HotRouteMethod.ts:241](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L241)
+[HotRouteMethod.ts:241](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L241)
 
 ___
 
@@ -280,7 +280,7 @@ IHotRouteMethod.parameters
 
 #### Defined in
 
-[HotRouteMethod.ts:181](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L181)
+[HotRouteMethod.ts:181](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L181)
 
 ___
 
@@ -296,7 +296,7 @@ IHotRouteMethod.returns
 
 #### Defined in
 
-[HotRouteMethod.ts:177](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L177)
+[HotRouteMethod.ts:177](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L177)
 
 ___
 
@@ -312,7 +312,7 @@ IHotRouteMethod.route
 
 #### Defined in
 
-[HotRouteMethod.ts:165](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L165)
+[HotRouteMethod.ts:165](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L165)
 
 ___
 
@@ -332,7 +332,7 @@ IHotRouteMethod.testCases
 
 #### Defined in
 
-[HotRouteMethod.ts:204](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L204)
+[HotRouteMethod.ts:204](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L204)
 
 ___
 
@@ -348,7 +348,7 @@ IHotRouteMethod.type
 
 #### Defined in
 
-[HotRouteMethod.ts:185](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L185)
+[HotRouteMethod.ts:185](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L185)
 
 ## Methods
 
@@ -371,4 +371,4 @@ Add a new test case.
 
 #### Defined in
 
-[HotRouteMethod.ts:373](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotRouteMethod.ts#L373)
+[HotRouteMethod.ts:381](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotRouteMethod.ts#L381)

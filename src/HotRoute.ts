@@ -44,6 +44,7 @@ export class HotRoute
 	/**
 	 * The errors and their JSON that can be thrown. Can be:
 	 * * not_authorized
+	 * * no_server_execute_function
 	 */
 	errors: { [error: string]: any };
 
@@ -65,7 +66,8 @@ export class HotRoute
 		this.authCredentials = null;
 		this.methods = methods;
 		this.errors = {
-				"not_authorized": HotRoute.createError ("Not authorized.")
+				"not_authorized": HotRoute.createError ("Not authorized."),
+				"no_server_execute_function": HotRoute.createError ("Missing server execute function."),
 			};
 	}
 

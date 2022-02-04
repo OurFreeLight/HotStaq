@@ -71,7 +71,7 @@ Executes tests.
 
 #### Defined in
 
-[HotTester.ts:100](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L100)
+[HotTester.ts:100](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L100)
 
 ## Properties
 
@@ -83,7 +83,7 @@ The base url that will construct future urls.
 
 #### Defined in
 
-[HotTester.ts:74](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L74)
+[HotTester.ts:74](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L74)
 
 ___
 
@@ -95,7 +95,7 @@ The driver to use when running tests.
 
 #### Defined in
 
-[HotTester.ts:86](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L86)
+[HotTester.ts:86](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L86)
 
 ___
 
@@ -107,7 +107,7 @@ Has this tester finished loading?
 
 #### Defined in
 
-[HotTester.ts:90](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L90)
+[HotTester.ts:90](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L90)
 
 ___
 
@@ -119,7 +119,7 @@ Has this tester finished setting up?
 
 #### Defined in
 
-[HotTester.ts:98](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L98)
+[HotTester.ts:98](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L98)
 
 ___
 
@@ -131,7 +131,7 @@ Has this tester finished setting up?
 
 #### Defined in
 
-[HotTester.ts:94](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L94)
+[HotTester.ts:94](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L94)
 
 ___
 
@@ -143,7 +143,7 @@ The tester name.
 
 #### Defined in
 
-[HotTester.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L70)
+[HotTester.ts:70](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L70)
 
 ___
 
@@ -155,7 +155,7 @@ The associated processor.
 
 #### Defined in
 
-[HotTester.ts:78](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L78)
+[HotTester.ts:78](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L78)
 
 ___
 
@@ -171,7 +171,7 @@ The test maps to test.
 
 #### Defined in
 
-[HotTester.ts:82](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L82)
+[HotTester.ts:82](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L82)
 
 ## Methods
 
@@ -187,7 +187,7 @@ Executed when destroying up the tester.
 
 #### Defined in
 
-[HotTester.ts:120](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L120)
+[HotTester.ts:120](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L120)
 
 ___
 
@@ -209,7 +209,7 @@ Execute the tests.
 
 #### Defined in
 
-[HotTester.ts:561](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L561)
+[HotTester.ts:561](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L561)
 
 ___
 
@@ -234,7 +234,7 @@ Execute a command.
 
 #### Defined in
 
-[HotTester.ts:380](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L380)
+[HotTester.ts:380](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L380)
 
 ___
 
@@ -260,7 +260,7 @@ Execute an API's test path.
 
 #### Defined in
 
-[HotTester.ts:256](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L256)
+[HotTester.ts:256](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L256)
 
 ___
 
@@ -284,7 +284,7 @@ Execute all test paths in an API route.
 
 #### Defined in
 
-[HotTester.ts:294](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L294)
+[HotTester.ts:294](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L294)
 
 ___
 
@@ -309,7 +309,7 @@ Execute a test page path.
 
 #### Defined in
 
-[HotTester.ts:329](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L329)
+[HotTester.ts:329](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L329)
 
 ___
 
@@ -332,7 +332,7 @@ Execute all test paths in a page.
 
 #### Defined in
 
-[HotTester.ts:515](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L515)
+[HotTester.ts:515](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L515)
 
 ___
 
@@ -354,7 +354,7 @@ Get a test page.
 
 #### Defined in
 
-[HotTester.ts:181](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L181)
+[HotTester.ts:181](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L181)
 
 ___
 
@@ -377,7 +377,7 @@ Get a test path.
 
 #### Defined in
 
-[HotTester.ts:191](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L191)
+[HotTester.ts:191](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L191)
 
 ___
 
@@ -404,7 +404,7 @@ Executed when a command is executed.
 
 #### Defined in
 
-[HotTester.ts:153](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L153)
+[HotTester.ts:153](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L153)
 
 ___
 
@@ -420,7 +420,7 @@ Executed when this tester has been executed from the API.
 
 #### Defined in
 
-[HotTester.ts:163](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L163)
+[HotTester.ts:163](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L163)
 
 ___
 
@@ -436,7 +436,7 @@ Executed when this tester has finished loading all data from the API.
 
 #### Defined in
 
-[HotTester.ts:167](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L167)
+[HotTester.ts:167](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L167)
 
 ___
 
@@ -462,7 +462,7 @@ Executed when an API test path has ended.
 
 #### Defined in
 
-[HotTester.ts:137](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L137)
+[HotTester.ts:137](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L137)
 
 ___
 
@@ -488,7 +488,7 @@ the testPath will not be immediately executed afterwards.
 
 #### Defined in
 
-[HotTester.ts:132](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L132)
+[HotTester.ts:132](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L132)
 
 ___
 
@@ -510,7 +510,7 @@ Executed when tests are finished.
 
 #### Defined in
 
-[HotTester.ts:158](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L158)
+[HotTester.ts:158](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L158)
 
 ___
 
@@ -535,7 +535,7 @@ Executed when a page test has ended.
 
 #### Defined in
 
-[HotTester.ts:148](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L148)
+[HotTester.ts:148](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L148)
 
 ___
 
@@ -561,7 +561,7 @@ immediately executed afterwards.
 
 #### Defined in
 
-[HotTester.ts:143](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L143)
+[HotTester.ts:143](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L143)
 
 ___
 
@@ -587,7 +587,7 @@ skip all test paths and execute onTestEnd instead.
 
 #### Defined in
 
-[HotTester.ts:127](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L127)
+[HotTester.ts:127](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L127)
 
 ___
 
@@ -611,7 +611,7 @@ Executed when setting up the tester.
 
 #### Defined in
 
-[HotTester.ts:116](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L116)
+[HotTester.ts:116](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L116)
 
 ___
 
@@ -627,7 +627,7 @@ Waits for the API to finish loading all data.
 
 #### Defined in
 
-[HotTester.ts:172](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L172)
+[HotTester.ts:172](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L172)
 
 ___
 
@@ -650,4 +650,4 @@ Get a destination JSON object to use.
 
 #### Defined in
 
-[HotTester.ts:201](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTester.ts#L201)
+[HotTester.ts:201](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTester.ts#L201)

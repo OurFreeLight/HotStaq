@@ -19,6 +19,8 @@ import { HotIO } from "./HotIO";
 import { HotAgentAPI } from "./HotAgentAPI";
 import { HotTester } from "./HotTester";
 import { HotTesterMocha } from "./HotTesterMocha";
+import { HotRoute } from "./HotRoute";
+import { HotRouteMethod } from "./HotRouteMethod";
 
 HotStaq.isWeb = false;
 
@@ -364,7 +366,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 			openDevTools: false,
 			headless: false,
 			remoteServer: "",
-			http: 8183,
+			http: 8182,
 			https: 4143
 		};
 	let apis: { [name: string]: APItoLoad; } = {};
@@ -403,6 +405,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 	let baseAPIUrl: string = "";
 	let runWebTestMap: boolean = false;
 	let runAPITestMap: boolean = false;
+	let listAPIRoutes: boolean = false;
 
 	const runCmd: commander.Command = new commander.Command (cmdName);
 	runCmd.description (`Run commands.`);
@@ -417,6 +420,9 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 				let serverStarter = await HotTesterServer.startServer (
 					`http://${testerSettings.address}:${testerSettings.http}`, testerSettings.http, testerSettings.https, processor);
 				testerServer = serverStarter.server;
+	
+				if (globalLogLevel != null)
+					testerServer.logger.logLevel = globalLogLevel;
 
 				let tester: HotTester = null;
 
@@ -603,6 +609,37 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 				await webServer.listen ();
 			}
 
+			if (listAPIRoutes === true)
+			{
+				let servers = [apiServer, testerServer];
+
+				for (let iIdx = 0; iIdx < servers.length; iIdx++)
+				{
+					let server = servers[iIdx];
+
+					if (server == null)
+						continue;
+
+					if (server.api == null)
+						continue;
+
+					for (let key2 in server.api.routes)
+					{
+						let route: HotRoute = server.api.routes[key2];
+						let routeName: string = route.route;
+
+						for (let iJdx = 0; iJdx < route.methods.length; iJdx++)
+						{
+							let method: HotRouteMethod = route.methods[iJdx];
+							let methodName: string = method.name;
+							let path: string = `/${route.version}/${routeName}/${methodName}`;
+
+							server.logger.info (`Route ${method.type.toString ()}: ${path}`);
+						}
+					}
+				}
+			}
+
 			if (runWebTestMap === true)
 			{
 				if (testerServer == null)
@@ -626,6 +663,12 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 			}
 		});
 
+	runCmd.option (`--list-api-routes`, 
+		`List the available API routes on startup.`, 
+		(arg: string, previous: any) =>
+		{
+			listAPIRoutes = true;
+		});
 	runCmd.option (`--tester-http-port <port>`, 
 		`Set the tester HTTP port`, 
 		(port: string, previous: any) =>
@@ -1197,8 +1240,7 @@ async function start ()
 		command.option ("--verbose", "Set the logging level to verbose.", 
 			(logLevel: string, previous: any) =>
 			{
-				if (logLevel === "verbose")
-					globalLogLevel = HotLogLevel.Verbose;
+				globalLogLevel = HotLogLevel.Verbose;
 			});
 		command.option ("-l, --log-level <level>", "Set the logging level. Can be (info,warning,error,all,none)", 
 			(logLevel: string, previous: any) =>

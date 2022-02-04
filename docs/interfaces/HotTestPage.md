@@ -25,7 +25,7 @@ The elements to test on this map.
 
 #### Defined in
 
-[HotTestMap.ts:56](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestMap.ts#L56)
+[HotTestMap.ts:56](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestMap.ts#L56)
 
 ___
 
@@ -41,4 +41,4 @@ The test paths to test on this map.
 
 #### Defined in
 
-[HotTestMap.ts:60](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestMap.ts#L60)
+[HotTestMap.ts:60](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestMap.ts#L60)

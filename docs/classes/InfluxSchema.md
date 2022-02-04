@@ -39,7 +39,7 @@ The Influx schema.
 
 #### Defined in
 
-[schemas/influx/InfluxSchema.ts:13](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/influx/InfluxSchema.ts#L13)
+[schemas/influx/InfluxSchema.ts:13](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/schemas/influx/InfluxSchema.ts#L13)
 
 ## Properties
 
@@ -55,7 +55,7 @@ The buckets in this schema.
 
 #### Defined in
 
-[schemas/influx/InfluxSchema.ts:11](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/influx/InfluxSchema.ts#L11)
+[schemas/influx/InfluxSchema.ts:11](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/schemas/influx/InfluxSchema.ts#L11)
 
 ___
 
@@ -71,4 +71,4 @@ The name of this schema.
 
 #### Defined in
 
-[schemas/HotDBSchema.ts:15](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/schemas/HotDBSchema.ts#L15)
+[schemas/HotDBSchema.ts:15](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/schemas/HotDBSchema.ts#L15)

@@ -66,7 +66,7 @@ The server-side database connection.
 
 #### Defined in
 
-[HotDB.ts:37](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L37)
+[HotDB.ts:37](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L37)
 
 ## Properties
 
@@ -78,7 +78,7 @@ The connection status.
 
 #### Defined in
 
-[HotDB.ts:30](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L30)
+[HotDB.ts:30](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L30)
 
 ___
 
@@ -90,7 +90,7 @@ The connection to the database (or the driver).
 
 #### Defined in
 
-[HotDB.ts:26](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L26)
+[HotDB.ts:26](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L26)
 
 ___
 
@@ -103,7 +103,7 @@ and keep it maintained as needed.
 
 #### Defined in
 
-[HotDB.ts:35](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L35)
+[HotDB.ts:35](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L35)
 
 ___
 
@@ -115,7 +115,7 @@ The database type.
 
 #### Defined in
 
-[HotDB.ts:22](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L22)
+[HotDB.ts:22](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L22)
 
 ## Methods
 
@@ -138,7 +138,7 @@ if db is null.
 
 #### Defined in
 
-[HotDB.ts:49](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L49)
+[HotDB.ts:49](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L49)
 
 ___
 
@@ -154,7 +154,7 @@ Disconnect from the server.
 
 #### Defined in
 
-[HotDB.ts:78](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L78)
+[HotDB.ts:78](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L78)
 
 ___
 
@@ -176,7 +176,7 @@ Make multiple queries.
 
 #### Defined in
 
-[HotDB.ts:74](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L74)
+[HotDB.ts:74](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L74)
 
 ___
 
@@ -199,7 +199,7 @@ The query to make.
 
 #### Defined in
 
-[HotDB.ts:66](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L66)
+[HotDB.ts:66](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L66)
 
 ___
 
@@ -222,7 +222,7 @@ Make a single query.
 
 #### Defined in
 
-[HotDB.ts:70](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L70)
+[HotDB.ts:70](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L70)
 
 ___
 
@@ -244,4 +244,4 @@ Checks if the table exists.
 
 #### Defined in
 
-[HotDB.ts:62](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotDB.ts#L62)
+[HotDB.ts:62](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotDB.ts#L62)

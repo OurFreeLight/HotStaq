@@ -27,7 +27,7 @@ without any exceptions being thrown.
 
 #### Defined in
 
-[HotTestElement.ts:16](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestElement.ts#L16)
+[HotTestElement.ts:16](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestElement.ts#L16)
 
 ___
 
@@ -40,4 +40,4 @@ order to select it.
 
 #### Defined in
 
-[HotTestElement.ts:10](https://github.com/OurFreeLight/HotStaq/blob/3e452c5/src/HotTestElement.ts#L10)
+[HotTestElement.ts:10](https://github.com/OurFreeLight/HotStaq/blob/a27c8f4/src/HotTestElement.ts#L10)
