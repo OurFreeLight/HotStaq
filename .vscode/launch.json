@@ -9,20 +9,13 @@
 			"name": "Debug Web Server",
 			"program": "${workspaceFolder}/build/src/cli.js",
 			"request": "launch",
+			"cwd": "/home/someone13/editing/projects/HotStaq/examples/html_only",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
 			"outputCapture": "std",
 			"args": [
-				"run",
-				"--web-route",
-				"/=${workspaceFolder}",
-				"--web-dont-redirect-http-to-https",
-				"--web-js-url",
-				"/build-web/HotStaq.js",
-				"--web-serve-hott-files",
-				"--web-http-port",
-				"8080"
+				"start"
 			]
 		},
 		{

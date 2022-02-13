@@ -7,6 +7,7 @@ import { HelloWorldAPI } from "../server/HelloWorldAPI";
 import { Builder, WebDriver, Session } from "selenium-webdriver";
 import Chrome from "selenium-webdriver/chrome";
 import { HotTesterServer } from "../../src/HotTesterServer";
+import { ServableFileExtension } from "../../src/HotHTTPServer";
 
 /**
  * Common testing features
@@ -108,7 +109,7 @@ export class Common
 	/**
 	 * Start the web server.
 	 */
-	async startServer (serveHottFiles: boolean = false): Promise<void>
+	async startServer (serveFileExtensions: ServableFileExtension[] = HotHTTPServer.getDefaultServableExtensions ()): Promise<void>
 	{
 		this.server = new HotHTTPServer (this.processor);
 
@@ -117,7 +118,7 @@ export class Common
 				"route": "/",
 				"localPath": ppath.normalize (`${process.cwd ()}/`)
 			});
-		this.server.serveHottFiles = serveHottFiles;
+		this.server.serveFileExtensions = serveFileExtensions;
 		this.server.hottFilesAssociatedInfo.jsSrcPath = "/build-web/HotStaq.js";
 		let api: HelloWorldAPI = new HelloWorldAPI (this.getUrl (), this.server);
 		await this.server.setAPI (api);

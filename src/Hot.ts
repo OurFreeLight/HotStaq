@@ -138,7 +138,7 @@ export class Hot
 				if (lowerFile.indexOf (".hott") > -1)
 				{
 					if (lowerFile.indexOf ("nahfam") < 0)
-						file += "?hpserve=nahfam";
+						file += "?hstqserve=nahfam";
 				}
 			}
 		}

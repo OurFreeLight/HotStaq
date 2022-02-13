@@ -2,7 +2,6 @@
 	"name": "HotSiteTest",
 	"server": {
 			"jsSrcPath": "/build-web/HotStaq.js",
-			"serveHottFiles": true,
 			"serveDirectories": [{
 					"route": "/",
 					"localPath": "./"

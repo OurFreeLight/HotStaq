@@ -103,9 +103,9 @@ export interface HotSite
 			 */
 			name?: string;
 			/**
-			 * Serve hott files when requested.
+			 * Serve the following file extensions when requested.
 			 */
-			serveHottFiles?: boolean;
+			serveFileExtensions?: string[];
 			/**
 			 * The name of the API to interface with across all pages.
 			 */
@@ -1155,7 +1155,7 @@ export class HotStaq implements IHotStaq
 	 * Generate the content to send to a client.
 	 */
 	generateContent (routeKey: string, name: string = "", url: string = "./",
-			jsSrcPath: string = "./js/HotStaq.js", passArgs: boolean = true, 
+			jsSrcPath: string = "./js/HotStaq.min.js", passArgs: boolean = true, 
 			args: any = null): string
 	{
 		let apiScripts: string = "";
@@ -1327,7 +1327,6 @@ export class HotStaq implements IHotStaq
 				if (this.mode === DeveloperMode.Development)
 				{
 					developerModeStr = `tempMode = HotStaqWeb.DeveloperMode.Development;`;
-					testerAPIStr = this.testerApiContent;
 
 					if (this.hotSite != null)
 					{
@@ -1335,6 +1334,8 @@ export class HotStaq implements IHotStaq
 						{
 							if (this.hotSite.testing.web != null)
 							{
+								testerAPIStr = this.testerApiContent;
+
 								if (this.hotSite.testing.web.testerAPIUrl == null)
 									this.hotSite.testing.web.testerAPIUrl = "http://127.0.0.1:8182";
 
@@ -1445,7 +1446,7 @@ export class HotStaq implements IHotStaq
 	 * from this HotStaq object with HotHTTPServer, be sure to use 
 	 * the loadHotSite method in HotHTTPServer.
 	 */
-	createExpressRoutes (expressApp: any, jsSrcPath: string = "./js/HotStaq.js"): void
+	createExpressRoutes (expressApp: any, jsSrcPath: string = "./js/HotStaq.min.js"): void
 	{
 		for (let key in this.pages)
 		{
@@ -1804,6 +1805,9 @@ export class HotStaq implements IHotStaq
 
 						options.processor = processor;
 						options.args = args;
+
+						if (options.url.indexOf ("hstqserve") < 0)
+							options.url += "?hstqserve=nahfam";
 
 						let output: string = await HotStaq.processUrl (options);
 

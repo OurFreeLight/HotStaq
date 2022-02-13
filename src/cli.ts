@@ -906,11 +906,11 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 
 					webServer.addStaticRoute (route, path);
 				});
-			runCmd.option (`--${currentServerType}-serve-hott-files`, "Serve Hott files", 
-				(port: string, previous: any) =>
+			runCmd.option (`--${currentServerType}-serve-file-extensions`, "Serve files extensions, must be passed as a JSON array.", 
+				(arg: string, previous: any) =>
 				{
-					webServer.serveHottFiles = true;
-				});
+					webServer.serveFileExtensions = JSON.parse (arg);
+				}, JSON.stringify (HotHTTPServer.getDefaultServableExtensions ()));
 			runCmd.option (`--${currentServerType}-js-url <url>`, "The url to the HotStaq JS", 
 				(url: string, previous: any) =>
 				{
