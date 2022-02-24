@@ -2,6 +2,8 @@ build/
 build-web/
 ./app/
 
+.env
+
 ./*.sh
 
 create-test-temp/
