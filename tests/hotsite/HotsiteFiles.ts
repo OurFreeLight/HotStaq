@@ -38,7 +38,6 @@ describe ("Hotsite Files Tests", () =>
 			});
 		it ("should have loaded the /files route", async () =>
 			{
-				debugger;
 				await HotStaq.wait (100);
 				let elm = await common.driver.wait (until.elementLocated (By.css (".btn")));
 				expect (elm).to.not.equal (null, "Page did not load!");

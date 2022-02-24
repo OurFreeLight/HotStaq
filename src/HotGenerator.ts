@@ -638,7 +638,15 @@ if (typeof (HotAPIGlobal) === "undefined")
 	HotAPIGlobal = window.HotAPI;
 
 if (typeof (${data.libraryName}.${data.apiName}) === "undefined")
-	${data.libraryName}.${data.apiName} = Object.assign (Object.create (Object.getPrototypeOf (HotAPIGlobal)), HotAPIGlobal);
+{
+	${data.libraryName}.${data.apiName} = class extends HotAPIGlobal
+		{
+			constructor (baseUrl, connection, db)
+			{
+				super (baseUrl, connection, db);
+			}
+		}
+}
 `;
 		}
 
@@ -787,7 +795,7 @@ class ${data.routeName}
 		{
 			content = `}
 
-${data.libraryName}.${data.apiName}.prototype["${data.routeName}"] = new ${data.routeName} ();
+${data.libraryName}.${data.apiName}.constructor["${data.routeName}"] = new ${data.routeName} ();
 `;
 		}
 
