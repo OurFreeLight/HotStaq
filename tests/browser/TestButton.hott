@@ -1,1 +1,1 @@
-<button id = "testButtonFromPage">Test Button from Page: ${Parent}</button>
+<button ?(JSON.stringify (Parent + "_Button")) id = "testButtonFromPage">Test Button from Page: ${Parent}</button>

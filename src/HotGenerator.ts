@@ -227,6 +227,8 @@ export class HotGenerator
 				apiFileContent += this.getAPIContent (this.generateType, "header", 
 					{ libraryName: libraryName, apiName: apiName, baseAPIUrl: serverResult.baseAPIUrl });
 
+				let collectedRoutes: { libraryName: string; apiName: string; routeName: string; }[] = [];
+
 				for (let key2 in serverResult.api.routes)
 				{
 					let route: HotRoute = serverResult.api.routes[key2];
@@ -249,9 +251,15 @@ export class HotGenerator
 
 					apiFileContent += this.getAPIContent (this.generateType, "class_footer", 
 						{ libraryName: libraryName, baseAPIUrl: serverResult.baseAPIUrl, apiName: apiName, routeName: routeName });
+
+					collectedRoutes.push ({
+							libraryName: libraryName, apiName: apiName, routeName: routeName
+						});
 				}
 
-				apiFileContent += this.getAPIContent (this.generateType, "footer", {});
+				apiFileContent += this.getAPIContent (this.generateType, "footer", {
+						libraryName: libraryName, apiName: apiName, collectedRoutes: collectedRoutes
+					});
 
 				const outputFile: string = ppath.normalize (`${outputDir}/${libraryName}_${apiName}`);
 				let outputFileExtension: string = ".ts";
@@ -636,17 +644,6 @@ var HotAPIGlobal = HotAPI;
 
 if (typeof (HotAPIGlobal) === "undefined")
 	HotAPIGlobal = window.HotAPI;
-
-if (typeof (${data.libraryName}.${data.apiName}) === "undefined")
-{
-	${data.libraryName}.${data.apiName} = class extends HotAPIGlobal
-		{
-			constructor (baseUrl, connection, db)
-			{
-				super (baseUrl, connection, db);
-			}
-		}
-}
 `;
 		}
 
@@ -690,49 +687,50 @@ class ${data.routeName}
 			let method: HotRouteMethod = data.method;
 			let paramsDescription: string = "";
 			let jsonParamOutput: string = "";
+			let jsonReturnOutput: string = "";
+			let getChildParameters = (param: HotRouteMethodParameter): any =>
+				{
+					let outputParams: string = "";
+
+					if (param.type != null)
+					{
+						if (param.type === "object")
+						{
+							if (param.parameters == null)
+								throw new Error (`Missing parameters for an object in ${method.name}`);
+						}
+
+						for (let key3 in param.parameters)
+						{
+							let param2 = param.parameters[key3];
+							let tempParam: HotRouteMethodParameter = {
+									type: "string",
+									required: false,
+									description: ""
+								};
+
+							if (typeof (param2) === "string")
+								tempParam["type"] = param2;
+							else
+								tempParam = param2;
+
+							if (tempParam.type === "object")
+								outputParams += getChildParameters (tempParam.parameters);
+							else
+							{
+								outputParams += `
+	 * @property {${tempParam.type}} ${key3} ${tempParam.description}`;
+							}
+						}
+					}
+
+					return (outputParams);
+				};
 
 			if (method.parameters != null)
 			{
 				let paramsObjType: string = "";
 				let paramsToOutput: string = "";
-				let getChildParameters = (param: HotRouteMethodParameter): any =>
-					{
-						let outputParams: string = "";
-
-						if (param.type != null)
-						{
-							if (param.type === "object")
-							{
-								if (param.parameters == null)
-									throw new Error (`Missing parameters for an object in ${method.name}`);
-							}
-
-							for (let key3 in param.parameters)
-							{
-								let param2 = param.parameters[key3];
-								let tempParam: HotRouteMethodParameter = {
-										type: "string",
-										required: false,
-										description: ""
-									};
-
-								if (typeof (param2) === "string")
-									tempParam["type"] = param2;
-								else
-									tempParam = param2;
-
-								if (tempParam.type === "object")
-									outputParams += getChildParameters (tempParam.parameters);
-								else
-								{
-									outputParams += `
-	 * @property {${tempParam.type}} ${key3} ${tempParam.description}`;
-								}
-							}
-						}
-
-						return (outputParams);
-					};
 
 				paramsObjType = `${data.routeName}_${data.methodName}_json_object_type`.toUpperCase ();
 
@@ -763,13 +761,39 @@ class ${data.routeName}
 	 * @param {${paramsObjType}} jsonObj`;
 			}
 
+			if (method.returns != null)
+			{
+				if (method.returns.type === "object")
+				{
+					let returnObjType: string = `${data.routeName}_${data.methodName}_json_return_type`.toUpperCase ();
+					let returnParamsToOutput: string = getChildParameters (method.returns);
+
+					paramsDescription += `/**
+	 * The JSON object returned from the server.
+	 * 
+	 * @typedef {Object} ${returnObjType}${returnParamsToOutput}
+	 */
+
+	`;
+					jsonReturnOutput = `
+	 * 
+	 * @returns {${returnObjType}} ${method.returns.description}`;
+				}
+				else
+				{
+					jsonReturnOutput = `
+	 * 
+	 * @returns {${method.returns.type}} ${method.returns.description}`;
+				}
+			}
+
 			content = `
 	${paramsDescription}/**
-	 * The ${data.methodName} method.${jsonParamOutput}
+	 * The ${data.methodName} method.${jsonParamOutput}${jsonReturnOutput}
 	 */
 	${data.methodName} (jsonObj)
 	{
-		var promise = new Promise (function (resolve, reject)
+		var promise = new Promise ((resolve, reject) => 
 			{
 				fetch (\`\${this.baseUrl}/${data.routeVersion}/${data.routeName}/${data.methodName}\`, {
 						"method": "${data.methodType}",
@@ -795,8 +819,37 @@ class ${data.routeName}
 		{
 			content = `}
 
-${data.libraryName}.${data.apiName}.constructor["${data.routeName}"] = new ${data.routeName} ();
 `;
+		}
+
+		if (contentPart === "footer")
+		{
+			let routesOutput: string = "";
+
+			if (data.collectedRoutes.length > 0)
+				routesOutput += "\n";
+
+			for (let iIdx = 0; iIdx < data.collectedRoutes.length; iIdx++)
+			{
+				let collectedRoute = data.collectedRoutes[iIdx];
+
+				routesOutput += `
+						this.${collectedRoute.routeName} = new ${collectedRoute.routeName} (baseUrl, connection, db);`;
+			}
+
+			content = `if (typeof (${data.libraryName}.${data.apiName}) === "undefined")
+{
+	if (typeof (HotAPIGlobal) !== "undefined")
+	{
+		${data.libraryName}.${data.apiName} = class extends HotAPIGlobal
+			{
+				constructor (baseUrl, connection, db)
+				{
+					super (baseUrl, connection, db);${routesOutput}
+				}
+			}
+	}
+}`;
 		}
 
 		return (content);
