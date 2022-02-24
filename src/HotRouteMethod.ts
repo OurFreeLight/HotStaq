@@ -60,6 +60,13 @@ export interface HotRouteMethodParameter
 {
 	/**
 	 * The type of parameter. Default: string
+	 * Can be:
+	 * * string
+	 * * integer
+	 * * number
+	 * * boolean
+	 * * array
+	 * * object
 	 */
 	type?: string;
 	/**
@@ -70,6 +77,10 @@ export interface HotRouteMethodParameter
 	 * Is this parameter required? Default: false
 	 */
 	required?: boolean;
+	/**
+	 * The parameters in the object.
+	 */
+	parameters?: { [name: string]: string | HotRouteMethodParameter; };
 }
 
 /**
@@ -92,7 +103,7 @@ export interface IHotRouteMethod
 	/**
 	 * The description of what returns from the api method.
 	 */
-	returns?: string;
+	returns?: string | HotRouteMethodParameter;
 	/**
 	 * The parameters in the api method.
 	 */
@@ -174,7 +185,7 @@ export class HotRouteMethod implements IHotRouteMethod
 	/**
 	 * The description of what returns from the api method.
 	 */
-	returns: string;
+	returns: HotRouteMethodParameter;
 	/**
 	 * The parameters in the api method.
 	 */
@@ -269,7 +280,18 @@ export class HotRouteMethod implements IHotRouteMethod
 				this.description = route.description;
 
 			if (route.returns != null)
-				this.returns = route.returns;
+			{
+				if (typeof (route.returns) === "string")
+				{
+					this.returns = {
+							"type": "string",
+							"required": true,
+							"description": route.returns
+						};
+				}
+				else
+					this.returns = route.returns;
+			}
 
 			if (route.parameters != null)
 			{

@@ -1,5 +1,7 @@
 db/
 
+.env
+
 build/
 build-web/
 builder/

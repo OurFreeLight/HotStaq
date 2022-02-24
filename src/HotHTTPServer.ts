@@ -30,6 +30,26 @@ export interface StaticRoute
 }
 
 /**
+ * A servable file extension.
+ */
+export interface ServableFileExtension
+{
+	/**
+	 * The file extension that includes the period at the beginning.
+	 * 
+	 * @example .hott
+	 */
+	fileExtension: string;
+	/**
+	 * If set to true, this will generate the content to serve the file.
+	 * Typically used for .hott files.
+	 * 
+	 * Default: true
+	 */
+	generateContent?: boolean;
+}
+
+/**
  * A HTTP server.
  */
 export class HotHTTPServer extends HotServer
@@ -70,10 +90,9 @@ export class HotHTTPServer extends HotServer
 			method: (req: express.Request, res: express.Response) => Promise<void>;
 		}[];
 	/**
-	 * Serve hott files when requested. This value will be overwritten by whatever 
-	 * value is set to server.serveHottFiles in HotSite.json.
+	 * Serve the following file extensions when requested.
 	 */
-	serveHottFiles: boolean;
+	serveFileExtensions: (string | ServableFileExtension)[];
 	/**
 	 * Do not serve these hott files.
 	 */
@@ -104,14 +123,17 @@ export class HotHTTPServer extends HotServer
 		this.expressApp = express ();
 		this.httpListener = null;
 		this.httpsListener = null;
-		this.staticRoutes = [];
+		this.staticRoutes = [{
+				"localPath": process.cwd (),
+				"route": "/"
+			}];
 		this.routes = [];
-		this.serveHottFiles = true;
+		this.serveFileExtensions = HotHTTPServer.getDefaultServableExtensions ();
 		this.ignoreHottFiles = {};
 		this.hottFilesAssociatedInfo = {
 				name: "",
 				url: "./",
-				jsSrcPath: "./js/HotStaq.js"
+				jsSrcPath: "./js/HotStaq.min.js"
 			};
 
 		if (process.env.LISTEN_ADDR != null)
@@ -186,6 +208,16 @@ export class HotHTTPServer extends HotServer
 			});
 		this.expressApp.use (express.urlencoded ({ "extended": true }));
 		this.expressApp.use (express.json ({ "limit": JSONLimit }));
+	}
+
+	/**
+	 * Get the default servable file extensions.
+	 */
+	static getDefaultServableExtensions (): ServableFileExtension[]
+	{
+		return ([{ fileExtension: ".hott", generateContent: true }, 
+			{ fileExtension: ".htm", generateContent: false }, 
+			{ fileExtension: ".html", generateContent: false }]);
 	}
 
 	/**
@@ -455,14 +487,14 @@ export class HotHTTPServer extends HotServer
 			this.logger.verbose (`Adding route ${route.type} ${route.route}`);
 		}
 
-		let serveHottFiles: boolean = this.serveHottFiles;
+		let serveFileExtensions: (string | ServableFileExtension)[] = this.serveFileExtensions;
 
 		if (this.processor.hotSite != null)
 		{
 			if (this.processor.hotSite.server != null)
 			{
-				if (this.processor.hotSite.server.serveHottFiles != null)
-					serveHottFiles = this.processor.hotSite.server.serveHottFiles;
+				if (this.processor.hotSite.server.serveFileExtensions != null)
+					serveFileExtensions = this.processor.hotSite.server.serveFileExtensions;
 			}
 
 			if (this.processor.hotSite.routes != null)
@@ -480,9 +512,9 @@ export class HotHTTPServer extends HotServer
 			}
 		}
 
-		if (serveHottFiles === true)
+		if (serveFileExtensions.length > 0)
 		{
-			this.logger.verbose (`Set to serve hott files...`);
+			this.logger.verbose (`Set to serve files: ${JSON.stringify (serveFileExtensions)}`);
 
 			this.expressApp.use ((req: express.Request, res: express.Response, next: any): void =>
 				{
@@ -501,7 +533,12 @@ export class HotHTTPServer extends HotServer
 							if (foundUrl[(foundUrl.length - 1)] === "/")
 								foundUrl = foundUrl.substr (0, (foundUrl.length - 1));
 
-							requestedUrl = `${foundUrl}/${req.originalUrl}`;
+							let addSlash: string = "/";
+
+							if (req.originalUrl[0] === "/")
+								addSlash = "";
+
+							requestedUrl = `${foundUrl}${addSlash}${req.originalUrl}`;
 						}
 
 						let url: URL = new URL (requestedUrl);
@@ -509,12 +546,16 @@ export class HotHTTPServer extends HotServer
 						const filepath: string = ppath.basename (urlFilepath);
 
 						// This if statement ensures the requested file is not on the ignore list.
-						if (this.ignoreHottFiles[filepath] == null)
+						if (this.ignoreHottFiles[filepath] != null)
+						{
+							// Ignore the file.
+						}
+						else
 						{
 							let sendHottContent = (fullUrl: URL, route: string): void =>
 								{
-									// Appending hpserve ensures that the content will not be resent.
-									fullUrl.searchParams.append ("hpserve", "nahfam");
+									// Appending hstqserve ensures that the content will not be resent.
+									fullUrl.searchParams.append ("hstqserve", "nahfam");
 
 									const content: string = this.processor.generateContent (route, 
 										this.hottFilesAssociatedInfo.name,
@@ -526,74 +567,79 @@ export class HotHTTPServer extends HotServer
 									res.setHeader ("Content-Type", "text/html");
 									res.send (content);
 								};
+							let sendFileContent = (path: string): void =>
+								{
+									res.sendFile (path);
+								};
 
 							let result: string = "";
-							let hpserve = url.searchParams.get ("hpserve");
+							let hstqserve = url.searchParams.get ("hstqserve");
 
-							if (hpserve != null)
-								result = hpserve;
+							if (hstqserve != null)
+								result = hstqserve;
 
 							// Make sure we're not accidentally resending the content.
 							if (result !== "nahfam")
 							{
-								let serveDirectories: {
-										route: string;
-										localPath: string;
-									}[] = HotStaq.getValueFromHotSiteObj (
-										this.processor.hotSite, ["server", "serveDirectories"]);
-								let checkDirs: string[] = [];
-
-								if (serveDirectories != null)
+								for (let iIdx = 0; iIdx < this.staticRoutes.length; iIdx++)
 								{
-									if (serveDirectories.length > 0)
-									{
-										for (let iIdx = 0; iIdx < serveDirectories.length; iIdx++)
-										{
-											const serveDir: string = serveDirectories[iIdx].localPath;
-
-											checkDirs.push (serveDir);
-										}
-									}
-								}
-
-								if (checkDirs.length < 1)
-									checkDirs.push (process.cwd ());
-
-								for (let iIdx = 0; iIdx < checkDirs.length; iIdx++)
-								{
-									let checkDir: string = checkDirs[iIdx];
+									let staticRoute: StaticRoute = this.staticRoutes[iIdx];
+									let checkDir: string = staticRoute.localPath;
 									const route: string = urlFilepath;
 									let tempFilepath: string = urlFilepath;
 									let sendContentFlag: boolean = false;
+									let generateContent: boolean = true;
+									let fullPath: string = "";
 
-									if (tempFilepath.indexOf (".hott") > -1)
+									for (let iJdx = 0; iJdx < serveFileExtensions.length; iJdx++)
 									{
-										if (await HotHTTPServer.checkIfFileExists (
-											ppath.normalize (`${checkDir}/${tempFilepath}`)) === true)
+										let servableFile: (string | ServableFileExtension) = serveFileExtensions[iJdx];
+										let serveFileExt: string = "";
+
+										if (typeof (servableFile) === "string")
+											serveFileExt = servableFile;
+										else
 										{
-											sendContentFlag = true;
+											serveFileExt = servableFile.fileExtension;
+
+											if (servableFile.generateContent != null)
+												generateContent = servableFile.generateContent;
 										}
-									}
 
-									if (sendContentFlag === false)
-									{
-										if (await HotHTTPServer.checkIfFileExists (
-											ppath.normalize (`${checkDir}/${tempFilepath}.hott`)) === true)
+										if (tempFilepath.indexOf (serveFileExt) > -1)
 										{
-											sendContentFlag = true;
-											url.pathname += ".hott";
+											if (await HotHTTPServer.checkIfFileExists (
+												ppath.normalize (`${checkDir}/${tempFilepath}`)) === true)
+											{
+												sendContentFlag = true;
+
+												break;
+											}
 										}
-									}
 
-									if (sendContentFlag === false)
-									{
-										// If no content has been found, send the index.
-										tempFilepath += "index.hott";
-
-										if (await HotHTTPServer.checkIfFileExists (
-											ppath.normalize (`${checkDir}/${tempFilepath}`)) === true)
+										if (sendContentFlag === false)
 										{
-											sendContentFlag = true;
+											if (await HotHTTPServer.checkIfFileExists (
+												ppath.normalize (`${checkDir}/${tempFilepath}${serveFileExt}`)) === true)
+											{
+												sendContentFlag = true;
+												url.pathname += serveFileExt;
+
+												break;
+											}
+										}
+
+										if (sendContentFlag === false)
+										{
+											if (await HotHTTPServer.checkIfFileExists (
+												ppath.normalize (`${checkDir}/${tempFilepath}index${serveFileExt}`)) === true)
+											{
+												// If no content has been found, send the index.
+												tempFilepath += `index${serveFileExt}`;
+												sendContentFlag = true;
+
+												break;
+											}
 										}
 									}
 
@@ -602,7 +648,10 @@ export class HotHTTPServer extends HotServer
 
 									if (sendContentFlag === true)
 									{
-										sendHottContent (url, route);
+										if (generateContent === true)
+											sendHottContent (url, route);
+										else
+											sendFileContent (ppath.normalize (`${checkDir}/${tempFilepath}`));
 
 										return;
 									}

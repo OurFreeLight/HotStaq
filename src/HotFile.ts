@@ -494,6 +494,7 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 
 			`;
 
+			// Output the arguments so it's usable in the entire document.
 			if (typeof (args) === "string")
 				throw new Error (`The passing arguments cannot be a string!`);
 

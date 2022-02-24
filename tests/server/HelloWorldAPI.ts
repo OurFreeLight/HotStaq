@@ -11,6 +11,8 @@ import { HotStaq } from "../../src/HotStaq";
 import { HotTestDriver } from "../../src/HotTestDriver";
 import { HTTPMethod } from "../../src/HotRouteMethod";
 
+import { HelloWorldSecond } from "./HelloWorldSecond";
+
 /// @fixme This weirdness is due to WebPack. Gotta find another way around this...
 var HotHTTPServer: any = null;
 
@@ -39,6 +41,7 @@ export class HelloWorldAPI extends HotAPI
 						description: "The message to send to the server. Can be: hi, hello"
 					}
 				},
+				"testCases": {},
 				returns: "The server says Hello World!"
 			});
 		route.addMethod ("is_up", 
@@ -68,6 +71,8 @@ export class HelloWorldAPI extends HotAPI
 						}
 					]);
 		this.addRoute (route);
+
+		this.addRoute (new HelloWorldSecond (this));
 	}
 
 	/**

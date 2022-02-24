@@ -341,7 +341,7 @@ export class HotTesterServer extends HotServer
 		this.expressApp.use ((req: express.Request, res: express.Response, next: any): void =>
 			{
 				const url: string = `${req.protocol}://${req.hostname}${req.originalUrl}`;
-				this.logger.verbose (`Requested: ${url}`);
+				this.logger.verbose (`Requested: ${req.method} ${req.httpVersion} ${url}`);
 
 				next ();
 			});

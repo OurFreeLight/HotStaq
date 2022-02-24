@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.41",
+  "version": "0.5.43",
   "description": "",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -8,12 +8,13 @@
   "main": "./build/src/api.js",
   "types": "./build/src/api.d.js",
   "scripts": {
-    "test": "hotstaq --hotsite ./tests/hotsite/HotSite.json generate && mocha --timeout 999999 --colors ./build/tests/**/*.js",
+    "test": "npm run build-test-api && export $(cat .env | xargs) && mocha --timeout 999999 --colors ./build/tests/**/*.js",
     "prepublishOnly": "npm run builddoc && npm run build && npm run buildweb",
     "builddoc": "typedoc --theme markdown --tsconfig ./tsconfig.json --entryPoints './src/api.ts' --readme README.md --out ./docs/ ./src",
     "build": "tsc --build ./tsconfig.json",
     "buildweb": "webpack --mode=production && npx google-closure-compiler --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",
-    "buildwebdebug": "webpack --mode=development"
+    "buildwebdebug": "webpack --mode=development",
+    "build-test-api": "hotstaq --hotsite ./tests/hotsite/HotSite.json generate"
   },
   "bugs": {
     "url": "https://github.com/OurFreeLight/HotStaq/issues"

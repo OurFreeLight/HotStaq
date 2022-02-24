@@ -32,7 +32,7 @@ describe ("Hotsite Files Tests", () =>
 
 				common = new Common (processor);
 				await common.load ();
-				await common.startServer (false);
+				await common.startServer ();
 
 				await common.driver.get (`${common.getUrl (server)}/files`);
 			});
@@ -45,7 +45,7 @@ describe ("Hotsite Files Tests", () =>
 		it ("should have loaded /tests/hotsite/HelloWorld", async () =>
 			{
 				await common.driver.navigate ().to (`${common.getUrl (server)}/tests/hotsite/HelloWorld`);
-				await HotStaq.wait (100);
+				await HotStaq.wait (300);
 				let elm = await common.driver.wait (until.elementLocated (By.css ("#test")));
 				expect (elm).to.not.equal (null, "Page did not load!");
 			});

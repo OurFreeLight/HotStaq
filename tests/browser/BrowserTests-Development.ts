@@ -36,11 +36,17 @@ Execute this code to debug in browser:
 (async () =>
 {
 	window.HotStaq = HotStaqWeb.HotStaq;
+	var HotClient = HotStaqWeb.HotClient;
+	var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+	var processor = new HotStaq ();
+	processor.mode = HotStaqWeb.DeveloperMode.Development;
 	window.Hot = HotStaqWeb.Hot;
-	var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}");
-	helloWorldAPI.connection = new HotClient (processor);
+	var client = new HotClient (processor);
+	var helloWorldAPI = new HelloWorldAPI ("http://127.0.0.1:3123", client);
 	helloWorldAPI.connection.api = helloWorldAPI;
-	await HotStaq.displayUrl ("/tests/browser/HelloWorld.hott");
+	processor.api = helloWorldAPI;
+	await HotStaq.displayUrl (
+		"./HelloWorld.hott", "Hello World!", processor, { testData: "TESTING" });
 })();
 */
 
@@ -85,6 +91,8 @@ Execute this code to debug in browser:
 				// Tests Hot.apiCall
 				elm = await common.driver.wait (until.elementLocated (By.id ("testHelloWorldAPI")));
 				await elm.click ();
+
+				await HotStaq.wait (100);
 
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");

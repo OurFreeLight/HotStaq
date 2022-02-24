@@ -9,20 +9,13 @@
 			"name": "Debug Web Server",
 			"program": "${workspaceFolder}/build/src/cli.js",
 			"request": "launch",
+			"cwd": "/home/someone13/editing/projects/HotStaq/examples/html_only",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
 			"outputCapture": "std",
 			"args": [
-				"run",
-				"--web-route",
-				"/=${workspaceFolder}",
-				"--web-dont-redirect-http-to-https",
-				"--web-js-url",
-				"/build-web/HotStaq.js",
-				"--web-serve-hott-files",
-				"--web-http-port",
-				"8080"
+				"start"
 			]
 		},
 		{
@@ -112,17 +105,16 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Build from HotSite",
+			"name": "Generate API from HotSite",
 			"program": "${workspaceFolder}/build/src/cli.js",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
 			"outputCapture": "std",
 			"args": [
-				"build",
-				"--hotsite",
-				"./tests/hotsite/HotSite.json",
-				"--docker"
+				"--hotsite", "./tests/hotsite/HotSite.json",
+				"generate",
+				"--generate-type", "javascript"
 			]
 		},
 		{
@@ -183,7 +175,7 @@
 				"DATABASE_USERNAME": "5NKVBAt7OrzrumQyQVs",
 				"DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
 				"DATABASE_SCHEMA": "hotstaq",
-				"INFLUX_DATABASE_SERVER": "http://192.168.1.195:8088",
+				"INFLUX_DATABASE_SERVER": "http://192.168.1.195:8091",
 				"INFLUX_DATABASE_USERNAME": "5NKVBAt7OrzrumQyQVs",
 				"INFLUX_DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
 				"INFLUX_DATABASE_ORG": "freelight",

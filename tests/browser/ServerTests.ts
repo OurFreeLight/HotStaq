@@ -18,7 +18,7 @@ describe ("Browser-Server Tests", () =>
 				common = new Common ();
 				await common.load ();
 
-				await common.startServer (true);
+				await common.startServer ();
 				await common.driver.get (`${common.getUrl ()}/tests/browser/Test.hott`);
 			});
 		after (async () =>

@@ -9,7 +9,7 @@ import { HotLog } from "./HotLog";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { APItoLoad, HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotRouteMethodParameter } from "./HotRouteMethod";
 
 /**
  * Generates stuff like API 
@@ -202,6 +202,14 @@ export class HotGenerator
 	 */
 	async generateAPI (processor: HotStaq, apis: { [name: string]: APItoLoad; }): Promise<void>
 	{
+		if ((this.generateType === "openapi-3.0.0-json") || 
+			(this.generateType === "openapi-3.0.0-yaml"))
+		{
+			await this.generateAPIDocumentation (processor, apis);
+
+			return;
+		}
+
 		if (! ((this.generateType === "typescript") || 
 			(this.generateType === "javascript")))
 		{
@@ -216,12 +224,15 @@ export class HotGenerator
 
 				let apiFileContent: string = "";
 
+				apiFileContent += this.getAPIContent (this.generateType, "header", 
+					{ libraryName: libraryName, apiName: apiName, baseAPIUrl: serverResult.baseAPIUrl });
+
 				for (let key2 in serverResult.api.routes)
 				{
 					let route: HotRoute = serverResult.api.routes[key2];
 					let routeName: string = route.route;
 
-					apiFileContent += this.getAPIContent (this.generateType, "header", 
+					apiFileContent += this.getAPIContent (this.generateType, "class_header", 
 						{ routeName: routeName, baseAPIUrl: serverResult.baseAPIUrl, 
 							libraryName: libraryName, apiName: apiName });
 
@@ -230,74 +241,76 @@ export class HotGenerator
 						let method: HotRouteMethod = route.methods[iJdx];
 						let methodName: string = method.name;
 
-						apiFileContent += this.getAPIContent (this.generateType, "function", 
+						apiFileContent += this.getAPIContent (this.generateType, "class_function", 
 							{ methodName: methodName, routeVersion: route.version, 
 								routeName: routeName, methodType: method.type.toUpperCase (), 
-								libraryName: libraryName, apiName: apiName });
+								libraryName: libraryName, apiName: apiName, method: method });
 					}
 
-					apiFileContent += this.getAPIContent (this.generateType, "footer", 
-						{ libraryName: libraryName, apiName: apiName, routeName: routeName });
+					apiFileContent += this.getAPIContent (this.generateType, "class_footer", 
+						{ libraryName: libraryName, baseAPIUrl: serverResult.baseAPIUrl, apiName: apiName, routeName: routeName });
+				}
 
-					const outputFile: string = ppath.normalize (`${outputDir}/${libraryName}_${apiName}`);
-					let outputFileExtension: string = ".ts";
+				apiFileContent += this.getAPIContent (this.generateType, "footer", {});
 
-					if (this.generateType === "javascript")
+				const outputFile: string = ppath.normalize (`${outputDir}/${libraryName}_${apiName}`);
+				let outputFileExtension: string = ".ts";
+
+				if (this.generateType === "javascript")
+				{
+					this.compileTS = false;
+					outputFileExtension = ".js";
+				}
+
+				await HotIO.writeTextFile (`${outputFile}${outputFileExtension}`, apiFileContent);
+
+				if (this.compileTS === true)
+				{
+					this.logger.info (`Compiling TypeScript...`);
+
+					const timestamp: string = Date.now ().toString ();
+					let tsconfigObj: any = JSON.parse (await HotIO.readTextFile (this.tsconfigPath));
+
+					tsconfigObj.compilerOptions.outDir = outputDir;
+					tsconfigObj.files = [`${outputFile}${outputFileExtension}`];
+
+					const temptsconfig: string = ppath.normalize (`${outputDir}/tsconfig-generator-temp-${timestamp}.json`);
+					await HotIO.writeTextFile (temptsconfig, JSON.stringify (tsconfigObj, null, 4));
+
+					let content: string = await HotIO.readTextFile (this.webpackConfigPath);
+					const tempWebpackConfig: string = ppath.normalize (
+							`${outputDir}/webpack.config.generator-temp-${timestamp}.js`);
+
+					content = HotStaq.replaceKey (content, "WEBPACK_VERSION", "1.0.0");
+					content = HotStaq.replaceKey (content, "WEBPACK_ENTRY", `${outputFile}${outputFileExtension}`);
+					content = HotStaq.replaceKey (content, "WEBPACK_TSCONFIG", temptsconfig);
+					content = HotStaq.replaceKey (content, "WEBPACK_IGNORE_PLUGINS_REGEX", "null");
+					content = HotStaq.replaceKey (content, "WEBPACK_OUTPUT_FILE", `${libraryName}_${apiName}.js`);
+					content = HotStaq.replaceKey (content, "WEBPACK_OUTPUT_PATH", outputDir);
+					content = HotStaq.replaceKey (content, "WEBPACK_LIBRARY_NAME", `${libraryName}_${apiName}`);
+
+					await HotIO.writeTextFile (tempWebpackConfig, content);
+
+					try
 					{
-						this.compileTS = false;
-						outputFileExtension = ".js";
+						// Build the TypeScript so it can run in a web browser.
+						await HotIO.exec (`cd ${outputDir} && webpack --mode=production -c ${tempWebpackConfig}`);
 					}
-
-					await HotIO.writeTextFile (`${outputFile}${outputFileExtension}`, apiFileContent);
-
-					if (this.compileTS === true)
+					catch (ex)
 					{
-						this.logger.info (`Compiling TypeScript...`);
-
-						const timestamp: string = Date.now ().toString ();
-						let tsconfigObj: any = JSON.parse (await HotIO.readTextFile (this.tsconfigPath));
-
-						tsconfigObj.compilerOptions.outDir = outputDir;
-						tsconfigObj.files = [`${outputFile}${outputFileExtension}`];
-
-						const temptsconfig: string = ppath.normalize (`${outputDir}/tsconfig-generator-temp-${timestamp}.json`);
-						await HotIO.writeTextFile (temptsconfig, JSON.stringify (tsconfigObj, null, 4));
-
-						let content: string = await HotIO.readTextFile (this.webpackConfigPath);
-						const tempWebpackConfig: string = ppath.normalize (
-								`${outputDir}/webpack.config.generator-temp-${timestamp}.js`);
-
-						content = HotStaq.replaceKey (content, "WEBPACK_VERSION", "1.0.0");
-						content = HotStaq.replaceKey (content, "WEBPACK_ENTRY", `${outputFile}${outputFileExtension}`);
-						content = HotStaq.replaceKey (content, "WEBPACK_TSCONFIG", temptsconfig);
-						content = HotStaq.replaceKey (content, "WEBPACK_IGNORE_PLUGINS_REGEX", "null");
-						content = HotStaq.replaceKey (content, "WEBPACK_OUTPUT_FILE", `${libraryName}_${apiName}.js`);
-						content = HotStaq.replaceKey (content, "WEBPACK_OUTPUT_PATH", outputDir);
-						content = HotStaq.replaceKey (content, "WEBPACK_LIBRARY_NAME", `${libraryName}_${apiName}`);
-
-						await HotIO.writeTextFile (tempWebpackConfig, content);
-
-						try
-						{
-							// Build the TypeScript so it can run in a web browser.
-							await HotIO.exec (`cd ${outputDir} && webpack --mode=production -c ${tempWebpackConfig}`);
-						}
-						catch (ex)
-						{
-						}
-
-						await HotIO.rm (temptsconfig);
-						await HotIO.rm (tempWebpackConfig);
-
-						this.logger.info (`Finished compiling TypeScript...`);
 					}
 
-					if (this.optimizeJS === true)
-					{
-						this.logger.info (`Optimizing JavaScript...`);
-						await HotIO.exec (`npx google-closure-compiler --js=${outputFile}.js --js_output_file=${outputFile}.min.js`);
-						this.logger.info (`Finished optimizing JavaScript...`);
-					}
+					await HotIO.rm (temptsconfig);
+					await HotIO.rm (tempWebpackConfig);
+
+					this.logger.info (`Finished compiling TypeScript...`);
+				}
+
+				if (this.optimizeJS === true)
+				{
+					this.logger.info (`Optimizing JavaScript...`);
+					await HotIO.exec (`npx google-closure-compiler --js=${outputFile}.js --js_output_file=${outputFile}.min.js`);
+					this.logger.info (`Finished optimizing JavaScript...`);
 				}
 
 				this.logger.info (`Finished generating Web API "${key}" from HotSite "${hotsite.name}"...`);
@@ -356,15 +369,95 @@ export class HotGenerator
 						let methodName: string = method.name;
 						let path: string = `/${route.version}/${routeName}/${methodName}`;
 						let methodDescription: string = "";
-						let returnsDescription: string = "";
+						let returnsDescription: any = {
+								description: ""
+							};
 						let component: any = null;
 						let componentName: string = "";
+						let getChildParameters = (param: HotRouteMethodParameter): any =>
+							{
+								let createdObj: any = {
+										type: param.type,
+										description: param.description || "",
+										properties: {}
+									};
+	
+								if (param.type != null)
+								{
+									if (param.type === "object")
+									{
+										if (param.parameters == null)
+											throw new Error (`Missing parameters for an object in ${method.name}`);
+									}
+
+									for (let key3 in param.parameters)
+									{
+										let param2 = param.parameters[key3];
+										let tempParam: HotRouteMethodParameter = {
+												type: "string",
+												required: false,
+												description: ""
+											};
+
+										if (typeof (param2) === "string")
+											tempParam["type"] = param2;
+										else
+											tempParam = param2;
+		
+										if (tempParam.type === "object")
+											createdObj.properties[key3] = getChildParameters (tempParam.parameters);
+										else
+										{
+											createdObj.properties[key3] = {
+													type: tempParam.type,
+													description: tempParam.description
+												};
+										}
+									}
+								}
+
+								return (createdObj);
+							};
 
 						if (method.description != null)
 							methodDescription = method.description;
 
 						if (method.returns != null)
-							returnsDescription = method.returns;
+						{
+							if (method.returns.type === "object")
+							{
+								returnsDescription = {
+										description: method.returns.description,
+										content: {
+											"application/json": {
+												schema: getChildParameters (method.returns)
+											}
+										}
+									};
+							}
+							else
+							{
+								returnsDescription = {
+										description: method.returns.description,
+										content: {
+											"application/json": {
+													schema: {
+														type: "string", 
+														description: method.returns.description
+													}
+												}
+										}
+									};
+							}
+						}
+
+						jsonObj.paths[path] = {};
+						jsonObj.paths[path][method.type.toLowerCase ()] = {
+								"summary": methodDescription,
+								responses: {
+									"200": returnsDescription
+								}
+							};
 
 						if (method.parameters != null)
 						{
@@ -383,25 +476,20 @@ export class HotGenerator
 							{
 								let param = method.parameters[key3];
 
-								component.properties[key3] = {
-										type: param.type,
-										description: param.description
-									};
+								if (param.type === "object")
+									component.properties[key3] = getChildParameters (param);
+								else
+								{
+									component.properties[key3] = {
+											type: param.type,
+											description: param.description
+										};
+								}
 
 								if (param.required === true)
 									component.required.push (key3);
 							}
 						}
-
-						jsonObj.paths[path] = {};
-						jsonObj.paths[path][method.type.toLowerCase ()] = {
-								"summary": methodDescription,
-								responses: {
-									"200": {
-										description: returnsDescription
-									}
-								}
-							};
 
 						if (component != null)
 						{
@@ -473,7 +561,12 @@ export class HotGenerator
 		{
 			content = `
 import { HotAPI } from "HotStaq";
+`;
+		}
 
+		if (contentPart === "class_header")
+		{
+			content = `
 /**
  * The ${data.routeName} API route.
  */
@@ -492,7 +585,7 @@ export class ${data.routeName} extends HotAPI
 `;
 		}
 
-		if (contentPart === "function")
+		if (contentPart === "class_function")
 		{
 			content = `
 	/**
@@ -516,7 +609,7 @@ export class ${data.routeName} extends HotAPI
 `;
 		}
 
-		if (contentPart === "footer")
+		if (contentPart === "class_footer")
 		{
 			content = `
 }
@@ -544,31 +637,135 @@ var HotAPIGlobal = HotAPI;
 if (typeof (HotAPIGlobal) === "undefined")
 	HotAPIGlobal = window.HotAPI;
 
+if (typeof (${data.libraryName}.${data.apiName}) === "undefined")
+{
+	${data.libraryName}.${data.apiName} = class extends HotAPIGlobal
+		{
+			constructor (baseUrl, connection, db)
+			{
+				super (baseUrl, connection, db);
+			}
+		}
+}
+`;
+		}
+
+		if (contentPart === "class_header")
+		{
+			content = `
 /**
  * The ${data.routeName} API route.
  */
-class ${data.routeName} extends HotAPIGlobal
+class ${data.routeName}
 {
 	constructor (baseUrl, connection, db)
 	{
 		if (baseUrl == null)
 			baseUrl = "${data.baseAPIUrl}";
 
-		super (baseUrl, connection, db);
+		if (connection === undefined)
+			connection = null;
+
+		if (db === undefined)
+			db = null;
 
 		/**
 		 * The base url to make calls to.
 		 */
 		this.baseUrl = baseUrl;
+		/**
+		 * The connection to the server/client.
+		 */
+		this.connection = connection;
+		/**
+		 * The database connection, if any.
+		 */
+		this.db = db;
 	}
 `;
 		}
 
-		if (contentPart === "function")
+		if (contentPart === "class_function")
 		{
+			let method: HotRouteMethod = data.method;
+			let paramsDescription: string = "";
+			let jsonParamOutput: string = "";
+
+			if (method.parameters != null)
+			{
+				let paramsObjType: string = "";
+				let paramsToOutput: string = "";
+				let getChildParameters = (param: HotRouteMethodParameter): any =>
+					{
+						let outputParams: string = "";
+
+						if (param.type != null)
+						{
+							if (param.type === "object")
+							{
+								if (param.parameters == null)
+									throw new Error (`Missing parameters for an object in ${method.name}`);
+							}
+
+							for (let key3 in param.parameters)
+							{
+								let param2 = param.parameters[key3];
+								let tempParam: HotRouteMethodParameter = {
+										type: "string",
+										required: false,
+										description: ""
+									};
+
+								if (typeof (param2) === "string")
+									tempParam["type"] = param2;
+								else
+									tempParam = param2;
+
+								if (tempParam.type === "object")
+									outputParams += getChildParameters (tempParam.parameters);
+								else
+								{
+									outputParams += `
+	 * @property {${tempParam.type}} ${key3} ${tempParam.description}`;
+								}
+							}
+						}
+
+						return (outputParams);
+					};
+
+				paramsObjType = `${data.routeName}_${data.methodName}_json_object_type`.toUpperCase ();
+
+				for (let key in method.parameters)
+				{
+					let param: HotRouteMethodParameter = method.parameters[key];
+
+					if (param.type === "object")
+					{
+						paramsToOutput += getChildParameters (param);
+					}
+					else
+					{
+						paramsToOutput += `
+	 * @property {${param.type}} ${key} ${param.description}`;
+					}
+				}
+
+				paramsDescription = `/**
+	 * The JSON object to send to the server.
+	 * 
+	 * @typedef {Object} ${paramsObjType}${paramsToOutput}
+	 */
+
+	`;
+				jsonParamOutput = `
+	 * 
+	 * @param {${paramsObjType}} jsonObj`;
+			}
+
 			content = `
-	/**
-	 * The ${data.methodName} method.
+	${paramsDescription}/**
+	 * The ${data.methodName} method.${jsonParamOutput}
 	 */
 	${data.methodName} (jsonObj)
 	{
@@ -591,17 +788,14 @@ class ${data.routeName} extends HotAPIGlobal
 
 		return (promise);
 	}
-
 `;
 		}
 
-		if (contentPart === "footer")
+		if (contentPart === "class_footer")
 		{
-			content = 
-`
-}
+			content = `}
 
-${data.libraryName}.${data.apiName} = ${data.routeName};
+${data.libraryName}.${data.apiName}.constructor["${data.routeName}"] = new ${data.routeName} ();
 `;
 		}
 
