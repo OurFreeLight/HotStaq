@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.44",
+  "version": "0.5.45",
   "description": "",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -13,7 +13,7 @@
     "builddoc": "typedoc --theme markdown --tsconfig ./tsconfig.json --entryPoints './src/api.ts' --readme README.md --out ./docs/ ./src",
     "build": "tsc --build ./tsconfig.json",
     "buildweb": "webpack --mode=production && npx google-closure-compiler --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",
-    "buildwebdebug": "webpack --mode=development",
+    "buildwebdebug": "webpack --mode=development && webpack --mode=development --config=webpack.config.tests.js",
     "build-test-api": "hotstaq --hotsite ./tests/hotsite/HotSite.json generate"
   },
   "bugs": {

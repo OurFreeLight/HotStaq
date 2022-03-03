@@ -681,17 +681,38 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Add and register a component.
 	 */
-	addComponent (component: HotComponent): void
+	addComponent (component: HotComponent | Function): void
 	{
-		this.components[component.name] = component;
-		this.registerComponent (component);
+		if (typeof (component) === "function")
+		{
+			// @ts-ignore
+			component = new component (this, this.api);
+		}
+
+		if (typeof (component) === "object")
+		{
+			if (component.name == null)
+				throw new Error (`Component must have a name!`);
+
+			if (component.tag == null)
+				throw new Error (`Component ${component.name} must have a tag!`);
+
+			this.components[component.name] = component;
+			this.registerComponent (component);
+		}
 	}
 
 	/**
 	 * Register a component for use as a HTML tag.
 	 */
-	registerComponent (component: HotComponent): void
+	protected registerComponent (component: HotComponent): void
 	{
+		if ((component.name == null) || (component.name === ""))
+			throw new Error (`Component must have a name!`);
+
+		if ((component.tag == null) || (component.tag === ""))
+			throw new Error (`Component ${component.name} must have a tag!`);
+
 		customElements.define (component.tag, class extends HTMLElement
 			{
 				constructor ()
@@ -701,7 +722,8 @@ export class HotStaq implements IHotStaq
 					/// @fixme Is this bad? Could create race conditions.
 					(async () =>
 					{
-						this.onclick = component.click.bind (component);
+						if (component.click != null)
+							this.onclick = component.click.bind (component);
 
 						for (let key in component.events)
 						{
@@ -734,16 +756,63 @@ export class HotStaq implements IHotStaq
 							}
 						}
 
-						let str: string = await component.output ();
-						let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
-						let shadow: ShadowRoot = this.attachShadow ({ mode: "open" });
+						let objectFunctions: string[] = Object.getOwnPropertyNames (component.constructor.prototype);
 
-						for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
+						// Associate any functions to the newly created element.
+						for (let iIdx = 0; iIdx < objectFunctions.length; iIdx++)
 						{
-							let child = newDOM.body.children[iIdx];
-							shadow.appendChild (child);
+							let objFunc: string = objectFunctions[iIdx];
+
+							if (objFunc === "constructor")
+								continue;
+
+							// @ts-ignore
+							let prop = component[objFunc];
+
+							if (typeof (prop) === "function")
+							{
+								let isNewFunction: boolean = true;
+
+								// Go through each function in the base HotComponent and see 
+								// if there's any matches. If there's a match, that means 
+								// we're trying to add an existing function, and we don't
+								// wanna do that. Skip it.
+								for (let key2 in HotComponent.prototype)
+								{
+									if (objFunc === key2)
+									{
+										isNewFunction = false;
+
+										break;
+									}
+								}
+
+								if (isNewFunction === true)
+								{
+									// @ts-ignore
+									this[objFunc] = component[objFunc];
+								}
+							}
 						}
 					})();
+				}
+
+				static get observedAttributes(): string[]
+				{
+					return (component.observedAttributes);
+				}
+
+				async connectedCallback ()
+				{
+					let str: string = HotFile.parseContent (await component.output (), true, { "outputCommands": false });
+					let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
+					let shadow: ShadowRoot = this.attachShadow ({ mode: "open" });
+
+					for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
+					{
+						let child = newDOM.body.children[iIdx];
+						shadow.appendChild (child);
+					}
 				}
 			}, component.elementOptions);
 	}

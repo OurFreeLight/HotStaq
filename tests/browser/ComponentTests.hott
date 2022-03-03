@@ -3,11 +3,22 @@
 
 <head>
 	<title>Component Tests</title>
+
+	<script type = "text/javascript" src="/build-web/HotStaqTests.js"></script>
+
+	<script type = "text/javascript">
+		var HelloWorld = HotStaqTests.HelloWorld;
+
+		/// @fixme Hot should already exist at this point? Is this a bug?
+		if (typeof (Hot) !== "undefined")
+			Hot.CurrentPage.processor.addComponent (new HelloWorld (Hot.CurrentPage.processor, null));
+	</script>
 </head>
 
 <body>
 	<hello-world id = "helloWorld"></hello-world><div id = "buttonClicked"></div>
 	<input id = "message" value = "" />
+	<input id = "message2" value = "" />
 </body>
 
 </html>

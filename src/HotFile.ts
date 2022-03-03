@@ -38,6 +38,21 @@ export interface IHotFile
 }
 
 /**
+ * Parser options for when processing a string or file.
+ */
+export interface ParserOptions
+{
+	/**
+	 * Output the commands generated from processing. Default: true
+	 */
+	outputCommands?: boolean;
+	/**
+	 * Allow JSON.stringify to be used during processing. Default: true
+	 */
+	allowStringify?: boolean;
+}
+
+/**
  * A file to process.
  */
 export class HotFile implements IHotFile
@@ -319,30 +334,35 @@ export class HotFile implements IHotFile
 	}
 
 	/**
-	 * Process the content in this file. This treats each file as one large JavaScript
-	 * file. Any text outside of the <* *> areas will be treated as:
+	 * Parse content.
 	 * 
-	 * 		Hot.echo ("text");
-	 * 
-	 * @fixme The regex's in the offContent functions need to be fixed. There's several 
-	 * test cases where they will fail.
+	 * @param thisContent The content to parse.
+	 * @param throwAllErrors If set to true, any error that occurs will be thrown as an exception.
+	 * @param options The options to use when parsing the content.
 	 */
-	async process (args: any = null): Promise<string>
+	static parseContent (thisContent: string, throwAllErrors: boolean, parserOptions: ParserOptions = null): string
 	{
-		let output: string = "";
-		let thisContent: string = this.content;
+		if (parserOptions == null)
+		{
+			parserOptions = {
+					outputCommands: true,
+					allowStringify: true
+				};
+		}
 
-		Hot.Mode = this.page.processor.mode;
-		Hot.Arguments = args;
-		Hot.CurrentPage = this.page;
-		Hot.PublicSecrets = this.page.processor.publicSecrets;
-		Hot.API = this.page.getAPI ();
-		Hot.TesterAPI = this.page.getTesterAPI ();
+		let STRINGIFY_START: string = "JSON.stringify (";
+		let STRINGIFY_END: string = ")";
+
+		if (parserOptions.allowStringify === false)
+		{
+			STRINGIFY_START = "";
+			STRINGIFY_END = "";
+		}
 
 		// Assemble the JS to evaluate. This will take all content outside of 
 		// <* and *> and wrap a Hot.echo around it. Any JS found inside of the 
 		// <* and *> will be executed as is.
-		output = HotFile.processContent (thisContent, 
+		let output: string = HotFile.processContent (thisContent, 
 			new RegExp ("(?=\\<\\*)([\\s\\S]*?)(?=\\*\\>)", "g"), 
 			(regexFound: string): string =>
 			{
@@ -372,8 +392,12 @@ export class HotFile implements IHotFile
 					tempOutput, "STR{", "}", "{", 
 					(regexFound2: string): string =>
 					{
-						let out: string = 
-						`*&&%*%@#@!echoOutput (JSON.stringify(${regexFound2}), ${this.throwAllErrors});*&!#%@!@*!`;
+						let out: string = "";
+
+						if (parserOptions.outputCommands === true)
+							out = `*&&%*%@#@!echoOutput (JSON.stringify(${regexFound2}), ${throwAllErrors});*&!#%@!@*!`;
+						else
+							out = `*&&%*%@#@!${STRINGIFY_START}${regexFound2}${STRINGIFY_END}, ${throwAllErrors});*&!#%@!@*!`;
 
 						return (out);
 					}, 
@@ -385,10 +409,17 @@ export class HotFile implements IHotFile
 					tempOutput2, "${", "}", "{", 
 					(regexFound2: string): string =>
 					{
-						let out: string = `*&&%*%@#@!try { Hot.echo (${regexFound2}); }catch (ex){Hot.echo ("");}*&!#%@!@*!`;
+						let out: string = "";
 
-						if (this.throwAllErrors === true)
-							out = `*&&%*%@#@!Hot.echo (${regexFound2});*&!#%@!@*!`;
+						if (parserOptions.outputCommands === true)
+						{
+							out = `*&&%*%@#@!try { Hot.echo (${regexFound2}); }catch (ex){Hot.echo ("");}*&!#%@!@*!`;
+
+							if (throwAllErrors === true)
+								out = `*&&%*%@#@!Hot.echo (${regexFound2});*&!#%@!@*!`;
+						}
+						else
+							out = regexFound2;
 
 						return (out);
 					}, 
@@ -396,7 +427,7 @@ export class HotFile implements IHotFile
 					{
 						return (offContent3);
 						/*let escapedContent: string = JSON.stringify (offContent3);
-						let out: string = `echoOutput (${escapedContent}, ${this.throwAllErrors});\n`;
+						let out: string = `echoOutput (${escapedContent}, ${throwAllErrors});\n`;
 
 						return (out);*/
 					});
@@ -414,7 +445,7 @@ export class HotFile implements IHotFile
 						(offContent3: string): string =>
 						{
 							return (offContent3);
-							/*let out: string = `echoOutput (${offContent3}, ${this.throwAllErrors});\n`;
+							/*let out: string = `echoOutput (${offContent3}, ${throwAllErrors});\n`;
 
 							return (out);*/
 						});
@@ -432,7 +463,11 @@ export class HotFile implements IHotFile
 							{
 								// Check to see if it be parsed. If so, stringify it.
 								JSON.parse (regexFound2);
-								foundStr = JSON.stringify (regexFound2);
+
+								if (parserOptions.allowStringify === true)
+									foundStr = JSON.stringify (regexFound2);
+								else
+									foundStr = `${regexFound2}`;
 							}
 							catch (ex)
 							{
@@ -443,18 +478,26 @@ export class HotFile implements IHotFile
 							}
 
 							/// @fixme Make this a callable function and pass foundStr, etc.
-							let out: string = 
-`*&&%*%@#@!{
+							let out: string = "";
+
+							if (parserOptions.outputCommands === true)
+							{
+								out = `*&&%*%@#@!{
 const testElm = createTestElement (${foundStr});
 Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "\${testElm.func}" data-test-object-value = "\${testElm.value}"\`);
 }*&!#%@!@*!\n`;
+							}
+							else
+							{
+								out = `${foundStr}`;
+							}
 
 							return (out);
 						}, 
 						(offContent3: string): string =>
 						{
 							return (offContent3);
-							/*let out: string = `echoOutput (${offContent3}, ${this.throwAllErrors});\n`;
+							/*let out: string = `echoOutput (${offContent3}, ${throwAllErrors});\n`;
 
 							return (out);*/
 						});
@@ -468,8 +511,19 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 					}, 
 					(offContent: string): string =>
 					{
-						let escapedContent: string = JSON.stringify (offContent);
-						let out: string = `echoOutput (${escapedContent}, ${this.throwAllErrors});\n`;
+						let escapedContent: string = "";
+
+						if (parserOptions.allowStringify === true)
+							escapedContent = JSON.stringify (offContent);
+						else
+							escapedContent = offContent;
+
+						let out: string = "";
+						
+						if (parserOptions.outputCommands === true)
+							out = `echoOutput (${escapedContent}, ${throwAllErrors});\n`;
+						else
+							out = escapedContent;
 
 						return (out);
 					}, 
@@ -482,6 +536,31 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 
 				return (tempOutput5);
 			}, 0);
+
+		return (output);
+	}
+
+	/**
+	 * Process the content in this file. This treats each file as one large JavaScript
+	 * file. Any text outside of the <* *> areas will be treated as:
+	 * 
+	 * 		Hot.echo ("text");
+	 * 
+	 * @fixme The regex's in the offContent functions need to be fixed. There's several 
+	 * test cases where they will fail.
+	 */
+	async process (args: any = null): Promise<string>
+	{
+		let thisContent: string = this.content;
+
+		Hot.Mode = this.page.processor.mode;
+		Hot.Arguments = args;
+		Hot.CurrentPage = this.page;
+		Hot.PublicSecrets = this.page.processor.publicSecrets;
+		Hot.API = this.page.getAPI ();
+		Hot.TesterAPI = this.page.getTesterAPI ();
+
+		let output: string = HotFile.parseContent (thisContent, this.throwAllErrors);
 
 		// Execute the assembled JS file.
 		let returnedOutput: any = null;
