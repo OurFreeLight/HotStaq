@@ -19,6 +19,7 @@ describe ("Component Tests", () =>
 				await common.load ();
 
 				await common.startServer ();
+				await common.driver.sleep (3000);
 				await common.driver.get (`${common.getUrl ()}/tests/browser/index.htm`);
 			});
 		after (async () =>
@@ -69,6 +70,16 @@ Execute this code to debug in browser:
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");
 				expect (value).to.equal ("Clicked", "Button was not clicked!");
+
+				await common.driver.executeAsyncScript (`
+					var done = arguments[0];
+					let objHelloWorld = document.getElementById ("helloWorld");
+					document.getElementById ("message2").value = objHelloWorld.test ();
+					done ();`);
+
+				elm = await common.driver.findElement (By.id ("message2"));
+				value = await elm.getAttribute ("value");
+				expect (value).to.equal ("bla-test", "Button was not clicked!");
 			});
 		it ("should dynamically create a Hello World button", async () =>
 			{

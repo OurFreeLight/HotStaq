@@ -29,6 +29,11 @@ export class HelloWorld extends HotComponent
 		}
 	}
 
+	test ()
+	{
+		return ("bla-test");
+	}
+
 	async output (): Promise<string>
 	{
 		return (`<button id = "${this.name}">

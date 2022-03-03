@@ -9,7 +9,6 @@
 			"name": "Debug Web Server",
 			"program": "${workspaceFolder}/build/src/cli.js",
 			"request": "launch",
-			"cwd": "/home/someone13/editing/projects/HotStaq/examples/html_only",
 			"skipFiles": [
 				"<node_internals>/**"
 			],

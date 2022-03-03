@@ -31,6 +31,10 @@ export interface IHotComponent
 	 */
 	elementOptions?: ElementDefinitionOptions;
 	/**
+	 * Any extra attributes to register.
+	 */
+	observedAttributes?: string[];
+	/**
 	 * The type of component.
 	 */
 	type?: string;
@@ -80,6 +84,10 @@ export abstract class HotComponent implements IHotComponent
 	 */
 	elementOptions: ElementDefinitionOptions;
 	/**
+	 * Any extra attributes to register.
+	 */
+	observedAttributes: string[];
+	/**
 	 * The type of component.
 	 */
 	type: string;
@@ -100,14 +108,16 @@ export abstract class HotComponent implements IHotComponent
 
 	constructor (copy: IHotComponent | HotStaq, api: HotAPI = null)
 	{
-		if (copy instanceof HotStaq)
+		if ((copy instanceof HotStaq) || (copy == null))
 		{
+			// @ts-ignore
 			this.processor = copy;
 			this.htmlElement = null;
 			this.name = "";
 			this.tag = "";
 			this.api = null;
 			this.elementOptions = undefined;
+			this.observedAttributes = [];
 			this.type = "";
 			this.value = null;
 			this.events = {};
@@ -120,6 +130,7 @@ export abstract class HotComponent implements IHotComponent
 			this.tag = copy.tag || this.name;
 			this.api = copy.api || null;
 			this.elementOptions = copy.elementOptions || undefined;
+			this.observedAttributes = copy.observedAttributes || [];
 			this.type = copy.type || "";
 			this.value = copy.value || null;
 			this.events = {};
@@ -149,7 +160,7 @@ export abstract class HotComponent implements IHotComponent
 	/**
 	 * Handle a click event.
 	 */
-	abstract click (): Promise<void>;
+	abstract click? (): Promise<void>;
 
 	/**
 	 * Output the component.

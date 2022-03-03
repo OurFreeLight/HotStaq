@@ -1,0 +1,86 @@
+{
+	"name": "HotSiteTest",
+	"server": {
+			"jsSrcPath": "/build-web/HotStaq.js",
+			"serveDirectories": [{
+					"route": "/",
+					"localPath": "./"
+				}]
+		},
+	"testing": {
+		"web": {
+			"tester": "HotTesterMochaSelenium",
+			"createNewTester": false,
+			"testerAPIUrl": "http://127.0.0.1:8184",
+			"launchpadUrl": "http://127.0.0.1:3123",
+			"maps": [
+				"Testing",
+				"Testing2"
+			]
+		},
+		"api": {
+			"tester": "HotTesterMochaSelenium",
+			"createNewTester": false,
+			"testerAPIUrl": "http://127.0.0.1:8184",
+			"launchpadUrl": "http://127.0.0.1:3123",
+			"maps": [
+				"HelloWorld"
+			]
+		}
+	},
+	"routes": {
+			"/hello_world": {
+				"name": "Hello World",
+				"url": "/tests/hotsite/HelloWorld.hott",
+				"api": "HelloWorld"
+			},
+			"/testing": {
+				"name": "Testing",
+				"url": "/tests/hotsite/HelloWorld.hott",
+				"api": "HelloWorld",
+				"map": [
+						"page:Testing -> Testing-Test"
+					]
+			},
+			"/testing2": {
+				"name": "Testing2",
+				"url": "/tests/hotsite/HelloWorld.hott",
+				"api": "HelloWorld",
+				"map": [
+						"page:Testing2 -> Testing-Test"
+					]
+			},
+			"/files": {
+				"name": "Files",
+				"url": "/tests/hotsite/HelloWorldFiles.hott",
+				"api": "HelloWorld"
+			}
+		},
+	"apis": {
+		"HelloWorld": {
+			"jsapi": "./build-web/HotStaqTests_HelloWorldAPI.js",
+			"libraryName": "HotStaqTests",
+			"apiName": "HelloWorldAPI",
+			"filepath": "./build/tests/server/HelloWorldAPI.js",
+			"map": [
+					"api:hello_world -> test_response -> TestAPIResponse"
+				]
+		}
+	},
+	"publicSecrets": {
+		"Secret1": "Shh!"
+	},
+	"components": {
+			"HelloWorldComponent": {
+					"url": "./tests/components/HelloWorldComponent.ts"
+				}
+		},
+	"files": {
+			"Button": {
+					"localFile": "./tests/components/Button.hott"
+				},
+			"Content": {
+					"localFile": "./tests/hotsite/Content.hott"
+				}
+		}
+}
