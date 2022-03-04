@@ -419,7 +419,7 @@ export class HotFile implements IHotFile
 								out = `*&&%*%@#@!Hot.echo (${regexFound2});*&!#%@!@*!`;
 						}
 						else
-							out = regexFound2;
+							out = `*&&%*%@#@!${regexFound2}*&!#%@!@*!`;
 
 						return (out);
 					}, 
@@ -489,7 +489,41 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 							}
 							else
 							{
-								out = `${foundStr}`;
+								let createTestElement = (foundStr2: any) =>
+								{
+									let testElm = null;
+
+									try
+									{
+										let obj = foundStr2;
+
+										if (typeof (foundStr2) === "string")
+											obj = JSON.parse (foundStr2);
+
+										if (typeof (obj) === "string")
+											testElm = new Hot.HotTestElement (obj);
+
+										if (obj instanceof Array)
+											testElm = new Hot.HotTestElement (obj[0], obj[1], obj[2]);
+
+										if (obj["name"] != null)
+											testElm = new Hot.HotTestElement (obj);
+
+										if (Hot.CurrentPage.testElements[testElm.name] != null)
+											throw new Error (`Test element ${testElm.name} already exists!`);
+									}
+									catch (ex)
+									{
+										throw new Error (
+								`Error processing test element ${foundStr} in ${Hot.CurrentPage.name}. Error: ${ex.message}`
+											);
+									}
+
+									return (testElm);
+								}
+
+								const testElm = createTestElement (foundStr);
+								out = `*&&%*%@#@!data-test-object-name = "${testElm.name}" data-test-object-func = "${testElm.func}" data-test-object-value = "${testElm.value}"*&!#%@!@*!`;
 							}
 
 							return (out);

@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.45",
+  "version": "0.5.46",
   "description": "",
   "bin": {
     "hotstaq": "./bin/hotstaq"

@@ -718,83 +718,6 @@ export class HotStaq implements IHotStaq
 				constructor ()
 				{
 					super ();
-
-					/// @fixme Is this bad? Could create race conditions.
-					(async () =>
-					{
-						if (component.click != null)
-							this.onclick = component.click.bind (component);
-
-						for (let key in component.events)
-						{
-							let event = component.events[key];
-
-							// @ts-ignore
-							this.addEventListener (event.type, event.func, event.options);
-						}
-
-						component.htmlElement = await component.onCreated (this);
-
-						if (component.handleAttributes != null)
-							await component.handleAttributes (this.attributes);
-						else
-						{
-							for (let iIdx = 0; iIdx < this.attributes.length; iIdx++)
-							{
-								let attr: Attr = this.attributes[iIdx];
-								let attrName: string = attr.name.toLowerCase ();
-								let attrValue: string = attr.value;
-
-								if (attrName === "id")
-									component.name = attrValue;
-
-								if (attrName === "name")
-									component.name = attrValue;
-
-								if (attrName === "value")
-									component.value = attrValue;
-							}
-						}
-
-						let objectFunctions: string[] = Object.getOwnPropertyNames (component.constructor.prototype);
-
-						// Associate any functions to the newly created element.
-						for (let iIdx = 0; iIdx < objectFunctions.length; iIdx++)
-						{
-							let objFunc: string = objectFunctions[iIdx];
-
-							if (objFunc === "constructor")
-								continue;
-
-							// @ts-ignore
-							let prop = component[objFunc];
-
-							if (typeof (prop) === "function")
-							{
-								let isNewFunction: boolean = true;
-
-								// Go through each function in the base HotComponent and see 
-								// if there's any matches. If there's a match, that means 
-								// we're trying to add an existing function, and we don't
-								// wanna do that. Skip it.
-								for (let key2 in HotComponent.prototype)
-								{
-									if (objFunc === key2)
-									{
-										isNewFunction = false;
-
-										break;
-									}
-								}
-
-								if (isNewFunction === true)
-								{
-									// @ts-ignore
-									this[objFunc] = component[objFunc];
-								}
-							}
-						}
-					})();
 				}
 
 				static get observedAttributes(): string[]
@@ -804,14 +727,92 @@ export class HotStaq implements IHotStaq
 
 				async connectedCallback ()
 				{
+					component.htmlElement = this;
+
 					let str: string = HotFile.parseContent (await component.output (), true, { "outputCommands": false });
 					let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
-					let shadow: ShadowRoot = this.attachShadow ({ mode: "open" });
 
-					for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
+					if (newDOM.body.children.length < 1)
+						throw new Error (`No component output from ${component.name}`);
+
+					if (newDOM.body.children.length > 1)
+						throw new Error (`Only a single html element can come from component ${component.name}, multiple elements were detected.`);
+
+					let newObj: HTMLElement = (<HTMLElement>newDOM.body.children[0]);
+
+					this.replaceWith (newObj);
+
+					if (component.click != null)
+						newObj.onclick = component.click.bind (component);
+
+					for (let key in component.events)
 					{
-						let child = newDOM.body.children[iIdx];
-						shadow.appendChild (child);
+						let event = component.events[key];
+
+						// @ts-ignore
+						newObj.addEventListener (event.type, event.func, event.options);
+					}
+
+					component.htmlElement = await component.onCreated (newObj);
+
+					if (component.handleAttributes != null)
+						await component.handleAttributes (newObj.attributes);
+					else
+					{
+						for (let iIdx = 0; iIdx < newObj.attributes.length; iIdx++)
+						{
+							let attr: Attr = newObj.attributes[iIdx];
+							let attrName: string = attr.name.toLowerCase ();
+							let attrValue: string = attr.value;
+
+							if (attrName === "id")
+								component.name = attrValue;
+
+							if (attrName === "name")
+								component.name = attrValue;
+
+							if (attrName === "value")
+								component.value = attrValue;
+						}
+					}
+
+					let objectFunctions: string[] = Object.getOwnPropertyNames (component.constructor.prototype);
+
+					// Associate any functions to the newly created element.
+					for (let iIdx = 0; iIdx < objectFunctions.length; iIdx++)
+					{
+						let objFunc: string = objectFunctions[iIdx];
+
+						if (objFunc === "constructor")
+							continue;
+
+						// @ts-ignore
+						let prop = component[objFunc];
+
+						if (typeof (prop) === "function")
+						{
+							let isNewFunction: boolean = true;
+
+							// Go through each function in the base HotComponent and see 
+							// if there's any matches. If there's a match, that means 
+							// we're trying to add an existing function, and we don't
+							// wanna do that. Skip it.
+							for (let key2 in HotComponent.prototype)
+							{
+								if (objFunc === key2)
+								{
+									isNewFunction = false;
+
+									break;
+								}
+							}
+
+							if (isNewFunction === true)
+							{
+								// @ts-ignore
+								newObj[objFunc] = component[objFunc];
+							}
+						}
 					}
 				}
 			}, component.elementOptions);

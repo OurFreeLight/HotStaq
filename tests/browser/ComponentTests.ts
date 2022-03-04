@@ -86,6 +86,7 @@ Execute this code to debug in browser:
 				await common.driver.executeAsyncScript (`
 				var done = arguments[0];
 				var HotStaq = HotStaqWeb.HotStaq;
+				document.getElementById ("buttonClicked").innerHTML = "";
 				HotStaq.addHtml ("body", "<hello-world id = \\"dynamicHelloWorld\\" value = \\"Send\\"></hello-world>");
 				done ();`);
 			});
@@ -99,7 +100,6 @@ Execute this code to debug in browser:
 
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");
-				let jsonObj = JSON.parse (value);
-				expect (jsonObj).to.equal ("Hello!");
+				expect (value).to.equal ("Clicked");
 			});
 	});
