@@ -707,9 +707,6 @@ export class HotStaq implements IHotStaq
 	 */
 	protected registerComponent (component: HotComponent): void
 	{
-		if ((component.name == null) || (component.name === ""))
-			throw new Error (`Component must have a name!`);
-
 		if ((component.tag == null) || (component.tag === ""))
 			throw new Error (`Component ${component.name} must have a tag!`);
 
@@ -729,7 +726,19 @@ export class HotStaq implements IHotStaq
 				{
 					component.htmlElement = this;
 
-					let str: string = HotFile.parseContent (await component.output (), true, { "outputCommands": false });
+					let output = await component.output ();
+					let htmlStr: string = "";
+					let addFunctionsTo: string = "";
+
+					if (typeof (output) === "string")
+						htmlStr = output;
+					else
+					{
+						htmlStr = output.html;
+						addFunctionsTo = output.addFunctionsTo;
+					}
+
+					let str: string = HotFile.parseContent (htmlStr, true, { "outputCommands": false });
 					let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
 
 					if (newDOM.body.children.length < 1)
@@ -811,6 +820,14 @@ export class HotStaq implements IHotStaq
 							{
 								// @ts-ignore
 								newObj[objFunc] = component[objFunc];
+
+								if (addFunctionsTo !== "")
+								{
+									const query: HTMLElement = document.querySelector (addFunctionsTo);
+
+									// @ts-ignore
+									query[objFunc] = component[objFunc];
+								}
 							}
 						}
 					}

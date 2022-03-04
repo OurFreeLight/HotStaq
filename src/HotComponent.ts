@@ -165,5 +165,17 @@ export abstract class HotComponent implements IHotComponent
 	/**
 	 * Output the component.
 	 */
-	abstract output (): Promise<string>;
+	abstract output (): Promise<string | 
+		{
+			/**
+			 * The HTML to output.
+			 */
+			html: string;
+			/**
+			 * The query selector to add this component's functions to.
+			 * 
+			 * @example #objectId
+			 */
+			addFunctionsTo: string;
+		}>;
 }

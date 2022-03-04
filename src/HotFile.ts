@@ -515,7 +515,7 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 									catch (ex)
 									{
 										throw new Error (
-								`Error processing test element ${foundStr} in ${Hot.CurrentPage.name}. Error: ${ex.message}`
+								`Error processing test element ${foundStr2} in ${Hot.CurrentPage.name}. Error: ${ex.message}`
 											);
 									}
 
