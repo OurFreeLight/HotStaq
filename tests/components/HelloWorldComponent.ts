@@ -36,7 +36,7 @@ export class HelloWorld extends HotComponent
 
 	async output (): Promise<string>
 	{
-		return (`<button id = "${this.name}">
+		return (`<button id = "${this.htmlElement.id}">
 			${this.value}
 		</button>`);
 	}
