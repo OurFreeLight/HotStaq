@@ -815,24 +815,6 @@ export class HotStaq implements IHotStaq
 						}
 					}
 				}
-
-				static get observedAttributes(): string[]
-				{
-					return (component.observedAttributes);
-				}
-
-				async connectedCallback ()
-				{
-					let str: string = HotFile.parseContent (await component.output (), true, { "outputCommands": false });
-					let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
-					let shadow: ShadowRoot = this.attachShadow ({ mode: "open" });
-
-					for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
-					{
-						let child = newDOM.body.children[iIdx];
-						shadow.appendChild (child);
-					}
-				}
 			}, component.elementOptions);
 	}
 
