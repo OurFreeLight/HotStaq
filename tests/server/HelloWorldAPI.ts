@@ -29,6 +29,21 @@ export class HelloWorldAPI extends HotAPI
 	{
 		super(baseUrl, connection, db);
 
+		this.userAuth = async (req: any, res: any, jsonObj: any, queryObj: any): Promise<any> =>
+			{
+				const apiKey: string = jsonObj["ApiKey"];
+				const apiSecret: string = jsonObj["ApiSecret"];
+
+				if ((apiKey === "kjs1he4w57h") && (apiSecret === "3u4j5n978sd"))
+				{
+					return ({ userId: "test-user" });
+				}
+				else
+					throw new Error ("Incorrect API key or secret!");
+
+				return (undefined);
+			};
+
 		let route: HotRoute = new HotRoute (connection, "hello_world");
 		route.addMethod ({
 				name: "hello",

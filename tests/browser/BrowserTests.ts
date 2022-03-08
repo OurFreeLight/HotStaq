@@ -102,6 +102,32 @@ Execute this code to debug in browser:
 
 				expect (jsonObj).to.equal ("Hello!");
 			});
+		it ("should send a bad authorized hi to the hello world api", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("testHelloWorldAPI3")));
+				await elm.click ();
+
+				await HotStaq.wait (100);
+
+				elm = await common.driver.findElement (By.id ("testHelloWorldAPI3"));
+				let value = await elm.getAttribute ("innerHTML");
+				let jsonObj = JSON.parse (value);
+
+				expect (jsonObj.error).to.equal ("Incorrect API key or secret!");
+			});
+		it ("should send a good authorized hi to the hello world api", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("testHelloWorldAPI4")));
+				await elm.click ();
+
+				await HotStaq.wait (100);
+
+				elm = await common.driver.findElement (By.id ("testHelloWorldAPI4"));
+				let value = await elm.getAttribute ("innerHTML");
+				let jsonObj = JSON.parse (value);
+
+				expect (jsonObj.message.value).to.equal ("Hello!");
+			});
 		it ("should test the test attribute that uses a JS executor ${}", async () =>
 			{
 				let elm = await common.driver.wait (until.elementLocated (By.id ("message")));
