@@ -104,8 +104,8 @@ export class HotCreator
 	{
 		const buildWebDir: string = ppath.normalize (`${__dirname}/../../build-web`);
 
-		await HotIO.copyFile (`${buildWebDir}/HotStaq.js`, ppath.normalize (location));
-		await HotIO.copyFile (`${buildWebDir}/HotStaq.min.js`, ppath.normalize (location));
+		await HotIO.copyFile (`${buildWebDir}/HotStaq.js`, ppath.normalize (`${location}/HotStaq.js`));
+		await HotIO.copyFile (`${buildWebDir}/HotStaq.min.js`, ppath.normalize (`${location}/HotStaq.min.js`));
 	}
 
 	/**
@@ -263,11 +263,8 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		this.logger.info (`Finished copying files...`);
 
 		this.logger.info (`Copying HotStaq JS files...`);
-		const buildWebDir: string = ppath.normalize (`${__dirname}/../../build-web`);
-
-		await HotIO.copyFile (`${buildWebDir}/HotStaq.js`, ppath.normalize (`${this.outputDir}/public/js/`));
-		await HotIO.copyFile (`${buildWebDir}/HotStaq.min.js`, ppath.normalize (`${this.outputDir}/public/js/`));
-		this.logger.info (`Finished copying public files...`);
+		await this.copyLibraries (ppath.normalize (`${this.outputDir}/public/js/`));
+		this.logger.info (`Finished copying HotStaq JS files...`);
 
 		this.logger.info (`Creating VSCode files...`);
 
