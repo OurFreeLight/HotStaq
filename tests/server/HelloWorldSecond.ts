@@ -12,7 +12,8 @@ export class HelloWorldSecond extends HotRoute
 
 		this.addMethod ({
 				name: "hello_again",
-				description: "Say hello again to the server and it will respond. Just more complicated.",
+				description: "Securely say hello again to the server with authorization and it will respond.",
+                onServerAuthorize: api.userAuth,
 				onServerExecute: this.complicatedHello,
 				parameters: {
 					message: {

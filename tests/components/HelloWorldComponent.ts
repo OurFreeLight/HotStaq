@@ -6,6 +6,7 @@ import { HelloWorldAPI } from "../server/HelloWorldAPI";
 export class HelloWorld extends HotComponent
 {
 	api: HelloWorldAPI;
+	storedTestValue: string;
 
 	constructor (copy: IHotComponent | HotStaq, api: HelloWorldAPI)
 	{
@@ -14,6 +15,7 @@ export class HelloWorld extends HotComponent
 		this.name = "hello-world";
 		this.tag = this.name;
 		this.value = "Hello World!";
+		this.storedTestValue = "bla-test";
 	}
 
 	async click (): Promise<void>
@@ -31,7 +33,9 @@ export class HelloWorld extends HotComponent
 
 	test ()
 	{
-		return ("bla-test");
+		// This ensures that when the function is called, it's being called from within 
+		// the correct instantiated component.
+		return (this.storedTestValue);
 	}
 
 	async output (): Promise<string>

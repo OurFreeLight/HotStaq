@@ -92,8 +92,8 @@ export class HotCreator
 				dev: "",
 				test: "hotstaq test",
 				build: "",
-				buildWebAPI: "",
-				buildWebAPIDebug: ""
+				buildWebAPI: "hotstaq generate",
+				buildWebAPIDebug: "hotstaq generate"
 			};
 	}
 
@@ -104,7 +104,8 @@ export class HotCreator
 	{
 		const buildWebDir: string = ppath.normalize (`${__dirname}/../../build-web`);
 
-		await HotIO.copyFiles (buildWebDir, ppath.normalize (location));
+		await HotIO.copyFile (`${buildWebDir}/HotStaq.js`, ppath.normalize (location));
+		await HotIO.copyFile (`${buildWebDir}/HotStaq.min.js`, ppath.normalize (location));
 	}
 
 	/**
@@ -143,7 +144,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				"author": "",
 				"license": "ISC",
 				"dependencies": {
-					"hotstaq": "^0.5.23",
+					"hotstaq": "^0.5.49",
 					"copy-webpack-plugin": "^6.0.3"
 				}
 			};
@@ -172,20 +173,8 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		if (this.npmCommands.build !== "")
 			packageJSON.scripts["build"] = this.npmCommands.build;
 
-		if (this.npmCommands.buildWebAPI === "")
-		{
-			if (this.language === "ts")
-				this.npmCommands.buildWebAPI = "hotstaq generate";
-		}
-
 		if (this.npmCommands.buildWebAPI !== "")
 			packageJSON.scripts["build-web"] = this.npmCommands.buildWebAPI;
-
-		if (this.npmCommands.buildWebAPIDebug === "")
-		{
-			if (this.language === "ts")
-				this.npmCommands.buildWebAPIDebug = "hotstaq generate";
-		}
 
 		if (this.npmCommands.buildWebAPIDebug !== "")
 			packageJSON.scripts["build-web-debug"] = this.npmCommands.buildWebAPIDebug;
@@ -276,7 +265,8 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		this.logger.info (`Copying HotStaq JS files...`);
 		const buildWebDir: string = ppath.normalize (`${__dirname}/../../build-web`);
 
-		await HotIO.copyFiles (buildWebDir, ppath.normalize (`${this.outputDir}/public/js/`));
+		await HotIO.copyFile (`${buildWebDir}/HotStaq.js`, ppath.normalize (`${this.outputDir}/public/js/`));
+		await HotIO.copyFile (`${buildWebDir}/HotStaq.min.js`, ppath.normalize (`${this.outputDir}/public/js/`));
 		this.logger.info (`Finished copying public files...`);
 
 		this.logger.info (`Creating VSCode files...`);
