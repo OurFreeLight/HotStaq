@@ -640,10 +640,16 @@ export class ${data.routeName} extends HotAPI
 `if (typeof (${data.libraryName}) === "undefined")
 	${data.libraryName} = {};
 
-var HotAPIGlobal = HotAPI;
+var HotAPIGlobal = undefined;
 
-if (typeof (HotAPIGlobal) === "undefined")
-	HotAPIGlobal = window.HotAPI;
+if (typeof (HotAPI) !== "undefined")
+	HotAPIGlobal = HotAPI;
+
+if (typeof (window) !== "undefined")
+{
+	if (typeof (window.HotAPI) !== "undefined")
+		HotAPIGlobal = window.HotAPI;
+}
 `;
 		}
 
@@ -795,6 +801,21 @@ class ${data.routeName}
 	{
 		var promise = new Promise ((resolve, reject) => 
 			{
+				if (Hot != null)
+				{
+					if (Hot.API != null)
+					{
+						if (Hot.API.authCredentials != null)
+						{
+							for (let key in Hot.API.authCredentials)
+							{
+								if (jsonObj[key] == null)
+									jsonObj[key] = Hot.API.authCredentials[key];
+							}
+						}
+					}
+				}
+
 				fetch (\`\${this.baseUrl}/${data.routeVersion}/${data.routeName}/${data.methodName}\`, {
 						"method": "${data.methodType}",
 						"headers": {
@@ -834,7 +855,7 @@ class ${data.routeName}
 				let collectedRoute = data.collectedRoutes[iIdx];
 
 				routesOutput += `
-						this.${collectedRoute.routeName} = new ${collectedRoute.routeName} (baseUrl, connection, db);`;
+					this.${collectedRoute.routeName} = new ${collectedRoute.routeName} (baseUrl, connection, db);`;
 			}
 
 			content = `if (typeof (${data.libraryName}.${data.apiName}) === "undefined")

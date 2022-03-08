@@ -15,11 +15,9 @@
 			"outputCapture": "std",
 			"args": [
                 "--development-mode",
-				"--hot-site",
-				"./HotSite.json",
+				"--hot-site", "./HotSite.json",
 				"run",
-				"--web-http-port",
-				"8080"
+				"--web-http-port", "8080"
 			],
 			"env": {
 			}
@@ -34,11 +32,9 @@
 			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
 			"args": [
                 "--development-mode",
-				"--hot-site",
-                "./HotSite.json",
+				"--hot-site", "./HotSite.json",
 				"test",
-				"--web-http-port",
-				"8080"
+				"--web-http-port", "8080"
 			],
 			"env": {
 			}

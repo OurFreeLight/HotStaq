@@ -678,6 +678,32 @@ export class HotStaq implements IHotStaq
 		return (this.files[name]);
 	}
 
+	/** 
+	 * Keep the context the object is currently in.
+	 * 
+	 * @param func The document element's id.
+	 * @param context The object to remain in context.
+	 * @param [val=undefined] An additional value to pass to the context.
+	 * @return The returned result from the function func.
+	 */
+	static keepContext(func: Function, context: any, val?: any): any
+	{
+		var objReturn = function()
+			{
+				var aryArgs = Array.prototype.slice.call(arguments);
+
+				if (val != undefined)
+					aryArgs.push(val);
+
+				if (context == null)
+					return func.apply(this, aryArgs);
+				else
+					return func.apply(context, aryArgs);
+			};
+
+		return objReturn;
+	}
+
 	/**
 	 * Add and register a component.
 	 */
@@ -819,14 +845,14 @@ export class HotStaq implements IHotStaq
 							if (isNewFunction === true)
 							{
 								// @ts-ignore
-								newObj[objFunc] = component[objFunc];
+								newObj[objFunc] = HotStaq.keepContext (component[objFunc], component);
 
 								if (addFunctionsTo !== "")
 								{
 									const query: HTMLElement = document.querySelector (addFunctionsTo);
 
 									// @ts-ignore
-									query[objFunc] = component[objFunc];
+									query[objFunc] = HotStaq.keepContext (component[objFunc], component);
 								}
 							}
 						}

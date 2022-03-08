@@ -4,6 +4,8 @@
 <head>
 	<title>Hello World Page</title>
 
+	<script type = "text/javascript" src = "/build-web/HotStaqTests_HelloWorldAPI.js"></script>
+
 	<script type = "text/javascript">
 		async function sayHello ()
 		{
@@ -16,6 +18,23 @@
 			let api = Hot.CurrentPage.getAPI ();
 			let result = await api.hello_world.hello ({ message: 'hi' });
 			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
+		}
+
+		async function sayHelloButAuthorizedBad ()
+		{
+			let result = await Hot.API.hello_world_second.hello_again ({ message: 'hi' });
+			document.getElementById ('testHelloWorldAPI3').innerHTML = JSON.stringify (result);
+		}
+
+		async function sayHelloButAuthorizedGood ()
+		{
+			Hot.API.authCredentials = {
+					ApiKey: "kjs1he4w57h",
+					ApiSecret: "3u4j5n978sd"
+				};
+
+			let result = await Hot.API.hello_world_second.hello_again ({ message: 'hi' });
+			document.getElementById ('testHelloWorldAPI4').innerHTML = JSON.stringify (result);
 		}
 	</script>
 </head>
@@ -30,6 +49,8 @@
 	<input id = "message" data-test = "${testData}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
 	<button id = "testHelloWorldAPI" onclick = "sayHello ();">Send</button>
 	<button id = "testHelloWorldAPI2" onclick = "sayHelloDifferently ();">Send2</button>
+	<button id = "testHelloWorldAPI3" onclick = "sayHelloButAuthorizedBad ();">Auth Send - Bad Auth</button>
+	<button id = "testHelloWorldAPI4" onclick = "sayHelloButAuthorizedGood ();">Auth Send - Good Auth</button>
 <*
 	await Hot.include ("./TestButton.hott", {
 			Parent: testData
