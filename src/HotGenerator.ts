@@ -650,6 +650,43 @@ if (typeof (window) !== "undefined")
 	if (typeof (window.HotAPI) !== "undefined")
 		HotAPIGlobal = window.HotAPI;
 }
+
+function HotStaqProcessJSONObject (jsonObj)
+{
+	if (jsonObj != null)
+	{
+		if (Hot != null)
+		{
+			if (Hot.API != null)
+			{
+				if (Hot.API.authCredentials != null)
+				{
+					for (let key in Hot.API.authCredentials)
+					{
+						if (jsonObj[key] == null)
+							jsonObj[key] = Hot.API.authCredentials[key];
+					}
+				}
+			}
+		}
+	}
+
+	return (jsonObj);
+}
+
+function HotStaqPostJSONObject (methodType, url, jsonObj)
+{
+	let promise = fetch (url, {
+			"method": methodType,
+			"headers": {
+				"Accept": "application/json",
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify (jsonObj)
+		});
+
+	return (promise);
+}
 `;
 		}
 
@@ -801,29 +838,10 @@ class ${data.routeName}
 	{
 		var promise = new Promise ((resolve, reject) => 
 			{
-				if (Hot != null)
-				{
-					if (Hot.API != null)
-					{
-						if (Hot.API.authCredentials != null)
-						{
-							for (let key in Hot.API.authCredentials)
-							{
-								if (jsonObj[key] == null)
-									jsonObj[key] = Hot.API.authCredentials[key];
-							}
-						}
-					}
-				}
-
-				fetch (\`\${this.baseUrl}/${data.routeVersion}/${data.routeName}/${data.methodName}\`, {
-						"method": "${data.methodType}",
-						"headers": {
-							"Accept": "application/json",
-							"Content-Type": "application/json"
-						},
-						body: JSON.stringify (jsonObj)
-					}).then (function (response)
+				jsonObj = HotStaqProcessJSONObject (jsonObj);
+				HotStaqPostJSONObject ("${data.methodType}", 
+					\`\${this.baseUrl}/${data.routeVersion}/${data.routeName}/${data.methodName}\`, 
+					jsonObj).then (function (response)
 						{
 							var result = response.json ();
 

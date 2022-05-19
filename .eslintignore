@@ -13,6 +13,8 @@ output/
 client/
 tests/
 
+temp*/
+
 create-test-temp/
 
 ./HotSite.json

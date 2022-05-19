@@ -21,7 +21,7 @@
 		<input ?("result") id = "resultText" type = "text" value = "" readonly /><br />
 	</body>
 </html>
-<*
+<!--<*
 	Hot.CurrentPage.createTestPath ("Form-SignIn-FillOut", async (driver) =>
 		{
 			await driver.waitForTestElement ("username");
@@ -45,4 +45,4 @@
 			await driver.assertElementValue (
 				"result", `{"error":"You didn't say hi."}`, "Element result is incorrect!");
 		});
-*>
+*>-->

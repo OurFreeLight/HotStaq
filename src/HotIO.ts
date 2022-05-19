@@ -2,7 +2,8 @@ import * as fs from "fs";
 import * as fse from "fs-extra";
 
 const util = require ("util");
-const asyncExec = util.promisify (require ("child_process").exec);
+import * as child_process from "child_process";
+const asyncExec = util.promisify (child_process.exec);
 
 /**
  * Handles IO for the server.
@@ -156,5 +157,15 @@ export class HotIO
 		let output = await asyncExec (cmd);
 
 		return (output.stdout);
+	}
+
+	/**
+	 * Execute a command as a grabbable process.
+	 */
+	static spawn (cmd: string, args: string[]): child_process.ChildProcess
+	{
+		let output: child_process.ChildProcess = child_process.spawn (cmd, args);
+
+		return (output);
 	}
 }

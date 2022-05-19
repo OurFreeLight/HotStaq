@@ -1,0 +1,30 @@
+{
+	"name": "test-static-site",
+	"server": {
+			"jsSrcPath": "./js/HotStaq.min.js",
+			"serveDirectories": [{
+					"route": "/",
+					"localPath": "./"
+				}]
+		},
+	"testing": {
+		"web": {
+			"tester": "HotTesterMochaSelenium",
+			"createNewTester": false,
+			"testerAPIUrl": "http://127.0.0.1:8186",
+			"launchpadUrl": "http://127.0.0.1:9898",
+			"maps": [
+				"TestTheIndex"
+			]
+		}
+	},
+	"routes": {
+			"/": {
+				"name": "TestTheIndex",
+				"url": "/index.htm",
+				"map": [
+						"page:TestTheIndex -> Page-Test-Button-Click"
+					]
+			}
+		}
+}

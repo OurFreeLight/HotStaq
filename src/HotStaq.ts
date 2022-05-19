@@ -259,9 +259,9 @@ export interface HotSite
 				};
 		};
 	/**
-	 * Secrets that can be publicly embedded into the page.
+	 * Public keys that are embedded into the page.
 	 */
-	publicSecrets?: {
+	publicKeys?: {
 			[name: string]: string | {
 					/**
 					 * The key of an API secret to pass to the site to 
@@ -306,7 +306,11 @@ export interface HotStartOptions
 	/**
 	 * The Hott site to load.
 	 */
-	url: string;
+	url?: string;
+	/**
+	 * The content to display.
+	 */
+	content?: string;
 	/**
 	 * The name of the page to load.
 	 */
@@ -437,11 +441,11 @@ export class HotStaq implements IHotStaq
 	 */
 	logger: HotLog;
 	/**
-	 * The secrets that can be exposed publicly.
+	 * The public keys to be exposed.
 	 */
-	publicSecrets: any;
+	publicKeys: any;
 	/**
-	 * The secrets that can be exposed publicly.
+	 * The testers that will be used to execute tests.
 	 */
 	testers: { [name: string]: HotTester };
 
@@ -529,7 +533,7 @@ export class HotStaq implements IHotStaq
 
 </html>`;
 		this.logger = new HotLog (HotLogLevel.None);
-		this.publicSecrets = {};
+		this.publicKeys = {};
 		this.testers = {};
 	}
 
@@ -986,11 +990,11 @@ export class HotStaq implements IHotStaq
 
 		if (HotStaq.isWeb === true)
 		{
-			this.logger.info (`Retrieving HotSite ${path}`);
+			this.logger.info (`Downloading HotSite ${path}`);
 
 			let res: any = await fetch (path);
 
-			this.logger.info (`Retrieved site ${path}`);
+			this.logger.info (`Downloaded site ${path}`);
 
 			jsonStr = res.text ();
 		}
@@ -998,7 +1002,7 @@ export class HotStaq implements IHotStaq
 		{
 			path = ppath.normalize (path);
 
-			this.logger.info (`Retrieving HotSite ${path}`);
+			this.logger.info (`Accessing HotSite ${path}`);
 
 			jsonStr = await new Promise (
 				(resolve: any, reject: any): void =>
@@ -1010,7 +1014,7 @@ export class HotStaq implements IHotStaq
 	
 							let content: string = data.toString ();
 
-							this.logger.info (`Retrieved site ${path}`);
+							this.logger.info (`Accessed site ${path}`);
 	
 							resolve (content);
 						});
@@ -1273,7 +1277,7 @@ export class HotStaq implements IHotStaq
 	{
 		let apiScripts: string = "";
 		let apiCode: string = "";
-		let publicSecrets: string = "";
+		let publicKeys: string = "";
 
 		/// @todo Optimize this function as much as possible.
 
@@ -1390,11 +1394,11 @@ export class HotStaq implements IHotStaq
 					jsSrcPath = this.hotSite.server.jsSrcPath;
 			}
 
-			if (this.hotSite.publicSecrets != null)
+			if (this.hotSite.publicKeys != null)
 			{
-				for (let key in this.hotSite.publicSecrets)
+				for (let key in this.hotSite.publicKeys)
 				{
-					let secret = this.hotSite.publicSecrets[key];
+					let secret = this.hotSite.publicKeys[key];
 					let value: string = undefined;
 
 					if (typeof (secret) === "string")
@@ -1426,7 +1430,7 @@ export class HotStaq implements IHotStaq
 						}
 					}
 
-					publicSecrets += `processor.publicSecrets["${key}"] = ${value};\n`;
+					publicKeys += `processor.publicKeys["${key}"] = ${value};\n`;
 				}
 			}
 		}
@@ -1538,7 +1542,7 @@ export class HotStaq implements IHotStaq
 				tempContent = tempContent.replace (/\%load\_hot\_site\%/g, ""); /// @fixme Should this only be done server-side?
 				tempContent = tempContent.replace (/\%load\_files\%/g, loadFiles);
 				tempContent = tempContent.replace (/\%api\_code\%/g, apiCode);
-				tempContent = tempContent.replace (/\%public\_secrets\%/g, publicSecrets);
+				tempContent = tempContent.replace (/\%public\_secrets\%/g, publicKeys);
 				tempContent = tempContent.replace (/\%url\%/g, url);
 				tempContent = tempContent.replace (/\%tester\_name\%/g, `"${testerName}"`);
 				tempContent = tempContent.replace (/\%tester\_map\%/g, `"${testerMap}"`);
@@ -1779,20 +1783,19 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Process content and get the result.
 	 */
-	static async processContent (processor: HotStaq, 
-		content: string, name: string, args: any = null): Promise<string>
+	static async processContent (options: HotStartOptions): Promise<string>
 	{
 		let file: HotFile = new HotFile ({
-			"content": content
+			"content": options.content
 		});
 		await file.load ();
 		let page: HotPage = new HotPage ({
-				"processor": processor,
-				"name": name,
+				"processor": options.processor,
+				"name": options.name,
 				"files": [file]
 			});
-		processor.addPage (page);
-		let result: string = await processor.process (name, args);
+		options.processor.addPage (page);
+		let result: string = await options.processor.process (options.name, options.args);
 
 		return (result);
 	}
@@ -1833,6 +1836,97 @@ export class HotStaq implements IHotStaq
 
 		if (HotStaq.onReadyForTesting != null)
 			await HotStaq.onReadyForTesting ();
+	}
+
+	/**
+	 * Setup the testers api, if any.
+	 */
+	static setupTesters (processor: HotStaq, options: HotStartOptions)
+	{
+		if (processor.mode === DeveloperMode.Development)
+		{
+			if (processor.testerAPI == null)
+			{
+				if (options.testerAPIBaseUrl == null)
+					options.testerAPIBaseUrl = "";
+
+				if (options.testerAPIBaseUrl === "")
+					options.testerAPIBaseUrl = "http://127.0.0.1:8182";
+
+				let client: HotClient = new HotClient (processor);
+				let testerAPI: HotTesterAPI = new HotTesterAPI (options.testerAPIBaseUrl, client);
+				testerAPI.connection.api = testerAPI;
+				processor.testerAPI = testerAPI;
+			}
+		}
+	}
+
+	/**
+	 * Setup the testers api on the client, if needed.
+	 */
+	static setupClientTesters (processor: HotStaq): string
+	{
+		let output: string = "";
+
+		if (processor.mode === DeveloperMode.Development)
+		{
+			output += 
+`<script type = "text/javascript">
+function hotstaq_isDocumentReady ()
+{
+if (window["Hot"] != null)
+{
+if (Hot.Mode === HotStaqWeb.DeveloperMode.Development)
+{
+let func = function ()
+	{
+		if (Hot.TesterAPI != null)
+		{
+			let testPaths = {};
+			let testElements = JSON.stringify (Hot.CurrentPage.testElements);
+			let testMaps = JSON.stringify (Hot.CurrentPage.testMaps);
+
+			for (let key in Hot.CurrentPage.testPaths)
+			{
+				let testPath = Hot.CurrentPage.testPaths[key];
+
+				testPaths[key] = testPath.toString ();
+			}
+
+			let testPathsStr = JSON.stringify (testPaths);
+
+			Hot.TesterAPI.tester.pageLoaded ({
+					testerName: Hot.CurrentPage.testerName,
+					testerMap: Hot.CurrentPage.testerMap,
+					pageName: Hot.CurrentPage.name,
+					testElements: testElements,
+					testPaths: testPathsStr
+				}).then (function (resp)
+					{
+						if (resp.error != null)
+						{
+							if (resp.error !== "")
+								throw new Error (resp.error);
+						}
+
+						HotStaqWeb.HotStaq.isReadyForTesting = true;
+					});
+		}
+	};
+
+if ((document.readyState === "complete") || (document.readyState === "interactive"))
+	func ();
+else
+	document.addEventListener ("DOMContentLoaded", func);
+}
+}
+}
+
+hotstaq_isDocumentReady ();
+</script>`;
+		}
+
+		return (output);
 	}
 
 	/**
@@ -1899,22 +1993,7 @@ export class HotStaq implements IHotStaq
 						if (processor == null)
 							processor = new HotStaq ();
 
-						if (processor.mode === DeveloperMode.Development)
-						{
-							if (processor.testerAPI == null)
-							{
-								if (options.testerAPIBaseUrl == null)
-									options.testerAPIBaseUrl = "";
-
-								if (options.testerAPIBaseUrl === "")
-									options.testerAPIBaseUrl = "http://127.0.0.1:8182";
-
-								let client: HotClient = new HotClient (processor);
-								let testerAPI: HotTesterAPI = new HotTesterAPI (options.testerAPIBaseUrl, client);
-								testerAPI.connection.api = testerAPI;
-								processor.testerAPI = testerAPI;
-							}
-						}
+						HotStaq.setupTesters (processor, options);
 
 						options.processor = processor;
 						options.args = args;
@@ -1924,63 +2003,7 @@ export class HotStaq implements IHotStaq
 
 						let output: string = await HotStaq.processUrl (options);
 
-						if (processor.mode === DeveloperMode.Development)
-						{
-							output += 
-`<script type = "text/javascript">
-	function hotstaq_isDocumentReady ()
-	{
-		if (window["Hot"] != null)
-		{
-			if (Hot.Mode === HotStaqWeb.DeveloperMode.Development)
-			{
-				let func = function ()
-					{
-						if (Hot.TesterAPI != null)
-						{
-							let testPaths = {};
-							let testElements = JSON.stringify (Hot.CurrentPage.testElements);
-							let testMaps = JSON.stringify (Hot.CurrentPage.testMaps);
-
-							for (let key in Hot.CurrentPage.testPaths)
-							{
-								let testPath = Hot.CurrentPage.testPaths[key];
-
-								testPaths[key] = testPath.toString ();
-							}
-
-							let testPathsStr = JSON.stringify (testPaths);
-
-							Hot.TesterAPI.tester.pageLoaded ({
-									testerName: Hot.CurrentPage.testerName,
-									testerMap: Hot.CurrentPage.testerMap,
-									pageName: Hot.CurrentPage.name,
-									testElements: testElements,
-									testPaths: testPathsStr
-								}).then (function (resp)
-									{
-										if (resp.error != null)
-										{
-											if (resp.error !== "")
-												throw new Error (resp.error);
-										}
-
-										HotStaqWeb.HotStaq.isReadyForTesting = true;
-									});
-						}
-					};
-
-				if ((document.readyState === "complete") || (document.readyState === "interactive"))
-					func ();
-				else
-					document.addEventListener ("DOMContentLoaded", func);
-			}
-		}
-	}
-
-	hotstaq_isDocumentReady ();
-</script>`;
-						}
+						output += HotStaq.setupClientTesters (processor);
 
 						HotStaq.useOutput (output);
 						resolve (processor);
@@ -1992,16 +2015,72 @@ export class HotStaq implements IHotStaq
 	 * Process and replace the current HTML page with the hott script.
 	 * This is meant for web browser use only.
 	 */
-	static async displayContent (content: string, name: string, processor: HotStaq = null): Promise<HotStaq>
+	static async displayContent (content: string | HotStartOptions, name: string = null, 
+			processor: HotStaq = null, args: any = null): Promise<HotStaq>
 	{
 		return (new Promise<HotStaq> ((resolve, reject) =>
 			{
 				HotStaq.onReady (async () =>
 					{
+						let options: HotStartOptions = {
+								"content": ""
+							};
+
+						if (name == null)
+						{
+							if (typeof (content) === "string")
+								options.name = "";
+							else
+								options.name = content.name;
+						}
+						else
+							options.name = name;
+
+						if (options.name === "")
+						{
+							if (typeof (content) === "string")
+								options.name = ""; /// @fixme Is this ok to do?
+							else
+								options.name = content.name;
+						}
+
+						if (typeof (content) === "string")
+							options.content = content;
+						else
+						{
+							options.content = content.content;
+
+							if (processor == null)
+							{
+								if (content.processor != null)
+									processor = content.processor;
+							}
+
+							if (args == null)
+							{
+								if (content.args != null)
+									args = content.args;
+							}
+
+							if (content.testerMap != null)
+								options.testerMap = content.testerMap;
+
+							if (content.testerName != null)
+								options.testerName = content.testerName;
+
+							if (content.testerAPIBaseUrl != null)
+								options.testerAPIBaseUrl = content.testerAPIBaseUrl;
+						}
+
 						if (processor == null)
 							processor = new HotStaq ();
 
-						let output: string = await HotStaq.processContent (processor, content, name);
+						HotStaq.setupTesters (processor, options);
+
+						options.processor = processor;
+						options.args = args;
+
+						let output: string = await HotStaq.processContent (options);
 
 						HotStaq.useOutput (output);
 						resolve (processor);
@@ -2014,30 +2093,171 @@ if (typeof (document) !== "undefined")
 {
 	let hotstaqElms = document.getElementsByTagName ("hotstaq");
 
-	if (hotstaqElms.length > 0)
-	{
-		let tempMode = 0;
+	// Set this to true, just in case...
+	HotStaq.isWeb = true;
 
 		// @ts-ignore
-		if (window["Hot"] != null)
-			tempMode = Hot.Mode;
+	if (typeof (HotStaqWeb) !== "undefined")
+	{
+		// @ts-ignore
+		window.HotStaq = HotStaqWeb.HotStaq;
+		// @ts-ignore
+		window.HotClient = HotStaqWeb.HotClient;
+		// @ts-ignore
+		window.HotAPI = HotStaqWeb.HotAPI;
+		// @ts-ignore
+		window.Hot = HotStaqWeb.Hot;
+	}
 
+	if (hotstaqElms.length > 0)
+	{
 		// @ts-ignore
 		let hotstaqElm: HTMLElement = hotstaqElms[0];
 
-		let processor = new HotStaq ();
-		let promises: any[] = [];
-
-		processor.mode = tempMode;
-
-		Promise.all (promises).then (function ()
+		setTimeout (async function ()
 			{
-				HotStaq.displayUrl ({
-						url: hotstaqElm.dataset.loadPage,
-						name: "",
+				let getAttr = (elm: HTMLElement, attrNames: string[]) =>
+					{
+						for (let iIdx = 0; iIdx < attrNames.length; iIdx++)
+						{
+							let attrName: string = attrNames[iIdx];
+
+							if (elm.getAttribute (attrName) != null)
+								return (elm.getAttribute (attrName));
+
+							if (elm.getAttribute (`data-${attrName}`) != null)
+								return (elm.getAttribute (`data-${attrName}`));
+						}
+
+						return (undefined);
+					};
+
+				let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
+				let name: string = getAttr (hotstaqElm, ["name"]) || ""; /// @fixme Should we allow names to be empty?
+				let args: string = getAttr (hotstaqElm, ["args"]) || null;
+				let apiLibrary: string = getAttr (hotstaqElm, ["api-library", "apiLibrary"]) || null;
+				let apiName: string = getAttr (hotstaqElm, ["api-name", "apiName"]) || null;
+				let apiUrl: string = getAttr (hotstaqElm, ["api-url", "apiUrl"]) || null;
+				let testerName: string = getAttr (hotstaqElm, ["tester-name", "testerName"]) || "HotTesterMochaSelenium";
+				let testerMap: string = getAttr (hotstaqElm, ["tester-map", "testerMap"]) || null;
+				let testerApiBaseUrl: string = getAttr (hotstaqElm, ["tester-api-base-url", "testerApiBaseUrl"]) || null;
+				let testerLaunchpadUrl: string = getAttr (hotstaqElm, ["tester-launchpad-url", "testerLaunchpadUrl"]) || null;
+				let dontReuseProcessor: boolean = false;
+				let passRawUrl: boolean = false;
+				let htmlSource: string = hotstaqElm.innerHTML || "";
+
+				if (getAttr (hotstaqElm, ["src"]) != null)
+					loadPage = getAttr (hotstaqElm, ["src"]);
+
+				if (getAttr (hotstaqElm, ["passRawUrl"]) != null)
+					passRawUrl = true;
+
+				if (getAttr (hotstaqElm, ["dont-reuse-processor", "dontReuseProcessor"]) != null)
+					dontReuseProcessor = true;
+
+				if (args != null)
+					args = JSON.parse (args);
+				else
+					args = Hot.Arguments;
+
+				let hasHtmlSource: boolean = false;
+
+				if (htmlSource !== "")
+				{
+					const htmlSourceCheck: string = htmlSource.replace (/\s/g,'');
+
+					if (htmlSourceCheck !== "")
+						hasHtmlSource = true;
+				}
+
+				let tempMode = 0;
+
+				// @ts-ignore
+				if (window["Hot"] != null)
+					tempMode = Hot.Mode;
+		
+				let processor: HotStaq = null;
+
+				if (dontReuseProcessor === false)
+				{
+					if (typeof (Hot) !== "undefined")
+					{
+						if (Hot.CurrentPage != null)
+						{
+							if (Hot.CurrentPage.processor != null)
+								processor = Hot.CurrentPage.processor;
+						}
+					}
+				}
+
+				if (processor == null)
+					processor = new HotStaq ();
+
+				processor.mode = tempMode;
+
+				let options: HotStartOptions = {
+						name: name,
 						processor: processor,
-						args: Hot.Arguments
-					});
-			});
+						args: args
+					};
+
+				if (loadPage !== "")
+				{
+					if (passRawUrl === false)
+					{
+						if (loadPage.indexOf ("hstqserve") < 0)
+							loadPage += "?hstqserve=nahfam";
+					}
+
+					options.url = loadPage;
+				}
+
+				if (testerMap != null)
+				{
+					options.testerMap = testerMap;
+					options.testerName = testerName;
+				}
+
+				if (testerName != null)
+					options.testerName = testerName;
+
+				if (testerApiBaseUrl != null)
+					options.testerAPIBaseUrl = testerApiBaseUrl;
+
+				if (testerLaunchpadUrl != null)
+					options.testerLaunchpadUrl = testerLaunchpadUrl;
+
+				if (apiName != null)
+				{
+					let client = new HotClient (processor);
+
+					if (apiUrl === "")
+						throw new Error (`api-url was not set!`);
+
+					let parentLib: any = window;
+
+					if (apiLibrary != null)
+					{
+						// @ts-ignore
+						parentLib = window[apiLibrary];
+					}
+
+					let newAPI = new parentLib[apiName] (apiUrl, client);
+					newAPI.connection.api = newAPI;
+					processor.api = newAPI;
+				}
+
+				if (hasHtmlSource === false)
+				{
+					if (loadPage === "")
+						throw new Error (`The hotstaq tag must have a src set or have the HTML contents inside it.`);
+
+					HotStaq.displayUrl (options);
+				}
+				else
+				{
+					HotStaq.displayContent (options);
+				}
+			}, 50);
 	}
 }

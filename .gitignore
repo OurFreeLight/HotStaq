@@ -2,10 +2,12 @@ build/
 build-web/
 ./app/
 
+**/HotStaq.min.js
+
 docs/
 
 create-test-temp/
-temp/
+temp*/
 
 # Logs
 logs

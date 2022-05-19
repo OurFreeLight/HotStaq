@@ -1,5 +1,5 @@
-# HTML Only Example
-This is a simple HTML only example of HotStaq running on a static site using only `HotStaq.min.js`.
+# Tests Only Example
+This is a simple tests only example of HotStaq running on a static site using only `HotStaq.min.js`.
 
 ## Running the Example
 Navigate into this folder and enter:

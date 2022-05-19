@@ -590,7 +590,7 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 		Hot.Mode = this.page.processor.mode;
 		Hot.Arguments = args;
 		Hot.CurrentPage = this.page;
-		Hot.PublicSecrets = this.page.processor.publicSecrets;
+		Hot.PublicKeys = this.page.processor.publicKeys;
 		Hot.API = this.page.getAPI ();
 		Hot.TesterAPI = this.page.getTesterAPI ();
 

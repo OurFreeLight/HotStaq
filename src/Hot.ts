@@ -88,9 +88,9 @@ export class Hot
 	 */
 	static Cookies: Cookies.CookiesStatic = Cookies;
 	/**
-	 * Any secrets that can be shown publicly. These can be passed from HotSite.json.
+	 * Any public keys that need to be shown. These can be passed from HotSite.json.
 	 */
-	static PublicSecrets: any = {};
+	static PublicKeys: any = {};
 	/**
 	 * The CSS string to use when echoing out the CSS files.
 	 */
@@ -203,7 +203,7 @@ export class Hot
 			throw new Error ("Current page's processor is null!");
 
 		if (Hot.CurrentPage.processor.api == null)
-			throw new Error ("Current page's processor api is null!");
+			throw new Error ("Current page's processor api is null! Did you forget to set the API name or URL?");
 
 		if (Hot.CurrentPage.processor.api != null)
 			result = await Hot.CurrentPage.processor.api.makeCall (route, data, httpMethod);

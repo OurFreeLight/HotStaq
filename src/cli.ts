@@ -567,7 +567,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 					return (foundAPIUrl);
 				};
 
-			let loadAndStartAPIServer = async (serverType: string) =>
+			let loadAPIServer = async (serverType: string, server: HotHTTPServer) =>
 				{
 					if (Object.keys (apis).length < 1)
 						throw new Error (`No APIs are loaded! Try using --api-load`);
@@ -580,26 +580,37 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 							baseAPIUrl = getBaseUrlFromHotSite (loadAPI);
 	
 						if (baseAPIUrl === "")
-							baseAPIUrl = `http://127.0.0.1:${apiServer.ports.http}`;
+							baseAPIUrl = `http://127.0.0.1:${server.ports.http}`;
 	
 						// Only run the api server.
-						await startAPIServer (apiServer, loadAPI, baseAPIUrl, dbinfo, true);
+						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, true);
 	
 						if (globalLogLevel != null)
-							apiServer.logger.logLevel = globalLogLevel;
+							server.logger.logLevel = globalLogLevel;
 	
-						apiServer.serverType = serverType;
-						await apiServer.listen ();
+						server.serverType = serverType;
 					}
+				};
+			let listenOnAPIServer = async (server: HotHTTPServer) =>
+				{
+					if (Object.keys (apis).length < 1)
+						throw new Error (`No APIs are loaded! Try using --api-load`);
+	
+					await server.listen ();
+				};
+			let loadAndStartAPIServer = async (serverType: string, server: HotHTTPServer) =>
+				{
+					await loadAPIServer (serverType, server);
+					await listenOnAPIServer (server);
 				};
 
 			if (serverType === "api")
-				await loadAndStartAPIServer ("API Server");
+				await loadAndStartAPIServer ("API Server", apiServer);
 
 			if (runWebServer === true)
 			{
 				if (runAPIServer === true)
-					await loadAndStartAPIServer ("Web-API Server");
+					await loadAPIServer ("Web-API Server", webServer);
 				else
 					webServer.serverType = "Web Server";
 

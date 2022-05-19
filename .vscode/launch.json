@@ -57,7 +57,6 @@
 				"--web-dont-redirect-http-to-https",
 				"--web-js-url",
 				"/build-web/HotStaq.js",
-				"--web-serve-hott-files",
 				"--web-http-port",
 				"8080",
 				"--api-dont-redirect-http-to-https",

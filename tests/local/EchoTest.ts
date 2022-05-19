@@ -83,7 +83,7 @@ describe ("Echo Tests", () =>
 		it ("should process the content using HotStaq.processContent", async () =>
 			{
 				let processor: HotStaq = new HotStaq ();
-				let output: string = await HotStaq.processContent (processor, content, "Echo Test");
+				let output: string = await HotStaq.processContent ({ processor: processor, content: content, name: "Echo Test" });
 				const comparison: string = finalContent.replace (/\s/g, "");
 
 				output = output.replace (/\s/g, "");

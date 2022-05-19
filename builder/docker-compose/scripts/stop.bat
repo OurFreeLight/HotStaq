@@ -1,3 +1,3 @@
-#!/usr/bin/env sh
+@echo off
 
-docker-compose -f ./docker/${HOTSITE_NAME}/Dockerfile down
+docker-compose down

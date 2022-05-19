@@ -67,7 +67,7 @@
 				]
 		}
 	},
-	"publicSecrets": {
+	"publicKeys": {
 		"Secret1": "Shh!"
 	},
 	"components": {

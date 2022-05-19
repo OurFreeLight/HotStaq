@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Page</title>
+</head>
+
+<body>
+    This is a static site that's used for testing html. Clicking 
+	<button id = "testingButton" onclick = "document.getElementById ('helloWorldTest').value = 'Hello World!';">this button</button> 
+	should make it say "Hello World!" here: <input id = "helloWorldTest" type = "text" value = "" /><br />
+    Once it says hello world in the input box above, the test will be complete.
+</body>
+</html>
+<!--<*
+	Hot.CurrentPage.createTestPath ("Page-Test-Button-Click", async (driver) =>
+		{
+            // This waits for the page to load. The > at the beginning of the string indicates that it 
+			// will be searching for a CSS selector.
+			await driver.waitForTestElement (">#testingButton");
+
+            // Click on the "testingButton" button.
+			await driver.run ([
+					[">#testingButton", "click"],
+				]);
+			await driver.assertElementValue (">#helloWorldTest", "Hello World!", "Element result is incorrect!");
+		});
+*>-->

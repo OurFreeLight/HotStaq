@@ -4,8 +4,6 @@
 <head>
 	<title>Hello World Page</title>
 
-	<script type = "text/javascript" src = "/build-web/HotStaqTests_HelloWorldAPI.js"></script>
-
 	<script type = "text/javascript">
 		async function sayHello ()
 		{

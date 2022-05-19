@@ -545,6 +545,35 @@ export class HotHTTPServer extends HotServer
 						const urlFilepath: string = url.pathname;
 						const filepath: string = ppath.basename (urlFilepath);
 
+						// Skip any files that could contain secrets.
+						{
+							let skipCurrentFile: boolean = false;
+							const lowerFilePath: string = filepath.toLowerCase ();
+							const extname: string = ppath.extname (lowerFilePath);
+
+							if (lowerFilePath === ".env")
+								skipCurrentFile = true;
+
+							if ((lowerFilePath === ".npmrc") || (lowerFilePath === ".yarnrc"))
+								skipCurrentFile = true;
+
+							if (lowerFilePath === "hotsite.json")
+								skipCurrentFile = true;
+
+							if (extname === ".pem")
+								skipCurrentFile = true;
+
+							if (skipCurrentFile === true)
+							{
+								const errMsg: string = `Refused to serve file ${filepath}. Could contain secrets.`;
+
+								this.logger.verbose (errMsg);
+								res.status (500).send ({ error: errMsg });
+
+								return;
+							}
+						}
+
 						// This if statement ensures the requested file is not on the ignore list.
 						if (this.ignoreHottFiles[filepath] != null)
 						{
@@ -775,7 +804,9 @@ export class HotHTTPServer extends HotServer
 								port = this.ports.https;
 							}
 
-							this.logger.info (`${this.serverType} running at ${protocol}://${this.listenAddress}:${port}/`);
+							this.logger.info (`${this.serverType} listening on ${protocol}://${this.listenAddress}:${port}/`);
+							this.logger.verbose (`Using HotSite object: ${JSON.stringify (this.processor.hotSite)}`);
+
 							resolve ();
 						};
 
