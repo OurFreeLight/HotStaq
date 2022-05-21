@@ -11,10 +11,26 @@ This will launch the web server in development mode. Open a web browser and navi
 ## Docker
 To build the docker images navigate to the project's directory and enter:
 ```console
-	hotstaq build
+hotstaq build
 ```
 
 This will build the Dockerfile. After which you can navigate into your output directory and enter:
 ```console
-	./build.sh
+./build.sh
+```
+
+To start the docker image, run:
+```console
+./start-app.sh
+```
+
+## API Generation
+To generate a web client for use on a website enter:
+```console
+npm run build-web
+```
+
+To generate the OpenAPI 3.0.0 YAML documentation enter:
+```console
+npm run build-doc
 ```

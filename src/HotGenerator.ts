@@ -10,6 +10,7 @@ import { HotHTTPServer } from "./HotHTTPServer";
 import { APItoLoad, HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HotRouteMethodParameter } from "./HotRouteMethod";
+import { HotServerType } from "./HotServer";
 
 /**
  * Generates stuff like API 
@@ -118,6 +119,7 @@ export class HotGenerator
 
 		server.logger.verbose (`Loaded API class: ${loadedAPI.exportedClassName}`);
 
+		server.type = HotServerType.Generate;
 		server.processor.api = api;
 		server.api = api;
 

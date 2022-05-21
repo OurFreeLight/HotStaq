@@ -3,6 +3,7 @@ import * as ppath from "path";
 import { HotIO } from "./HotIO";
 import { HotStaq, HotSite } from "./HotStaq";
 import { HotLog } from "./HotLog";
+import { isObject } from "util";
 
 /**
  * Creates stuff for the CLI.
@@ -74,6 +75,10 @@ export class HotCreator
 			 * The debug web api build command to use.
 			 */
 			buildWebAPIDebug: string;
+			/**
+			 * The command to use to build the documentation.
+			 */
+			buildDoc: string;
 		};
 
 	constructor (logger: HotLog, name: string = "")
@@ -93,7 +98,8 @@ export class HotCreator
 				test: "hotstaq test",
 				build: "",
 				buildWebAPI: "hotstaq generate",
-				buildWebAPIDebug: "hotstaq generate"
+				buildWebAPIDebug: "hotstaq generate",
+				buildDoc: "hotstaq generate --generate-type openapi-3.0.0-yaml"
 			};
 	}
 
@@ -133,21 +139,39 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			`;
 		}
 
+		let hotPackageJSONStr: string = await HotIO.readTextFile (ppath.normalize (`${__dirname}/../../package.json`));
+		let hotPackageJSONObj = JSON.parse (hotPackageJSONStr);
+		let hotstaqVersion: string = hotPackageJSONObj.version;
+
 		let packageJSON: any = {
 				"name": this.name,
 				"description": "",
 				"version": "1.0.0",
-				"main": "index.js",
+				"main": "./build/index.js",
 				"scripts": {
 				},
 				"keywords": [],
 				"author": "",
 				"license": "ISC",
 				"dependencies": {
-					"hotstaq": "^0.5.49",
-					"copy-webpack-plugin": "^6.0.3"
+					"copy-webpack-plugin": "^6.0.3",
+					"dotenv": "^10.0.0",
+					"hotstaq": `^${hotstaqVersion}`
+				},
+				"devDependencies": {
+					"@types/express": "^4.17.13",
+					"@types/formidable": "^2.0.0",
+					"@types/js-cookie": "^3.0.1",
+					"@types/mocha": "^9.0.0",
+					"@types/mysql": "^2.15.19",
+					"@types/selenium-webdriver": "^4.0.16",
+					"webpack": "^4.46.0",
+					"webpack-cli": "^4.9.1"
 				}
 			};
+
+		if (this.language === "ts")
+			packageJSON.devDependencies["ts-loader"] = "^7.0.5";
 
 		if (this.npmCommands.start === "")
 			this.npmCommands.start = `hotstaq --hotsite ./HotSite.json run --server-type ${this.type}`;
@@ -178,6 +202,9 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 
 		if (this.npmCommands.buildWebAPIDebug !== "")
 			packageJSON.scripts["build-web-debug"] = this.npmCommands.buildWebAPIDebug;
+
+		if (this.npmCommands.buildDoc !== "")
+			packageJSON.scripts["build-doc"] = this.npmCommands.buildDoc;
 
 		// If this is a web only build, remove the build web scripts from packageJSON.
 		if (this.type === "web")

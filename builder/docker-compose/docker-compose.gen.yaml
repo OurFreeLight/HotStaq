@@ -4,6 +4,10 @@ services:
     image: ${NAMESPACE}/${HOTSITE_NAME}:latest
     networks:
       - ${HOTSITE_NAME}-network
+    healthcheck:
+      test: ["CMD", "curl", "http://127.0.0.1:80"]
+      retries: 10
+      timeout: 10s
     ${DOCKER_COMPOSE_APP_PORTS}
     environment:
       SERVER_TYPE: web
@@ -14,6 +18,10 @@ services:
     image: ${NAMESPACE}/${HOTSITE_NAME}-api:latest
     networks:
       - ${HOTSITE_NAME}-network
+    healthcheck:
+      test: ["CMD", "curl", "http://127.0.0.1:80"]
+      retries: 10
+      timeout: 10s
     depends_on:
       - ${HOTSITE_NAME}-database
     ${DOCKER_COMPOSE_APP_API_PORTS}

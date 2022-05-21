@@ -20,7 +20,11 @@ RUN cd /tmp/app && \
 
 FROM node:16.15.0-alpine3.15
 
+RUN mkdir -p /app/build/ && \
+	apk add curl
+
 COPY --from=builder /tmp/app/build/ /app/build/
+COPY --from=builder /tmp/app/public/ /app/public/
 COPY --from=builder /tmp/app/node_modules/ /app/node_modules/
 COPY --from=builder /tmp/app/HotSite.json /app/HotSite.json
 COPY --from=builder /tmp/app/package.json /app/package.json

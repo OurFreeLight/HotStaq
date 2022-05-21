@@ -9,7 +9,8 @@ import { HotRoute } from "./HotRoute";
 export enum HotServerType
 {
 	HTTP,
-	WebSockets
+	WebSockets,
+	Generate
 }
 
 /**
