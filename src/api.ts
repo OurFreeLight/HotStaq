@@ -10,7 +10,7 @@ import { HotPage } from "./HotPage";
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HTTPMethod, ServerAuthorizationFunction, ServerExecutionFunction } from "./HotRouteMethod";
-import { HotServer } from "./HotServer";
+import { HotServer, HotServerType } from "./HotServer";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotClient } from "./HotClient";
 
@@ -69,6 +69,7 @@ export {
 		ServerAuthorizationFunction,
 		ServerExecutionFunction,
 		HotServer,
+		HotServerType,
 		HotHTTPServer,
 		HotClient,
 		HotTesterServer,

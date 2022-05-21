@@ -10,7 +10,7 @@ import { HotPage } from "./HotPage";
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HTTPMethod, ServerAuthorizationFunction, ServerExecutionFunction } from "./HotRouteMethod";
-import { HotServer } from "./HotServer";
+import { HotServer, HotServerType } from "./HotServer";
 import { HotClient } from "./HotClient";
 
 // Testing stuff
@@ -38,6 +38,7 @@ module.exports["HotRoute"] = HotRoute;
 module.exports["HotRouteMethod"] = HotRouteMethod;
 module.exports["HTTPMethod"] = HTTPMethod;
 module.exports["HotServer"] = HotServer;
+module.exports["HotServerType"] = HotServerType;
 module.exports["HotClient"] = HotClient;
 module.exports["HotTester"] = HotTester;
 module.exports["HotTesterAPI"] = HotTesterAPI;

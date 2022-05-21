@@ -111,6 +111,8 @@ export class HotGenerator
 		let server: HotHTTPServer = new HotHTTPServer (processor);
 		let baseAPIUrl: string = this.getBaseUrlFromHotSite (processor, server, loadedAPI);
 
+		server.type = HotServerType.Generate;
+
 		process.chdir (process.cwd ());
 		let foundModulePath = require.resolve (loadedAPI.path, { paths: [process.cwd ()] });
 		let apiJS = require (foundModulePath);
@@ -119,7 +121,6 @@ export class HotGenerator
 
 		server.logger.verbose (`Loaded API class: ${loadedAPI.exportedClassName}`);
 
-		server.type = HotServerType.Generate;
 		server.processor.api = api;
 		server.api = api;
 
