@@ -751,6 +751,13 @@ export class HotStaq implements IHotStaq
 		if ((component.tag == null) || (component.tag === ""))
 			throw new Error (`Component ${component.name} must have a tag!`);
 
+		if (customElements.get (component.tag) !== undefined)
+		{
+			/// @fixme This element has already been defined. Should this throw an error or warning? I don't think it should...
+
+			return;
+		}
+
 		customElements.define (component.tag, class extends HTMLElement
 			{
 				constructor ()
