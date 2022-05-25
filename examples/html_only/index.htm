@@ -2,11 +2,16 @@
 <html>
 
 <head>
-	<title>Page</title>
+	<title>The Page</title>
 </head>
 
-<hotstaq data-load-page = "./index.hott">
+<hotstaq router = "default">
 </hotstaq>
+
+<hotstaq-router name = "default">
+	<route path = "/" src = "./home.hott"></route>
+	<route path = "/about" src = "./about.hott"></route>
+</hotstaq-router>
 
 <script type = "text/javascript" src = "./js/HotStaq.min.js"></script>
 

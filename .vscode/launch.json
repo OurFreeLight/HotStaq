@@ -50,6 +50,8 @@
 				"run",
 				"--server-type",
 				"web-api",
+				"--global-api", "HelloWorld",
+				"--api-base-url", "testsettse",
 				"--api-load",
 				"HelloWorldAPI=${workspaceFolder}/build/tests/server/HelloWorldAPI.js",
 				"--web-route",

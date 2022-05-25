@@ -1,2 +1,11 @@
-This is a header.<br />
-----<br />
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Client Side Only Bare Bones Example</title>
+</head>
+
+<body>
+
+This is a header. <a href = "./">Home</a> - <a href = "./about">About</a><br />
+<hr />

@@ -5,6 +5,7 @@ import * as fs from "fs";
 import { F_OK } from "constants";
 
 import express from "express";
+import mimeTypes from "mime-types";
 import { Fields, Files, IncomingForm } from "formidable";
 
 import { HotServer } from "./HotServer";
@@ -30,6 +31,21 @@ export interface StaticRoute
 }
 
 /**
+ * A HTTP header to send.
+ */
+export interface HTTPHeader
+{
+	/**
+	 * The header type. Example: Content-Type
+	 */
+	type: string;
+	/**
+	 * The header value. Example: text/html
+	 */
+	value: string;
+}
+
+/**
  * A servable file extension.
  */
 export interface ServableFileExtension
@@ -47,6 +63,10 @@ export interface ServableFileExtension
 	 * Default: true
 	 */
 	generateContent?: boolean;
+	/**
+	 * The headers to send with the file extension.
+	 */
+	headers?: HTTPHeader[];
 }
 
 /**
@@ -544,12 +564,23 @@ export class HotHTTPServer extends HotServer
 						let url: URL = new URL (requestedUrl);
 						const urlFilepath: string = url.pathname;
 						const filepath: string = ppath.basename (urlFilepath);
+						const extname: string = ppath.extname (filepath).toLowerCase ();
+						let skipSecretFiles: boolean = true;
 
 						// Skip any files that could contain secrets.
+						if (this.processor.hotSite != null)
+						{
+							if (this.processor.hotSite.server != null)
+							{
+								if (this.processor.hotSite.server.serveSecretFiles === false)
+									skipSecretFiles = false;
+							}
+						}
+
+						if (skipSecretFiles === true)
 						{
 							let skipCurrentFile: boolean = false;
 							const lowerFilePath: string = filepath.toLowerCase ();
-							const extname: string = ppath.extname (lowerFilePath);
 
 							if (lowerFilePath === ".env")
 								skipCurrentFile = true;
@@ -596,8 +627,50 @@ export class HotHTTPServer extends HotServer
 									res.setHeader ("Content-Type", "text/html");
 									res.send (content);
 								};
-							let sendFileContent = (path: string): void =>
+							let sendFileContent = (path: string, fileExt: string, iServableFile: ServableFileExtension): void =>
 								{
+									if (iServableFile != null)
+									{
+										if (iServableFile.fileExtension != null)
+										{
+											if (fileExt === iServableFile.fileExtension)
+											{
+												if (iServableFile.headers != null)
+												{
+													if (iServableFile.headers.length > 0)
+													{
+														for (let iIdx = 0; iIdx < iServableFile.headers.length; iIdx++)
+														{
+															let httpHeader: HTTPHeader = iServableFile.headers[iIdx];
+
+															if (httpHeader.type == null)
+																throw new Error (`Missing HTTP header type on file extension ${fileExt}`);
+
+															if (httpHeader.value == null)
+																throw new Error (`Missing HTTP header value on file extension ${fileExt}`);
+
+															res.header (httpHeader.type, httpHeader.value);
+														}
+
+														res.sendFile (path);
+
+														return;
+													}
+												}
+											}
+										}
+									}
+
+									if (fileExt === ".hott")
+										res.setHeader ("Content-Type", "text/html");
+									else
+									{
+										let mimeType = mimeTypes.lookup (fileExt);
+
+										if (typeof (mimeType) === "string")
+											res.setHeader ("Content-Type", mimeType);
+									}
+
 									res.sendFile (path);
 								};
 
@@ -618,7 +691,13 @@ export class HotHTTPServer extends HotServer
 									let tempFilepath: string = urlFilepath;
 									let sendContentFlag: boolean = false;
 									let generateContent: boolean = true;
-									let fullPath: string = "";
+									let foundServableFile: ServableFileExtension = null;
+
+									if (checkDir === "")
+										checkDir = process.cwd ();
+
+									if ((checkDir === ".") || (checkDir === "./"))
+										checkDir = process.cwd ();
 
 									for (let iJdx = 0; iJdx < serveFileExtensions.length; iJdx++)
 									{
@@ -642,6 +721,9 @@ export class HotHTTPServer extends HotServer
 											{
 												sendContentFlag = true;
 
+												if (typeof (serveFileExt) !== "string")
+													foundServableFile = serveFileExt;
+
 												break;
 											}
 										}
@@ -652,6 +734,10 @@ export class HotHTTPServer extends HotServer
 												ppath.normalize (`${checkDir}/${tempFilepath}${serveFileExt}`)) === true)
 											{
 												sendContentFlag = true;
+
+												if (typeof (serveFileExt) !== "string")
+													foundServableFile = serveFileExt;
+
 												url.pathname += serveFileExt;
 
 												break;
@@ -667,6 +753,9 @@ export class HotHTTPServer extends HotServer
 												tempFilepath += `index${serveFileExt}`;
 												sendContentFlag = true;
 
+												if (typeof (serveFileExt) !== "string")
+													foundServableFile = serveFileExt;
+
 												break;
 											}
 										}
@@ -680,7 +769,12 @@ export class HotHTTPServer extends HotServer
 										if (generateContent === true)
 											sendHottContent (url, route);
 										else
-											sendFileContent (ppath.normalize (`${checkDir}/${tempFilepath}`));
+										{
+											sendFileContent (
+												ppath.normalize (`${checkDir}/${tempFilepath}`),
+												extname,
+												foundServableFile);
+										}
 
 										return;
 									}

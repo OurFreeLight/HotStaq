@@ -18,6 +18,7 @@ import { HotTester } from "./HotTester";
 import { HotTesterAPI } from "./HotTesterAPI";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotTestDestination, HotTestMap } from "./HotTestMap";
+import { ServableFileExtension } from "./HotHTTPServer";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
@@ -103,9 +104,13 @@ export interface HotSite
 			 */
 			name?: string;
 			/**
+			 * If set to true, this will serve ALL files, including potentially secret files.
+			 */
+			serveSecretFiles?: boolean;
+			/**
 			 * Serve the following file extensions when requested.
 			 */
-			serveFileExtensions?: string[];
+			serveFileExtensions?: (string | ServableFileExtension)[];
 			/**
 			 * The name of the API to interface with across all pages.
 			 */
@@ -296,6 +301,10 @@ export interface HotSite
 					url: string;
 				};
 		};
+	/**
+	 * If set to true, this will disable loading files into memory.
+	 */
+	disableFileLoading?: boolean;
 }
 
 /**
@@ -459,11 +468,13 @@ export class HotStaq implements IHotStaq
 		this.files = copy.files || {};
 		this.hotSite = copy.hotSite || null;
 		this.apiContent = `
-			var %api_name% = %api_exported_name%.%api_name%;
-			var newHotClient = new HotClient (processor);
-			var newapi = new %api_name% (%base_url%, newHotClient);
-			newHotClient.api = newapi;
-			processor.api = newapi;`;
+			{
+				var %api_name% = %api_exported_name%.%api_name%;
+				var newHotClient = new HotClient (processor);
+				var newapi = new %api_name% (%base_url%, newHotClient);
+				newHotClient.api = newapi;
+				processor.api = newapi;
+			}`;
 		this.testerApiContent = `
 			var HotTesterAPI = HotStaqWeb.HotTesterAPI;
 			var newHotTesterClient = new HotClient (processor);
@@ -981,51 +992,12 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
-	 * Load from a HotSite.json file. Be sure to load and attach any testers before 
-	 * loading a HotSite.
+	 * Process a HotSite.
 	 */
-	async loadHotSite (path: string): Promise<void>
+	async processHotSite (): Promise<void>
 	{
-		let jsonStr: string = "";
-
-		if (HotStaq.isWeb === true)
-		{
-			this.logger.info (`Downloading HotSite ${path}`);
-
-			let res: any = await fetch (path);
-
-			this.logger.info (`Downloaded site ${path}`);
-
-			jsonStr = res.text ();
-		}
-		else
-		{
-			path = ppath.normalize (path);
-
-			this.logger.info (`Accessing HotSite ${path}`);
-
-			jsonStr = await new Promise (
-				(resolve: any, reject: any): void =>
-				{
-					fs.readFile (path, (err: NodeJS.ErrnoException, data: Buffer): void =>
-						{
-							if (err != null)
-								throw err;
-	
-							let content: string = data.toString ();
-
-							this.logger.info (`Accessed site ${path}`);
-	
-							resolve (content);
-						});
-				});
-		}
-
-		this.hotSite = JSON.parse (jsonStr);
-
 		HotStaq.checkHotSiteName (this.hotSite.name, true);
 
-		this.hotSite.hotsitePath = path;
 		let routes = this.hotSite.routes;
 		let testerUrl: string = "http://127.0.0.1:8182";
 		let tester: HotTester = null;
@@ -1210,10 +1182,63 @@ export class HotStaq implements IHotStaq
 		if (this.hotSite.routes == null)
 			this.hotSite.routes = {};
 
-		await this.loadHotFiles (this.hotSite.files);
+		let disableFileLoading: boolean = false;
+
+		if (this.hotSite.disableFileLoading != null)
+			disableFileLoading = this.hotSite.disableFileLoading;
+
+		if (disableFileLoading === false)
+			await this.loadHotFiles (this.hotSite.files);
+		else
+			this.logger.verbose (`Hotsite has file loading disabled...`);
 
 		if (tester != null)
 			this.addTester (tester);
+	}
+
+	/**
+	 * Load from a HotSite.json file. Be sure to load and attach any testers before 
+	 * loading a HotSite.
+	 */
+	async loadHotSite (path: string): Promise<void>
+	{
+		let jsonStr: string = "";
+
+		if (HotStaq.isWeb === true)
+		{
+			this.logger.info (`Downloading HotSite ${path}`);
+
+			let res: any = await fetch (path);
+
+			this.logger.info (`Downloaded site ${path}`);
+
+			jsonStr = res.text ();
+		}
+		else
+		{
+			path = ppath.normalize (path);
+
+			this.logger.info (`Accessing HotSite ${path}`);
+
+			jsonStr = await new Promise (
+				(resolve: any, reject: any): void =>
+				{
+					fs.readFile (path, (err: NodeJS.ErrnoException, data: Buffer): void =>
+						{
+							if (err != null)
+								throw err;
+	
+							let content: string = data.toString ();
+
+							this.logger.info (`Accessed site ${path}`);
+	
+							resolve (content);
+						});
+				});
+		}
+
+		this.hotSite = JSON.parse (jsonStr);
+		this.hotSite.hotsitePath = path;
 	}
 
 	/**
@@ -1223,6 +1248,8 @@ export class HotStaq implements IHotStaq
 	async loadHotFiles (files: { [name: string]: { url?: string; localFile?: string; content?: string; } }, 
 			forceContentLoading: boolean = false): Promise<void>
 	{
+		this.logger.verbose (`Loading Hott files...`);
+
 		for (let key in files)
 		{
 			let file = files[key];
@@ -1262,10 +1289,24 @@ export class HotStaq implements IHotStaq
 				loadContent = true;
 
 			if (loadContent === true)
+			{
+				let filepath: string = "";
+
+				if (newFile.url !== "")
+					filepath = newFile.url;
+
+				if (newFile.localFile !== "")
+					filepath = newFile.localFile;
+
+				this.logger.verbose (`Loading Hott file: ${filepath}`);
 				await newFile.load ();
+				this.logger.verbose (`Finished loading Hott file: ${filepath}`);
+			}
 
 			this.addFile (newFile);
 		}
+
+		this.logger.verbose (`Finished loading Hott files...`);
 	}
 
 	/**
@@ -2133,6 +2174,7 @@ if (typeof (document) !== "undefined")
 					};
 
 				let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
+				let router: string = getAttr (hotstaqElm, ["router"]) || "";
 				let name: string = getAttr (hotstaqElm, ["name"]) || ""; /// @fixme Should we allow names to be empty?
 				let args: string = getAttr (hotstaqElm, ["args"]) || null;
 				let apiLibrary: string = getAttr (hotstaqElm, ["api-library", "apiLibrary"]) || null;
@@ -2145,6 +2187,7 @@ if (typeof (document) !== "undefined")
 				let dontReuseProcessor: boolean = false;
 				let passRawUrl: boolean = false;
 				let htmlSource: string = hotstaqElm.innerHTML || "";
+				let routerManager: { [path: string]: string; } = {};
 
 				if (getAttr (hotstaqElm, ["src"]) != null)
 					loadPage = getAttr (hotstaqElm, ["src"]);
@@ -2154,6 +2197,46 @@ if (typeof (document) !== "undefined")
 
 				if (getAttr (hotstaqElm, ["dont-reuse-processor", "dontReuseProcessor"]) != null)
 					dontReuseProcessor = true;
+
+				if (router !== "")
+				{
+					let hotstaqRouterElms = document.getElementsByTagName ("hotstaq-router");
+
+					for (let iIdx = 0; iIdx < hotstaqRouterElms.length; iIdx++)
+					{
+						// @ts-ignore
+						let hotstaqRouterElm: HTMLElement = hotstaqRouterElms[iIdx];
+						let routerName: string = getAttr (hotstaqRouterElm, ["name"]);
+
+						// @ts-ignore
+						if (routerName === router)
+						{
+							// Load all routes from the router.
+							for (let iJdx = 0; iJdx < hotstaqRouterElm.childNodes.length; iJdx++)
+							{
+								// @ts-ignore
+								let routerElm: HTMLElement = hotstaqRouterElm.childNodes[iJdx];
+
+								if (routerElm instanceof HTMLElement)
+								{
+									if (routerElm.tagName.toUpperCase () === "ROUTE")
+									{
+										let routerPath: string = getAttr (routerElm, ["path"]);
+										let routerSrc: string = getAttr (routerElm, ["src"]);
+
+										routerManager[routerPath] = routerSrc;
+									}
+								}
+							}
+
+							// Find the correct route and load it.
+							if (routerManager[window.location.pathname] != null)
+								loadPage = routerManager[window.location.pathname];
+
+							break;
+						}
+					}
+				}
 
 				if (args != null)
 					args = JSON.parse (args);
@@ -2250,7 +2333,7 @@ if (typeof (document) !== "undefined")
 				if (hasHtmlSource === false)
 				{
 					if (loadPage === "")
-						throw new Error (`The hotstaq tag must have a src set or have the HTML contents inside it.`);
+						throw new Error (`The hotstaq tag must have a src, HTML contents inside it, or a router set.`);
 
 					HotStaq.displayUrl (options);
 				}

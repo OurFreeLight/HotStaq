@@ -39,11 +39,16 @@ async function startAPIServer (server: HotHTTPServer, loadedAPI: APItoLoad, base
 {
 	process.chdir (process.cwd ());
 	let foundModulePath = require.resolve (loadedAPI.path, { paths: [process.cwd ()] });
+
+	server.logger.verbose (`Loading API JavaScript from: ${foundModulePath}`);
+
 	let apiJS = require (foundModulePath);
 	let apiClass: any = apiJS[loadedAPI.exportedClassName];
 	let api: HotAPI = new apiClass (baseAPIUrl, server);
 
 	server.logger.info (`Loaded API class: ${loadedAPI.exportedClassName}`);
+	server.logger.verbose (`Base API URL: ${baseAPIUrl}`);
+	server.logger.verbose (`Loaded API JavaScript from: ${foundModulePath}`);
 
 	processor.api = api;
 	server.processor.api = api;
@@ -73,7 +78,9 @@ async function startAPIServer (server: HotHTTPServer, loadedAPI: APItoLoad, base
 		if (dbinfo.password === "")
 			throw new Error (`No database password provided!`);
 
+		server.logger.verbose (`Connecting to ${dbinfo.type} database "${dbinfo.database}" on host ${dbinfo.server}:${dbinfo.port}`);
 		await api.db.connect (dbinfo);
+		server.logger.verbose (`Connected to ${dbinfo.type} database "${dbinfo.database}" on host ${dbinfo.server}:${dbinfo.port}`);
 	}
 
 	return (api);
@@ -128,7 +135,10 @@ async function handleBuildCommands (): Promise<commander.Command>
 				throw new Error (`When building, you must specify a HotSite.json!`);
 
 			if (hotsitePath !== "")
+			{
 				await processor.loadHotSite (hotsitePath);
+				await processor.processHotSite ();
+			}
 
 			builder.hotsites = [processor.hotSite];
 			await builder.build ();
@@ -401,11 +411,14 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 		};
 
 	let serverType: string = "web";
+	let globalApi: string = "";
 	let baseWebUrl: string = "";
 	let baseAPIUrl: string = "";
 	let runWebTestMap: boolean = false;
 	let runAPITestMap: boolean = false;
 	let listAPIRoutes: boolean = false;
+	let disableFileLoading: boolean = false;
+	let skipSecretFiles: boolean = true;
 
 	const runCmd: commander.Command = new commander.Command (cmdName);
 	runCmd.description (`Run commands.`);
@@ -450,6 +463,19 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 			if (hotsitePath !== "")
 			{
 				await processor.loadHotSite (hotsitePath);
+
+				if (disableFileLoading === true)
+					processor.hotSite.disableFileLoading = disableFileLoading;
+
+				if (skipSecretFiles === false)
+				{
+					if (processor.hotSite.server == null)
+						processor.hotSite.server = {};
+
+					processor.hotSite.server.serveSecretFiles = true;
+				}
+
+				await processor.processHotSite ();
 				apis = loadAPIs (processor);
 			}
 
@@ -531,6 +557,9 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 
 				runWebServer = true;
 			}
+
+			if (globalApi !== "")
+				processor.hotSite.server.globalApi = globalApi;
 
 			if ((serverType === "api") || (serverType === "web-api"))
 				runAPIServer = true;
@@ -679,6 +708,18 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 		(arg: string, previous: any) =>
 		{
 			listAPIRoutes = true;
+		});
+	runCmd.option (`--disable-file-loading`, 
+		`Disable file caching and loading.`, 
+		(arg: string, previous: any) =>
+		{
+			disableFileLoading = true;
+		});
+	runCmd.option (`--serve-secret-files`, 
+		`Forces secret files to be served. NOT RECOMMENDED.`, 
+		(arg: string, previous: any) =>
+		{
+			skipSecretFiles = false;
 		});
 	runCmd.option (`--tester-http-port <port>`, 
 		`Set the tester HTTP port`, 
@@ -950,6 +991,12 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 		{
 			serverType = type;
 		}, "web");
+	runCmd.option (`--global-api <api_name>`, 
+		`Set the global api to be used across all pages.`, 
+		(api_name: string, previous: any) =>
+		{
+			globalApi = api_name;
+		}, "");
 	runCmd.option ("--db-type <type>", "The type of database to use. Can be (mysql, influx)", 
 		(type: string, previous: any) =>
 		{
@@ -1030,7 +1077,7 @@ async function handleAgentCommands (): Promise<commander.Command>
 			await apiServer.listen ();
 		});
 
-	agentCmd.option ("--base_api_url <value>", "The key that must be given in order to execute the commands.", 
+	agentCmd.option ("--base-api-url <value>", "The key that must be given in order to execute the commands.", 
 		(value: string, previous: any) =>
 		{
 			baseAPIUrl = value;
@@ -1117,6 +1164,7 @@ async function handleGenerateCommands (): Promise<commander.Command>
 			if (hotsitePath !== "")
 			{
 				await processor.loadHotSite (hotsitePath);
+				await processor.processHotSite ();
 				apis = loadAPIs (processor);
 			}
 

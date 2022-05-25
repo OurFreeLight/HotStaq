@@ -18,7 +18,7 @@ module.exports = {
 							loader: "ts-loader",
 							options: {
 									transpileOnly: true,
-									configFile: "tsconfig-web.json"
+									configFile: "tsconfig.json"
 								}
 						}],
 					exclude: new RegExp ("node_modules")

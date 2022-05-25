@@ -27,6 +27,7 @@ describe ("API Generator Tests", () =>
 		it ("should load the HotSite", async () =>
 			{
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
+				await processor.processHotSite ();
 				apis = Common.loadAPIs (processor);
 			});
 		it ("should generate the API", async () =>

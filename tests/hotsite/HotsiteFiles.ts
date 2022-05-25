@@ -29,6 +29,7 @@ describe ("Hotsite Files Tests", () =>
 		
 				server.logger.logLevel = HotLogLevel.All;
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
+				await processor.processHotSite ();
 
 				common = new Common (processor);
 				await common.load ();

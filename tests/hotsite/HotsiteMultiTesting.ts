@@ -51,6 +51,7 @@ describe ("Hotsite Testing Multi Tests", () =>
 				testerServer.addTester (tester);
 
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
+				await processor.processHotSite ();
 
 				let api: HelloWorldAPI = new HelloWorldAPI (common.getUrl (server), server);
 				await server.setAPI (api);
