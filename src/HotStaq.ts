@@ -128,17 +128,29 @@ export interface HotSite
 			 */
 			ports?: {
 					/**
-					 * The HTTP port to serve on.
+					 * The web HTTP port to serve on.
 					 */
 					http?: number;
 					/**
-					 * The HTTPS port to serve on.
+					 * The web HTTPS port to serve on.
 					 */
 					https?: number;
 					/**
-					 * If set to true, this will redirect from HTTP to HTTPS.
+					 * If set to true, this will redirect from HTTP to HTTPS for a web and web-api server.
 					 */
 					redirectHTTPtoHTTPS?: boolean;
+					/**
+					 * The api HTTP port to serve on.
+					 */
+					apiHttp?: number;
+					/**
+					 * The api HTTPS port to serve on.
+					 */
+					apiHttps?: number;
+					/**
+					 * If set to true, this will redirect from HTTP to HTTPS for an api server.
+					 */
+					apiRedirectHTTPtoHTTPS?: boolean;
 				};
 			/**
 			 * The list of directory to serve to the client from the server.
@@ -180,6 +192,11 @@ export interface HotSite
 				 * The name of the test driver to use.
 				 */
 				driver?: string;
+				/**
+				 * The number of milliseconds to wait before executing the next command.
+				 * Default is set to 20.
+				 */
+				commandDelay?: number;
 				/**
 				 * The url to the html that loads the hott files.
 				 */
@@ -1053,6 +1070,12 @@ export class HotStaq implements IHotStaq
 							}
 							else
 								tester = this.testers[testerName];
+
+							if (tester.driver == null)
+								throw new Error (`Tester ${testerName} does not have a driver set!`);
+
+							if (parentObj.commandDelay != null)
+								tester.driver.commandDelay = parentObj.commandDelay;
 						};
 
 					if (this.hotSite.testing.web != null)

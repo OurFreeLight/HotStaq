@@ -1,3 +1,4 @@
+import { HotStaq } from "./HotStaq";
 import { HotTestElement, HotTestElementOptions } from "./HotTestElement";
 import { HotTestPage } from "./HotTestMap";
 
@@ -10,10 +11,15 @@ export abstract class HotTestDriver
 	 * The current page.
 	 */
 	page: HotTestPage;
+	/**
+	 * The delay in milliseconds between each executed command.
+	 */
+	commandDelay: number;
 
 	constructor (page: HotTestPage = null)
 	{
 		this.page = page;
+		this.commandDelay = 20;
 	}
 
 	/**
@@ -163,7 +169,11 @@ export abstract class HotTestDriver
 			testElm.func = func;
 			testElm.value = value;
 
-			results.push (await this.runCommand (testElm));
+			let result = await this.runCommand (testElm);
+
+			await HotStaq.wait (this.commandDelay);
+
+			results.push (result);
 		}
 
 		return (results);

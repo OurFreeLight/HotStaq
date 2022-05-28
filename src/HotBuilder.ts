@@ -5,7 +5,7 @@ import { HotStaq, HotSite } from "./HotStaq";
 import { HotLog } from "./HotLog";
 
 /**
- * Builds stuff for the CLI like docker images and Kubernetes clusters.
+ * Builds stuff for the CLI like docker images and Kubernetes Helm charts.
  */
 export class HotBuilder
 {
@@ -35,9 +35,9 @@ export class HotBuilder
 	 */
 	dockerCompose: boolean;
 	/**
-	 * Will build the Kubernetes cluster.
+	 * Will build a Kubernetes Helm Chart.
 	 */
-	kubernetes: boolean;
+	helmChart: boolean;
 	/**
 	 * The logger.
 	 */
@@ -54,7 +54,7 @@ export class HotBuilder
 		this.dockerHardenSecurity = true;
 		this.appendReadMe = true;
 		this.dockerCompose = false;
-		this.kubernetes = false;
+		this.helmChart = false;
 		this.hotsites = [];
 		this.logger = logger;
 		this.outputDir = ppath.normalize (`${process.cwd ()}/`);

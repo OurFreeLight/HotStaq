@@ -123,15 +123,6 @@ async function handleBuildCommands (): Promise<commander.Command>
 			createHotBuilder ();
 
 			if (hotsitePath === "")
-			{
-				let tempHotsitePath: string = ppath.normalize (`${process.cwd ()}/HotSite.json`);
-
-				/// @fixme Do this check without caps sensitivity.
-				if (await HotIO.exists (tempHotsitePath) === true)
-					hotsitePath = tempHotsitePath;
-			}
-
-			if (hotsitePath === "")
 				throw new Error (`When building, you must specify a HotSite.json!`);
 
 			if (hotsitePath !== "")
@@ -180,7 +171,7 @@ async function handleBuildCommands (): Promise<commander.Command>
 			createHotBuilder ();
 			builder.dockerCompose = true;
 		});
-	/*buildCmd.option ("--kubernetes", "Build a Kubernetes cluster from the given HotSite.json.", 
+	/*buildCmd.option ("--helm-chart", "Build a Kubernetes Helm Chart from the given HotSite.json.", 
 		(arg: string, previous: any) =>
 		{
 			createHotBuilder ();
@@ -473,6 +464,40 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 						processor.hotSite.server = {};
 
 					processor.hotSite.server.serveSecretFiles = true;
+				}
+
+				if (processor.hotSite.server == null)
+					processor.hotSite.server = {};
+
+				if (processor.hotSite.server.ports == null)
+					processor.hotSite.server.ports = {};
+
+				if (webServer != null)
+				{
+					if (processor.hotSite.server.ports.http == null)
+						processor.hotSite.server.ports.http = webServer.ports.http;
+
+					if (processor.hotSite.server.ports.https == null)
+						processor.hotSite.server.ports.https = webServer.ports.https;
+				}
+
+				if (apiServer != null)
+				{
+					if (processor.hotSite.server.ports.apiHttp == null)
+						processor.hotSite.server.ports.apiHttp = apiServer.ports.http;
+
+					if (processor.hotSite.server.ports.apiHttps == null)
+						processor.hotSite.server.ports.apiHttps = apiServer.ports.https;
+				}
+
+				// Go through each API and replace the base url with the base url set in the cli.
+				if (processor.hotSite.apis != null)
+				{
+					for (let key in processor.hotSite.apis)
+					{
+						let tempApi = processor.hotSite.apis[key];
+						tempApi.url = baseAPIUrl;
+					}
 				}
 
 				await processor.processHotSite ();
@@ -1148,15 +1173,6 @@ async function handleGenerateCommands (): Promise<commander.Command>
 			createHotBuilder ();
 
 			if (hotsitePath === "")
-			{
-				let tempHotsitePath: string = ppath.normalize (`${process.cwd ()}/HotSite.json`);
-
-				/// @fixme Do this check without caps sensitivity.
-				if (await HotIO.exists (tempHotsitePath) === true)
-					hotsitePath = tempHotsitePath;
-			}
-
-			if (hotsitePath === "")
 				throw new Error (`When building, you must specify a HotSite.json!`);
 
 			let apis: { [name: string]: APItoLoad; } = {};
@@ -1260,7 +1276,7 @@ async function start ()
 
 		const program: commander.Command = new commander.Command ("hotstaq");
 
-		program.description (`Copyright(c) 2021, FreeLight, Inc. Under the MIT License.`);
+		program.description (`Copyright(c) 2022, FreeLight, Inc. Under the MIT License.`);
 		let command: commander.Command = program.version (VERSION);
 
 		let hotsiteExists: boolean = false;
@@ -1275,7 +1291,13 @@ async function start ()
 		if (checkIfPathExists ("./hotsite.json") === true)
 		{
 			hotsiteExists = true;
-			foundHotsitePath = ppath.normalize ("./HotSite.json");
+			foundHotsitePath = ppath.normalize ("./hotsite.json");
+		}
+
+		if (checkIfPathExists ("./HOTSITE.json") === true)
+		{
+			hotsiteExists = true;
+			foundHotsitePath = ppath.normalize ("./HOTSITE.json");
 		}
 
 		if (hotsiteExists === true)
