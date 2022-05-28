@@ -1368,6 +1368,9 @@ export class HotStaq implements IHotStaq
 
 							let baseUrl: string = "\"\"";
 
+							if (globalApi.url != null)
+								baseUrl = `\"${globalApi.url}\"`;
+
 							if (this.api != null)
 								baseUrl = `\"${this.api.baseUrl}\"`;
 
@@ -1421,6 +1424,9 @@ export class HotStaq implements IHotStaq
 							apiScripts += `\t<script type = "text/javascript" src = "${jsapipath}"></script>\n`;
 
 							let baseUrl: string = "\"\"";
+
+							if (api.url != null)
+								baseUrl = `\"${api.url}\"`;
 
 							if (this.api != null)
 								baseUrl = `\"${this.api.baseUrl}\"`;

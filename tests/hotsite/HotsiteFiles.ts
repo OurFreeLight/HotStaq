@@ -26,7 +26,7 @@ describe ("Hotsite Files Tests", () =>
 		it ("should load the HotSite", async () =>
 			{
 				server = new HotHTTPServer (processor);
-		
+
 				server.logger.logLevel = HotLogLevel.All;
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
 				await processor.processHotSite ();
