@@ -32,7 +32,7 @@
 			},
 			"problemMatcher": [],
 			"label": "Build web tests",
-			"command": "npx webpack --mode=development --config=webpack.config.tests.js --watch"
+			"command": "npx webpack --mode=development --config=webpack.config.tests.cjs --watch"
 		},
 		{
 			"type": "shell",

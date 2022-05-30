@@ -21,7 +21,7 @@ module.exports = {
 									configFile: "tsconfig-web.json"
 								}
 						}],
-					exclude: /node_modules/
+					exclude: new RegExp ("node_modules")
 				}]
 		},
 		plugins: [
@@ -29,23 +29,46 @@ module.exports = {
 					__VERSION__: `\"${packageVersion}\"`
 				}),
 			new webpack.IgnorePlugin ({
-					resourceRegExp: /HotTesterMochaSelenium|HotTestSeleniumDriver|HotTesterMocha/
+				resourceRegExp: /HotHTTPServer|HotTesterMochaSelenium|HotTestSeleniumDriver|HotTesterMocha|express|mysql/
 				})
 		],
 		resolve: {
-			extensions: [".tsx", ".ts", ".js"]
-		},
-		node: {
-			fs: "empty",
-			path: "empty",
-			crypto: "empty",
-			stream: "empty",
-			net: "empty",
-			tls: "empty",
-			child_process: "empty"
+			extensions: [".tsx", ".ts", ".js"],
+			fallback: {
+				fs: false,
+				path: false,
+				net: false,
+				tls: false,
+				crypto: false,
+				buffer: false,
+				https: false,
+				http: false,
+				net: false,
+				process: false,
+				child_process: false,
+				stream: false,
+				worker_threads: false,
+				url: false,
+				util: false,
+				zlib: false
+			}
 		},
 		externals: {
-			hotstaq: "HotStaqWeb"
+			"validate-npm-package-name": "{}",
+			"node:path": "{}",
+			"node:buffer": "{}",
+			"node:fs": "{}",
+			"node:crypto": "{}",
+			"node:https": "{}",
+			"node:http": "{}",
+			"node:net": "{}",
+			"node:process": "{}",
+			"node:child_process": "{}",
+			"node:stream/web": "{}",
+			"node:stream": "{}",
+			"node:url": "{}",
+			"node:util": "{}",
+			"node:zlib": "{}"
 		},
 		output: {
 			filename: "HotStaqTests.js",

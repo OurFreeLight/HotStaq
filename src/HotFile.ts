@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 
 import { DeveloperMode, Hot } from "./Hot";
 import { HotPage } from "./HotPage";
@@ -115,7 +115,7 @@ export class HotFile implements IHotFile
 	{
 		try
 		{
-			let res: Response = await fetch (url);
+			let res = await fetch (url);
 
 			if (res.ok === false)
 				throw new Error (`${res.status}: ${res.statusText}`);

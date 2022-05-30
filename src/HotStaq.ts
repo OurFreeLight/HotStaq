@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as ppath from "path";
 
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 import validateModuleName from "validate-npm-package-name";
 
 import { HotPage } from "./HotPage";

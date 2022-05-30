@@ -5,7 +5,7 @@ import { HotAPI } from "./HotAPI";
 import { HotTestElement } from "./HotTestElement";
 
 import Cookies from "js-cookie";
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 
 /**
  * The available developer modes.
@@ -224,7 +224,7 @@ export class Hot
 	{
 		try
 		{
-			let res: Response = await fetch (url, {
+			let res = await fetch (url, {
 					"method": httpMethod,
 					"headers": {
 							"Accept": "application/json",
@@ -249,14 +249,14 @@ export class Hot
 	/**
 	 * Make a HTTP request. This is basically just a wrapper for fetch.
 	 * 
-	 * @param url The full url to make the HTTP call.
-	 * @param requestInit The request parameters to send.
+	 * @param {string} url The full url to make the HTTP call.
+	 * @param {RequestInit} requestInit The request parameters to send.
 	 * 
 	 * @returns The HTTP response.
 	 */
-	static async httpRequest (url: string, requestInit: RequestInit = undefined): Promise<Response>
+	static async httpRequest (url: string, requestInit: any = undefined): Promise<any>
 	{
-		let res: Response = await fetch (url, requestInit);
+		let res = await fetch (url, requestInit);
 
 		return (res);
 	}

@@ -36,13 +36,42 @@ module.exports = {
 				})
 		],
 		resolve: {
-			extensions: [".tsx", ".ts", ".js"]
+			extensions: [".tsx", ".ts", ".js"],
+			fallback: {
+				fs: false,
+				path: false,
+				net: false,
+				tls: false,
+				crypto: false,
+				buffer: false,
+				https: false,
+				http: false,
+				net: false,
+				process: false,
+				child_process: false,
+				stream: false,
+				worker_threads: false,
+				url: false,
+				util: false,
+				zlib: false
+			}
 		},
-		node: {
-			fs: "empty",
-			path: "empty",
-			net: "empty",
-			tls: "empty"
+		externals: {
+			"validate-npm-package-name": "{}",
+			"node:path": "{}",
+			"node:buffer": "{}",
+			"node:fs": "{}",
+			"node:crypto": "{}",
+			"node:https": "{}",
+			"node:http": "{}",
+			"node:net": "{}",
+			"node:process": "{}",
+			"node:child_process": "{}",
+			"node:stream/web": "{}",
+			"node:stream": "{}",
+			"node:url": "{}",
+			"node:util": "{}",
+			"node:zlib": "{}"
 		},
 		output: {
 			filename: "HotStaq.js",
