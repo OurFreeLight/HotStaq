@@ -1,4 +1,4 @@
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 
 import { HotServer } from "./HotServer";
 import { HotRoute } from "./HotRoute";

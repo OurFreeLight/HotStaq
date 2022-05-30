@@ -1,6 +1,6 @@
 import "mocha";
 import { expect, should } from "chai";
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 
 import { HotStaq } from "../../src/HotStaq";
 import { HotIO } from "../../src/HotIO";
@@ -17,7 +17,7 @@ describe ("CLI Tests", () =>
 
                 await HotStaq.wait (1000);
 
-				let res: Response = await fetch (`${url}/tests/browser/HelloWorld`);
+				let res = await fetch (`${url}/tests/browser/HelloWorld`);
                 const text = await res.text ();
 
 				expect (res.status).to.equal (200);
@@ -37,7 +37,7 @@ describe ("CLI Tests", () =>
 
 				await HotStaq.wait (1000);
 
-				let res: Response = await fetch (`${url}/HelloWorld`);
+				let res = await fetch (`${url}/HelloWorld`);
 				const text = await res.text ();
 
 				expect (res.status).to.equal (200);
@@ -57,7 +57,7 @@ describe ("CLI Tests", () =>
 
 				await HotStaq.wait (1000);
 
-				let res: Response = await fetch (`${url}/`);
+				let res = await fetch (`${url}/`);
 				const text = await res.text ();
 
 				expect (res.status).to.equal (200);
@@ -79,7 +79,7 @@ describe ("CLI Tests", () =>
 
 				await HotStaq.wait (1000);
 
-				let res: Response = await fetch (`${url}/tests/browser/HelloWorld`);
+				let res = await fetch (`${url}/tests/browser/HelloWorld`);
 				const text = await res.text ();
 
 				expect (res.status).to.equal (200);

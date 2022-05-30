@@ -1,6 +1,6 @@
 import "mocha";
 import { expect, should } from "chai";
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 import FormData from "form-data";
 
 import * as fs from "fs";
@@ -39,14 +39,14 @@ describe ("Server Tests", () =>
 
 		it ("should report 404", async () =>
 			{
-				let res: Response = await fetch (url);
+				let res = await fetch (url);
 
 				expect (res.status).to.equal (404);
 			});
 		it ("should add a static route and get the tests index html", async () =>
 			{
 				server.addStaticRoute ("/", `${process.cwd ()}/`);
-				let res: Response = await fetch (`${url}/tests/browser/index.htm`);
+				let res = await fetch (`${url}/tests/browser/index.htm`);
 
 				expect (res.status).to.equal (200);
 			});
@@ -73,12 +73,12 @@ describe ("Server Tests", () =>
 
 				formData.append ("index.html", stream);
 
-				let res: Response = await fetch (`${url}/v1/hello_world/file_upload`, {
+				let res = await fetch (`${url}/v1/hello_world/file_upload`, {
 						method: "POST",
 						// @ts-ignore
 						body: formData
 					});
-				let jsonRes = await res.json ();
+				let jsonRes: any = await res.json ();
 
 				expect (fs.existsSync (jsonRes.path)).to.equal (true);
 				fs.unlinkSync (jsonRes.path);

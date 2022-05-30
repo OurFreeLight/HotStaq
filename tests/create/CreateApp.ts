@@ -1,6 +1,6 @@
 import "mocha";
 import { expect, should } from "chai";
-import fetch from "cross-fetch";
+import fetch from "node-fetch";
 import FormData from "form-data";
 
 import * as fs from "fs";

@@ -1288,16 +1288,22 @@ async function start ()
 			foundHotsitePath = ppath.normalize ("./HotSite.json");
 		}
 
-		if (checkIfPathExists ("./hotsite.json") === true)
+		if (hotsiteExists === false)
 		{
-			hotsiteExists = true;
-			foundHotsitePath = ppath.normalize ("./hotsite.json");
+			if (checkIfPathExists ("./hotsite.json") === true)
+			{
+				hotsiteExists = true;
+				foundHotsitePath = ppath.normalize ("./hotsite.json");
+			}
 		}
 
-		if (checkIfPathExists ("./HOTSITE.json") === true)
+		if (hotsiteExists === false)
 		{
-			hotsiteExists = true;
-			foundHotsitePath = ppath.normalize ("./HOTSITE.json");
+			if (checkIfPathExists ("./HOTSITE.json") === true)
+			{
+				hotsiteExists = true;
+				foundHotsitePath = ppath.normalize ("./HOTSITE.json");
+			}
 		}
 
 		if (hotsiteExists === true)
