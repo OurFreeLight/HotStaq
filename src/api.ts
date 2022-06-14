@@ -5,6 +5,7 @@ import { HotComponent, IHotComponent } from "./HotComponent";
 import { HotFile } from "./HotFile";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotPage } from "./HotPage";
+import { HotIO } from "./HotIO";
 
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
@@ -61,6 +62,7 @@ export {
 		HotLog,
 		HotLogLevel,
 		HotPage,
+		HotIO,
 		HotDB,
 		ConnectionStatus,
 		HotRoute,

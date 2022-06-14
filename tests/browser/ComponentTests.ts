@@ -19,7 +19,7 @@ describe ("Component Tests", () =>
 				await common.load ();
 
 				await common.startServer ();
-				await common.driver.sleep (3000);
+				await common.driver.sleep (1500);
 				await common.driver.get (`${common.getUrl ()}/tests/browser/index.htm`);
 			});
 		after (async () =>

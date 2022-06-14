@@ -147,6 +147,20 @@ export class Hot
 	}
 
 	/**
+	 * Include and execute JavaScript for use when running the preprocessor.
+	 */
+	static async includeJS (file: string): Promise<any>
+	{
+		const res = await Hot.httpRequest (file);
+		const output: string = await res.text ();
+
+		if (HotStaq.isWeb === true)
+			eval.apply (window, [output]);
+		else
+			eval (output);
+	}
+
+	/**
 	 * Run an already loaded file and echo out it's contents.
 	 */
 	static async runFile (fileName: string, args: any[] = null): Promise<void>
@@ -224,14 +238,21 @@ export class Hot
 	{
 		try
 		{
-			let res = await fetch (url, {
-					"method": httpMethod,
-					"headers": {
-							"Accept": "application/json",
-							"Content-Type": "application/json"
-						},
-					"body": JSON.stringify (data)
-				});
+			let fetchObj = {
+				"method": httpMethod,
+				"headers": {
+						"Accept": "application/json",
+						"Content-Type": "application/json"
+					}
+			}
+
+			if (httpMethod === "POST")
+			{
+				/// @ts-ignore
+				fetchObj["body"] = JSON.stringify (data);
+			}
+
+			let res = await fetch (url, fetchObj);
 
 			if (res.ok === false)
 				throw new Error (`${res.status}: ${res.statusText}`);

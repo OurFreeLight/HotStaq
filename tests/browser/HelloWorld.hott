@@ -1,3 +1,6 @@
+<*
+	await Hot.includeJS ("./HelloWorldIncludeJS.js");
+*>
 <!DOCTYPE html>
 <html>
 
@@ -45,8 +48,9 @@
 	Hot.echo (`World!</button><div id = "buttonClicked"></div>`);
 *>
 	<input id = "message" data-test = "${testData}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
-	<button id = "testHelloWorldAPI" onclick = "sayHello ();">Send</button>
-	<button id = "testHelloWorldAPI2" onclick = "sayHelloDifferently ();">Send2</button>
+	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
+	*> onclick = "sayHello ();">Send</button>
+	<button id = "${getTestHelloWorldAPI2Id ()}" onclick = "sayHelloDifferently ();">Send2</button>
 	<button id = "testHelloWorldAPI3" onclick = "sayHelloButAuthorizedBad ();">Auth Send - Bad Auth</button>
 	<button id = "testHelloWorldAPI4" onclick = "sayHelloButAuthorizedGood ();">Auth Send - Good Auth</button>
 <*

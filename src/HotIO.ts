@@ -31,6 +31,16 @@ export class HotIO
 	}
 
 	/**
+	 * Read a file and create a stream from it.
+	 */
+	static readFileStream (path: string): fs.ReadStream
+	{
+		let stream: fs.ReadStream = fs.createReadStream (path);
+
+		return (stream);
+	}
+
+	/**
 	 * Write to a text file.
 	 */
 	static async writeTextFile (path: string, content: string): Promise<string>

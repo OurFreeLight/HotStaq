@@ -64,7 +64,7 @@ export class HelloWorldAPI extends HotAPI
 			{
 				return (true);
 			}, HTTPMethod.GET);
-		route.addMethod ("file_upload", this.fileUpload);
+		route.addMethod ("file_upload", this.fileUpload, HTTPMethod.FILE_UPLOAD);
 		route.addMethod ("test_response", this.testResponse, HTTPMethod.POST, [
 						"TestAPIResponse",
 						async (driver: HotTestDriver): Promise<any> =>
@@ -112,15 +112,15 @@ export class HelloWorldAPI extends HotAPI
 	/**
 	 * This accepts a file upload.
 	 */
-	async fileUpload (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async fileUpload (req: any, res: any, authorizedValue: any, 
+		jsonObj: any, queryObj: any, files: any): Promise<any>
 	{
 		let filename: string = "";
 		let filepath: string = "";
-		let results = await HotHTTPServer.getFileUploads (req);
 
-		for (let key in results)
+		for (let key in files)
 		{
-			let file = results[key];
+			let file = files[key];
 			filename = file.name;
 			filepath = file.path;
 

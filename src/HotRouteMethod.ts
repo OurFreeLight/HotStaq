@@ -8,8 +8,18 @@ import { HotServer } from "./HotServer";
  */
 export enum HTTPMethod
 {
+	/**
+	 * A HTTP GET request.
+	 */
 	GET = "get",
-	POST = "post"
+	/**
+	 * A HTTP POST request.
+	 */
+	POST = "post",
+	/**
+	 * This will upload a file, then post the json request afterwards.
+	 */
+	FILE_UPLOAD = "file_upload_then_post_json"
 }
 
 /**
@@ -21,7 +31,7 @@ export type ServerRegistrationFunction = () => Promise<boolean>;
  * A function that will be executed by the server.
  */
 export type ServerExecutionFunction = 
-	(req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any) => Promise<any>;
+	(req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any, files?: any) => Promise<any>;
 /**
  * A function that will be executed by the client.
  */

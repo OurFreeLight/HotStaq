@@ -1223,7 +1223,7 @@ async function handleGenerateCommands (): Promise<commander.Command>
 			createHotBuilder ();
 			generator.optimizeJS = true;
 		});
-	generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: typescript,javascript,openapi-3.0.0-json,openapi-3.0.0-yaml", 
+	generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: javascript,openapi-3.0.0-json,openapi-3.0.0-yaml", 
 		(arg: string, previous: any) =>
 		{
 			createHotBuilder ();

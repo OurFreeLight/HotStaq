@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import FormData from "form-data";
 
 import { HotServer } from "./HotServer";
 import { HotRoute } from "./HotRoute";
@@ -57,7 +58,21 @@ export abstract class HotAPI
 	 */
 	db: HotDB;
 	/**
-	 * The authorization credentials to use throughout the application.
+	 * The authorization credentials to use throughout the application. If using 
+	 * basic authentication for HTTP requests, be sure to override the 
+	 * `toAuthorizationHeaderString` in this object.
+	 * 
+	 * Example of this object:
+	 * ```ts
+	 * this.authCredentials = {
+	 * 		user: "username",
+	 * 		password: "password",
+	 * 		toAuthorizationHeaderString: function ()
+	 * 			{
+	 * 				return (btoa (this.user + ":" + this.password));
+	 * 			}
+	 * 	};
+	 * ```
 	 */
 	authCredentials: any;
 	/**
@@ -345,9 +360,12 @@ export abstract class HotAPI
 	/**
 	 * Make a call to the API.
 	 */
-	async makeCall (route: string, data: any, httpMethod: string = "POST"): Promise<any>
+	async makeCall (route: string, data: any, httpMethod: string = "POST", 
+		files: { [name: string]: any } = {}): Promise<any>
 	{
 		let url: string = this.baseUrl;
+
+		httpMethod = httpMethod.toUpperCase ();
 
 		if (url[(url.length - 1)] === "/")
 			url = url.substr (0, (url.length - 1));
@@ -357,7 +375,38 @@ export abstract class HotAPI
 
 		url += route;
 
-		httpMethod = httpMethod.toUpperCase ();
+		const numFiles: number = Object.keys (files).length;
+
+		if (numFiles > 0)
+		{
+			if (httpMethod !== "POST")
+				throw new Error (`To upload files, you must set the httpMethod to POST.`);
+
+			const formData: FormData = new FormData ();
+
+			for (let key in files)
+				formData.append (key, files[key]);
+
+			let res = await fetch (url, {
+					method: "POST",
+					// @ts-ignore
+					body: formData
+				});
+			let jsonRes: any = await res.json ();
+
+			if (data["hotstaq"] == null)
+				data["hotstaq"] = {};
+
+			if (data["hotstaq"]["uploads"] == null)
+				data["hotstaq"]["uploads"] = {};
+
+			data["hotstaq"]["uploads"]["uploadId"] = 
+					jsonRes["hotstaq"]["uploads"]["uploadId"];
+
+			const result: any = await this.makeCall (route, data, httpMethod);
+
+			return (result);
+		}
 
 		let fetchObj: any = {
 				method: httpMethod,
@@ -373,19 +422,20 @@ export abstract class HotAPI
 			fetchObj["body"] = JSON.stringify (data);
 		}
 
-		let res: any = null;
+		let promise = new Promise ((resolve, reject) => 
+			{
+				fetch (url, fetchObj).then (async (res) =>
+					{
+						let jsonObj: any = await res.json ();
 		
-		try
-		{
-			res = await fetch (url, fetchObj);
-		}
-		catch (ex)
-		{
-			throw ex;
-		}
+						resolve (jsonObj);
+					})
+					.catch ((reason: any) =>
+					{
+						reject (reason);
+					});
+			});
 
-		let jsonObj: any = await res.json ();
-
-		return (jsonObj);
+		return (promise);
 	}
 }

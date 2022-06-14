@@ -11,7 +11,7 @@
 		"web": {
 			"tester": "HotTesterMochaSelenium",
 			"createNewTester": false,
-			"testerAPIUrl": "http://127.0.0.1:8184",
+			"testerAPIUrl": "http://127.0.0.1:8182",
 			"launchpadUrl": "http://127.0.0.1:3123",
 			"maps": [
 				"Testing",
@@ -21,7 +21,7 @@
 		"api": {
 			"tester": "HotTesterMochaSelenium",
 			"createNewTester": false,
-			"testerAPIUrl": "http://127.0.0.1:8184",
+			"testerAPIUrl": "http://127.0.0.1:8182",
 			"launchpadUrl": "http://127.0.0.1:3123",
 			"maps": [
 				"HelloWorld"

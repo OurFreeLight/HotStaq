@@ -14,6 +14,7 @@ import { DeveloperMode } from "./Hot";
 import { HotLogLevel } from "./HotLog";
 import { EventExecutionType, HotAPI } from "./HotAPI";
 import { HotTester } from "./HotTester";
+import { HotHTTPServer } from "./HotHTTPServer";
 
 /**
  * An API server for use during testing.
@@ -227,8 +228,10 @@ export class HotTesterServer extends HotServer
 
 			methodName += method.name;
 			method.isRegistered = true;
+			const expressType: string = HotHTTPServer.getExpressMethodName (method.type);
 
-			this.expressApp[method.type] (methodName, 
+			/// @ts-ignore
+			this.expressApp[expressType] (methodName, 
 				async (req: express.Request, res: express.Response) =>
 				{
 					let hasAuthorization: boolean = true;
@@ -349,8 +352,10 @@ export class HotTesterServer extends HotServer
 		for (let iIdx = 0; iIdx < this.routes.length; iIdx++)
 		{
 			let route = this.routes[iIdx];
+			const expressType: string = HotHTTPServer.getExpressMethodName (route.type);
 
-			this.expressApp[route.type] (route.route, route.method);
+			/// @ts-ignore
+			this.expressApp[expressType] (route.route, route.method);
 		}
 	}
 

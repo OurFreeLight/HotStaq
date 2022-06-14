@@ -9,7 +9,7 @@ import { HotLog } from "./HotLog";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { APItoLoad, HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotRouteMethodParameter } from "./HotRouteMethod";
+import { HotRouteMethod, HotRouteMethodParameter, HTTPMethod } from "./HotRouteMethod";
 import { HotServerType } from "./HotServer";
 
 /**
@@ -245,10 +245,20 @@ export class HotGenerator
 					{
 						let method: HotRouteMethod = route.methods[iJdx];
 						let methodName: string = method.name;
+						let methodType: string = "post";
+			
+						if (method.type === HTTPMethod.GET)
+							methodType = "get";
+			
+						if (method.type === HTTPMethod.POST)
+							methodType = "post";
+			
+						if (method.type === HTTPMethod.FILE_UPLOAD)
+							methodType = "post";
 
 						apiFileContent += this.getAPIContent (this.generateType, "class_function", 
 							{ methodName: methodName, routeVersion: route.version, 
-								routeName: routeName, methodType: method.type.toUpperCase (), 
+								routeName: routeName, methodType: methodType.toUpperCase (), 
 								libraryName: libraryName, apiName: apiName, method: method });
 					}
 
@@ -654,6 +664,40 @@ if (typeof (window) !== "undefined")
 		HotAPIGlobal = window.HotAPI;
 }
 
+/**
+ * Get the authorization header string.
+ */
+function HotStaqGetAuthorizationHeaderString ()
+{
+	const auth = null;
+
+	if (this.authorization != null)
+	{
+		if (this.authorization.toAuthorizationHeaderString != null)
+			auth = this.authorization.toAuthorizationHeaderString ();
+	}
+
+	if (auth == null)
+	{
+		if (Hot != null)
+		{
+			if (Hot.API != null)
+			{
+				if (Hot.API.authCredentials != null)
+				{
+					if (Hot.API.authCredentials.toAuthorizationHeaderString != null)
+						auth = Hot.API.authCredentials.toAuthorizationHeaderString ();
+				}
+			}
+		}
+	}
+
+	return (auth);
+}
+
+/**
+ * Process a JSON object, and get it ready to make a request.
+ */
 function HotStaqProcessJSONObject (jsonObj)
 {
 	if (jsonObj != null)
@@ -677,14 +721,22 @@ function HotStaqProcessJSONObject (jsonObj)
 	return (jsonObj);
 }
 
-function HotStaqPostJSONObject (methodType, url, jsonObj)
+/**
+ * Make a request to the server.
+ */
+function HotStaqPostJSONObject (methodType, url, jsonObj, auth)
 {
+	let headers = {
+			"Accept": "application/json",
+			"Content-Type": "application/json"
+		};
+
+	if (auth != null)
+		headers["Authorization"] = auth;
+
 	let promise = fetch (url, {
 			"method": methodType,
-			"headers": {
-				"Accept": "application/json",
-				"Content-Type": "application/json"
-			},
+			"headers": headers,
 			body: JSON.stringify (jsonObj)
 		});
 
@@ -721,9 +773,22 @@ class ${data.routeName}
 		 */
 		this.connection = connection;
 		/**
+		 * The authorization used to connect to the server.
+		 */
+		this.authorization = null;
+		/**
 		 * The database connection, if any.
 		 */
 		this.db = db;
+
+		if (connection != null)
+		{
+			if (connection.api != null)
+			{
+				if (connection.api.authCredentials != null)
+					this.authorization = connection.api.authCredentials;
+			}
+		}
 	}
 `;
 		}
@@ -833,6 +898,31 @@ class ${data.routeName}
 				}
 			}
 
+			let uploadFileBegin: string = "";
+			let uploadFileEnd: string = "";
+
+			if (method.type === HTTPMethod.FILE_UPLOAD)
+			{
+				uploadFileBegin = `
+				let uploadHeaders = {
+						"Content-Type": "multipart/form-data"
+					};
+
+				if (auth != null)
+					uploadHeaders["Authorization"] = auth;
+
+				fetch (url, {
+					"method": "POST",
+					"headers": uploadHeaders,
+					body: JSON.stringify (jsonObj)
+				}).then (() =>
+				{
+				`;
+				uploadFileEnd = `
+				});
+				`;
+			}
+
 			content = `
 	${paramsDescription}/**
 	 * The ${data.methodName} method.${jsonParamOutput}${jsonReturnOutput}
@@ -841,15 +931,24 @@ class ${data.routeName}
 	{
 		var promise = new Promise ((resolve, reject) => 
 			{
-				jsonObj = HotStaqProcessJSONObject (jsonObj);
-				HotStaqPostJSONObject ("${data.methodType}", 
-					\`\${this.baseUrl}/${data.routeVersion}/${data.routeName}/${data.methodName}\`, 
-					jsonObj).then (function (response)
-						{
-							var result = response.json ();
+				const url = \`\${this.baseUrl}/${data.routeVersion}/${data.routeName}/${data.methodName}\`;
+				const auth = null;
 
-							resolve (result);
-						});
+				if (this.authorization != null)
+				{
+					if (this.authorization.toAuthorizationHeaderString != null)
+						auth = this.authorization.toAuthorizationHeaderString ();
+				}
+
+				${uploadFileBegin}
+				jsonObj = HotStaqProcessJSONObject (jsonObj);
+				HotStaqPostJSONObject ("${data.methodType}", url, jsonObj, auth).then (
+					function (response)
+					{
+						var result = response.json ();
+
+						resolve (result);
+					});${uploadFileEnd}
 			});
 
 		return (promise);

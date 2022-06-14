@@ -163,19 +163,19 @@
 			"preLaunchTask": "Build web test api",
 			"program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
 			"args": [
-				"--timeout", "5000", 
+				"--timeout", "6000", 
 				"--colors", 
 				"./build/tests/**/*.js"
 			],
 			"cwd": "${workspaceFolder}",
 			"env": {
 				"HTTP_PORT": "3123",
-				"DATABASE_SERVER": "192.168.1.195",
+				"DATABASE_SERVER": "192.168.0.195",
 				"DATABASE_PORT": "3310",
 				"DATABASE_USERNAME": "5NKVBAt7OrzrumQyQVs",
 				"DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
 				"DATABASE_SCHEMA": "hotstaq",
-				"INFLUX_DATABASE_SERVER": "http://192.168.1.195:8091",
+				"INFLUX_DATABASE_SERVER": "http://192.168.0.195:8091",
 				"INFLUX_DATABASE_USERNAME": "5NKVBAt7OrzrumQyQVs",
 				"INFLUX_DATABASE_PASSWORD": "1BBrZbKYRUM7oiMA5oY",
 				"INFLUX_DATABASE_ORG": "freelight",

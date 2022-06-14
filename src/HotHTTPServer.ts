@@ -6,13 +6,15 @@ import { F_OK } from "constants";
 
 import express from "express";
 import mimeTypes from "mime-types";
-import { Fields, Files, IncomingForm } from "formidable";
+import { Fields, Files, IncomingForm, Options } from "formidable";
+import { v4 as uuidv4 } from "uuid";
 
 import { HotServer } from "./HotServer";
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HTTPMethod } from "./HotRouteMethod";
 import { EventExecutionType, HotAPI } from "./HotAPI";
+import { HotIO } from "./HotIO";
 
 /**
  * A static route.
@@ -135,6 +137,25 @@ export class HotHTTPServer extends HotServer
 			 */
 			jsSrcPath: string;
 		};
+	/**
+	 * The uploads that have been sent to the server. Each key is an upload id that 
+	 * has a list of file paths where the files can be retreived.
+	 */
+	uploads: {
+			[uploadId: string]: {
+				[key: string]: {
+					name: string;
+					size: number;
+					path: string;
+				}
+			}
+		};
+	/**
+	 * Auto delete upload options.
+	 */
+	autoDeleteUploadOptions: {
+			afterUploadIdUse: boolean;
+		};
 
 	constructor (processor: HotStaq | HotServer, httpPort: number = null, httpsPort: number = null)
 	{
@@ -154,6 +175,10 @@ export class HotHTTPServer extends HotServer
 				name: "",
 				url: "./",
 				jsSrcPath: "./js/HotStaq.min.js"
+			};
+		this.uploads = {};
+		this.autoDeleteUploadOptions = {
+				afterUploadIdUse: true
 			};
 
 		if (process.env.LISTEN_ADDR != null)
@@ -228,6 +253,25 @@ export class HotHTTPServer extends HotServer
 			});
 		this.expressApp.use (express.urlencoded ({ "extended": true }));
 		this.expressApp.use (express.json ({ "limit": JSONLimit }));
+	}
+
+	/**
+	 * Get the method name to be used with Express.
+	 */
+	static getExpressMethodName (methodType: HTTPMethod): string
+	{
+		let expressMethod: string = "post";
+
+		if (methodType === HTTPMethod.GET)
+			expressMethod = "get";
+
+		if (methodType === HTTPMethod.POST)
+			expressMethod = "post";
+
+		if (methodType === HTTPMethod.FILE_UPLOAD)
+			expressMethod = "post";
+
+		return (expressMethod);
 	}
 
 	/**
@@ -364,7 +408,11 @@ export class HotHTTPServer extends HotServer
 				method.isRegistered = true;
 
 				this.logger.verbose (`Adding route ${method.type} ${methodName}`);
-				this.expressApp[method.type] (methodName, 
+
+				const expressType: string = HotHTTPServer.getExpressMethodName (method.type);
+
+				// @ts-ignore
+				this.expressApp[expressType] (methodName, 
 					async (req: express.Request, res: express.Response) =>
 					{
 						let hasAuthorization: boolean = true;
@@ -427,13 +475,89 @@ export class HotHTTPServer extends HotServer
 
 						if (hasAuthorization === true)
 						{
-							if (method.onServerExecute != null)
+							let uploadedFiles: any = await HotHTTPServer.getFileUploads(req);
+
+							if (Object.keys (uploadedFiles).length > 0)
 							{
+								const hotstaqUploadId: string = uuidv4 ();
+
+								this.uploads[hotstaqUploadId] = {};
+								const tempDir: string = process.env["TEMP_UPLOAD_DIR"] || "./temp/";
+
 								try
 								{
+									await HotIO.mkdir (tempDir);
+								}
+								catch (ex)
+								{
+								}
+
+								for (let key in uploadedFiles)
+								{
+									let uploadedFile: File = uploadedFiles[key];
+									/// @ts-ignore
+									const newFilePath: string = ppath.normalize (`${tempDir}/${uploadedFile.originalFilename}`);
+
+									/// @ts-ignore
+									await HotIO.moveFile (uploadedFile.filepath, newFilePath, { overwrite: true });
+
+									let uploadedObj: any = {
+										/// @ts-ignore
+										name: uploadedFile.originalFilename,
+										size: uploadedFile.size,
+										// @ts-ignore
+										path: newFilePath
+									};
+
+									this.uploads[hotstaqUploadId][key] = uploadedObj;
+								}
+
+								this.logger.verbose (`${req.method} ${methodName}, Upload ID: ${hotstaqUploadId}, Received uploads: ${JSON.stringify (this.uploads[hotstaqUploadId])}`);
+
+								res.json ({
+										hotstaq: {
+											uploads: {
+												uploadId: hotstaqUploadId
+											}
+										}
+									});
+
+								return;
+							}
+
+							if (method.onServerExecute != null)
+							{
+								let hotstaq: any = jsonObj["hotstaq"];
+								let foundUploadId: string = "";
+
+								if (hotstaq != null)
+								{
+									if (hotstaq["uploads"] != null)
+									{
+										if (hotstaq["uploads"]["uploadId"] != null)
+										{
+											let hotstaqUploadId: string = hotstaq["uploads"]["uploadId"];
+
+											if (this.uploads[hotstaqUploadId] != null)
+											{
+												hotstaq["uploads"]["files"] = this.uploads[hotstaqUploadId];
+												foundUploadId = hotstaqUploadId;
+											}
+										}
+									}
+								}
+
+								try
+								{
+									let files: any = {};
+
+									if (foundUploadId !== "")
+										files = this.uploads[foundUploadId];
+
 									let result: any = 
 										await method.onServerExecute.call (
-											thisObj, req, res, authorizationValue, jsonObj, queryObj);
+											thisObj, req, res, authorizationValue, 
+											jsonObj, queryObj, files);
 
 									this.logger.verbose (`${req.method} ${methodName}, Response: ${result}`);
 
@@ -444,6 +568,12 @@ export class HotHTTPServer extends HotServer
 								{
 									this.logger.verbose (`Execution error: ${ex.message}`);
 									res.json ({ error: ex.message });
+								}
+
+								if (foundUploadId !== "")
+								{
+									if (this.autoDeleteUploadOptions.afterUploadIdUse === true)
+										await this.deleteUploads (foundUploadId);
 								}
 							}
 						}
@@ -487,6 +617,26 @@ export class HotHTTPServer extends HotServer
 	}
 
 	/**
+	 * Delete the uploads for a given upload id.
+	 */
+	async deleteUploads (uploadId: string): Promise<void>
+	{
+		let uploads = this.uploads[uploadId];
+
+		if (uploads == null)
+			return;
+
+		for (let key in uploads)
+		{
+			let upload = uploads[key];
+
+			await HotIO.rm (ppath.normalize (upload.path));
+		}
+
+		delete this.uploads[uploadId];
+	}
+
+	/**
 	 * The routes to add before registering a route.
 	 */
 	preregisterRoute (): void
@@ -502,9 +652,11 @@ export class HotHTTPServer extends HotServer
 		for (let iIdx = 0; iIdx < this.routes.length; iIdx++)
 		{
 			let route = this.routes[iIdx];
+			const expressType: string = HotHTTPServer.getExpressMethodName (route.type);
 
-			this.expressApp[route.type] (route.route, route.method);
-			this.logger.verbose (`Adding route ${route.type} ${route.route}`);
+			/// @ts-ignore
+			this.expressApp[expressType] (route.route, route.method);
+			this.logger.verbose (`Added route ${route.type} ${route.route}`);
 		}
 
 		let serveFileExtensions: (string | ServableFileExtension)[] = this.serveFileExtensions;
@@ -791,7 +943,11 @@ export class HotHTTPServer extends HotServer
 	/**
 	 * Get all files uploaded.
 	 */
-	static async getFileUploads (req: express.Request, options: any = { multiples: true }): Promise<Files>
+	static async getFileUploads (req: express.Request, 
+		options: Options = {
+				multiples: true, 
+				enabledPlugins: ["octetstream", "multipart"]
+			}): Promise<Files>
 	{
 		return (await new Promise<Files> ((resolve, reject) =>
 			{
@@ -800,7 +956,11 @@ export class HotHTTPServer extends HotServer
 				form.parse (req, (err: any, fields: Fields, files: Files) =>
 					{
 						if (err != null)
-							throw err;
+						{
+							/// @fixme Is it ok to ignore this error?
+							if (err.message !== "no parser found")
+								throw err;
+						}
 		
 						resolve (files);
 					});

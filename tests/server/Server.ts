@@ -12,6 +12,7 @@ import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HelloWorldAPI } from "./HelloWorldAPI";
 import { DeveloperMode } from "../../src/Hot";
+import { HotIO } from "../../src/HotIO";
 
 describe ("Server Tests", () =>
 	{
@@ -68,7 +69,7 @@ describe ("Server Tests", () =>
 		it ("should upload a file to HelloWorldAPI and delete it", async () =>
 			{
 				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
-				let stream: fs.ReadStream = fs.createReadStream (filepath);
+				/*let stream: fs.ReadStream = fs.createReadStream (filepath);
 				const formData: FormData = new FormData ();
 
 				formData.append ("index.html", stream);
@@ -78,9 +79,12 @@ describe ("Server Tests", () =>
 						// @ts-ignore
 						body: formData
 					});
-				let jsonRes: any = await res.json ();
+				let jsonRes: any = await res.json ();*/
+				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload", {}, "POST", {
+						"indexFileKey": HotIO.readFileStream (filepath)
+					});
 
-				expect (fs.existsSync (jsonRes.path)).to.equal (true);
+				expect (fs.existsSync (jsonRes.path)).to.equal (true, "File was not uploaded properly!");
 				fs.unlinkSync (jsonRes.path);
 			});
 	});
