@@ -45,6 +45,7 @@ async function startAPIServer (server: HotHTTPServer, loadedAPI: APItoLoad, base
 	let apiJS = require (foundModulePath);
 	let apiClass: any = apiJS[loadedAPI.exportedClassName];
 	let api: HotAPI = new apiClass (baseAPIUrl, server);
+	let useDatabase: boolean = true;
 
 	server.logger.info (`Loaded API class: ${loadedAPI.exportedClassName}`);
 	server.logger.verbose (`Base API URL: ${baseAPIUrl}`);
@@ -63,6 +64,21 @@ async function startAPIServer (server: HotHTTPServer, loadedAPI: APItoLoad, base
 	}
 
 	if (dbinfo != null)
+	{
+		if (dbinfo.type === "none")
+			useDatabase = false;
+	}
+
+	if (process.env["DATABASE_DISABLE"] != null)
+	{
+		if (process.env["DATABASE_DISABLE"] === "1")
+			useDatabase = false;
+	}
+
+	if (useDatabase === false)
+		await server.setAPI (api);
+
+	if ((dbinfo != null) && (useDatabase === true))
 	{
 		let dbClass = null;
 
@@ -1022,7 +1038,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 		{
 			globalApi = api_name;
 		}, "");
-	runCmd.option ("--db-type <type>", "The type of database to use. Can be (mysql, influx)", 
+	runCmd.option ("--db-type <type>", "The type of database to use. Can be (none, mysql, influx)", 
 		(type: string, previous: any) =>
 		{
 			setupDB ();

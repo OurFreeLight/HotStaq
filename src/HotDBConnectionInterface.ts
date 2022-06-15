@@ -5,6 +5,7 @@ export interface HotDBConnectionInterface
 {
     /**
      * The type of database. Can be:
+     * * none
      * * mysql
      * * influx
      */

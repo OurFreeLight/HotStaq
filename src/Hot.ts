@@ -206,7 +206,9 @@ export class Hot
 	/**
 	 * Make an api call.
 	 */
-	static async apiCall (route: string, data: any = null, httpMethod: string = "POST"): Promise<any>
+	static async apiCall (route: string, data: any = null, 
+		httpMethod: string = "POST", 
+		files: { [name: string]: any } = {}): Promise<any>
 	{
 		let result: any = null;
 
@@ -220,7 +222,10 @@ export class Hot
 			throw new Error ("Current page's processor api is null! Did you forget to set the API name or URL?");
 
 		if (Hot.CurrentPage.processor.api != null)
-			result = await Hot.CurrentPage.processor.api.makeCall (route, data, httpMethod);
+		{
+			result = await Hot.CurrentPage.processor.api.makeCall (route, 
+							data, httpMethod, files);
+		}
 
 		return (result);
 	}

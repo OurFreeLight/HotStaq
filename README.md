@@ -53,6 +53,12 @@ You can configure how HotStaq starts by using:
 	* Accepted values:
 		* mysql
 		* influx
+* DATABASE_DISABLE
+	* Type: number
+	* Description: If set to 0, the database will not be used.
+	* Accepted values:
+		* 0
+		* 1
 * DATABASE_SERVER
 	* Type: string
 	* Description: The url to the database server to connect to.

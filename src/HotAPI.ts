@@ -246,7 +246,7 @@ export abstract class HotAPI
 						newRoute[newRouteMethod.name] = newRouteMethod.onClientExecute;
 					else
 					{*/
-						newRoute[newRouteMethod.name] = (data: any): any =>
+						newRoute[newRouteMethod.name] = (data: any, files: any): any =>
 							{
 								let httpMethod: string = newRouteMethod.type;
 								// Construct the url here. Base + route + route method
@@ -322,7 +322,7 @@ export abstract class HotAPI
 									}
 								}
 
-								let args: any[] = [routeStr, data, httpMethod];
+								let args: any[] = [routeStr, data, httpMethod, files];
 
 								return (this.makeCall.apply (this, args));
 							};
@@ -403,6 +403,7 @@ export abstract class HotAPI
 			data["hotstaq"]["uploads"]["uploadId"] = 
 					jsonRes["hotstaq"]["uploads"]["uploadId"];
 
+			// After the upload, make the actual JSON call. Do not pass files again.
 			const result: any = await this.makeCall (route, data, httpMethod);
 
 			return (result);
