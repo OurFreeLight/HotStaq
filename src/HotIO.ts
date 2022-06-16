@@ -59,14 +59,15 @@ export class HotIO
 	}
 
 	/**
-	 * Make a directory.
+	 * Make a directory recursively.
 	 */
-	static async mkdir (path: string): Promise<void>
+	static async mkdir (path: string, 
+		options: fs.MakeDirectoryOptions = { "recursive": true }): Promise<void>
 	{
 		return (await new Promise (
 			(resolve: any, reject: any): void =>
 			{
-				fs.mkdir (path, { recursive: true }, 
+				fs.mkdir (path, options, 
 					(err: NodeJS.ErrnoException, path: string) => 
 					{
 						if (err != null)
@@ -80,12 +81,13 @@ export class HotIO
 	/**
 	 * Delete a file.
 	 */
-	static async rm (path: string): Promise<void>
+	static async rm (path: string, options: fs.RmOptions = 
+		{ "force": false, maxRetries: 0, recursive: false, retryDelay: 100 }): Promise<void>
 	{
 		return (await new Promise (
 			(resolve: any, reject: any): void =>
 			{
-				fs.rm (path, 
+				fs.rm (path, options, 
 					(err: NodeJS.ErrnoException) => 
 					{
 						if (err != null)

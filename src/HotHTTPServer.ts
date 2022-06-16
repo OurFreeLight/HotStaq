@@ -629,8 +629,10 @@ export class HotHTTPServer extends HotServer
 		for (let key in uploads)
 		{
 			let upload = uploads[key];
+			const uploadPath: string = ppath.normalize (upload.path);
 
-			await HotIO.rm (ppath.normalize (upload.path));
+			if (await HotIO.exists (uploadPath) === true)
+				await HotIO.rm (uploadPath);
 		}
 
 		delete this.uploads[uploadId];
