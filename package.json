@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.734",
+  "version": "0.5.735",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -9,9 +9,10 @@
   "types": "./build/src/api.d.js",
   "type": "commonjs",
   "scripts": {
+    "version-check": "node ./scripts/VersionCheck.mjs",
     "test": "npm run build-test-api && export $(cat .env | xargs) && mocha --timeout 5000 --colors ./build/tests/**/*.js",
     "test-nyc": "npm run build-test-api && nyc mocha --require=dotenv/config --timeout 5000 --colors ./build/tests/**/*.js",
-    "prepublishOnly": "npm run builddoc && npm run build && npm run buildweb",
+    "prepublishOnly": "npm run builddoc && npm run build && npm run buildweb && npm run version-check",
     "builddoc": "typedoc --theme markdown --tsconfig ./tsconfig.json --entryPoints './src/api.ts' --readme README.md --out ./docs/ ./src",
     "build": "tsc --build ./tsconfig.json",
     "buildweb": "webpack --mode=production && npx google-closure-compiler --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",

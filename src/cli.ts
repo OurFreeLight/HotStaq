@@ -1365,7 +1365,7 @@ async function start ()
 
 				if (logLevel === "none")
 					globalLogLevel = HotLogLevel.None;
-			}, "");
+			}, "all");
 		command.option ("--dev, --development-mode", "Set to execute in development mode. This will allow for testing data to be collected and executed", 
 			(value: string, previous: any) =>
 			{

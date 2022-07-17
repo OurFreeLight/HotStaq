@@ -15,11 +15,16 @@ export abstract class HotTestDriver
 	 * The delay in milliseconds between each executed command.
 	 */
 	commandDelay: number;
+	/**
+	 * Any data that needs to be saved between the different testing runs.
+	 */
+	persistentData: any;
 
 	constructor (page: HotTestPage = null)
 	{
 		this.page = page;
 		this.commandDelay = 20;
+		this.persistentData = {};
 	}
 
 	/**

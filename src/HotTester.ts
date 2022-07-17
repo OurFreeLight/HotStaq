@@ -209,6 +209,13 @@ export abstract class HotTester
 			};
 		let strs: string[] = destination.split (/\-\>/g);
 		let type: string = strs[0];
+
+		if (type.length < 2)
+			return (null);
+
+		if ((type[0] === "/") && (type[1] === "/"))
+			return (null);
+
 		let getType: (typeStr: string, typeDelimiter: string) => string = 
 			(typeStr: string, typeDelimiter: string): string =>
 			{
@@ -540,7 +547,8 @@ export abstract class HotTester
 				let newDestination: HotDestination = HotTester.interpretDestination (
 													destination.mapName, testDest);
 
-				result = await this.executeTestPagePaths (newDestination);
+				if (newDestination != null)
+					result = await this.executeTestPagePaths (newDestination);
 			}
 
 			if (stop.cmd !== "")

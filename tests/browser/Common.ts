@@ -79,14 +79,20 @@ export class Common
 		{
 			if (process.env["TESTING_DEVTOOLS"] === "1")
 			{
-				options.addArguments ("--auto-open-devtools-for-tabs");
+				options = options.addArguments ("--auto-open-devtools-for-tabs");
 				defaultCreate = false;
 			}
 		}
 
 		if (process.env["TESTING_REMOTE_SERVER"] != null)
 		{
-			options.addArguments ("--headless", "--disable-gpu", "--no-sandbox","--window-size=1920,1080");
+			options = options.addArguments ("--headless", "--disable-gpu", "--no-sandbox","--window-size=1920,1080");
+			defaultCreate = false;
+		}
+
+		if (process.env["USER_DATA_DIR"] != null)
+		{
+			options = options.addArguments (`user-data-dir=${process.env["USER_DATA_DIR"]}`, "--profile-directory=Default");
 			defaultCreate = false;
 		}
 

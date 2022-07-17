@@ -411,6 +411,10 @@ export interface IHotStaq
 export class HotStaq implements IHotStaq
 {
 	/**
+	 * The current version of HotStaq.
+	 */
+	static version: string = "0.5.735";
+	/**
 	 * Indicates if this is a web build.
 	 */
 	static isWeb: boolean = false;
@@ -422,6 +426,10 @@ export class HotStaq implements IHotStaq
 	 * Executes this event when this page is ready for testing.
 	 */
 	static onReadyForTesting: () => Promise<void> = null;
+	/**
+	 * Errors to execute when something goes wrong.
+	 */
+	static errors: { [name: string]: { redirectToUrl?: string; func?: (errType: string) => void; }; } = {};
 	/**
 	 * Indicates what type of execution this is.
 	 */
@@ -651,6 +659,32 @@ export class HotStaq implements IHotStaq
 		}
 
 		return (value);
+	}
+
+	/**
+	 * Execute an error. This cannot be an async function due to the nature of how this works.
+	 */
+	static executeError (errType: string)
+	{
+		if (HotStaq.errors[errType] != null)
+		{
+			let url: string = HotStaq.errors[errType].redirectToUrl;
+
+			if (url != null)
+			{
+				if (url !== "")
+				{
+					window.location.href = url;
+
+					return;
+				}
+			}
+
+			let func = HotStaq.errors[errType].func;
+
+			if (func != null)
+				func (errType);
+		}
 	}
 
 	/**
@@ -1895,9 +1929,34 @@ export class HotStaq implements IHotStaq
 	 */
 	static useOutput (output: string): void
 	{
-		document.open ();
-		document.write (output);
-		document.close ();
+		let parser = new DOMParser ();
+		let child = parser.parseFromString (output, "text/html");
+
+		document.getElementsByTagName('html')[0].innerHTML = child.getElementsByTagName('html')[0].innerHTML;
+
+		// Thanks to newfurniturey at: 
+		// https://stackoverflow.com/questions/22945884/domparser-appending-script-tags-to-head-body-but-not-executing
+		let tmpScripts = document.getElementsByTagName('script');
+		if (tmpScripts.length > 0) {
+			// push all of the document's script tags into an array
+			// (to prevent dom manipulation while iterating over dom nodes)
+			let scripts = [];
+			for (let i = 0; i < tmpScripts.length; i++) {
+				scripts.push(tmpScripts[i]);
+			}
+
+			// iterate over all script tags and create a duplicate tags for each
+			for (let i = 0; i < scripts.length; i++) {
+				let s = document.createElement('script');
+				s.innerHTML = scripts[i].innerHTML;
+
+				// add the new node to the page
+				scripts[i].parentNode.appendChild(s);
+
+				// remove the original (non-executing) node from the page
+				scripts[i].parentNode.removeChild(scripts[i]);
+			}
+		}
 	}
 
 	/**
@@ -2168,215 +2227,258 @@ hotstaq_isDocumentReady ();
 
 if (typeof (document) !== "undefined")
 {
-	let hotstaqElms = document.getElementsByTagName ("hotstaq");
-
-	// Set this to true, just in case...
-	HotStaq.isWeb = true;
-
-		// @ts-ignore
-	if (typeof (HotStaqWeb) !== "undefined")
+	let loadHotStaqSite = function ()
 	{
-		// @ts-ignore
-		window.HotStaq = HotStaqWeb.HotStaq;
-		// @ts-ignore
-		window.HotClient = HotStaqWeb.HotClient;
-		// @ts-ignore
-		window.HotAPI = HotStaqWeb.HotAPI;
-		// @ts-ignore
-		window.Hot = HotStaqWeb.Hot;
-	}
+		let hotstaqElms = document.getElementsByTagName ("hotstaq");
 
-	if (hotstaqElms.length > 0)
-	{
-		// @ts-ignore
-		let hotstaqElm: HTMLElement = hotstaqElms[0];
+		// Set this to true, just in case...
+		HotStaq.isWeb = true;
 
-		setTimeout (async function ()
-			{
-				let getAttr = (elm: HTMLElement, attrNames: string[]) =>
-					{
-						for (let iIdx = 0; iIdx < attrNames.length; iIdx++)
-						{
-							let attrName: string = attrNames[iIdx];
+			// @ts-ignore
+		if (typeof (HotStaqWeb) !== "undefined")
+		{
+			// @ts-ignore
+			window.HotStaq = HotStaqWeb.HotStaq;
+			// @ts-ignore
+			window.HotClient = HotStaqWeb.HotClient;
+			// @ts-ignore
+			window.HotAPI = HotStaqWeb.HotAPI;
+			// @ts-ignore
+			window.Hot = HotStaqWeb.Hot;
+		}
 
-							if (elm.getAttribute (attrName) != null)
-								return (elm.getAttribute (attrName));
+		if (hotstaqElms.length > 0)
+		{
+			// @ts-ignore
+			let hotstaqElm: HTMLElement = hotstaqElms[0];
 
-							if (elm.getAttribute (`data-${attrName}`) != null)
-								return (elm.getAttribute (`data-${attrName}`));
-						}
-
-						return (undefined);
-					};
-
-				let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
-				let router: string = getAttr (hotstaqElm, ["router"]) || "";
-				let name: string = getAttr (hotstaqElm, ["name"]) || ""; /// @fixme Should we allow names to be empty?
-				let args: string = getAttr (hotstaqElm, ["args"]) || null;
-				let apiLibrary: string = getAttr (hotstaqElm, ["api-library", "apiLibrary"]) || null;
-				let apiName: string = getAttr (hotstaqElm, ["api-name", "apiName"]) || null;
-				let apiUrl: string = getAttr (hotstaqElm, ["api-url", "apiUrl"]) || null;
-				let testerName: string = getAttr (hotstaqElm, ["tester-name", "testerName"]) || "HotTesterMochaSelenium";
-				let testerMap: string = getAttr (hotstaqElm, ["tester-map", "testerMap"]) || null;
-				let testerApiBaseUrl: string = getAttr (hotstaqElm, ["tester-api-base-url", "testerApiBaseUrl"]) || null;
-				let testerLaunchpadUrl: string = getAttr (hotstaqElm, ["tester-launchpad-url", "testerLaunchpadUrl"]) || null;
-				let dontReuseProcessor: boolean = false;
-				let passRawUrl: boolean = false;
-				let htmlSource: string = hotstaqElm.innerHTML || "";
-				let routerManager: { [path: string]: string; } = {};
-
-				if (getAttr (hotstaqElm, ["src"]) != null)
-					loadPage = getAttr (hotstaqElm, ["src"]);
-
-				if (getAttr (hotstaqElm, ["passRawUrl"]) != null)
-					passRawUrl = true;
-
-				if (getAttr (hotstaqElm, ["dont-reuse-processor", "dontReuseProcessor"]) != null)
-					dontReuseProcessor = true;
-
-				if (router !== "")
+			setTimeout (async function ()
 				{
-					let hotstaqRouterElms = document.getElementsByTagName ("hotstaq-router");
-
-					for (let iIdx = 0; iIdx < hotstaqRouterElms.length; iIdx++)
-					{
-						// @ts-ignore
-						let hotstaqRouterElm: HTMLElement = hotstaqRouterElms[iIdx];
-						let routerName: string = getAttr (hotstaqRouterElm, ["name"]);
-
-						// @ts-ignore
-						if (routerName === router)
+					let getAttr = (elm: HTMLElement, attrNames: string[]) =>
 						{
-							// Load all routes from the router.
-							for (let iJdx = 0; iJdx < hotstaqRouterElm.childNodes.length; iJdx++)
+							for (let iIdx = 0; iIdx < attrNames.length; iIdx++)
 							{
-								// @ts-ignore
-								let routerElm: HTMLElement = hotstaqRouterElm.childNodes[iJdx];
+								let attrName: string = attrNames[iIdx];
 
-								if (routerElm instanceof HTMLElement)
-								{
-									if (routerElm.tagName.toUpperCase () === "ROUTE")
-									{
-										let routerPath: string = getAttr (routerElm, ["path"]);
-										let routerSrc: string = getAttr (routerElm, ["src"]);
+								if (elm.getAttribute (attrName) != null)
+									return (elm.getAttribute (attrName));
 
-										routerManager[routerPath] = routerSrc;
-									}
-								}
+								if (elm.getAttribute (`data-${attrName}`) != null)
+									return (elm.getAttribute (`data-${attrName}`));
 							}
 
-							// Find the correct route and load it.
-							if (routerManager[window.location.pathname] != null)
-								loadPage = routerManager[window.location.pathname];
+							return (undefined);
+						};
 
-							break;
-						}
-					}
-				}
+					let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
+					let router: string = getAttr (hotstaqElm, ["router"]) || "";
+					let name: string = getAttr (hotstaqElm, ["name"]) || ""; /// @fixme Should we allow names to be empty?
+					let args: string = getAttr (hotstaqElm, ["args"]) || null;
+					let apiLibrary: string = getAttr (hotstaqElm, ["api-library", "apiLibrary"]) || null;
+					let apiName: string = getAttr (hotstaqElm, ["api-name", "apiName"]) || null;
+					let apiUrl: string = getAttr (hotstaqElm, ["api-url", "apiUrl"]) || null;
+					let testerName: string = getAttr (hotstaqElm, ["tester-name", "testerName"]) || "HotTesterMochaSelenium";
+					let testerMap: string = getAttr (hotstaqElm, ["tester-map", "testerMap"]) || null;
+					let testerApiBaseUrl: string = getAttr (hotstaqElm, ["tester-api-base-url", "testerApiBaseUrl"]) || null;
+					let testerLaunchpadUrl: string = getAttr (hotstaqElm, ["tester-launchpad-url", "testerLaunchpadUrl"]) || null;
+					let dontReuseProcessor: boolean = false;
+					let passRawUrl: boolean = false;
+					let htmlSource: string = hotstaqElm.innerHTML || "";
+					let routerManager: { [path: string]: string; } = {};
 
-				if (args != null)
-					args = JSON.parse (args);
-				else
-					args = Hot.Arguments;
+					if (getAttr (hotstaqElm, ["src"]) != null)
+						loadPage = getAttr (hotstaqElm, ["src"]);
 
-				let hasHtmlSource: boolean = false;
+					if (getAttr (hotstaqElm, ["passRawUrl"]) != null)
+						passRawUrl = true;
 
-				if (htmlSource !== "")
-				{
-					const htmlSourceCheck: string = htmlSource.replace (/\s/g,'');
+					if (getAttr (hotstaqElm, ["dont-reuse-processor", "dontReuseProcessor"]) != null)
+						dontReuseProcessor = true;
 
-					if (htmlSourceCheck !== "")
-						hasHtmlSource = true;
-				}
+					let hotstaqErrors = document.getElementsByTagName ("hotstaq-error");
 
-				let tempMode = 0;
-
-				// @ts-ignore
-				if (window["Hot"] != null)
-					tempMode = Hot.Mode;
-		
-				let processor: HotStaq = null;
-
-				if (dontReuseProcessor === false)
-				{
-					if (typeof (Hot) !== "undefined")
-					{
-						if (Hot.CurrentPage != null)
-						{
-							if (Hot.CurrentPage.processor != null)
-								processor = Hot.CurrentPage.processor;
-						}
-					}
-				}
-
-				if (processor == null)
-					processor = new HotStaq ();
-
-				processor.mode = tempMode;
-
-				let options: HotStartOptions = {
-						name: name,
-						processor: processor,
-						args: args
-					};
-
-				if (loadPage !== "")
-				{
-					if (passRawUrl === false)
-					{
-						if (loadPage.indexOf ("hstqserve") < 0)
-							loadPage += "?hstqserve=nahfam";
-					}
-
-					options.url = loadPage;
-				}
-
-				if (testerMap != null)
-				{
-					options.testerMap = testerMap;
-					options.testerName = testerName;
-				}
-
-				if (testerName != null)
-					options.testerName = testerName;
-
-				if (testerApiBaseUrl != null)
-					options.testerAPIBaseUrl = testerApiBaseUrl;
-
-				if (testerLaunchpadUrl != null)
-					options.testerLaunchpadUrl = testerLaunchpadUrl;
-
-				if (apiName != null)
-				{
-					let client = new HotClient (processor);
-
-					if (apiUrl === "")
-						throw new Error (`api-url was not set!`);
-
-					let parentLib: any = window;
-
-					if (apiLibrary != null)
+					for (let iIdx = 0; iIdx < hotstaqErrors.length; iIdx++)
 					{
 						// @ts-ignore
-						parentLib = window[apiLibrary];
+						let hotstaqErrorElm: HTMLElement = hotstaqErrors[iIdx];
+						let errorStatus: string = getAttr (hotstaqErrorElm, ["status"]);
+						let unsupportedBrowser: string = getAttr (hotstaqErrorElm, ["unsupported-browser-redirect"]);
+
+						if (unsupportedBrowser != null)
+							HotStaq.errors["unsupportedBrowser"] = { redirectToUrl: unsupportedBrowser };
+						else
+							HotStaq.errors[`${errorStatus}`] = { redirectToUrl: unsupportedBrowser };
 					}
 
-					let newAPI = new parentLib[apiName] (apiUrl, client);
-					newAPI.connection.api = newAPI;
-					processor.api = newAPI;
-				}
+					// Check if async/await is available.
+					try
+					{
+						eval ("async () => {}");
+					}
+					catch (ex)
+					{
+						HotStaq.executeError ("unsupportedBrowser");
+					}
 
-				if (hasHtmlSource === false)
-				{
-					if (loadPage === "")
-						throw new Error (`The hotstaq tag must have a src, HTML contents inside it, or a router set.`);
+					if (router !== "")
+					{
+						let hotstaqRouterElms = document.getElementsByTagName ("hotstaq-router");
 
-					HotStaq.displayUrl (options);
-				}
-				else
-				{
-					HotStaq.displayContent (options);
-				}
-			}, 50);
-	}
+						for (let iIdx = 0; iIdx < hotstaqRouterElms.length; iIdx++)
+						{
+							// @ts-ignore
+							let hotstaqRouterElm: HTMLElement = hotstaqRouterElms[iIdx];
+							let routerName: string = getAttr (hotstaqRouterElm, ["name"]);
+							let serveLocally: string = getAttr (hotstaqRouterElm, ["serve-local", "serveLocally"]);
+
+							// @ts-ignore
+							if (routerName === router)
+							{
+								// Load all routes from the router.
+								for (let iJdx = 0; iJdx < hotstaqRouterElm.childNodes.length; iJdx++)
+								{
+									// @ts-ignore
+									let routerElm: HTMLElement = hotstaqRouterElm.childNodes[iJdx];
+
+									if (routerElm instanceof HTMLElement)
+									{
+										if (routerElm.tagName.toUpperCase () === "ROUTE")
+										{
+											let routerPath: string = getAttr (routerElm, ["path"]);
+											let routerSrc: string = getAttr (routerElm, ["src"]);
+
+											routerManager[routerPath] = routerSrc;
+										}
+									}
+								}
+
+								let tempPathname: string = window.location.pathname;
+
+								if (serveLocally != null)
+								{
+									const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+
+									if (lastSlashPos > -1)
+										tempPathname = tempPathname.substring (lastSlashPos);
+								}
+
+								// Find the correct route and load it.
+								if (routerManager[tempPathname] != null)
+									loadPage = routerManager[tempPathname];
+
+								break;
+							}
+						}
+					}
+
+					if (args != null)
+						args = JSON.parse (args);
+					else
+						args = Hot.Arguments;
+
+					let hasHtmlSource: boolean = false;
+
+					if (htmlSource !== "")
+					{
+						const htmlSourceCheck: string = htmlSource.replace (/\s/g,'');
+
+						if (htmlSourceCheck !== "")
+							hasHtmlSource = true;
+					}
+
+					let tempMode = 0;
+
+					// @ts-ignore
+					if (window["Hot"] != null)
+						tempMode = Hot.Mode;
+			
+					let processor: HotStaq = null;
+
+					if (dontReuseProcessor === false)
+					{
+						if (typeof (Hot) !== "undefined")
+						{
+							if (Hot.CurrentPage != null)
+							{
+								if (Hot.CurrentPage.processor != null)
+									processor = Hot.CurrentPage.processor;
+							}
+						}
+					}
+
+					if (processor == null)
+						processor = new HotStaq ();
+
+					processor.mode = tempMode;
+
+					let options: HotStartOptions = {
+							name: name,
+							processor: processor,
+							args: args
+						};
+
+					if (loadPage !== "")
+					{
+						if (passRawUrl === false)
+						{
+							if (loadPage.indexOf ("hstqserve") < 0)
+								loadPage += "?hstqserve=nahfam";
+						}
+
+						options.url = loadPage;
+					}
+
+					if (testerMap != null)
+					{
+						options.testerMap = testerMap;
+						options.testerName = testerName;
+					}
+
+					if (testerName != null)
+						options.testerName = testerName;
+
+					if (testerApiBaseUrl != null)
+						options.testerAPIBaseUrl = testerApiBaseUrl;
+
+					if (testerLaunchpadUrl != null)
+						options.testerLaunchpadUrl = testerLaunchpadUrl;
+
+					if (apiName != null)
+					{
+						let client = new HotClient (processor);
+
+						if (apiUrl === "")
+							throw new Error (`api-url was not set!`);
+
+						let parentLib: any = window;
+
+						if (apiLibrary != null)
+						{
+							// @ts-ignore
+							parentLib = window[apiLibrary];
+						}
+
+						let newAPI = new parentLib[apiName] (apiUrl, client);
+						newAPI.connection.api = newAPI;
+						processor.api = newAPI;
+					}
+
+					if (hasHtmlSource === false)
+					{
+						if (loadPage === "")
+							throw new Error (`The hotstaq tag must have a src, HTML contents inside it, or a router set.`);
+
+						HotStaq.displayUrl (options);
+					}
+					else
+					{
+						HotStaq.displayContent (options);
+					}
+				}, 50);
+		}
+	};
+
+	/// @ts-ignore
+	window.ethereum22 = window.ethereum;
+	window.addEventListener ("load", loadHotStaqSite);
 }

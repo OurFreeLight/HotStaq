@@ -165,7 +165,7 @@
 			"args": [
 				"--timeout", "6000", 
 				"--colors", 
-				"./build/tests/**/*.js"
+				"./build/tests/cli/**/*.js"
 			],
 			"cwd": "${workspaceFolder}",
 			"env": {
@@ -181,7 +181,8 @@
 				"INFLUX_DATABASE_ORG": "freelight",
 				"INFLUX_DATABASE_TOKEN": "Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e",
 				"INFLUX_DATABASE_SCHEMA": "hotstaq",
-				"TESTING_DEVTOOLS": "1"
+				"TESTING_DEVTOOLS": "1",
+				"USER_DATA_DIR": "/home/someone13/.config/google-chrome/"
 			}
 		}
 	]

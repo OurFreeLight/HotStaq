@@ -132,6 +132,9 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			if (this.windowSize != null)
 				options = options.windowSize (this.windowSize);
 
+			if (process.env["USER_DATA_DIR"] != null)
+				options = options.addArguments(`user-data-dir=${process.env["USER_DATA_DIR"]}`);
+
 			if (process.env.NODE_TLS_REJECT_UNAUTHORIZED != null)
 			{
 				if (process.env.NODE_TLS_REJECT_UNAUTHORIZED == "0")
@@ -156,6 +159,9 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 			if (this.windowSize != null)
 				options = options.windowSize (this.windowSize);
+
+			if (process.env["USER_DATA_DIR"] != null)
+				options = options.addArguments(`user-data-dir=${process.env["USER_DATA_DIR"]}`);
 
 			if (process.env.NODE_TLS_REJECT_UNAUTHORIZED != null)
 			{
