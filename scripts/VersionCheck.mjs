@@ -20,6 +20,8 @@ import { HotStaq } from "../build/src/HotStaq.js";
 	 catch (ex)
 	 {
 		console.error (ex.toString ());
+
+		process.exit (1);
 	 }
 }
 

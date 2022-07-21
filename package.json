@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.735",
+  "version": "0.5.737",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"

@@ -1,11 +1,53 @@
-<!DOCTYPE html>
-<html>
 
-<head>
-	<title>Client Side Only Bare Bones Example</title>
-</head>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="./favicon.ico">
 
-<body>
+    <title>HTML Only HotStaq Example</title>
 
-This is a header. <a href = "./">Home</a> - <a href = "./about">About</a><br />
-<hr />
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/cover/">
+
+    <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="./css/cover.css" rel="stylesheet">
+
+    <script src="./js/jquery-3.2.1.slim.min.js"></script>
+	<script type = "text/javascript">
+		setTimeout (() => 
+			{
+				console.log ("1");
+			}, 500);
+	</script>
+	<script type = "text/javascript">
+		setTimeout (() => 
+			{
+				console.log ("2");
+			}, 500);
+	</script>
+	<script type = "text/javascript">
+		setTimeout (() => 
+			{
+				console.log ("3");
+			}, 500);
+	</script>
+  </head>
+
+  <body class="text-center">
+
+	<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
+		<header class="masthead mb-auto">
+			<div class="inner">
+			<h3 class="masthead-brand">Cover</h3>
+			<nav class="nav nav-masthead justify-content-center">
+				<a class="nav-link" href="./">Home</a>
+				<a class="nav-link" href="./about">About</a>
+			</nav>
+			</div>
+		</header>

@@ -413,7 +413,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.5.735";
+	static version: string = "0.5.737";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1927,7 +1927,7 @@ export class HotStaq implements IHotStaq
 	 * Replace the current HTML page with the output.
 	 * This is meant for web browser use only.
 	 */
-	static useOutput (output: string): void
+	static async useOutput (output: string): Promise<void>
 	{
 		let parser = new DOMParser ();
 		let child = parser.parseFromString (output, "text/html");
@@ -1950,11 +1950,31 @@ export class HotStaq implements IHotStaq
 				let s = document.createElement('script');
 				s.innerHTML = scripts[i].innerHTML;
 
+				if (scripts[i].getAttribute ("src") != null)
+				{
+					if (scripts[i].getAttribute ("src") !== "")
+						s.setAttribute ("src", scripts[i].getAttribute ("src"));
+				}
+
+				if (scripts[i].getAttribute ("type") != null)
+				{
+					if (scripts[i].getAttribute ("type") !== "")
+						s.setAttribute ("type", scripts[i].getAttribute ("type"));
+				}
+
 				// add the new node to the page
 				scripts[i].parentNode.appendChild(s);
 
 				// remove the original (non-executing) node from the page
 				scripts[i].parentNode.removeChild(scripts[i]);
+
+				await new Promise<void> ((resolve, reject) =>
+					{
+						s.onload = () =>
+							{
+								resolve ();
+							};
+					});
 			}
 		}
 	}
@@ -2141,7 +2161,7 @@ hotstaq_isDocumentReady ();
 
 						output += HotStaq.setupClientTesters (processor);
 
-						HotStaq.useOutput (output);
+						await HotStaq.useOutput (output);
 						resolve (processor);
 					});
 			}));
@@ -2218,7 +2238,7 @@ hotstaq_isDocumentReady ();
 
 						let output: string = await HotStaq.processContent (options);
 
-						HotStaq.useOutput (output);
+						await HotStaq.useOutput (output);
 						resolve (processor);
 					});
 			}));
