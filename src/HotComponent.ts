@@ -105,6 +105,39 @@ export abstract class HotComponent implements IHotComponent
 				options: any;
 			}
 		};
+	/**
+	 * Execute prior to output.
+	 * 
+	 * @returns If set to false, the component will not be registered.
+	 */
+	onPreOutput: () => Promise<boolean>;
+	/**
+	 * Execute after getting the output, but before the DOM parsing.
+	 * 
+	 * @param output The output from the component to register. Can be manipulated one last time prior to 
+	 * being parsed into a DOM element.
+	 * 
+	 * @returns The final output to be parsed as a DOM element.
+	 */
+	onPostOutput: (output: (string | {
+			html: string;
+			addFunctionsTo: string;
+		})) => Promise<(string | {
+				html: string;
+				addFunctionsTo: string;
+			})>;
+	/**
+	 * Execute after the output has been parsed and is ready to be placed into the DOM.
+	 */
+	onParsed: (output: string) => Promise<string>;
+	/**
+	 * Execute prior to placing the new DOM element.
+	 */
+	onPrePlace: (htmlElement: HTMLElement) => Promise<HTMLElement>;
+	/**
+	 * Execute after placing the new DOM element. Can be manipulated one final time prior to being rendered.
+	 */
+	onPostPlace: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<HTMLElement>;
 
 	constructor (copy: IHotComponent | HotStaq, api: HotAPI = null)
 	{
@@ -121,6 +154,12 @@ export abstract class HotComponent implements IHotComponent
 			this.type = "";
 			this.value = null;
 			this.events = {};
+
+			this.onPreOutput = null;
+			this.onPostOutput = null;
+			this.onParsed = null;
+			this.onPrePlace = null;
+			this.onPostPlace = null;
 		}
 		else
 		{

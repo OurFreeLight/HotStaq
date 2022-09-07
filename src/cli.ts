@@ -499,11 +499,8 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 
 				if (apiServer != null)
 				{
-					if (processor.hotSite.server.ports.apiHttp == null)
-						processor.hotSite.server.ports.apiHttp = apiServer.ports.http;
-
-					if (processor.hotSite.server.ports.apiHttps == null)
-						processor.hotSite.server.ports.apiHttps = apiServer.ports.https;
+						processor.hotSite.server.ports.http = apiServer.ports.http;
+						processor.hotSite.server.ports.https = apiServer.ports.https;
 				}
 
 				// Go through each API and replace the base url with the base url set in the cli.
@@ -858,6 +855,29 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 				else
 					baseAPIUrl = url;
 			}, "");
+
+		if (currentServerType === "api")
+		{
+			runCmd.option (`--${currentServerType}-port <port>`, 
+				`Set the ${currentServerType} HTTP port`, 
+				(port: string, previous: any) =>
+				{
+					try
+					{
+						const tempPort: number = parseInt (port);
+	
+						if (currentServerType === "web")
+							webServer.ports.http = tempPort;
+						else
+							apiServer.ports.http = tempPort;
+					}
+					catch (ex)
+					{
+						processor.logger.error (`Unable to parse ${currentServerType} http port ${port}`);
+					}
+				}, httpPort);
+		}
+
 		runCmd.option (`--${currentServerType}-http-port <port>`, 
 			`Set the ${currentServerType} HTTP port`, 
 			(port: string, previous: any) =>

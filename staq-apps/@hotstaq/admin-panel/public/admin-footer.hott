@@ -1,0 +1,16 @@
+		</div>
+	</div>
+
+
+    <script src="./js/bootstrap.bundle.min.js"></script>
+
+    <script src="./js/feather.min.js"></script>
+	<script src="./js/Chart.min.js"></script>
+	<script src="./js/dashboard.js"></script>
+
+	<script src="./components/admin-form.js"></script>
+	<script src="./components/admin-dashboard.js"></script>
+	<script src="./components/admin-table.js"></script>
+	<script src="./components/admin-table-field.js"></script>
+  </body>
+</html>

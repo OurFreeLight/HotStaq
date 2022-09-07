@@ -1,0 +1,14 @@
+<*
+    await Hot.include ("./admin-header.hott");
+*>
+
+<admin-dashboard hot-title = "Users">
+    <admin-form>
+        <admin-table hot-schema = "users">
+            <admin-table-field hot-field = "name">Name</admin-table-field>
+            <admin-table-field hot-field = "email">Email</admin-table-field>
+        </admin-table>
+    </admin-form>
+</admin-dashboard>
+
+<* await Hot.include ("./admin-footer.hott"); *>

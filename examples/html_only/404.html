@@ -8,11 +8,13 @@
 <hotstaq router = "default">
 </hotstaq>
 
-<hotstaq-router name = "default" serve-local = "true">
+<hotstaq-router name = "default" serve-local = "false">
 	<route path = "/" src = "./home.hott"></route>
 	<route path = "/about" src = "./about.hott"></route>
+
+	<route path = "/admin*" redirect = "./admin/"></route>
 </hotstaq-router>
 
-<script type = "text/javascript" src = "/build-web/HotStaq.js"></script>
+<script type = "text/javascript" src = "./js/HotStaq.js"></script>
 
 </html>

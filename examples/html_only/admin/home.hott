@@ -1,0 +1,11 @@
+<* await Hot.include ("./header.hott"); *>
+
+      <main role="main" class="inner cover">
+        <h1 class="cover-heading">Admin Panel 1</h1>
+        <p class="lead">This is the home page of your example site. The template you see is an example template from Bootstrap.</p>
+        <p class="lead">
+          <a id = "learnMore" href="#" class="btn btn-lg btn-secondary">Learn more</a>
+        </p>
+      </main>
+
+<* await Hot.include ("./footer.hott"); *>

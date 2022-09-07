@@ -166,8 +166,8 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 					"@types/mysql": "^2.15.19",
 					"@types/selenium-webdriver": "^4.0.16",
 					"@types/mime-types": "^2.1.1",
-					"webpack": "^4.46.0",
-					"webpack-cli": "^4.9.1"
+					"webpack": "^5.72.1",
+					"webpack-cli": "^4.9.2"
 				}
 			};
 

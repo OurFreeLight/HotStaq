@@ -165,6 +165,19 @@ export interface HotSite
 					 */
 					localPath: string;
 				}[];
+			/**
+			 * How to handle errors.
+			 */
+			errors?: {
+				/**
+				 * On a 404, serve a local file.
+				 */
+				on404?: string;
+				/**
+				 * On an error other than a 404, serve a local file.
+				 */
+				onOther?: string;
+			};
 		};
 	/**
 	 * Testing related functionality.
@@ -413,7 +426,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.5.737";
+	static version: string = "0.5.74";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -809,6 +822,28 @@ export class HotStaq implements IHotStaq
 			return;
 		}
 
+		/**
+		 * This helps parse <tr> and other tags that do not have a parent.
+		 * 
+		 * Thanks Brandon McConnell!
+		 * 
+		 * From: https://stackoverflow.com/questions/67313479/make-parsefromstring-parse-without-validation
+		 */
+		/// @ts-ignore
+		DOMParser.prototype.looseParseFromString = function(str: string) {
+			str = str.replace(/ \/>/g, '>').replace(/(<(area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr).*?>)/g, '$1</$2>');
+			const xdom = this.parseFromString('<xml>'+str+'</xml>', 'text/xml');
+			const hdom = this.parseFromString('', 'text/html');
+			for (let elem of Array.from(xdom.documentElement.children)) {
+			  hdom.body.appendChild(elem);
+			}
+			for (let elem of Array.from(hdom.querySelectorAll('area,base,br,col,command,embed,hr,img,input,keygen,link,meta,param,source,track,wbr'))) {
+				/// @ts-ignore
+			  elem.outerHTML = '<'+elem.outerHTML.slice(1).split('<')[0];
+			}
+			return hdom;
+		  }
+
 		customElements.define (component.tag, class extends HTMLElement
 			{
 				constructor ()
@@ -825,9 +860,47 @@ export class HotStaq implements IHotStaq
 				{
 					component.htmlElement = this;
 
+					if (component.handleAttributes != null)
+						await component.handleAttributes (this.attributes);
+					else
+					{
+						for (let iIdx = 0; iIdx < this.attributes.length; iIdx++)
+						{
+							const attr: Attr = this.attributes[iIdx];
+							const attrName: string = attr.name.toLowerCase ();
+							const attrValue: string = attr.value;
+
+							if (attrName === "id")
+								component.name = attrValue;
+
+							if (attrName === "name")
+								component.name = attrValue;
+
+							if (attrName === "value")
+								component.value = attrValue;
+
+							if (attrName.indexOf ("hot-") > -1)
+							{
+								const attrTempName: string = attrName.substring (4);
+
+								/// @ts-ignore
+								component[attrTempName] = attrValue;
+							}
+						}
+					}
+
+					if (component.onPreOutput != null)
+					{
+						if (await component.onPreOutput () === false)
+							return;
+					}
+
 					let output = await component.output ();
 					let htmlStr: string = "";
 					let addFunctionsTo: string = "";
+
+					if (component.onPostOutput != null)
+						output = await component.onPostOutput (output);
 
 					if (typeof (output) === "string")
 						htmlStr = output;
@@ -838,15 +911,51 @@ export class HotStaq implements IHotStaq
 					}
 
 					let str: string = HotFile.parseContent (htmlStr, true, { "outputCommands": false });
-					let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
+
+					if (component.onParsed != null)
+						str = await component.onParsed (str);
+
+					/// @ts-ignore
+					let newDOM: Document = new DOMParser ().looseParseFromString (str);
+					let newObj: HTMLElement = null;
 
 					if (newDOM.body.children.length < 1)
 						throw new Error (`No component output from ${component.name}`);
 
 					if (newDOM.body.children.length > 1)
-						throw new Error (`Only a single html element can come from component ${component.name}, multiple elements were detected.`);
+					{
+						let throwErr: boolean = true;
 
-					let newObj: HTMLElement = (<HTMLElement>newDOM.body.children[0]);
+						for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
+						{
+							let child = newDOM.body.children[iIdx];
+
+							if (child instanceof HTMLElement)
+							{
+								if (child.tagName.toLowerCase () === "parsererror")
+								{
+									newObj = child;
+									throwErr = false;
+
+									break;
+								}
+							}
+						}
+
+						if (throwErr === true)
+							throw new Error (`Only a single html element can come from component ${component.name}, multiple elements were detected.`);
+					}
+
+					newObj = (<HTMLElement>newDOM.body.children[0]);
+					let childrenToReadd: Node[] = [];
+
+					// Save the children from being replaced.
+					for (let iIdx = (this.children.length - 1); iIdx > -1; iIdx--)
+					{
+						let child: Node = this.children[iIdx];
+
+						childrenToReadd.push (this.removeChild (child));
+					}
 
 					this.replaceWith (newObj);
 
@@ -859,29 +968,6 @@ export class HotStaq implements IHotStaq
 
 						// @ts-ignore
 						newObj.addEventListener (event.type, event.func, event.options);
-					}
-
-					component.htmlElement = await component.onCreated (newObj);
-
-					if (component.handleAttributes != null)
-						await component.handleAttributes (newObj.attributes);
-					else
-					{
-						for (let iIdx = 0; iIdx < newObj.attributes.length; iIdx++)
-						{
-							let attr: Attr = newObj.attributes[iIdx];
-							let attrName: string = attr.name.toLowerCase ();
-							let attrValue: string = attr.value;
-
-							if (attrName === "id")
-								component.name = attrValue;
-
-							if (attrName === "name")
-								component.name = attrValue;
-
-							if (attrName === "value")
-								component.value = attrValue;
-						}
 					}
 
 					let objectFunctions: string[] = Object.getOwnPropertyNames (component.constructor.prototype);
@@ -929,6 +1015,38 @@ export class HotStaq implements IHotStaq
 								}
 							}
 						}
+					}
+
+					if (component.onPrePlace != null)
+						newObj = await component.onPrePlace (newObj);
+
+					component.htmlElement = await component.onCreated (newObj);
+
+					// If the hotstaq-place-here exists, place the children there. If not, place it under the 
+					// new element.
+					let placeHereArray = component.htmlElement.getElementsByTagName ("hotstaq-place-here");
+					let placeHere: Node = component.htmlElement;
+
+					if (placeHereArray.length > 0)
+					{
+						placeHere = placeHereArray[0].parentNode;
+
+						// Remove the hotstaq-place-here element. We don't want that to show.
+						placeHere.removeChild (placeHereArray[0]);
+					}
+
+					// Append the children to the newly created HTML element.
+					for (let iIdx = 0; iIdx < childrenToReadd.length; iIdx++)
+					{
+						const child: Node = childrenToReadd[iIdx];
+
+						placeHere.appendChild (child);
+					}
+
+					if (component.onPostPlace != null)
+					{
+						/// @ts-ignore
+						component.htmlElement = await component.onPostPlace (placeHere, component.htmlElement);
 					}
 				}
 			}, component.elementOptions);
@@ -1929,6 +2047,15 @@ export class HotStaq implements IHotStaq
 	 */
 	static async useOutput (output: string): Promise<void>
 	{
+		// Tried to reset the document's readyState hoping it would be set again after the 
+		// new document has loaded. Doesn't work...
+		/*Object.defineProperty (document, "readyState", {
+				get ()
+				{
+					return ("loading");
+				}
+			});*/
+
 		let parser = new DOMParser ();
 		let child = parser.parseFromString (output, "text/html");
 
@@ -1967,14 +2094,6 @@ export class HotStaq implements IHotStaq
 
 				// remove the original (non-executing) node from the page
 				scripts[i].parentNode.removeChild(scripts[i]);
-
-				await new Promise<void> ((resolve, reject) =>
-					{
-						s.onload = () =>
-							{
-								resolve ();
-							};
-					});
 			}
 		}
 	}
@@ -2265,6 +2384,8 @@ if (typeof (document) !== "undefined")
 			window.HotAPI = HotStaqWeb.HotAPI;
 			// @ts-ignore
 			window.Hot = HotStaqWeb.Hot;
+			// @ts-ignore
+			window.HotComponent = HotStaqWeb.HotComponent;
 		}
 
 		if (hotstaqElms.length > 0)
@@ -2292,7 +2413,7 @@ if (typeof (document) !== "undefined")
 
 					let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
 					let router: string = getAttr (hotstaqElm, ["router"]) || "";
-					let name: string = getAttr (hotstaqElm, ["name"]) || ""; /// @fixme Should we allow names to be empty?
+					let name: string = getAttr (hotstaqElm, ["name"]) || "default";
 					let args: string = getAttr (hotstaqElm, ["args"]) || null;
 					let apiLibrary: string = getAttr (hotstaqElm, ["api-library", "apiLibrary"]) || null;
 					let apiName: string = getAttr (hotstaqElm, ["api-name", "apiName"]) || null;
@@ -2304,7 +2425,8 @@ if (typeof (document) !== "undefined")
 					let dontReuseProcessor: boolean = false;
 					let passRawUrl: boolean = false;
 					let htmlSource: string = hotstaqElm.innerHTML || "";
-					let routerManager: { [path: string]: string; } = {};
+					let routerManager: { [path: string]: { redirect: string; base: string; src: string; } } = {};
+					let routerWildcards: string[] = [];
 
 					if (getAttr (hotstaqElm, ["src"]) != null)
 						loadPage = getAttr (hotstaqElm, ["src"]);
@@ -2365,9 +2487,18 @@ if (typeof (document) !== "undefined")
 										if (routerElm.tagName.toUpperCase () === "ROUTE")
 										{
 											let routerPath: string = getAttr (routerElm, ["path"]);
+											let redirect: string = getAttr (routerElm, ["redirect"]);
+											let base: string = getAttr (routerElm, ["base"]);
 											let routerSrc: string = getAttr (routerElm, ["src"]);
 
-											routerManager[routerPath] = routerSrc;
+											if (routerPath.indexOf ("*") > -1)
+												routerWildcards.push (routerPath);
+
+											routerManager[routerPath] = {
+													redirect: redirect || undefined, 
+													base: base || undefined, 
+													src: routerSrc || undefined
+												};
 										}
 									}
 								}
@@ -2376,15 +2507,50 @@ if (typeof (document) !== "undefined")
 
 								if (serveLocally != null)
 								{
-									const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+									const lowerServeLocally: string = serveLocally.toLowerCase ();
 
-									if (lastSlashPos > -1)
-										tempPathname = tempPathname.substring (lastSlashPos);
+									if ((lowerServeLocally === "true") ||
+										(lowerServeLocally === "yes") ||
+										(lowerServeLocally === "1"))
+									{
+										const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+
+										if (lastSlashPos > -1)
+											tempPathname = tempPathname.substring (lastSlashPos);
+									}
+								}
+
+								if (routerWildcards.length > 0)
+								{
+									// Serve locally doesn't really work with wildcards
+									/// @fixme This isn't actually working like a wildcard should. This needs to be improved.
+									for (let iJdx = 0; iJdx < routerWildcards.length; iJdx++)
+									{
+										let routeWildcard: string = routerWildcards[iJdx];
+										let tempRouteWildcard: string = routeWildcard.replace ("*", "");
+
+										if (tempPathname.indexOf (tempRouteWildcard) > -1)
+										{
+											tempPathname = routeWildcard;
+
+											break;
+										}
+									}
 								}
 
 								// Find the correct route and load it.
 								if (routerManager[tempPathname] != null)
-									loadPage = routerManager[tempPathname];
+								{
+									if (routerManager[tempPathname].redirect != null)
+									{
+										window.location.href = routerManager[tempPathname].redirect;
+
+										return;
+									}
+
+									if (routerManager[tempPathname].src != null)
+										loadPage = routerManager[tempPathname].src;
+								}
 
 								break;
 							}

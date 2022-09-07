@@ -1,4 +1,4 @@
-import * as mysql from "mysql";
+import * as mysql from "mysql2";
 
 import * as ppath from "path";
 import * as vm from "vm";
@@ -16,7 +16,7 @@ export interface MySQLResults
 {
 	error: any;
 	results: any;
-	fields: mysql.FieldInfo[];
+	fields: mysql.FieldPacket[];
 }
 
 /**
@@ -44,7 +44,7 @@ export class HotDBMySQL extends HotDB<mysql.Connection, MySQLResults, MySQLSchem
 						port: connectionInfo.port,
 						database: connectionInfo.database
 					});
-				this.db.connect ((err: mysql.MysqlError, ...args: any[]): void =>
+				this.db.connect ((err: URIError, ...args: any[]): void =>
 					{
 						if (err != null)
 						{
@@ -195,7 +195,7 @@ return (migration.version);
 		let tableExists: boolean = await new Promise<boolean> ((resolve, reject) =>
 			{
 				this.db.query ("SELECT table_name FROM information_schema.tables where table_name = ?;", [tableName], 
-					(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+					(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
 					{
 						let result: boolean = false;
 
@@ -222,7 +222,7 @@ return (migration.version);
 		let dbresults: MySQLResults = await new Promise<MySQLResults> ((resolve, reject) =>
 			{
 				this.db.query (queryString, values, 
-					(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+					(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
 					{
 						resolve ({ error: err, results: results, fields: fields });
 					});
@@ -241,7 +241,7 @@ return (migration.version);
 		let dbresults: MySQLResults = await new Promise<MySQLResults> ((resolve, reject) =>
 			{
 				this.db.query (queryString, values, 
-					(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+					(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
 					{
 						let tempResults = null;
 
@@ -288,7 +288,7 @@ return (migration.version);
 					}
 
 					this.db.query (queryString, queryValues, 
-						(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+						(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
 						{
 							resolve ({ error: err, results: results, fields: fields });
 						});

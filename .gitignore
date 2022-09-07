@@ -2,6 +2,7 @@ build/
 build-web/
 ./app/
 
+**/HotStaq.js
 **/HotStaq.min.js
 
 docs/

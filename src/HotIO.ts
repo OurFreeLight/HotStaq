@@ -101,9 +101,9 @@ export class HotIO
 	/**
 	 * Copy files to a location.
 	 */
-	static async copyFiles (src: string, dest: string): Promise<void>
+	static async copyFiles (src: string, dest: string, options: fse.CopyOptions = undefined): Promise<void>
 	{
-		return (fse.copy (src, dest));
+		return (fse.copy (src, dest, options));
     }
 
 	/**

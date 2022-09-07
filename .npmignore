@@ -2,6 +2,9 @@ node_modules/
 db/
 !creator/
 
+docs/
+examples/
+
 .env
 
 temp*/
@@ -17,3 +20,8 @@ build-web/HotStaqTests.js
 
 ./HotSite.json
 ./*.config.js
+
+.nyc_output
+.git
+.circleci
+.vscode
