@@ -29,6 +29,10 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
 	 */
 	connectionStatus: ConnectionStatus;
 	/**
+	 * The max number of database connections to maintain.
+	 */
+	connectionLimit: number;
+	/**
 	 * The db schema. This will generate a database structure 
 	 * and keep it maintained as needed.
 	 */
@@ -39,6 +43,7 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
 		this.type = type;
 		this.db = db;
 		this.connectionStatus = ConnectionStatus.Disconnected;
+		this.connectionLimit = 10;
 		this.schema = schema;
 	}
 

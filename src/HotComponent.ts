@@ -1,6 +1,32 @@
 import { HotAPI } from "./HotAPI";
 import { HotStaq } from "./HotStaq";
 
+export interface HotComponentOutput
+{
+	/**
+	 * The HTML to output.
+	 */
+	html: string;
+	/**
+	 * The query selector to add this component's functions to.
+	 * 
+	 * @example #objectId
+	 */
+	addFunctionsTo?: string;
+	/**
+	 * The place here parent name to attach this html to.
+	 * 
+	 * @example top
+	 */
+	placeHereParent?: string;
+	/**
+	 * Append the output to an existing element.
+	 * 
+	 * @example div .testClass
+	 */
+	parentSelector?: string;
+}
+
 /**
  * A component to preprocess.
  */
@@ -11,9 +37,9 @@ export interface IHotComponent
 	 */
 	processor: HotStaq;
 	/**
-	 * The associated HTMLElement.
+	 * The associated HTMLElements.
 	 */
-	htmlElement?: HTMLElement;
+	htmlElements?: HTMLElement[];
 	/**
 	 * The name of the page.
 	 */
@@ -43,6 +69,10 @@ export interface IHotComponent
 	 */
 	value?: any;
 	/**
+	 * The inner HTML or value of the component.
+	 */
+	inner: any;
+	/**
 	 * The events to trigger.
 	 */
 	events?: {
@@ -52,6 +82,45 @@ export interface IHotComponent
 				options?: any;
 			}
 		};
+	/**
+	 * Execute prior to output.
+	 * 
+	 * @returns If set to false, the component will not be registered.
+	 */
+	onPreOutput?: () => Promise<boolean>;
+	/**
+	 * Execute after getting the output, but before the DOM parsing.
+	 * 
+	 * @param output The output from the component to register. Can be manipulated one last time prior to 
+	 * being parsed into a DOM element.
+	 * 
+	 * @returns The final output to be parsed as a DOM element.
+	 */
+	onPostOutput?: (output: (string | HotComponentOutput[])) => Promise<(string | HotComponentOutput[])>;
+	/**
+	 * Execute when its time to fix the HTML prior to DOM parsing. This will skip the HotStaq default fixing.
+	 */
+	onFixHTML?: (output: string) => Promise<{ fixedStr: string, querySelector: string; }>;
+	/**
+	 * Execute a custom DOM parser.
+	 */
+	onParseDOM?: (output: string) => Promise<Document>;
+	/**
+	 * Execute after the output has been parsed and is ready to be placed into the DOM.
+	 */
+	onParsed?: (output: string) => Promise<string>;
+	/**
+	 * Execute prior to placing the new DOM element.
+	 */
+	onPrePlace?: (htmlElement: HTMLElement) => Promise<HTMLElement>;
+	/**
+	 * Execute after placing the new DOM element. Can be manipulated one final time prior to being rendered.
+	 */
+	onPostPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<HTMLElement>;
+	/**
+	 * Execute after placing the DOM element onto the newly created parent.
+	 */
+	onParentPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<void>;
 }
 
 /**
@@ -64,9 +133,9 @@ export abstract class HotComponent implements IHotComponent
 	 */
 	processor: HotStaq;
 	/**
-	 * The associated HTMLElement.
+	 * The associated HTMLElements.
 	 */
-	htmlElement: HTMLElement;
+	htmlElements: HTMLElement[];
 	/**
 	 * The name of the component.
 	 */
@@ -96,6 +165,10 @@ export abstract class HotComponent implements IHotComponent
 	 */
 	value: any;
 	/**
+	 * The inner HTML or value of the component.
+	 */
+	inner: any;
+	/**
 	 * The events to trigger.
 	 */
 	events: {
@@ -110,7 +183,7 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns If set to false, the component will not be registered.
 	 */
-	onPreOutput: () => Promise<boolean>;
+	onPreOutput?: () => Promise<boolean>;
 	/**
 	 * Execute after getting the output, but before the DOM parsing.
 	 * 
@@ -119,25 +192,31 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns The final output to be parsed as a DOM element.
 	 */
-	onPostOutput: (output: (string | {
-			html: string;
-			addFunctionsTo: string;
-		})) => Promise<(string | {
-				html: string;
-				addFunctionsTo: string;
-			})>;
+	onPostOutput?: (output: (string | HotComponentOutput[])) => Promise<(string | HotComponentOutput[])>;
+	/**
+	 * Execute when its time to fix the HTML prior to DOM parsing. This will skip the HotStaq default fixing.
+	 */
+	onFixHTML?: (output: string) => Promise<{ fixedStr: string, querySelector: string; }>;
+	/**
+	 * Execute a custom DOM parser.
+	 */
+	onParseDOM?: (output: string) => Promise<Document>;
 	/**
 	 * Execute after the output has been parsed and is ready to be placed into the DOM.
 	 */
-	onParsed: (output: string) => Promise<string>;
+	onParsed?: (output: string) => Promise<string>;
 	/**
 	 * Execute prior to placing the new DOM element.
 	 */
-	onPrePlace: (htmlElement: HTMLElement) => Promise<HTMLElement>;
+	onPrePlace?: (htmlElement: HTMLElement) => Promise<HTMLElement>;
 	/**
 	 * Execute after placing the new DOM element. Can be manipulated one final time prior to being rendered.
 	 */
-	onPostPlace: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<HTMLElement>;
+	onPostPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<HTMLElement>;
+	/**
+	 * Execute after placing the DOM element onto the newly created parent.
+	 */
+	onParentPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<void>;
 
 	constructor (copy: IHotComponent | HotStaq, api: HotAPI = null)
 	{
@@ -145,7 +224,7 @@ export abstract class HotComponent implements IHotComponent
 		{
 			// @ts-ignore
 			this.processor = copy;
-			this.htmlElement = null;
+			this.htmlElements = [];
 			this.name = "";
 			this.tag = "";
 			this.api = null;
@@ -153,18 +232,13 @@ export abstract class HotComponent implements IHotComponent
 			this.observedAttributes = [];
 			this.type = "";
 			this.value = null;
+			this.inner = null;
 			this.events = {};
-
-			this.onPreOutput = null;
-			this.onPostOutput = null;
-			this.onParsed = null;
-			this.onPrePlace = null;
-			this.onPostPlace = null;
 		}
 		else
 		{
 			this.processor = copy.processor;
-			this.htmlElement = copy.htmlElement || null;
+			this.htmlElements = copy.htmlElements || [];
 			this.name = copy.name || "";
 			this.tag = copy.tag || this.name;
 			this.api = copy.api || null;
@@ -172,6 +246,7 @@ export abstract class HotComponent implements IHotComponent
 			this.observedAttributes = copy.observedAttributes || [];
 			this.type = copy.type || "";
 			this.value = copy.value || null;
+			this.inner = copy.inner || null;
 			this.events = {};
 		}
 
@@ -180,11 +255,9 @@ export abstract class HotComponent implements IHotComponent
 	}
 
 	/**
-	 * Event that's called when this component is created. This is 
-	 * called before output is called. Right after this is called, 
-	 * the attributes from the HTMLElement will be processed. If 
-	 * the functionality of the attributes processing need to be 
-	 * overwritten, use the handleAttributes method to handle them.
+	 * Event that's called when this component's DOM element has been created.
+	 * 
+	 * @returns The modified DOM element.
 	 */
 	async onCreated (element: HTMLElement): Promise<any>
 	{
@@ -204,17 +277,5 @@ export abstract class HotComponent implements IHotComponent
 	/**
 	 * Output the component.
 	 */
-	abstract output (): Promise<string | 
-		{
-			/**
-			 * The HTML to output.
-			 */
-			html: string;
-			/**
-			 * The query selector to add this component's functions to.
-			 * 
-			 * @example #objectId
-			 */
-			addFunctionsTo: string;
-		}>;
+	abstract output (): Promise<string | HotComponentOutput[]>;
 }

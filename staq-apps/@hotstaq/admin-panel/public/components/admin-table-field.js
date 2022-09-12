@@ -5,27 +5,25 @@ class AdminTableField extends HotComponent
 		super (copy, api);
 
 		this.tag = "admin-table-field";
-		this.value = "";
+		this.field = "";
 	}
 
 	/**
-	 * When this element is placed, execute the following.
+	 * Add this table field to the table
 	 */
-	/*async onPostPlacement (parentElement, htmlElement)
+	async onPostPlace (parentNode, htmlElement)
 	{
-		parentElement.addHeader (htmlElement);
+		let hotComponent = parentNode.parentNode.parentNode.parentNode.hotComponent;
 
-		return (htmlElement);
-	}*/
+		hotComponent.addHeaderDataOnly (this, htmlElement);
+	}
 
 	async output ()
 	{
-		return (`
-		<tr>
-			<td>
-				${this.value}
-			</td>
-		</tr>`);
+		return ([{
+			html: `<th>${this.inner}</th>`,
+			placeHereParent: "header"
+		}]);
 	}
 }
 

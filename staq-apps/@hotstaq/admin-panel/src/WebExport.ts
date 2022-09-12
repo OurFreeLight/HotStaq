@@ -1,7 +1,7 @@
 import { AppAPI } from "./AppAPI";
-import { HelloWorld } from "./HelloWorld";
+import { DataRoute } from "./DataRoute";
 
 export {
         AppAPI,
-		HelloWorld
+		DataRoute
 	};

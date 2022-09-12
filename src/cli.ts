@@ -1,6 +1,7 @@
 import * as ppath from "path";
 import * as fs from "fs";
 
+import * as dotenv from "dotenv";
 import * as commander from "commander";
 
 import { HotStaq } from "./HotStaq";
@@ -1310,6 +1311,10 @@ async function start ()
 		let packageJSON: any = JSON.parse (fs.readFileSync (packagePath).toString ());
 		VERSION = packageJSON.version;
 
+		dotenv.config ();
+
+		let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
+
 		const program: commander.Command = new commander.Command ("hotstaq");
 
 		program.description (`Copyright(c) 2022, FreeLight, Inc. Under the MIT License.`);
@@ -1349,6 +1354,11 @@ async function start ()
 			(path: string, previous: any) =>
 			{
 				process.chdir (path);
+			});
+		command.option ("--env-file <path>", "Set the path to the .env file to load.", 
+			(path: string, previous: any) =>
+			{
+				envPath = path;
 			});
 		command.option ("-o, --hotsite <path>", "Specify the HotSite.json to use. This will look in the current directory to find one first.", 
 			(path: string, previous: any) =>
@@ -1409,6 +1419,20 @@ async function start ()
 
 		let agentCmd: commander.Command = await handleAgentCommands ();
 		command.addCommand (agentCmd);
+
+		if (await HotIO.exists (envPath) === true)
+		{
+			const content: string = await HotIO.readTextFile (envPath);
+			let envVars = dotenv.parse (content);
+
+			for (let key in envVars)
+			{
+				const value: any = envVars[key];
+
+				if (value != null)
+					process.env[key] = value;
+			}
+		}
 
 		if (process.argv.length > 2)
 			program.parse (process.argv);

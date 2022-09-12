@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.5.74",
+  "version": "0.6.0",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -61,7 +61,7 @@
     "@types/validate-npm-package-name": "^3.0.3",
     "@typescript-eslint/eslint-plugin": "^5.3.1",
     "@typescript-eslint/parser": "^5.3.1",
-    "dotenv": "^16.0.1",
+    "dotenv": "^16.0.2",
     "eslint": "^8.2.0",
     "nyc": "^15.1.0",
     "ts-loader": "^7.0.5",

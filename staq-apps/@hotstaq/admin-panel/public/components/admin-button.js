@@ -13,7 +13,7 @@ class AdminButton extends HotComponent
 
 	async output ()
 	{
-		return (`<button id = "${this.htmlElement.id}" onclick = "this.buttonClicked ();"></button>`);
+		return (`<button id = "${this.htmlElements[0].id}" onclick = "this.buttonClicked ();"></button>`);
 	}
 }
 

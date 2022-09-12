@@ -1,7 +1,7 @@
 import { HotAPI, HotServer, HotClient, HotRoute, 
 	HotRouteMethod, MySQLSchema, 
-	ServerAuthorizationFunction, HotStaq } from "hotstaq";
-import { HelloWorld } from "./HelloWorld";
+	ServerAuthorizationFunction, HotStaq, HotServerType } from "hotstaq";
+import { DataRoute } from "./DataRoute";
 
 /**
  * The App's API and routes.
@@ -14,7 +14,10 @@ export class AppAPI extends HotAPI
 
 		this.onPreRegister = async (): Promise<boolean> =>
 			{
-				// Setup and connect to the database here.
+				if (connection.type !== HotServerType.Generate)
+				{
+					this.setDBSchema (new MySQLSchema (process.env["DATABASE_SCHEMA"]));
+				}
 
 				return (true);
 			};
@@ -25,6 +28,6 @@ export class AppAPI extends HotAPI
 				return (true);
 			};
 
-		this.addRoute (new HelloWorld (this));
+		this.addRoute (new DataRoute (this));
 	}
 }

@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "main": "build/AppAPI.js",
   "scripts": {
-    "start": "hotstaq --hotsite ./HotSite.json run --server-type web-api",
+    "start": "hotstaq --hotsite ./HotSite.json --env-file ./.env run --server-type web-api",
     "dev": "hotstaq --hotsite ./HotSite.json --development-mode run --server-type web-api --web-http-port 8080",
     "test": "hotstaq test",
     "build": "tsc --build ./tsconfig.json",
@@ -18,7 +18,7 @@
   "dependencies": {
     "copy-webpack-plugin": "^6.0.3",
     "dotenv": "^10.0.0",
-    "hotstaq": "^0.5.74"
+    "hotstaq": "^0.6.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",

@@ -43,7 +43,7 @@ Execute this code to debug in browser:
 	var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}");
 	helloWorldAPI.connection = new HotClient (processor);
 	helloWorldAPI.connection.api = helloWorldAPI;
-	processor.addComponent (new HelloWorld (processor, helloWorldAPI));
+	processor.addComponent (HelloWorld, helloWorldAPI);
 	await HotStaq.displayUrl ("/tests/browser/ComponentTests.hott", processor);
 })();
 */
@@ -57,7 +57,7 @@ Execute this code to debug in browser:
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
 				helloWorldAPI.connection.api = helloWorldAPI;
-				processor.addComponent (new HelloWorld (processor, helloWorldAPI));
+				processor.addComponent (HelloWorld, helloWorldAPI);
 				await HotStaq.displayUrl ("/tests/browser/ComponentTests.hott", "Hello World Components!", processor);
 				done ();`);
 			});
@@ -100,6 +100,6 @@ Execute this code to debug in browser:
 
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");
-				expect (value).to.equal ("Clicked");
+				expect (value).to.equal (`"Hello!"`);
 			});
 	});
