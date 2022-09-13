@@ -643,15 +643,19 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 					for (let key in apis)
 					{
 						let loadAPI: APItoLoad = apis[key];
+						let isAPIOnly: boolean = false;
 	
 						if (baseAPIUrl === "")
 							baseAPIUrl = getBaseUrlFromHotSite (loadAPI);
 	
 						if (baseAPIUrl === "")
 							baseAPIUrl = `http://127.0.0.1:${server.ports.http}`;
+
+						if (serverType === "web-api")
+							isAPIOnly = false;
 	
 						// Only run the api server.
-						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, true);
+						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, isAPIOnly);
 	
 						if (globalLogLevel != null)
 							server.logger.logLevel = globalLogLevel;

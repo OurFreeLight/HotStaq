@@ -6,7 +6,7 @@ class AdminDashboard extends HotComponent
 
 		this.tag = "admin-dashboard";
 		this.title = "";
-		this.base = "http://localhost:3232";
+		this.base = "";
 	}
 
 	/**
@@ -15,7 +15,8 @@ class AdminDashboard extends HotComponent
 	async onPostPlace (parentNode, htmlElement)
 	{
 		// Set the base API url to use for this dashboard.
-		Hot.Data.baseUrl = this.base;
+		if (this.base != "")
+			Hot.Data.baseUrl = this.base;
 	}
 
 	async output ()
