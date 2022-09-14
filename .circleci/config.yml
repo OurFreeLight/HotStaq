@@ -19,7 +19,8 @@ jobs:
       - run:
           name: Publish library
           command: |
-            npm publish --otp $NPM_ACCESS_TOKEN
+            echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
+            npm publish
 
 workflows:
   version: 2
