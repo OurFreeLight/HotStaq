@@ -1,4 +1,4 @@
-import * as mysql from "mysql";
+import * as mysql from "mysql2";
 
 import * as ppath from "path";
 import * as vm from "vm";
@@ -16,15 +16,15 @@ export interface MySQLResults
 {
 	error: any;
 	results: any;
-	fields: mysql.FieldInfo[];
+	fields: mysql.FieldPacket[];
 }
 
 /**
  * The MySQL database connection.
  */
-export class HotDBMySQL extends HotDB<mysql.Connection, MySQLResults, MySQLSchema>
+export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
 {
-	constructor (db: mysql.Connection = null, type: string = "mysql", schema: MySQLSchema = null)
+	constructor (db: mysql.Pool = null, type: string = "mysql", schema: MySQLSchema = null)
 	{
 		super (db, type, schema);
 	}
@@ -36,26 +36,21 @@ export class HotDBMySQL extends HotDB<mysql.Connection, MySQLResults, MySQLSchem
 	{
 		return (new Promise<any[]> ((resolve, reject) =>
 			{
+				if (process.env["DATABASE_CONNECTIONS_LIMIT"] != null)
+					this.connectionLimit = parseInt (process.env["DATABASE_CONNECTIONS_LIMIT"]);
+
 				this.connectionStatus = ConnectionStatus.Connecting;
-				this.db = mysql.createConnection ({
+				this.db = mysql.createPool ({
 						host: connectionInfo.server,
 						user: connectionInfo.username,
 						password: connectionInfo.password,
 						port: connectionInfo.port,
-						database: connectionInfo.database
+						database: connectionInfo.database,
+						waitForConnections: true,
+						connectionLimit: this.connectionLimit
 					});
-				this.db.connect ((err: mysql.MysqlError, ...args: any[]): void =>
-					{
-						if (err != null)
-						{
-							this.connectionStatus = ConnectionStatus.Disconnected;
-
-							throw err;
-						}
-
-						this.connectionStatus = ConnectionStatus.Connected;
-						resolve (args[0]);
-					});
+				this.connectionStatus = ConnectionStatus.Connected;
+				resolve ([true]);
 			}));
 	}
 
@@ -178,10 +173,28 @@ return (migration.version);
 	{
 		if (await this.tableCheck ("migrations") === false)
 		{
-			/// @todo Verify that this actually created.
-			await this.db.query (`create table if not exists migrations (
-					version datetime not null
-				);`);
+			await new Promise<void> ((resolve, reject) =>
+				{
+					this.db.getConnection (async (err: NodeJS.ErrnoException, connection: mysql.PoolConnection) =>
+						{
+							if (err)
+							{
+								reject (err);
+
+								return;
+							}
+	
+							/// @todo Verify that this actually created.
+							await this.db.query (`create table if not exists migrations (
+									version datetime not null
+								);`).on ("end", () =>
+									{
+										connection.release ();
+									});
+
+							resolve ();
+						});
+				});
 		}
 	}
 
@@ -194,18 +207,31 @@ return (migration.version);
 
 		let tableExists: boolean = await new Promise<boolean> ((resolve, reject) =>
 			{
-				this.db.query ("SELECT table_name FROM information_schema.tables where table_name = ?;", [tableName], 
-					(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+				this.db.getConnection (async (err: NodeJS.ErrnoException, connection: mysql.PoolConnection) =>
 					{
-						let result: boolean = false;
-
-						if (results != null)
+						if (err)
 						{
-							if (results.length > 0)
-								result = true;
+							reject (err);
+
+							return;
 						}
 
-						resolve (result);
+						this.db.query ("SELECT table_name FROM information_schema.tables where table_name = ?;", [tableName], 
+							(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
+							{
+								let result: boolean = false;
+
+								if (results != null)
+								{
+									if (results.length > 0)
+										result = true;
+								}
+
+								resolve (result);
+							}).on ("end", () =>
+								{
+									connection.release ();
+								});
 					});
 			});
 
@@ -221,10 +247,23 @@ return (migration.version);
 
 		let dbresults: MySQLResults = await new Promise<MySQLResults> ((resolve, reject) =>
 			{
-				this.db.query (queryString, values, 
-					(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+				this.db.getConnection ((err: NodeJS.ErrnoException, connection: mysql.PoolConnection) =>
 					{
-						resolve ({ error: err, results: results, fields: fields });
+						if (err)
+						{
+							reject (err);
+
+							return;
+						}
+
+						this.db.query (queryString, values, 
+							(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
+							{
+								resolve ({ error: err, results: results, fields: fields });
+							}).on ("end", () =>
+								{
+									connection.release ();
+								});
 					});
 			});
 
@@ -240,18 +279,31 @@ return (migration.version);
 
 		let dbresults: MySQLResults = await new Promise<MySQLResults> ((resolve, reject) =>
 			{
-				this.db.query (queryString, values, 
-					(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
+				this.db.getConnection ((err: NodeJS.ErrnoException, connection: mysql.PoolConnection) =>
 					{
-						let tempResults = null;
-
-						if (results != null)
+						if (err)
 						{
-							if (results.length > 0)
-								tempResults = results[0];
+							reject (err);
+
+							return;
 						}
 
-						resolve ({ error: err, results: tempResults, fields: fields });
+						this.db.query (queryString, values, 
+							(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
+							{
+								let tempResults = null;
+
+								if (results != null)
+								{
+									if (results.length > 0)
+										tempResults = results[0];
+								}
+
+								resolve ({ error: err, results: tempResults, fields: fields });
+							}).on ("end", () =>
+								{
+									connection.release ();
+								});
 					});
 			});
 
@@ -269,33 +321,53 @@ return (migration.version);
 		this.dbCheck ();
 
 		let alldbresults: MySQLResults[] = [];
-		let promises = [];
 
-		for (let iIdx = 0; iIdx < queryStrings.length; iIdx++)
+		await new Promise<void> ((resolve, reject) =>
 		{
-			/// @fixme This could overwhelm the server, and each query most likely will 
-			/// not be done in a deterministic order. Consider adding a 5-10ms delay between
-			/// each query.
-			promises.push (new Promise<MySQLResults> ((resolve, reject) =>
+			this.db.getConnection (async (err: NodeJS.ErrnoException, connection: mysql.PoolConnection) =>
 				{
-					let queryString: string | { query: string; values: any[]; } = queryStrings[iIdx];
-					let queryValues: any[] = [];
+					let promises = [];
 
-					if (typeof (queryString) !== "string")
+					if (err)
 					{
-						queryValues = queryString.values;
-						queryString = queryString.query;
+						reject (err);
+
+						return;
 					}
 
-					this.db.query (queryString, queryValues, 
-						(err: mysql.MysqlError, results: any, fields: mysql.FieldInfo[]) =>
-						{
-							resolve ({ error: err, results: results, fields: fields });
-						});
-				}));
-		}
+					for (let iIdx = 0; iIdx < queryStrings.length; iIdx++)
+					{
+						/// @fixme This could overwhelm the server, and each query most likely will 
+						/// not be done in a deterministic order. Consider adding a 5-10ms delay between
+						/// each query.
+						promises.push (new Promise<MySQLResults> ((resolve2, reject2) =>
+							{
+								let queryString: string | { query: string; values: any[]; } = queryStrings[iIdx];
+								let queryValues: any[] = [];
 
-		alldbresults = await Promise.all (promises);
+								if (typeof (queryString) !== "string")
+								{
+									queryValues = queryString.values;
+									queryString = queryString.query;
+								}
+
+								this.db.query (queryString, queryValues, 
+									(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
+									{
+										resolve2 ({ error: err, results: results, fields: fields });
+									}).on ("end", () =>
+										{
+										});
+							}));
+					}
+
+					alldbresults = await Promise.all (promises);
+
+					connection.release ();
+
+					resolve ();
+				});
+		});
 
 		return (alldbresults);
 	}

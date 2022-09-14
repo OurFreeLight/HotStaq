@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Router Test</title>
+</head>
+
+<hotstaq router = "routerTest">
+</hotstaq>
+
+<hotstaq-router name = "routerTest" serve-local = "false">
+	<route path = "/tests/browser/HelloWorld" src = "./HelloWorld.hott"></route>
+	<route path = "/tests/browser/TestingMochaSelenium" src = "./Testing-MochaSelenium.hott"></route>
+
+	<route path = "/tests/browser/redirectTest*" redirect = "./notDoneYet/"></route>
+</hotstaq-router>
+
+<hotstaq-map name = "testMap">
+	<path>relUrl:/tests/browser/HelloWorld -> Form-SignIn-FillOut</path>
+</hotstaq-map>
+
+<script type = "text/javascript" src = "./js/HotStaq.js"></script>
+
+</html>

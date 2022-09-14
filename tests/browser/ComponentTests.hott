@@ -11,7 +11,7 @@
 
 		/// @fixme Hot should already exist at this point? Is this a bug?
 		if (typeof (Hot) !== "undefined")
-			Hot.CurrentPage.processor.addComponent (new HelloWorld (Hot.CurrentPage.processor, null));
+			Hot.CurrentPage.processor.addComponent (HelloWorld);
 	</script>
 </head>
 

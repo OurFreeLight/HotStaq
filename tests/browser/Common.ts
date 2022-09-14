@@ -115,7 +115,7 @@ export class Common
 	/**
 	 * Start the web server.
 	 */
-	async startServer (serveFileExtensions: ServableFileExtension[] = HotHTTPServer.getDefaultServableExtensions ()): Promise<void>
+	async startServer (serveFileExtensions: ServableFileExtension[] = HotHTTPServer.getDefaultServableExtensions (), custom404: string = null): Promise<void>
 	{
 		this.server = new HotHTTPServer (this.processor);
 
@@ -126,6 +126,17 @@ export class Common
 			});
 		this.server.serveFileExtensions = serveFileExtensions;
 		this.server.hottFilesAssociatedInfo.jsSrcPath = "/build-web/HotStaq.js";
+
+		if (custom404 != null)
+		{
+			this.server.handle404 = (req: any, res: any, next: any): void =>
+				{
+					this.server.logger.verbose (`404 ${JSON.stringify (req.url)}`);
+
+					res.status (404).sendFile (custom404);
+				};
+		}
+
 		let api: HelloWorldAPI = new HelloWorldAPI (this.getUrl (), this.server);
 		await this.server.setAPI (api);
 

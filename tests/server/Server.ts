@@ -51,6 +51,12 @@ describe ("Server Tests", () =>
 
 				expect (res.status).to.equal (200);
 			});
+		it ("should try to get a file from the static route that doesn't exist", async () =>
+			{
+				let res = await fetch (`${url}/baddir/file\\that<doesnt-exist.badexttoo`);
+
+				expect (res.status).to.equal (404);
+			});
 		it ("should set the HelloWorldAPI then call it without saying hi", async () =>
 			{
 				api = new HelloWorldAPI (common.getUrl (), server);
@@ -69,17 +75,7 @@ describe ("Server Tests", () =>
 		it ("should upload a file to HelloWorldAPI and delete it", async () =>
 			{
 				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
-				/*let stream: fs.ReadStream = fs.createReadStream (filepath);
-				const formData: FormData = new FormData ();
 
-				formData.append ("index.html", stream);
-
-				let res = await fetch (`${url}/v1/hello_world/file_upload`, {
-						method: "POST",
-						// @ts-ignore
-						body: formData
-					});
-				let jsonRes: any = await res.json ();*/
 				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload", {}, "POST", {
 						"indexFileKey": HotIO.readFileStream (filepath)
 					});

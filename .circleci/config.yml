@@ -1,0 +1,32 @@
+version: 2.1
+jobs:
+  publish:
+    working_directory: /app
+    docker:
+      - image: docker:20-git
+        environment:
+          NPM_ACCESS_TOKEN: $NPM_ACCESS_TOKEN
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk add bash curl python3 py3-pip jq wget nodejs npm
+
+            npm install -g typescript typedoc
+            npm install
+      - run:
+          name: Publish library
+          command: |
+            npm publish --otp $NPM_ACCESS_TOKEN
+
+workflows:
+  version: 2
+  hotstaq-publish:
+    jobs:
+      - publish: 
+          filters:
+            branches:
+              only: 
+                - master

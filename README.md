@@ -95,6 +95,12 @@ You can configure how HotStaq starts by using:
 	* Description: The database schema (or bucket) to use.
 	* Accepted values:
 		* Any string.
+* DATABASE_CONNECTIONS_LIMIT
+	* Type: number
+	* Description: The max number of database connections to maintain.
+	* Default: 10
+	* Accepted values:
+		* Any integer.
 * SELENIUM_REMOTE_SERVER
 	* Type: string
 	* Description: The remote selenium server to do web browser tests with.

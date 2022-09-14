@@ -1,0 +1,98 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Web Server",
+			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"--development-mode",
+				"--hotsite",
+				"./HotSite.json",
+				"run",
+				"--web-http-port",
+				"8080"
+			],
+			"env": {}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Web/API Server",
+			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"--development-mode",
+				"--hotsite",
+				"./HotSite.json",
+				"run",
+				"--server-type",
+				"web-api",
+				"--web-http-port",
+				"8080",
+				"--api-http-port",
+				"8081"
+			],
+			"env": {}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug API Server",
+			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": [
+				"--development-mode",
+				"--hotsite",
+				"./HotSite.json",
+				"run",
+				"--server-type",
+				"api",
+				"--api-http-port",
+				"8081"
+			],
+			"env": {}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Run Web Tests",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+			"args": [
+				"--development-mode",
+				"--hotsite",
+				"./HotSite.json",
+				"test",
+				"--web-http-port",
+				"8080"
+			],
+			"env": {}
+		},
+		{
+			"type": "pwa-node",
+			"request": "attach",
+			"name": "Remote Debugger",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"localRoot": "${workspaceFolder}",
+			"address": "127.0.0.1",
+			"port": 9229,
+			"remoteRoot": "/app/admin-panel"
+		}
+	]
+}

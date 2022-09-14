@@ -7,7 +7,7 @@ import validateModuleName from "validate-npm-package-name";
 import { HotPage } from "./HotPage";
 import { HotFile } from "./HotFile";
 
-import { HotComponent } from "./HotComponent";
+import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
@@ -165,6 +165,19 @@ export interface HotSite
 					 */
 					localPath: string;
 				}[];
+			/**
+			 * How to handle errors.
+			 */
+			errors?: {
+				/**
+				 * On a 404, serve a local file.
+				 */
+				on404?: string;
+				/**
+				 * On an error other than a 404, serve a local file.
+				 */
+				onOther?: string;
+			};
 		};
 	/**
 	 * Testing related functionality.
@@ -393,7 +406,13 @@ export interface IHotStaq
 	/**
 	 * The components that can be constructed.
 	 */
-	components?: { [name: string]: HotComponent };
+	components?: {
+		[tagName: string]: {
+				componentType: (new  (copy: IHotComponent | HotStaq, api?: HotAPI) => HotComponent), 
+				processor: HotStaq, 
+				api: HotAPI
+			}
+		};
 	/**
 	 * The files that can be stored for later use.
 	 */
@@ -413,7 +432,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.5.737";
+	static version: string = "0.6.0";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -449,7 +468,13 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The components that can be constructed.
 	 */
-	components: { [name: string]: HotComponent };
+	components: {
+		[tagName: string]: {
+				componentType: (new  (copy: IHotComponent | HotStaq, api?: HotAPI) => HotComponent), 
+				processor: HotStaq, 
+				api: HotAPI
+			}
+		};
 	/**
 	 * The files that can be stored for later use.
 	 */
@@ -773,173 +798,425 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Add and register a component.
 	 */
-	addComponent (component: HotComponent | Function): void
+	addComponent (ComponentType: (new  (copy: IHotComponent | HotStaq, api?: HotAPI) => HotComponent), api: HotAPI = null, 
+		elementOptions: ElementDefinitionOptions = undefined): void
 	{
-		if (typeof (component) === "function")
+		let tempApi = this.api
+		
+		if (api != null)
+			tempApi = api;
+
+		let tempComponentObj = new ComponentType (this, tempApi);
+
+		if (this.components[tempComponentObj.tag] != null)
+			throw new Error (`Component ${tempComponentObj.tag} already exists!`);
+
+		this.components[tempComponentObj.tag] = { componentType: ComponentType, processor: this, api: tempApi };
+		this.registerComponent (tempComponentObj.tag, elementOptions);
+	}
+
+	/**
+	 * Correct any HTML prior to DOM parsing. This only accounts for <tr> currently.
+	 */
+	protected static fixHTML (str: string): { fixedStr: string, querySelector: string; }
+	{
+		// Take into account the difference between XML and HTML.
+		const tempStr: string = str.replace(/ \/>/g, '>').replace(
+			/(<(area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr).*?>)/g, '$1</$2>');
+		const parsedXML = new DOMParser ().parseFromString (`<xml>${tempStr}</xml>`, "text/xml");
+		let querySelector: string = "";
+
+		if (parsedXML.documentElement.children.length > 0)
 		{
-			// @ts-ignore
-			component = new component (this, this.api);
+			const tagName: string = parsedXML.documentElement.children[0].tagName.toLowerCase ();
+
+			if (tagName === "tr")
+			{
+				str = `<table>${str}</table>`;
+				querySelector = "tbody";
+			}
+
+			if (tagName === "th")
+			{
+				str = `<table>${str}</table>`;
+				querySelector = tagName;
+			}
 		}
 
-		if (typeof (component) === "object")
-		{
-			if (component.name == null)
-				throw new Error (`Component must have a name!`);
-
-			if (component.tag == null)
-				throw new Error (`Component ${component.name} must have a tag!`);
-
-			this.components[component.name] = component;
-			this.registerComponent (component);
-		}
+		return ({ fixedStr: str, querySelector: querySelector });
 	}
 
 	/**
 	 * Register a component for use as a HTML tag.
 	 */
-	protected registerComponent (component: HotComponent): void
+	protected registerComponent (tag: string, elementOptions: ElementDefinitionOptions = undefined): void
 	{
-		if ((component.tag == null) || (component.tag === ""))
-			throw new Error (`Component ${component.name} must have a tag!`);
+		if ((tag == null) || (tag === ""))
+			throw new Error (`All components must have a tag!`);
 
-		if (customElements.get (component.tag) !== undefined)
+		if (customElements.get (tag) !== undefined)
 		{
 			/// @fixme This element has already been defined. Should this throw an error or warning? I don't think it should...
 
 			return;
 		}
 
-		customElements.define (component.tag, class extends HTMLElement
+		let processorComponents = this.components;
+
+		customElements.define (tag, class extends HTMLElement
 			{
+				/**
+				 * The connected HotComponent.
+				 */
+				component: HotComponent;
+			
 				constructor ()
 				{
 					super ();
+
+					let componentInfo = processorComponents[tag];
+					this.component = new componentInfo.componentType (componentInfo.processor, componentInfo.api);
+				}
+			
+				/**
+				 * This helps parse <tr> and other tags that do not have a parent.
+				 * 
+				 * Thanks Brandon McConnell!
+				 * 
+				 * From: https://stackoverflow.com/questions/67313479/make-parsefromstring-parse-without-validation
+				 * 
+				 * @todo May remove this as it does not seem to work well in a lot of edge cases.
+				 */
+				protected looseParseFromString (parser: DOMParser, str: string) {
+					str = str.replace(/ \/>/g, '>').replace(/(<(area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr).*?>)/g, '$1</$2>');
+					const xdom = parser.parseFromString('<xml>'+str+'</xml>', 'text/xml');
+					const hdom = parser.parseFromString('', 'text/html');
+					for (let elem of Array.from(xdom.documentElement.children)) {
+						/// @ts-ignore
+						hdom.body.appendChild(elem);
+					}
+					for (let elem of Array.from(hdom.querySelectorAll('area,base,br,col,command,embed,hr,img,input,keygen,link,meta,param,source,track,wbr'))) {
+						/// @ts-ignore
+						elem.outerHTML = '<'+elem.outerHTML.slice(1).split('<')[0];
+					}
+					return hdom;
 				}
 
-				static get observedAttributes(): string[]
+				get observedAttributes(): string[] /// @fixme Does this REALLY have to be static? Awful if it does...
 				{
-					return (component.observedAttributes);
+					return (this.component.observedAttributes);
 				}
-
+			
 				async connectedCallback ()
 				{
-					component.htmlElement = this;
-
-					let output = await component.output ();
-					let htmlStr: string = "";
-					let addFunctionsTo: string = "";
-
-					if (typeof (output) === "string")
-						htmlStr = output;
+					let compHtmlElement = this;
+			
+					// @ts-ignore
+					compHtmlElement.hotComponent = this.component;
+			
+					this.component.htmlElements = [compHtmlElement];
+					this.component.inner = this.innerHTML;
+			
+					if (this.component.handleAttributes != null)
+						await this.component.handleAttributes (this.attributes);
 					else
 					{
-						htmlStr = output.html;
-						addFunctionsTo = output.addFunctionsTo;
-					}
-
-					let str: string = HotFile.parseContent (htmlStr, true, { "outputCommands": false });
-					let newDOM: Document = new DOMParser ().parseFromString (str, "text/html");
-
-					if (newDOM.body.children.length < 1)
-						throw new Error (`No component output from ${component.name}`);
-
-					if (newDOM.body.children.length > 1)
-						throw new Error (`Only a single html element can come from component ${component.name}, multiple elements were detected.`);
-
-					let newObj: HTMLElement = (<HTMLElement>newDOM.body.children[0]);
-
-					this.replaceWith (newObj);
-
-					if (component.click != null)
-						newObj.onclick = component.click.bind (component);
-
-					for (let key in component.events)
-					{
-						let event = component.events[key];
-
-						// @ts-ignore
-						newObj.addEventListener (event.type, event.func, event.options);
-					}
-
-					component.htmlElement = await component.onCreated (newObj);
-
-					if (component.handleAttributes != null)
-						await component.handleAttributes (newObj.attributes);
-					else
-					{
-						for (let iIdx = 0; iIdx < newObj.attributes.length; iIdx++)
+						for (let iIdx = 0; iIdx < this.attributes.length; iIdx++)
 						{
-							let attr: Attr = newObj.attributes[iIdx];
-							let attrName: string = attr.name.toLowerCase ();
-							let attrValue: string = attr.value;
-
+							const attr: Attr = this.attributes[iIdx];
+							const attrName: string = attr.name.toLowerCase ();
+							const attrValue: string = attr.value;
+			
 							if (attrName === "id")
-								component.name = attrValue;
-
+								this.component.name = attrValue;
+			
 							if (attrName === "name")
-								component.name = attrValue;
-
+								this.component.name = attrValue;
+			
 							if (attrName === "value")
-								component.value = attrValue;
+								this.component.value = attrValue;
+			
+							if (attrName.indexOf ("hot-") > -1)
+							{
+								const attrTempName: string = attrName.substring (4);
+			
+								/// @ts-ignore
+								this.component[attrTempName] = attrValue;
+							}
 						}
 					}
-
-					let objectFunctions: string[] = Object.getOwnPropertyNames (component.constructor.prototype);
-
-					// Associate any functions to the newly created element.
-					for (let iIdx = 0; iIdx < objectFunctions.length; iIdx++)
+			
+					if (this.component.onPreOutput != null)
 					{
-						let objFunc: string = objectFunctions[iIdx];
-
-						if (objFunc === "constructor")
-							continue;
-
-						// @ts-ignore
-						let prop = component[objFunc];
-
-						if (typeof (prop) === "function")
+						if (await this.component.onPreOutput () === false)
+							return;
+					}
+			
+					let outputs = await this.component.output ();
+			
+					if (this.component.onPostOutput != null)
+						outputs = await this.component.onPostOutput (outputs);
+			
+					let componentOutputs: HotComponentOutput[] = [];
+			
+					if (typeof (outputs) === "string")
+						componentOutputs.push ({ html: outputs });
+					else
+					{
+						if (outputs instanceof Array)
+							componentOutputs = outputs;
+						else
+							componentOutputs = [outputs];
+					}
+			
+					for (let iKdx = 0; iKdx < componentOutputs.length; iKdx++)
+					{
+						let output = componentOutputs[iKdx];
+						let htmlStr: string = output.html;
+						let addFunctionsTo: string = "";
+			
+						if (output.addFunctionsTo != null)
+							addFunctionsTo = output.addFunctionsTo;
+			
+						let str: string = HotFile.parseContent (htmlStr, true, { "outputCommands": false });
+			
+						if (this.component.onParsed != null)
+							str = await this.component.onParsed (str);
+			
+						let htmlHandler: { fixedStr: string, querySelector: string; } = { fixedStr: "", querySelector: "" };
+			
+						if (this.component.onFixHTML != null)
+							htmlHandler = await this.component.onFixHTML (str);
+						else
+							htmlHandler = HotStaq.fixHTML (str);
+			
+						let newDOM: Document = null;
+						let newObj: HTMLElement = null;
+			
+						if (this.component.onParseDOM != null)
+							newDOM = await this.component.onParseDOM (htmlHandler.fixedStr);
+						else
 						{
-							let isNewFunction: boolean = true;
-
-							// Go through each function in the base HotComponent and see 
-							// if there's any matches. If there's a match, that means 
-							// we're trying to add an existing function, and we don't
-							// wanna do that. Skip it.
-							for (let key2 in HotComponent.prototype)
+							/// @ts-ignore
+							//newDOM = this.looseParseFromString (new DOMParser (), str);
+							newDOM = new DOMParser ().parseFromString (htmlHandler.fixedStr, "text/html");
+						}
+			
+						if (newDOM.body.children.length < 1)
+							throw new Error (`No component output from ${this.component.name}`);
+			
+						if (newDOM.body.children.length > 1)
+						{
+							let throwErr: boolean = true;
+			
+							for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
 							{
-								if (objFunc === key2)
+								let child = newDOM.body.children[iIdx];
+			
+								if (child instanceof HTMLElement)
 								{
-									isNewFunction = false;
-
-									break;
+									if (child.tagName.toLowerCase () === "parsererror")
+									{
+										newObj = child;
+										throwErr = false;
+			
+										break;
+									}
 								}
 							}
+			
+							if (throwErr === true)
+								throw new Error (`Only a single html element can come from component ${this.component.name}, multiple elements were detected.`);
+						}
 
-							if (isNewFunction === true)
+						if (htmlHandler.querySelector === "")
+							newObj = (<HTMLElement>newDOM.body.children[0]);
+						else
+							newObj = newDOM.querySelector (htmlHandler.querySelector);
+
+						let childrenToReadd: Node[] = [];
+			
+						// Save the children from being replaced.
+						for (let iIdx = (this.children.length - 1); iIdx > -1; iIdx--)
+						{
+							let child: Node = this.children[iIdx];
+			
+							childrenToReadd.push (this.removeChild (child));
+						}
+			
+						this.replaceWith (newObj);
+			
+						if (this.component.click != null)
+							newObj.onclick = this.component.click.bind (this.component);
+			
+						for (let key in this.component.events)
+						{
+							let event = this.component.events[key];
+			
+							// @ts-ignore
+							newObj.addEventListener (event.type, event.func, event.options);
+						}
+			
+						let objectFunctions: string[] = Object.getOwnPropertyNames (this.component.constructor.prototype);
+			
+						// Associate any functions to the newly created element.
+						for (let iIdx = 0; iIdx < objectFunctions.length; iIdx++)
+						{
+							let objFunc: string = objectFunctions[iIdx];
+			
+							if (objFunc === "constructor")
+								continue;
+			
+							// @ts-ignore
+							let prop = this.component[objFunc];
+			
+							if (typeof (prop) === "function")
+							{
+								let isNewFunction: boolean = true;
+			
+								// Go through each function in the base HotComponent and see 
+								// if there's any matches. If there's a match, that means 
+								// we're trying to add an existing function, and we don't
+								// wanna do that. Skip it.
+								for (let key2 in HotComponent.prototype)
+								{
+									if (objFunc === key2)
+									{
+										isNewFunction = false;
+			
+										break;
+									}
+								}
+			
+								if (isNewFunction === true)
+								{
+									// @ts-ignore
+									newObj[objFunc] = HotStaq.keepContext (this.component[objFunc], this.component);
+			
+									if (addFunctionsTo !== "")
+									{
+										let query: HTMLElement = document.querySelector (addFunctionsTo);
+			
+										// @ts-ignore
+										query[objFunc] = HotStaq.keepContext (this.component[objFunc], this.component);
+									}
+								}
+							}
+						}
+			
+						if (this.component.onPrePlace != null)
+							newObj = await this.component.onPrePlace (newObj);
+			
+						let compHtmlElement2: HTMLElement = await this.component.onCreated (newObj);
+			
+						if (this.component.onParentPlace != null)
+						{
+							// @ts-ignore
+							compHtmlElement2.onParentPlace = this.component.onParentPlace;
+						}
+			
+						// @ts-ignore
+						compHtmlElement2.hotComponent = this.component;
+						this.component.htmlElements.push (compHtmlElement2);
+			
+						if (output.parentSelector != null)
+						{
+							let parentNode: Node = document.querySelector (output.parentSelector);
+			
+							compHtmlElement2.parentElement.removeChild (compHtmlElement2);
+							parentNode.appendChild (compHtmlElement2);
+			
+							// @ts-ignore
+							if (compHtmlElement2.onParentPlace != null)
 							{
 								// @ts-ignore
-								newObj[objFunc] = HotStaq.keepContext (component[objFunc], component);
-
-								if (addFunctionsTo !== "")
-								{
-									const query: HTMLElement = document.querySelector (addFunctionsTo);
-
-									// @ts-ignore
-									query[objFunc] = HotStaq.keepContext (component[objFunc], component);
-								}
+								await compHtmlElement2.hotComponent.onParentPlace (parentNode, compHtmlElement2);
 							}
+						}
+			
+						if (output.placeHereParent != null)
+						{
+							let parentNodeToCheck = compHtmlElement2.parentNode;
+							let parentNodeCheckCounter: number = 0;
+			
+							while (parentNodeCheckCounter < 10) /// @todo Make this controllable with a variable from the component.
+							{
+								if (parentNodeToCheck == null)
+									break;
+			
+								if (parentNodeToCheck instanceof HTMLHtmlElement)
+									break;
+			
+								// If the hot-place-here exists, place the children there. If not, place it under the 
+								// new element.
+								let placeHereArray = parentNodeToCheck.querySelectorAll (`hot-place-here[name="${output.placeHereParent}"]`);
+			
+								if (placeHereArray.length > 0)
+								{
+									let placeHere = placeHereArray[0];
+			
+									compHtmlElement2.parentNode.removeChild (compHtmlElement2);
+									placeHere.appendChild (compHtmlElement2);
+			
+									// @ts-ignore
+									if (compHtmlElement2.onParentPlace != null)
+									{
+										// @ts-ignore
+										await compHtmlElement2.hotComponent.onParentPlace (placeHere, compHtmlElement2);
+									}
+			
+									break;
+								}
+			
+								if (placeHereArray.length < 1)
+								{
+									let placeHereAttrArray = parentNodeToCheck.querySelectorAll (`[hot-place-here="${output.placeHereParent}"]`);
+			
+									if (placeHereAttrArray.length > 0)
+									{
+										let placeHere = placeHereAttrArray[0];
+										compHtmlElement2.parentNode.removeChild (compHtmlElement2);
+										placeHere.appendChild (compHtmlElement2);
+			
+										// @ts-ignore
+										if (compHtmlElement2.onParentPlace != null)
+										{
+											// @ts-ignore
+											await compHtmlElement2.hotComponent.onParentPlace (placeHere, compHtmlElement2);
+										}
+			
+										break;
+									}
+								}
+			
+								parentNodeToCheck = parentNodeToCheck.parentNode;
+								parentNodeCheckCounter++;
+							}
+						}
+			
+						// Append the children to the newly created HTML element.
+						for (let iIdx = 0; iIdx < childrenToReadd.length; iIdx++)
+						{
+							const child: Node = childrenToReadd[iIdx];
+			
+							compHtmlElement2.appendChild (child);
+			
+							// @ts-ignore
+							if (child.onParentPlace != null)
+							{
+								// @ts-ignore
+								await child.hotComponent.onParentPlace (compHtmlElement2, child);
+							}
+						}
+			
+						if (this.component.onPostPlace != null)
+						{
+							/// @ts-ignore
+							compHtmlElement2 = await this.component.onPostPlace (compHtmlElement2.parentNode, compHtmlElement2);
 						}
 					}
 				}
-			}, component.elementOptions);
-	}
-
-	/**
-	 * Get a component to process.
-	 */
-	getComponent (name: string): HotComponent
-	{
-		return (this.components[name]);
+			}, elementOptions);
 	}
 
 	/**
@@ -961,12 +1238,20 @@ export class HotStaq implements IHotStaq
 
 		if (typeof (html) === "string")
 		{
-			let newDOM: Document = new DOMParser ().parseFromString (html, "text/html");
+			let htmlHandler = HotStaq.fixHTML (html);
+			let newDOM: Document = new DOMParser ().parseFromString (htmlHandler.fixedStr, "text/html");
+			let children: any = null;
+
+			if (htmlHandler.querySelector === "")
+				children = newDOM.body.children;
+			else
+				children = newDOM.querySelector (htmlHandler.querySelector).children;
+
 			let results: HTMLElement[] = [];
 
-			for (let iIdx = 0; iIdx < newDOM.body.children.length; iIdx++)
+			for (let iIdx = 0; iIdx < children.length; iIdx++)
 			{
-				let child: HTMLElement = (<HTMLElement>newDOM.body.children[iIdx]);
+				let child: HTMLElement = (<HTMLElement>children[iIdx]);
 
 				results.push (foundParent.appendChild (child));
 			}
@@ -1237,9 +1522,9 @@ export class HotStaq implements IHotStaq
 
 				/// @fixme Create unit test for fetching, loading, and registering.
 				let res: any = await fetch (componentUrl);
-				let newComponent: HotComponent = eval (res);
+				let ComponentClass = eval (res);
 
-				this.addComponent (newComponent);
+				this.addComponent (ComponentClass);
 			}
 		}
 
@@ -1929,6 +2214,15 @@ export class HotStaq implements IHotStaq
 	 */
 	static async useOutput (output: string): Promise<void>
 	{
+		// Tried to reset the document's readyState hoping it would be set again after the 
+		// new document has loaded. Doesn't work...
+		/*Object.defineProperty (document, "readyState", {
+				get ()
+				{
+					return ("loading");
+				}
+			});*/
+
 		let parser = new DOMParser ();
 		let child = parser.parseFromString (output, "text/html");
 
@@ -1967,14 +2261,6 @@ export class HotStaq implements IHotStaq
 
 				// remove the original (non-executing) node from the page
 				scripts[i].parentNode.removeChild(scripts[i]);
-
-				await new Promise<void> ((resolve, reject) =>
-					{
-						s.onload = () =>
-							{
-								resolve ();
-							};
-					});
 			}
 		}
 	}
@@ -2265,6 +2551,8 @@ if (typeof (document) !== "undefined")
 			window.HotAPI = HotStaqWeb.HotAPI;
 			// @ts-ignore
 			window.Hot = HotStaqWeb.Hot;
+			// @ts-ignore
+			window.HotComponent = HotStaqWeb.HotComponent;
 		}
 
 		if (hotstaqElms.length > 0)
@@ -2292,7 +2580,7 @@ if (typeof (document) !== "undefined")
 
 					let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
 					let router: string = getAttr (hotstaqElm, ["router"]) || "";
-					let name: string = getAttr (hotstaqElm, ["name"]) || ""; /// @fixme Should we allow names to be empty?
+					let name: string = getAttr (hotstaqElm, ["name"]) || "default";
 					let args: string = getAttr (hotstaqElm, ["args"]) || null;
 					let apiLibrary: string = getAttr (hotstaqElm, ["api-library", "apiLibrary"]) || null;
 					let apiName: string = getAttr (hotstaqElm, ["api-name", "apiName"]) || null;
@@ -2304,7 +2592,8 @@ if (typeof (document) !== "undefined")
 					let dontReuseProcessor: boolean = false;
 					let passRawUrl: boolean = false;
 					let htmlSource: string = hotstaqElm.innerHTML || "";
-					let routerManager: { [path: string]: string; } = {};
+					let routerManager: { [path: string]: { redirect: string; base: string; src: string; } } = {};
+					let routerWildcards: string[] = [];
 
 					if (getAttr (hotstaqElm, ["src"]) != null)
 						loadPage = getAttr (hotstaqElm, ["src"]);
@@ -2365,9 +2654,18 @@ if (typeof (document) !== "undefined")
 										if (routerElm.tagName.toUpperCase () === "ROUTE")
 										{
 											let routerPath: string = getAttr (routerElm, ["path"]);
+											let redirect: string = getAttr (routerElm, ["redirect"]);
+											let base: string = getAttr (routerElm, ["base"]);
 											let routerSrc: string = getAttr (routerElm, ["src"]);
 
-											routerManager[routerPath] = routerSrc;
+											if (routerPath.indexOf ("*") > -1)
+												routerWildcards.push (routerPath);
+
+											routerManager[routerPath] = {
+													redirect: redirect || undefined, 
+													base: base || undefined, 
+													src: routerSrc || undefined
+												};
 										}
 									}
 								}
@@ -2376,15 +2674,50 @@ if (typeof (document) !== "undefined")
 
 								if (serveLocally != null)
 								{
-									const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+									const lowerServeLocally: string = serveLocally.toLowerCase ();
 
-									if (lastSlashPos > -1)
-										tempPathname = tempPathname.substring (lastSlashPos);
+									if ((lowerServeLocally === "true") ||
+										(lowerServeLocally === "yes") ||
+										(lowerServeLocally === "1"))
+									{
+										const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+
+										if (lastSlashPos > -1)
+											tempPathname = tempPathname.substring (lastSlashPos);
+									}
+								}
+
+								if (routerWildcards.length > 0)
+								{
+									// Serve locally doesn't really work with wildcards
+									/// @fixme This isn't actually working like a wildcard should. This needs to be improved.
+									for (let iJdx = 0; iJdx < routerWildcards.length; iJdx++)
+									{
+										let routeWildcard: string = routerWildcards[iJdx];
+										let tempRouteWildcard: string = routeWildcard.replace ("*", "");
+
+										if (tempPathname.indexOf (tempRouteWildcard) > -1)
+										{
+											tempPathname = routeWildcard;
+
+											break;
+										}
+									}
 								}
 
 								// Find the correct route and load it.
 								if (routerManager[tempPathname] != null)
-									loadPage = routerManager[tempPathname];
+								{
+									if (routerManager[tempPathname].redirect != null)
+									{
+										window.location.href = routerManager[tempPathname].redirect;
+
+										return;
+									}
+
+									if (routerManager[tempPathname].src != null)
+										loadPage = routerManager[tempPathname].src;
+								}
 
 								break;
 							}

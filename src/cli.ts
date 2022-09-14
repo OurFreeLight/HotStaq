@@ -1,6 +1,7 @@
 import * as ppath from "path";
 import * as fs from "fs";
 
+import * as dotenv from "dotenv";
 import * as commander from "commander";
 
 import { HotStaq } from "./HotStaq";
@@ -499,11 +500,8 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 
 				if (apiServer != null)
 				{
-					if (processor.hotSite.server.ports.apiHttp == null)
-						processor.hotSite.server.ports.apiHttp = apiServer.ports.http;
-
-					if (processor.hotSite.server.ports.apiHttps == null)
-						processor.hotSite.server.ports.apiHttps = apiServer.ports.https;
+						processor.hotSite.server.ports.http = apiServer.ports.http;
+						processor.hotSite.server.ports.https = apiServer.ports.https;
 				}
 
 				// Go through each API and replace the base url with the base url set in the cli.
@@ -645,15 +643,19 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 					for (let key in apis)
 					{
 						let loadAPI: APItoLoad = apis[key];
+						let isAPIOnly: boolean = false;
 	
 						if (baseAPIUrl === "")
 							baseAPIUrl = getBaseUrlFromHotSite (loadAPI);
 	
 						if (baseAPIUrl === "")
 							baseAPIUrl = `http://127.0.0.1:${server.ports.http}`;
+
+						if (serverType === "web-api")
+							isAPIOnly = false;
 	
 						// Only run the api server.
-						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, true);
+						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, isAPIOnly);
 	
 						if (globalLogLevel != null)
 							server.logger.logLevel = globalLogLevel;
@@ -858,6 +860,29 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 				else
 					baseAPIUrl = url;
 			}, "");
+
+		if (currentServerType === "api")
+		{
+			runCmd.option (`--${currentServerType}-port <port>`, 
+				`Set the ${currentServerType} HTTP port`, 
+				(port: string, previous: any) =>
+				{
+					try
+					{
+						const tempPort: number = parseInt (port);
+	
+						if (currentServerType === "web")
+							webServer.ports.http = tempPort;
+						else
+							apiServer.ports.http = tempPort;
+					}
+					catch (ex)
+					{
+						processor.logger.error (`Unable to parse ${currentServerType} http port ${port}`);
+					}
+				}, httpPort);
+		}
+
 		runCmd.option (`--${currentServerType}-http-port <port>`, 
 			`Set the ${currentServerType} HTTP port`, 
 			(port: string, previous: any) =>
@@ -1290,6 +1315,10 @@ async function start ()
 		let packageJSON: any = JSON.parse (fs.readFileSync (packagePath).toString ());
 		VERSION = packageJSON.version;
 
+		dotenv.config ();
+
+		let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
+
 		const program: commander.Command = new commander.Command ("hotstaq");
 
 		program.description (`Copyright(c) 2022, FreeLight, Inc. Under the MIT License.`);
@@ -1329,6 +1358,11 @@ async function start ()
 			(path: string, previous: any) =>
 			{
 				process.chdir (path);
+			});
+		command.option ("--env-file <path>", "Set the path to the .env file to load.", 
+			(path: string, previous: any) =>
+			{
+				envPath = path;
 			});
 		command.option ("-o, --hotsite <path>", "Specify the HotSite.json to use. This will look in the current directory to find one first.", 
 			(path: string, previous: any) =>
@@ -1389,6 +1423,20 @@ async function start ()
 
 		let agentCmd: commander.Command = await handleAgentCommands ();
 		command.addCommand (agentCmd);
+
+		if (await HotIO.exists (envPath) === true)
+		{
+			const content: string = await HotIO.readTextFile (envPath);
+			let envVars = dotenv.parse (content);
+
+			for (let key in envVars)
+			{
+				const value: any = envVars[key];
+
+				if (value != null)
+					process.env[key] = value;
+			}
+		}
 
 		if (process.argv.length > 2)
 			program.parse (process.argv);

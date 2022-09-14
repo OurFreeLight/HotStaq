@@ -1,0 +1,15 @@
+node_modules/
+db/
+!creator/
+
+build/tests/
+
+client/
+tests/
+
+create-test-temp/
+
+build-web/HotStaqTests.js
+
+./HotSite.json
+./*.config.js

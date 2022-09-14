@@ -156,6 +156,14 @@ export class HotHTTPServer extends HotServer
 	autoDeleteUploadOptions: {
 			afterUploadIdUse: boolean;
 		};
+	/**
+	 * The function to execute when handling 404 errors.
+	 */
+	handle404: (req: express.Request, res: express.Response, next: any) => void;
+	/**
+	 * The function to execute when handling other errors.
+	 */
+	handleOther: (err: any, req: express.Request, res: express.Response, next: any) => void;
 
 	constructor (processor: HotStaq | HotServer, httpPort: number = null, httpsPort: number = null)
 	{
@@ -180,6 +188,8 @@ export class HotHTTPServer extends HotServer
 		this.autoDeleteUploadOptions = {
 				afterUploadIdUse: true
 			};
+		this.handle404 = null;
+		this.handleOther = null;
 
 		if (process.env.LISTEN_ADDR != null)
 		{
@@ -752,8 +762,7 @@ export class HotHTTPServer extends HotServer
 							{
 								const errMsg: string = `Refused to serve file ${filepath}. Could contain secrets.`;
 
-								this.logger.verbose (errMsg);
-								res.status (500).send ({ error: errMsg });
+								this.handleOther (new Error (errMsg), req, res, next);
 
 								return;
 							}
@@ -806,7 +815,7 @@ export class HotHTTPServer extends HotServer
 															res.header (httpHeader.type, httpHeader.value);
 														}
 
-														res.sendFile (path);
+														res.status (200).sendFile (path);
 
 														return;
 													}
@@ -825,7 +834,7 @@ export class HotHTTPServer extends HotServer
 											res.setHeader ("Content-Type", mimeType);
 									}
 
-									res.sendFile (path);
+									res.status (200).sendFile (path);
 								};
 
 							let result: string = "";
@@ -974,23 +983,26 @@ export class HotHTTPServer extends HotServer
 	 * route stack. The first will be to capture any 404 errors, the second would be to 
 	 * catch any remaining errors.
 	 */
-	setErrorHandlingRoutes (
-		handle404: (req: express.Request, res: express.Response, next: any) => void = null, 
-		handleOther: (err: any, req: express.Request, res: express.Response, next: any) => void = null
-		): void
+	setErrorHandlingRoutes (): void
 	{
-		if (handle404 == null)
+		if (this.handle404 == null)
 		{
-			handle404 = (req: express.Request, res: express.Response, next: any): void =>
+			this.handle404 = (req: express.Request, res: express.Response, next: any): void =>
 				{
 					this.logger.verbose (`404 ${JSON.stringify (req.url)}`);
-					res.status (404).send ({ error: "404" });
+
+					let on404: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "errors", "on404"]);
+
+					if (on404 != null)
+						res.status (404).sendFile (on404);
+					else
+						res.status (404).send ({ error: "404" });
 				};
 		}
 
-		if (handleOther == null)
+		if (this.handleOther == null)
 		{
-			handleOther = (err: any, req: express.Request, res: express.Response, next: any): void =>
+			this.handleOther = (err: any, req: express.Request, res: express.Response, next: any): void =>
 				{
 					let stack: string = "";
 					let msg: string = "";
@@ -1002,12 +1014,28 @@ export class HotHTTPServer extends HotServer
 					}
 
 					this.logger.verbose (`500 Server error ${JSON.stringify (stack)}`);
-					res.status (500).send ({ error: `Server error: ${msg}` });
+
+					let onOther: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "errors", "onOther"]);
+
+					if (onOther != null)
+						res.status (500).sendFile (onOther);
+					else
+						res.status (500).send ({ error: `Server error: ${msg}` });
 				};
 		}
 
-		this.expressApp.use (handle404);
-		this.expressApp.use (handleOther);
+		// This is a hack to force the function names, so we can find them and delete them later.
+		Object.defineProperty (this.handle404, "name", 
+			{
+				value: "handle404"
+			});
+		Object.defineProperty (this.handleOther, "name", 
+			{
+				value: "handleOther"
+			});
+
+		this.expressApp.use (this.handle404);
+		this.expressApp.use (this.handleOther);
 	}
 
 	/**

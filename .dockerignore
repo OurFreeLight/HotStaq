@@ -5,9 +5,12 @@ build-web/
 .env
 
 ./*.sh
+.circleci
+.vscode
 
 create-test-temp/
 temp*/
+examples/
 
 # Logs
 logs
