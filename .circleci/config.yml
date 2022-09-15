@@ -22,6 +22,9 @@ jobs:
           command: |
             sudo npm install -g typescript typedoc
             npm install
+            npm run build
+            npm run buildweb
+            npm run version-check
             
             cat > "./.env" \<<EOF
             HTTP_PORT=3123
