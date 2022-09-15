@@ -37,6 +37,11 @@
 			let result = await Hot.API.hello_world_second.hello_again ({ message: 'hi' });
 			document.getElementById ('testHelloWorldAPI4').innerHTML = JSON.stringify (result);
 		}
+
+		(() =>
+		{
+			document.getElementById ('iifeTest').innerHTML = "IIFE Worked";
+		})();
 	</script>
 </head>
 
@@ -60,6 +65,9 @@
 *>
 	<br /><br />
 	<a href = "./TestingMochaSelenium">Router Testing-MochaSelenium Test</a>
+	<*
+		Hot.echo (`<div id = "iifeTest"></div>`);
+	*>
 </body>
 
 </html>

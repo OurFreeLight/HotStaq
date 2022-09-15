@@ -265,6 +265,9 @@ export abstract class HotTester
 	{
 		let runTestPath: boolean = true;
 
+		if (method == null)
+			throw new Error (`Trying to access null method on destination map ${destination.mapName}.`);
+
 		// A dumb hack to prevent any recursion that could occur.
 		if (skipEventCalls === false)
 		{
@@ -322,6 +325,10 @@ export abstract class HotTester
 			let method: HotRouteMethod = route.getMethod (pathName);
 			let nextStop: HotTestStop = destination.paths[iIdx + 1];
 			let testName: string = nextStop.path;
+
+			if (method == null)
+				throw new Error (`Unable to find method related to path ${pathName} in map ${destination.mapName}`);
+
 			let result: any = await this.executeTestAPIPath (destination, method, testName);
 
 			results.push (result);

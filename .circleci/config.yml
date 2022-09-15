@@ -1,5 +1,42 @@
 version: 2.1
+
 jobs:
+  test:
+    docker:
+      - image: cimg/node:lts-browsers
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk add bash curl python3 py3-pip jq wget nodejs npm
+            
+            npm install -g typescript typedoc
+            npm install
+            
+            cat > "./.env" <<EOF
+            HTTP_PORT=3123
+            DATABASE_SERVER=localhost
+            DATABASE_PORT=3310
+            DATABASE_USERNAME=5NKVBAt7OrzrumQyQVs
+            DATABASE_PASSWORD=1BBrZbKYRUM7oiMA5oY
+            DATABASE_SCHEMA=hotstaq
+            INFLUX_DATABASE_SERVER=http://localhost:8091
+            INFLUX_DATABASE_USERNAME=5NKVBAt7OrzrumQyQVs
+            INFLUX_DATABASE_PASSWORD=1BBrZbKYRUM7oiMA5oY
+            INFLUX_DATABASE_ORG=freelight
+            INFLUX_DATABASE_TOKEN=Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e
+            INFLUX_DATABASE_SCHEMA=hotstaq
+            TESTING_DEVTOOLS=1
+            EOF
+      - run:
+          name: "Test: Browsers"
+          command: |
+            npm run build-test-api
+            
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
   publish:
     working_directory: /app
     docker:
@@ -19,12 +56,19 @@ jobs:
       - run:
           name: Publish library
           command: |
-            npm publish --otp $NPM_ACCESS_TOKEN
+            echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
+            npm publish
 
 workflows:
   version: 2
   hotstaq-publish:
     jobs:
+      - test: 
+          filters:
+            branches:
+              only: 
+                - dev
+                - master
       - publish: 
           filters:
             branches:

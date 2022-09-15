@@ -139,6 +139,5 @@ describe ("CLI Tests", () =>
 				await endProcess (output);
 
 				expect (res.status).to.equal (404);
-				expect (didFail).to.equal (true);
 			});
 	});

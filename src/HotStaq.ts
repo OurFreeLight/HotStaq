@@ -432,7 +432,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.6.0";
+	static version: string = "0.6.1";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -2234,33 +2234,50 @@ export class HotStaq implements IHotStaq
 		if (tmpScripts.length > 0) {
 			// push all of the document's script tags into an array
 			// (to prevent dom manipulation while iterating over dom nodes)
-			let scripts = [];
+			let scripts: HTMLScriptElement[] = [];
 			for (let i = 0; i < tmpScripts.length; i++) {
 				scripts.push(tmpScripts[i]);
 			}
 
-			// iterate over all script tags and create a duplicate tags for each
+			// iterate over all script tags and create duplicate tags for each
 			for (let i = 0; i < scripts.length; i++) {
-				let s = document.createElement('script');
-				s.innerHTML = scripts[i].innerHTML;
-
-				if (scripts[i].getAttribute ("src") != null)
-				{
-					if (scripts[i].getAttribute ("src") !== "")
-						s.setAttribute ("src", scripts[i].getAttribute ("src"));
-				}
-
-				if (scripts[i].getAttribute ("type") != null)
-				{
-					if (scripts[i].getAttribute ("type") !== "")
-						s.setAttribute ("type", scripts[i].getAttribute ("type"));
-				}
+				let s: HTMLScriptElement = document.createElement('script');
 
 				// add the new node to the page
 				scripts[i].parentNode.appendChild(s);
 
 				// remove the original (non-executing) node from the page
 				scripts[i].parentNode.removeChild(scripts[i]);
+
+				await new Promise<void> ((resolve, reject) =>
+					{
+						s.onload = () =>
+							{
+								resolve ();
+							};
+
+						let hasSrc: boolean = false;
+
+						if (scripts[i].getAttribute ("src") != null)
+						{
+							if (scripts[i].getAttribute ("src") !== "")
+							{
+								s.setAttribute ("src", scripts[i].getAttribute ("src"));
+								hasSrc = true;
+							}
+						}
+
+						if (scripts[i].getAttribute ("type") != null)
+						{
+							if (scripts[i].getAttribute ("type") !== "")
+								s.setAttribute ("type", scripts[i].getAttribute ("type"));
+						}
+
+						s.innerHTML = scripts[i].innerHTML;
+
+						if (hasSrc === false)
+							resolve ();
+					});
 			}
 		}
 	}
