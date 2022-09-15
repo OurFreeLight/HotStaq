@@ -39,6 +39,7 @@ jobs:
             TESTING_DEVTOOLS=1
             EOF
             
+            sudo npm -g install
             npm run build-test-api
       - run:
           name: "Test: Browsers"
