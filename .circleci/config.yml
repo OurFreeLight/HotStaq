@@ -15,7 +15,7 @@ jobs:
             npm install -g typescript typedoc
             npm install
             
-            cat > "./.env" <<EOF
+            cat > "./.env" \<<EOF
             HTTP_PORT=3123
             DATABASE_SERVER=localhost
             DATABASE_PORT=3310
