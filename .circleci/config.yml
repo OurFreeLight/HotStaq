@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo npm install -g typescript typedoc
+            sudo npm install -g typescript typedoc mocha
             npm install
             npm run build
             npm run buildweb
