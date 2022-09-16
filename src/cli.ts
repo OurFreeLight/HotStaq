@@ -1323,6 +1323,29 @@ async function start ()
 
 		dotenv.config ();
 
+		if (process.env["LOGGING_LEVEL"] != null)
+		{
+			let logLevel: string = process.env["LOGGING_LEVEL"];
+
+			if (logLevel === "info")
+				globalLogLevel = HotLogLevel.Info;
+
+			if (logLevel === "warning")
+				globalLogLevel = HotLogLevel.Warning;
+
+			if (logLevel === "error")
+				globalLogLevel = HotLogLevel.Error;
+
+			if (logLevel === "verbose")
+				globalLogLevel = HotLogLevel.Verbose;
+
+			if (logLevel === "all")
+				globalLogLevel = HotLogLevel.All;
+
+			if (logLevel === "none")
+				globalLogLevel = HotLogLevel.None;
+		}
+
 		let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
 
 		const program: commander.Command = new commander.Command ("hotstaq");
@@ -1385,7 +1408,7 @@ async function start ()
 			{
 				globalLogLevel = HotLogLevel.Verbose;
 			});
-		command.option ("-l, --log-level <level>", "Set the logging level. Can be (info,warning,error,all,none)", 
+		command.option ("-l, --log-level <level>", "Set the logging level. Can be (info,warning,error,verbose,all,none)", 
 			(logLevel: string, previous: any) =>
 			{
 				if (logLevel === "info")

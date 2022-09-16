@@ -84,10 +84,14 @@ export class Common
 		}
 
 		if (defaultCreate === true)
-			this.driver = await builder.withCapabilities (this.capabilities).build ();
+			builder = builder.withCapabilities (this.capabilities);
 		else
-			this.driver = await builder.forBrowser ("chrome").setChromeOptions (options).build ();
+			builder = builder.forBrowser ("chrome").setChromeOptions (options);
 
+		if (process.env["TESTING_REMOTE_SERVER"] != null)
+			builder = builder.usingServer (process.env["TESTING_REMOTE_SERVER"]);
+
+		this.driver = await builder.build ()
 		this.session = await this.driver.getSession ();
 	}
 

@@ -29,7 +29,7 @@ describe ("Browser Testing From Web Tests - Custom Tester - Development Mode", (
 				let testMap: HotTestMap = new HotTestMap ([
 						"page:testingWebPage -> Form-SignIn-FillOut"
 					]);
-				testerDriver = new TestDriver ();
+				testerDriver = new TestDriver (processor);
 				tester = new Tester (processor, "Tester", common.getUrl (), testerDriver, { testMap: testMap });
 				tester.testerType = "web";
 

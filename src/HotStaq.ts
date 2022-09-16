@@ -2214,72 +2214,64 @@ export class HotStaq implements IHotStaq
 	 */
 	static async useOutput (output: string): Promise<void>
 	{
-		// Tried to reset the document's readyState hoping it would be set again after the 
-		// new document has loaded. Doesn't work...
-		/*Object.defineProperty (document, "readyState", {
-				get ()
-				{
-					return ("loading");
+			let parser = new DOMParser ();
+			let child = parser.parseFromString (output, "text/html");
+			let htmlObj: HTMLHtmlElement = document.getElementsByTagName('html')[0];
+
+			htmlObj.innerHTML = child.getElementsByTagName('html')[0].innerHTML;
+
+			// Thanks to newfurniturey at: 
+			// https://stackoverflow.com/questions/22945884/domparser-appending-script-tags-to-head-body-but-not-executing
+			let tmpScripts = document.getElementsByTagName('script');
+			if (tmpScripts.length > 0) {
+				// push all of the document's script tags into an array
+				// (to prevent dom manipulation while iterating over dom nodes)
+				let scripts: HTMLScriptElement[] = [];
+				for (let i = 0; i < tmpScripts.length; i++) {
+					scripts.push(tmpScripts[i]);
 				}
-			});*/
 
-		let parser = new DOMParser ();
-		let child = parser.parseFromString (output, "text/html");
+				// iterate over all script tags and create duplicate tags for each
+				for (let i = 0; i < scripts.length; i++) {
+					let s: HTMLScriptElement = document.createElement('script');
 
-		document.getElementsByTagName('html')[0].innerHTML = child.getElementsByTagName('html')[0].innerHTML;
+					// add the new node to the page
+					scripts[i].parentNode.appendChild(s);
 
-		// Thanks to newfurniturey at: 
-		// https://stackoverflow.com/questions/22945884/domparser-appending-script-tags-to-head-body-but-not-executing
-		let tmpScripts = document.getElementsByTagName('script');
-		if (tmpScripts.length > 0) {
-			// push all of the document's script tags into an array
-			// (to prevent dom manipulation while iterating over dom nodes)
-			let scripts: HTMLScriptElement[] = [];
-			for (let i = 0; i < tmpScripts.length; i++) {
-				scripts.push(tmpScripts[i]);
-			}
+					// remove the original (non-executing) node from the page
+					scripts[i].parentNode.removeChild(scripts[i]);
 
-			// iterate over all script tags and create duplicate tags for each
-			for (let i = 0; i < scripts.length; i++) {
-				let s: HTMLScriptElement = document.createElement('script');
-
-				// add the new node to the page
-				scripts[i].parentNode.appendChild(s);
-
-				// remove the original (non-executing) node from the page
-				scripts[i].parentNode.removeChild(scripts[i]);
-
-				await new Promise<void> ((resolve, reject) =>
-					{
-						s.onload = () =>
-							{
-								resolve ();
-							};
-
-						let hasSrc: boolean = false;
-
-						if (scripts[i].getAttribute ("src") != null)
+					await new Promise<void> ((resolve2, reject2) =>
 						{
-							if (scripts[i].getAttribute ("src") !== "")
+							s.onload = () =>
+								{
+									resolve2 ();
+								};
+
+							let hasSrc: boolean = false;
+
+							if (scripts[i].getAttribute ("src") != null)
 							{
-								s.setAttribute ("src", scripts[i].getAttribute ("src"));
-								hasSrc = true;
+								if (scripts[i].getAttribute ("src") !== "")
+								{
+									s.setAttribute ("src", scripts[i].getAttribute ("src"));
+									hasSrc = true;
+								}
 							}
-						}
 
-						if (scripts[i].getAttribute ("type") != null)
-						{
-							if (scripts[i].getAttribute ("type") !== "")
-								s.setAttribute ("type", scripts[i].getAttribute ("type"));
-						}
+							if (scripts[i].getAttribute ("type") != null)
+							{
+								if (scripts[i].getAttribute ("type") !== "")
+									s.setAttribute ("type", scripts[i].getAttribute ("type"));
+							}
 
-						s.innerHTML = scripts[i].innerHTML;
+							s.innerHTML = scripts[i].innerHTML;
 
-						if (hasSrc === false)
-							resolve ();
-					});
+							if (hasSrc === false)
+								resolve2 ();
+						});
+				}
 			}
-		}
 	}
 
 	/**

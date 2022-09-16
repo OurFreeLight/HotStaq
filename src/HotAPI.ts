@@ -433,7 +433,7 @@ export abstract class HotAPI
 					})
 					.catch ((reason: any) =>
 					{
-						throw new Error (reason.message);
+						throw new Error (`${url}: ${reason.message}`);
 					});
 			});
 
