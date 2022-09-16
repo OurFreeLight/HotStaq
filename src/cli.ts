@@ -51,13 +51,16 @@ async function startAPIServer (server: HotHTTPServer, loadedAPI: APItoLoad, base
 	server.logger.info (`Loaded API class: ${loadedAPI.exportedClassName}`);
 	server.logger.verbose (`Base API URL: ${baseAPIUrl}`);
 	server.logger.verbose (`Loaded API JavaScript from: ${foundModulePath}`);
+	server.logger.verbose (`Server Type Set to: ${server.serverType}`);
 
 	processor.api = api;
 	server.processor.api = api;
 	server.api = api;
 
-	if (isAPIOnly === true)
+	if (server.serverType === "api")
 	{
+		server.logger.info (`Server is ONLY an API.`);
+
 		server.addRoute ("/", async (req: any, res: any) =>
 			{
 				res.json ({ "status": "ok" });
@@ -635,7 +638,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 					return (foundAPIUrl);
 				};
 
-			let loadAPIServer = async (serverType: string, server: HotHTTPServer) =>
+			let loadAPIServer = async (serverTypeDisplayName: string, server: HotHTTPServer) =>
 				{
 					if (Object.keys (apis).length < 1)
 						throw new Error (`No APIs are loaded! Try using --api-load`);
@@ -643,7 +646,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 					for (let key in apis)
 					{
 						let loadAPI: APItoLoad = apis[key];
-						let isAPIOnly: boolean = false;
+						let isAPIOnly: boolean = true;
 	
 						if (baseAPIUrl === "")
 							baseAPIUrl = getBaseUrlFromHotSite (loadAPI);
@@ -651,16 +654,19 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 						if (baseAPIUrl === "")
 							baseAPIUrl = `http://127.0.0.1:${server.ports.http}`;
 
-						if (serverType === "web-api")
+						if ((serverType === "web") || (serverType === "web-api"))
 							isAPIOnly = false;
-	
-						// Only run the api server.
-						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, isAPIOnly);
 	
 						if (globalLogLevel != null)
 							server.logger.logLevel = globalLogLevel;
 	
 						server.serverType = serverType;
+
+						// Only run the api server.
+						await startAPIServer (server, loadAPI, baseAPIUrl, dbinfo, isAPIOnly);
+	
+						// Change the name to a friendly display name.
+						server.serverType = serverTypeDisplayName;
 					}
 				};
 			let listenOnAPIServer = async (server: HotHTTPServer) =>
@@ -1317,6 +1323,29 @@ async function start ()
 
 		dotenv.config ();
 
+		if (process.env["LOGGING_LEVEL"] != null)
+		{
+			let logLevel: string = process.env["LOGGING_LEVEL"];
+
+			if (logLevel === "info")
+				globalLogLevel = HotLogLevel.Info;
+
+			if (logLevel === "warning")
+				globalLogLevel = HotLogLevel.Warning;
+
+			if (logLevel === "error")
+				globalLogLevel = HotLogLevel.Error;
+
+			if (logLevel === "verbose")
+				globalLogLevel = HotLogLevel.Verbose;
+
+			if (logLevel === "all")
+				globalLogLevel = HotLogLevel.All;
+
+			if (logLevel === "none")
+				globalLogLevel = HotLogLevel.None;
+		}
+
 		let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
 
 		const program: commander.Command = new commander.Command ("hotstaq");
@@ -1379,7 +1408,7 @@ async function start ()
 			{
 				globalLogLevel = HotLogLevel.Verbose;
 			});
-		command.option ("-l, --log-level <level>", "Set the logging level. Can be (info,warning,error,all,none)", 
+		command.option ("-l, --log-level <level>", "Set the logging level. Can be (info,warning,error,verbose,all,none)", 
 			(logLevel: string, previous: any) =>
 			{
 				if (logLevel === "info")

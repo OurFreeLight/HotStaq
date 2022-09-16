@@ -2,10 +2,11 @@ import * as oss from "os";
 
 import { HotTestElement, HotTestElementOptions } from "../../src/HotTestElement";
 import { HotTestDriver } from "../../src/HotTestDriver";
+import { HotTestPage } from "../../src/HotTestMap";
+import { HotStaq } from "../../src/HotStaq";
 
 import { By, until, WebDriver, WebElement, Session, Builder } from "selenium-webdriver";
 import Chrome from "selenium-webdriver/chrome";
-import { HotTestPage } from "../../src/HotTestMap";
 
 /**
  * Runs and executes tests.
@@ -21,9 +22,9 @@ export class TestDriver extends HotTestDriver
 	 */
 	driver: WebDriver;
 
-	constructor (page: HotTestPage = null)
+	constructor (processor: HotStaq, page: HotTestPage = null)
 	{
-		super (page);
+		super (processor, page);
 
 		this.driver = null;
 		this.session = null;
@@ -80,10 +81,14 @@ export class TestDriver extends HotTestDriver
 		}
 
 		if (defaultCreate === true)
-			this.driver = await builder.withCapabilities (capabilities).build ();
+			builder = builder.withCapabilities (capabilities);
 		else
-			this.driver = await builder.forBrowser ("chrome").setChromeOptions (options).build ();
+			builder = builder.forBrowser ("chrome").setChromeOptions (options);
 
+		if (process.env["TESTING_REMOTE_SERVER"] != null)
+			builder = builder.usingServer (process.env["TESTING_REMOTE_SERVER"]);
+
+		this.driver = await builder.build ()
 		this.session = await this.driver.getSession ();
 	}
 

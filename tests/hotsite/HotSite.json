@@ -58,7 +58,7 @@
 		},
 	"apis": {
 		"HelloWorld": {
-			"jsapi": "./build-web/HotStaqTests_HelloWorldAPI.js",
+			"jsapi": "/build-web/HotStaqTests_HelloWorldAPI.js",
 			"libraryName": "HotStaqTests",
 			"apiName": "HelloWorldAPI",
 			"filepath": "./build/tests/server/HelloWorldAPI.js",

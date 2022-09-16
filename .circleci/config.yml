@@ -1,5 +1,65 @@
 version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@1.4.0
+
 jobs:
+  test:
+    docker:
+      - image: cimg/node:lts-browsers
+    steps:
+      - checkout
+      - setup_remote_docker
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
+      - run:
+          name: Check Chrome Installation
+          command: |
+            google-chrome --version
+            chromedriver --version
+      - run:
+          name: Install dependencies
+          command: |
+            sudo npm install -g typescript typedoc mocha
+            npm install
+            npm run build
+            npm run buildweb
+            npm run version-check
+            
+            cat > "./.env" \<<EOF
+            HTTP_PORT=3123
+            DATABASE_SERVER=localhost
+            DATABASE_PORT=3310
+            DATABASE_USERNAME=5NKVBAt7OrzrumQyQVs
+            DATABASE_PASSWORD=1BBrZbKYRUM7oiMA5oY
+            DATABASE_SCHEMA=hotstaq
+            INFLUX_DATABASE_SERVER=http://localhost:8091
+            INFLUX_DATABASE_USERNAME=5NKVBAt7OrzrumQyQVs
+            INFLUX_DATABASE_PASSWORD=1BBrZbKYRUM7oiMA5oY
+            INFLUX_DATABASE_ORG=freelight
+            INFLUX_DATABASE_TOKEN=Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e
+            INFLUX_DATABASE_SCHEMA=hotstaq
+            LOGGING_LEVEL=verbose
+            TESTING_DEVTOOLS=0
+            TESTING_REMOTE_SERVER=http://localhost:4444/wd/hub
+            SELENIUM_REMOTE_SERVER=http://localhost:4444/wd/hub
+            EOF
+            
+            sudo npm -g install
+            npm run build-test-api
+      # Will attempt to get this to work again later
+      - run:
+          name: "Prepare for Testing"
+          command: |
+            java -jar /usr/local/bin/selenium.jar -role hub &
+            sleep 2
+            java -Dwebdriver.chrome.driver="/usr/local/bin/chromedriver" -jar /usr/local/bin/selenium.jar -role node &
+      # Will attempt to get this to work again later
+      - run:
+          name: "Test: Browsers"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
   publish:
     working_directory: /app
     docker:
@@ -24,9 +84,15 @@ jobs:
 
 workflows:
   version: 2
-  hotstaq-publish:
+  hotstaq:
     jobs:
-      - publish: 
+      #- test:
+      #    filters:
+      #      branches:
+      #        only: 
+      #          - dev
+      #          - master
+      - publish:
           filters:
             branches:
               only: 

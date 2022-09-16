@@ -3,6 +3,7 @@ import * as oss from "os";
 import { HotTestElement, HotTestElementOptions } from "./HotTestElement";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotTestPage } from "./HotTestMap";
+import { HotStaq } from "./HotStaq";
 
 import { By, until, WebDriver, WebElement, Session, Builder } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
@@ -55,9 +56,9 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			height: number;
 		};
 
-	constructor (page: HotTestPage = null)
+	constructor (processor: HotStaq, page: HotTestPage = null)
 	{
-		super (page);
+		super (processor, page);
 
 		this.driver = null;
 		this.session = null;
@@ -114,6 +115,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 		if (this.remoteServer !== "")
 		{
+			this.processor.logger.verbose (`HotTestSeleniumDriver: Connecting to remote server ${this.remoteServer}`);
 			builder = builder.usingServer (this.remoteServer);
 			createWindowSize ();
 			this.headless = true;
@@ -123,22 +125,39 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		{
 			let options = new firefox.Options ();
 
+			this.processor.logger.verbose (`HotTestSeleniumDriver: Using Firefox with options`);
+
 			if (this.openDevTools === true)
+			{
 				options = options.addArguments ("-devtools");
+				this.processor.logger.verbose (`  * devtools`);
+			}
 
 			if (this.headless === true)
+			{
 				options = options.headless ();
+				this.processor.logger.verbose (`  * headless`);
+			}
 
 			if (this.windowSize != null)
+			{
 				options = options.windowSize (this.windowSize);
+				this.processor.logger.verbose (`  * Window Size: ${this.windowSize.width}x${this.windowSize.height}`);
+			}
 
 			if (process.env["USER_DATA_DIR"] != null)
+			{
 				options = options.addArguments(`user-data-dir=${process.env["USER_DATA_DIR"]}`);
+				this.processor.logger.verbose (`  * User data dir: ${process.env["USER_DATA_DIR"]}`);
+			}
 
 			if (process.env.NODE_TLS_REJECT_UNAUTHORIZED != null)
 			{
 				if (process.env.NODE_TLS_REJECT_UNAUTHORIZED == "0")
+				{
 					options.setAcceptInsecureCerts (true);
+					this.processor.logger.verbose (`  * Accepting insecure certs`);
+				}
 			}
 
 			builder = builder.setFirefoxOptions (options);
@@ -148,32 +167,54 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		{
 			let options = new chrome.Options ();
 
+			this.processor.logger.verbose (`HotTestSeleniumDriver: Using Chrome with options`);
+
 			if (this.disableGPUAndSandbox === true)
+			{
 				options = options.addArguments ("--disable-gpu", "--no-sandbox");
+				this.processor.logger.verbose (`  * Disabled GPU and No sandbox`);
+			}
 
 			if (this.openDevTools === true)
+			{
 				options = options.addArguments ("--auto-open-devtools-for-tabs");
+				this.processor.logger.verbose (`  * Auto open devtools`);
+			}
 
 			if (this.headless === true)
+			{
 				options = options.headless ();
+				this.processor.logger.verbose (`  * Headless`);
+			}
 
 			if (this.windowSize != null)
+			{
 				options = options.windowSize (this.windowSize);
+				this.processor.logger.verbose (`  * Window Size: ${this.windowSize.width}x${this.windowSize.height}`);
+			}
 
 			if (process.env["USER_DATA_DIR"] != null)
+			{
 				options = options.addArguments(`user-data-dir=${process.env["USER_DATA_DIR"]}`);
+				this.processor.logger.verbose (`  * User data dir: ${process.env["USER_DATA_DIR"]}`);
+			}
 
 			if (process.env.NODE_TLS_REJECT_UNAUTHORIZED != null)
 			{
 				if (process.env.NODE_TLS_REJECT_UNAUTHORIZED == "0")
+				{
 					options.setAcceptInsecureCerts (true);
+					this.processor.logger.verbose (`  * Accepting insecure certs`);
+				}
 			}
 
 			builder = builder.setChromeOptions (options);
 		}
 
+		this.processor.logger.verbose (`HotTestSeleniumDriver: Starting session...`);
 		this.driver = await builder.build ();
 		this.session = await this.driver.getSession ();
+		this.processor.logger.verbose (`HotTestSeleniumDriver: Session started...`);
 	}
 
 	/**
@@ -194,6 +235,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	async navigateToUrl(url: string): Promise<void>
 	{
 		await this.driver.get (url);
+		this.processor.logger.verbose (`HotTestSeleniumDriver: navigateToUrl - ${url}`);
 	}
 
 	/**
@@ -210,6 +252,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			nameStr = name.name;
 
 		let foundElm: WebElement = null;
+
+		this.processor.logger.verbose (`HotTestSeleniumDriver: waitForTestElement - Searching for ${nameStr}`);
 
 		if (options.mustBeVisible === false)
 			foundElm = await this.driver.wait (until.elementLocated (this.getTestObjectByName (nameStr)));
@@ -230,6 +274,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			}
 		}
 
+		this.processor.logger.verbose (`HotTestSeleniumDriver: waitForTestElement - Found ${nameStr}`);
+
 		return (foundElm);
 	}
 
@@ -247,6 +293,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			nameStr = name.name;
 
 		let foundElm: WebElement = null;
+
+		this.processor.logger.verbose (`HotTestSeleniumDriver: findTestElement - Searching for ${nameStr}`);
 
 		if (options.mustBeVisible === false)
 		{
@@ -271,6 +319,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 				}
 			}
 		}
+
+		this.processor.logger.verbose (`HotTestSeleniumDriver: findTestElement - Found ${nameStr}`);
 
 		return (foundElm);
 	}
@@ -298,6 +348,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			func = funcName;
 			value = valueStr;
 		}
+
+		this.processor.logger.verbose (`HotTestSeleniumDriver: runCommand - Running ${func} with value ${value} for ${name}`);
 
 		let elm: WebElement = await this.findTestElement (name, options);
 		let result: any = null;
@@ -327,6 +379,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			}
 		}
 
+		this.processor.logger.verbose (`HotTestSeleniumDriver: runCommand - Finished running ${func} with value ${value} for ${name}`);
+
 		return (result);
 	}
 
@@ -353,6 +407,8 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 			throw new Error (`Unable to find test object ${realName}`);
 		}
+
+		this.processor.logger.verbose (`HotTestSeleniumDriver: assertElementValue - Asserting`);
 
 		let elmValue: string = await elm.getText ();
 		let elmValue2: string = "";

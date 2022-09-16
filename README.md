@@ -101,11 +101,22 @@ You can configure how HotStaq starts by using:
 	* Default: 10
 	* Accepted values:
 		* Any integer.
+* LOGGING_LEVEL
+	* Type: string
+	* Description: The logging level to use.
+	* Accepted values:
+		* info
+		* warning
+		* error
+		* verbose
+		* all
+		* none
 * SELENIUM_REMOTE_SERVER
 	* Type: string
-	* Description: The remote selenium server to do web browser tests with.
+	* Description: The remote selenium server to do web browser tests with. This will also ensure that the server is being used headless.
 	* Accepted values:
 		* Any valid url.
+		* http://localhost:
 * SELENIUM_WINDOW_WIDTH
 	* Type: number
 	* Description: The width of the new browser window.

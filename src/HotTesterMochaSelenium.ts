@@ -57,7 +57,7 @@ export class HotTesterMochaSelenium extends HotTester
 	{
 		super (processor, name, baseUrl, null, testMaps);
 
-		this.driver = new HotTestSeleniumDriver ();
+		this.driver = new HotTestSeleniumDriver (processor);
         this.mocha = null;
         this.timeout = 10000;
 		this.suite = null;

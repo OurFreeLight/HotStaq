@@ -10,6 +10,10 @@ export abstract class HotTestDriver
 	/**
 	 * The current page.
 	 */
+	processor: HotStaq;
+	/**
+	 * The current page.
+	 */
 	page: HotTestPage;
 	/**
 	 * The delay in milliseconds between each executed command.
@@ -20,8 +24,9 @@ export abstract class HotTestDriver
 	 */
 	persistentData: any;
 
-	constructor (page: HotTestPage = null)
+	constructor (processor: HotStaq, page: HotTestPage = null)
 	{
+		this.processor = processor;
 		this.page = page;
 		this.commandDelay = 20;
 		this.persistentData = {};

@@ -62,7 +62,7 @@ describe ("Browser Manual Testing From Server Tests - Custom Tester - Developmen
 							}
 					});
 
-				testerDriver = new TestDriver ();
+				testerDriver = new TestDriver (processor);
 				tester = new Tester (processor, "Tester", common.getUrl (), testerDriver, { testMap: testMap });
 				tester.testerType = "server";
 
