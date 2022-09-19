@@ -39,16 +39,27 @@ export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
 				if (process.env["DATABASE_CONNECTIONS_LIMIT"] != null)
 					this.connectionLimit = parseInt (process.env["DATABASE_CONNECTIONS_LIMIT"]);
 
-				this.connectionStatus = ConnectionStatus.Connecting;
-				this.db = mysql.createPool ({
+				let multipleStatements: boolean = false;
+
+				if (connectionInfo.multipleStatements != null)
+					multipleStatements = connectionInfo.multipleStatements;
+
+				let connectionObj: mysql.PoolOptions = {
 						host: connectionInfo.server,
 						user: connectionInfo.username,
 						password: connectionInfo.password,
 						port: connectionInfo.port,
 						database: connectionInfo.database,
 						waitForConnections: true,
-						connectionLimit: this.connectionLimit
-					});
+						connectionLimit: this.connectionLimit,
+						multipleStatements: multipleStatements
+					};
+
+				if (connectionInfo.connectionObjectOverride != null)
+					connectionObj = connectionInfo.connectionObjectOverride;
+
+				this.connectionStatus = ConnectionStatus.Connecting;
+				this.db = mysql.createPool (connectionObj);
 				this.connectionStatus = ConnectionStatus.Connected;
 				resolve ([true]);
 			}));

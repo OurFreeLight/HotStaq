@@ -50,6 +50,9 @@ export class HotDBInflux extends HotDB<InfluxDB, void, InfluxSchema>
 
 				try
 				{
+					if (connectionInfo.connectionObjectOverride != null)
+						influxConnection = connectionInfo.connectionObjectOverride;
+
 					this.connectionStatus = ConnectionStatus.Connecting;
 					this.db = new InfluxDB (influxConnection);
 

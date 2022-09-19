@@ -122,6 +122,9 @@ export class Common
 	 */
 	async shutdown (): Promise<void>
 	{
+		if (this.driver != null)
+			this.driver.quit ();
+
 		await this.server.shutdown ();
 		await HotStaq.wait (1000);
 	}

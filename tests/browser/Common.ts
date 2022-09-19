@@ -161,6 +161,9 @@ export class Common
 		if (this.testerServer != null)
 			await this.testerServer.shutdown ();
 
+		if (this.driver != null)
+			this.driver.quit ();
+
 		await this.server.shutdown ();
 		await HotStaq.wait (1000);
 	}
