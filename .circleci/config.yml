@@ -152,6 +152,8 @@ workflows:
                 - dev
                 - master
       - publish:
+          requires:
+            - test
           filters:
             branches:
               only: 
