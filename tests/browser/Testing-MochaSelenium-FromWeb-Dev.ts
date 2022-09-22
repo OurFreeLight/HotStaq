@@ -29,6 +29,10 @@ describe ("Browser Testing From Web Tests - Mocha Selenium - Development Mode", 
 					]);
 				tester = new HotTesterMochaSelenium (
 					processor, "Tester", common.getUrl (), { testMap: testMap });
+
+				if (process.env["TESTING_RUN_HEADLESS"] != null)
+					tester.driver.headless = true;
+
 				tester.onSetup = async (driver: WebDriver): Promise<boolean> =>
 					{
 						await driver.get (`${common.getUrl ()}/tests/browser/index.htm`);

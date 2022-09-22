@@ -79,14 +79,14 @@ export class Common
 		{
 			if (process.env["TESTING_DEVTOOLS"] === "1")
 			{
-				options.addArguments ("--auto-open-devtools-for-tabs");
+				options = options.addArguments ("--auto-open-devtools-for-tabs");
 				defaultCreate = false;
 			}
 		}
 
 		if ((process.env["TESTING_REMOTE_SERVER"] != null) || (process.env["TESTING_RUN_HEADLESS"] != null))
 		{
-			options.addArguments ("--headless", "--disable-gpu", "--no-sandbox","--window-size=1920,1080");
+			options = options.addArguments ("--headless", "--disable-gpu", "--no-sandbox","--window-size=1920,1080");
 			defaultCreate = false;
 		}
 

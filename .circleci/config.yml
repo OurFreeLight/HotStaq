@@ -50,6 +50,14 @@ jobs:
             sudo npm -g install .
 
             npm run build-test-api
+      - run:
+          name: Check if everything built correctly
+          command: |
+            ls ./build/
+            ls ./build-web/HotStaq.js
+            ls ./build-web/HotStaq.min.js
+            ls ./build-web/HotStaqTests_HelloWorldAPI.js
+            ls ./build-web/HotStaqTests.js
       # Will attempt to get this to work again later. Will be great for testing on multiple different browsers.
       # - run:
       #     name: "Prepare for Testing"
@@ -85,6 +93,12 @@ jobs:
             npm run build
             npm run buildweb
             npm run version-check
+      - run:
+          name: Check if everything built correctly
+          command: |
+            ls ./build/
+            ls ./build-web/HotStaq.js
+            ls ./build-web/HotStaq.min.js
       - run:
           name: Publish library
           command: |
