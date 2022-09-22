@@ -47,6 +47,9 @@ describe ("Hotsite Testing Tests", () =>
 						tester.driver.openDevTools = true;
 				}
 
+				if (process.env["TESTING_RUN_HEADLESS"] != null)
+					tester.driver.headless = true;
+
 				testerServer.addTester (tester);
 
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);

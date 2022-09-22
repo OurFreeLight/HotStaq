@@ -10,13 +10,6 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
-      - run:
-          name: Check Chrome Installation
-          command: |
-            google-chrome --version
-            chromedriver --version
       - run:
           name: Install dependencies
           command: |
@@ -59,6 +52,13 @@ jobs:
             ls ./build-web/HotStaq.min.js
             ls ./build-web/HotStaqTests_HelloWorldAPI.js
             ls ./build-web/HotStaqTests.js
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
+      - run:
+          name: Check Chrome Installation
+          command: |
+            google-chrome --version
+            chromedriver --version
       # Will attempt to get this to work again later. Will be great for testing on multiple different browsers.
       # - run:
       #     name: "Prepare for Testing"
@@ -72,6 +72,41 @@ jobs:
           command: |
             export $(cat .env | xargs)
             mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
+      - run:
+          name: "Test: CLI"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/cli/**/*.js
+      - run:
+          name: "Test: Create"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+      - run:
+          name: "Test: Generator"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
+      - run:
+          name: "Test: Hotsite"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
+      - run:
+          name: "Test: Local"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/local/**/*.js
+      - run:
+          name: "Test: Parsing"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
+      - run:
+          name: "Test: Server"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/server/**/*.js
   publish:
     working_directory: /app
     docker:
