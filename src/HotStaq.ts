@@ -432,7 +432,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.6.21";
+	static version: string = "0.6.24";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -2691,7 +2691,8 @@ if (typeof (document) !== "undefined")
 									}
 								}
 
-								let tempPathname: string = window.location.pathname;
+								let checkPath: string = window.location.pathname;
+								let gotoPath: string = window.location.pathname;
 
 								if (serveLocally != null)
 								{
@@ -2701,10 +2702,13 @@ if (typeof (document) !== "undefined")
 										(lowerServeLocally === "yes") ||
 										(lowerServeLocally === "1"))
 									{
-										const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+										const lastSlashPos: number = checkPath.lastIndexOf ("/");
 
 										if (lastSlashPos > -1)
-											tempPathname = tempPathname.substring (lastSlashPos);
+										{
+											checkPath = checkPath.substring (lastSlashPos);
+											gotoPath = gotoPath.substring (lastSlashPos);
+										}
 									}
 								}
 
@@ -2717,9 +2721,10 @@ if (typeof (document) !== "undefined")
 										let routeWildcard: string = routerWildcards[iJdx];
 										let tempRouteWildcard: string = routeWildcard.replace ("*", "");
 
-										if (tempPathname.indexOf (tempRouteWildcard) > -1)
+										if (checkPath.indexOf (tempRouteWildcard) > -1)
 										{
-											tempPathname = routeWildcard;
+											// This simply returns the key in the routerManager to access.
+											checkPath = routeWildcard;
 
 											break;
 										}
@@ -2727,24 +2732,30 @@ if (typeof (document) !== "undefined")
 								}
 
 								// Find the correct route and load it.
-								if (routerManager[tempPathname] != null)
+								if (routerManager[checkPath] != null)
 								{
-									if (routerManager[tempPathname].redirect != null)
+									if (routerManager[checkPath].redirect != null)
 									{
-										window.location.href = routerManager[tempPathname].redirect;
+										window.location.href = routerManager[checkPath].redirect;
 
 										return;
 									}
 
-									if (routerManager[tempPathname].baseRedirect != null)
+									if (routerManager[checkPath].baseRedirect != null)
 									{
-										window.location.href = `${routerManager[tempPathname].baseRedirect}?hstqbaseredirect=${encodeURI (tempPathname)}`;
+										const searchParams = window.location.search;
+										let modifiedSearchParams = "";
+
+										if ((searchParams !== "") && (searchParams !== "?"))
+											modifiedSearchParams = `&${searchParams.substring (1)}`;
+
+										window.location.href = `${routerManager[checkPath].baseRedirect}?hstqbaseredirect=${encodeURI (gotoPath + searchParams)}${modifiedSearchParams}`;
 
 										return;
 									}
 
-									if (routerManager[tempPathname].src != null)
-										loadPage = routerManager[tempPathname].src;
+									if (routerManager[checkPath].src != null)
+										loadPage = routerManager[checkPath].src;
 								}
 
 								break;
