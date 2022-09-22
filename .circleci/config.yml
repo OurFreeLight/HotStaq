@@ -45,10 +45,11 @@ jobs:
           command: |
             npm run build
             npm run buildweb
+            npm run buildwebdebug
             npm run version-check
             
             sudo npm -g install .
-
+            
             npm run build-test-api
       - run:
           name: Check if everything built correctly
