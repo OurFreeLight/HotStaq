@@ -2601,8 +2601,9 @@ if (typeof (document) !== "undefined")
 					let dontReuseProcessor: boolean = false;
 					let passRawUrl: boolean = false;
 					let htmlSource: string = hotstaqElm.innerHTML || "";
-					let routerManager: { [path: string]: { redirect: string; base: string; src: string; } } = {};
+					let routerManager: { [path: string]: { redirect: string; baseRedirect: string; base: string; src: string; } } = {};
 					let routerWildcards: string[] = [];
+					let search: URLSearchParams = new URLSearchParams (window.location.search);
 
 					if (getAttr (hotstaqElm, ["src"]) != null)
 						loadPage = getAttr (hotstaqElm, ["src"]);
@@ -2612,6 +2613,15 @@ if (typeof (document) !== "undefined")
 
 					if (getAttr (hotstaqElm, ["dont-reuse-processor", "dontReuseProcessor"]) != null)
 						dontReuseProcessor = true;
+
+					let hstqbaseredirect: string = search.get ("hstqbaseredirect");
+
+					if (hstqbaseredirect != null)
+					{
+						hstqbaseredirect = decodeURI (hstqbaseredirect);
+						window.history.replaceState ("", "", hstqbaseredirect);
+						loadPage = hstqbaseredirect;
+					}
 
 					let hotstaqErrors = document.getElementsByTagName ("hotstaq-error");
 
@@ -2664,6 +2674,7 @@ if (typeof (document) !== "undefined")
 										{
 											let routerPath: string = getAttr (routerElm, ["path"]);
 											let redirect: string = getAttr (routerElm, ["redirect"]);
+											let baseRedirect: string = getAttr (routerElm, ["base-redirect", "baseRedirect"]);
 											let base: string = getAttr (routerElm, ["base"]);
 											let routerSrc: string = getAttr (routerElm, ["src"]);
 
@@ -2672,6 +2683,7 @@ if (typeof (document) !== "undefined")
 
 											routerManager[routerPath] = {
 													redirect: redirect || undefined, 
+													baseRedirect: baseRedirect || undefined, 
 													base: base || undefined, 
 													src: routerSrc || undefined
 												};
@@ -2720,6 +2732,13 @@ if (typeof (document) !== "undefined")
 									if (routerManager[tempPathname].redirect != null)
 									{
 										window.location.href = routerManager[tempPathname].redirect;
+
+										return;
+									}
+
+									if (routerManager[tempPathname].baseRedirect != null)
+									{
+										window.location.href = `${routerManager[tempPathname].baseRedirect}?hstqbaseredirect=${encodeURI (tempPathname)}`;
 
 										return;
 									}
