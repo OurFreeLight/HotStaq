@@ -138,6 +138,11 @@ You can configure how HotStaq starts by using:
 	* Description: The remote server to use during browser tests.
 	* Accepted values:
 		* Any valid url.
+* TESTING_RUN_HEADLESS
+	* Type: string
+	* Description: If set to any value, the launched chrome browser will run headless.
+	* Accepted values:
+		* Any
 
 ## Developing
 To get started developing you'll need to install:

@@ -84,7 +84,7 @@ export class Common
 			}
 		}
 
-		if (process.env["TESTING_REMOTE_SERVER"] != null)
+		if ((process.env["TESTING_REMOTE_SERVER"] != null) || (process.env["TESTING_RUN_HEADLESS"] != null))
 		{
 			options = options.addArguments ("--headless", "--disable-gpu", "--no-sandbox","--window-size=1920,1080");
 			defaultCreate = false;

@@ -22,9 +22,6 @@ jobs:
           command: |
             sudo npm install -g typescript typedoc mocha
             npm install
-            npm run build
-            npm run buildweb
-            npm run version-check
             
             cat > "./.env" \<<EOF
             HTTP_PORT=3123
@@ -41,19 +38,26 @@ jobs:
             INFLUX_DATABASE_SCHEMA=hotstaq
             LOGGING_LEVEL=verbose
             TESTING_DEVTOOLS=0
-            TESTING_REMOTE_SERVER=http://localhost:4444/wd/hub
-            SELENIUM_REMOTE_SERVER=http://localhost:4444/wd/hub
+            TESTING_RUN_HEADLESS=1
             EOF
-            
-            sudo npm -g install
-            npm run build-test-api
-      # Will attempt to get this to work again later
       - run:
-          name: "Prepare for Testing"
+          name: Build
           command: |
-            java -jar /usr/local/bin/selenium.jar -role hub &
-            sleep 2
-            java -Dwebdriver.chrome.driver="/usr/local/bin/chromedriver" -jar /usr/local/bin/selenium.jar -role node &
+            npm run build
+            npm run buildweb
+            npm run version-check
+            npm run build-test-api
+      - run:
+          name: Install globally
+          command: |
+            sudo npm -g install .
+      # Will attempt to get this to work again later. Will be great for testing on multiple different browsers.
+      # - run:
+      #     name: "Prepare for Testing"
+      #     command: |
+      #       java -jar /usr/local/bin/selenium.jar -role hub &
+      #       sleep 2
+      #       java -Dwebdriver.chrome.driver="/usr/local/bin/chromedriver" -jar /usr/local/bin/selenium.jar -role node &
       # Will attempt to get this to work again later
       - run:
           name: "Test: Browsers"
@@ -77,21 +81,27 @@ jobs:
             npm install -g typescript typedoc
             npm install
       - run:
+          name: Build
+          command: |
+            npm run build
+            npm run buildweb
+            npm run version-check
+      - run:
           name: Publish library
           command: |
             echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
-            npm publish
+            npm publish --ignore-scripts
 
 workflows:
   version: 2
   hotstaq:
     jobs:
-      #- test:
-      #    filters:
-      #      branches:
-      #        only: 
-      #          - dev
-      #          - master
+      - test:
+          filters:
+            branches:
+              only: 
+                - dev
+                - master
       - publish:
           filters:
             branches:
