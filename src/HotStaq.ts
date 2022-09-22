@@ -432,7 +432,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.6.1";
+	static version: string = "0.6.24";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -2601,8 +2601,9 @@ if (typeof (document) !== "undefined")
 					let dontReuseProcessor: boolean = false;
 					let passRawUrl: boolean = false;
 					let htmlSource: string = hotstaqElm.innerHTML || "";
-					let routerManager: { [path: string]: { redirect: string; base: string; src: string; } } = {};
+					let routerManager: { [path: string]: { redirect: string; baseRedirect: string; base: string; src: string; } } = {};
 					let routerWildcards: string[] = [];
+					let search: URLSearchParams = new URLSearchParams (window.location.search);
 
 					if (getAttr (hotstaqElm, ["src"]) != null)
 						loadPage = getAttr (hotstaqElm, ["src"]);
@@ -2612,6 +2613,15 @@ if (typeof (document) !== "undefined")
 
 					if (getAttr (hotstaqElm, ["dont-reuse-processor", "dontReuseProcessor"]) != null)
 						dontReuseProcessor = true;
+
+					let hstqbaseredirect: string = search.get ("hstqbaseredirect");
+
+					if (hstqbaseredirect != null)
+					{
+						hstqbaseredirect = decodeURI (hstqbaseredirect);
+						window.history.replaceState ("", "", hstqbaseredirect);
+						loadPage = hstqbaseredirect;
+					}
 
 					let hotstaqErrors = document.getElementsByTagName ("hotstaq-error");
 
@@ -2664,6 +2674,7 @@ if (typeof (document) !== "undefined")
 										{
 											let routerPath: string = getAttr (routerElm, ["path"]);
 											let redirect: string = getAttr (routerElm, ["redirect"]);
+											let baseRedirect: string = getAttr (routerElm, ["base-redirect", "baseRedirect"]);
 											let base: string = getAttr (routerElm, ["base"]);
 											let routerSrc: string = getAttr (routerElm, ["src"]);
 
@@ -2672,6 +2683,7 @@ if (typeof (document) !== "undefined")
 
 											routerManager[routerPath] = {
 													redirect: redirect || undefined, 
+													baseRedirect: baseRedirect || undefined, 
 													base: base || undefined, 
 													src: routerSrc || undefined
 												};
@@ -2679,7 +2691,8 @@ if (typeof (document) !== "undefined")
 									}
 								}
 
-								let tempPathname: string = window.location.pathname;
+								let checkPath: string = window.location.pathname;
+								let gotoPath: string = window.location.pathname;
 
 								if (serveLocally != null)
 								{
@@ -2689,10 +2702,13 @@ if (typeof (document) !== "undefined")
 										(lowerServeLocally === "yes") ||
 										(lowerServeLocally === "1"))
 									{
-										const lastSlashPos: number = tempPathname.lastIndexOf ("/");
+										const lastSlashPos: number = checkPath.lastIndexOf ("/");
 
 										if (lastSlashPos > -1)
-											tempPathname = tempPathname.substring (lastSlashPos);
+										{
+											checkPath = checkPath.substring (lastSlashPos);
+											gotoPath = gotoPath.substring (lastSlashPos);
+										}
 									}
 								}
 
@@ -2705,9 +2721,10 @@ if (typeof (document) !== "undefined")
 										let routeWildcard: string = routerWildcards[iJdx];
 										let tempRouteWildcard: string = routeWildcard.replace ("*", "");
 
-										if (tempPathname.indexOf (tempRouteWildcard) > -1)
+										if (checkPath.indexOf (tempRouteWildcard) > -1)
 										{
-											tempPathname = routeWildcard;
+											// This simply returns the key in the routerManager to access.
+											checkPath = routeWildcard;
 
 											break;
 										}
@@ -2715,17 +2732,30 @@ if (typeof (document) !== "undefined")
 								}
 
 								// Find the correct route and load it.
-								if (routerManager[tempPathname] != null)
+								if (routerManager[checkPath] != null)
 								{
-									if (routerManager[tempPathname].redirect != null)
+									if (routerManager[checkPath].redirect != null)
 									{
-										window.location.href = routerManager[tempPathname].redirect;
+										window.location.href = routerManager[checkPath].redirect;
 
 										return;
 									}
 
-									if (routerManager[tempPathname].src != null)
-										loadPage = routerManager[tempPathname].src;
+									if (routerManager[checkPath].baseRedirect != null)
+									{
+										const searchParams = window.location.search;
+										let modifiedSearchParams = "";
+
+										if ((searchParams !== "") && (searchParams !== "?"))
+											modifiedSearchParams = `&${searchParams.substring (1)}`;
+
+										window.location.href = `${routerManager[checkPath].baseRedirect}?hstqbaseredirect=${encodeURI (gotoPath + searchParams)}${modifiedSearchParams}`;
+
+										return;
+									}
+
+									if (routerManager[checkPath].src != null)
+										loadPage = routerManager[checkPath].src;
 								}
 
 								break;

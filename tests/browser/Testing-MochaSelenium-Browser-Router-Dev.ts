@@ -29,6 +29,10 @@ describe ("Browser Testing From Browser Router Tests - Mocha Selenium - Developm
 					]);
 				tester = new HotTesterMochaSelenium (
 					processor, "Tester", common.getUrl (), { testMap: testMap });
+
+				if (process.env["TESTING_RUN_HEADLESS"] != null)
+					tester.driver.headless = true;
+
 				tester.onSetup = async (driver: WebDriver): Promise<boolean> =>
 					{
 						await driver.get (`${common.getUrl ()}/tests/browser/HelloWorld`);
