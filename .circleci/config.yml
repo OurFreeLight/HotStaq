@@ -41,16 +41,15 @@ jobs:
             TESTING_RUN_HEADLESS=1
             EOF
       - run:
-          name: Build
+          name: Build and install globally
           command: |
             npm run build
             npm run buildweb
             npm run version-check
-            npm run build-test-api
-      - run:
-          name: Install globally
-          command: |
+            
             sudo npm -g install .
+
+            npm run build-test-api
       # Will attempt to get this to work again later. Will be great for testing on multiple different browsers.
       # - run:
       #     name: "Prepare for Testing"
