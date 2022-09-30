@@ -108,7 +108,6 @@ jobs:
             export $(cat .env | xargs)
             mocha --timeout 5000 --colors ./build/tests/server/**/*.js
   publish:
-    working_directory: /app
     docker:
       - image: cimg/node:lts
         environment:
