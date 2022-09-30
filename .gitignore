@@ -5,6 +5,8 @@ build-web/
 **/HotStaq.js
 **/HotStaq.min.js
 
+.npmrc
+
 docs/
 
 create-test-temp/

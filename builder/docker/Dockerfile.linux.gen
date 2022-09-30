@@ -1,9 +1,11 @@
 FROM node:16.15.0-alpine3.15 AS builder
 
+ARG HOTSTAQ_VERSION="latest"
+
 # Install build dependencies
 RUN apk update && \
 	apk add git && \
-	npm install -g typescript hotstaq && \
+	npm install -g typescript hotstaq@${HOTSTAQ_VERSION} && \
 	mkdir -p /tmp/app
 
 COPY ./package.json /tmp/app/package.json
@@ -33,7 +35,7 @@ COPY ./docker/${HOTSITE_NAME}/app/start.sh /app/start.sh
 
 RUN chmod 500 /app/start.sh
 
-RUN npm install -g hotstaq
+RUN npm install -g hotstaq@${HOTSTAQ_VERSION}
 
 ${DOCKERFILE_PORTS}
 ${HARDEN_SECURITY}
