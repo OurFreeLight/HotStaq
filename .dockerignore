@@ -3,6 +3,7 @@ build-web/
 ./app/
 
 .env
+.npmrc
 
 ./*.sh
 .circleci

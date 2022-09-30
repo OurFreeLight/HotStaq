@@ -390,6 +390,6 @@ return (migration.version);
 	{
 		this.dbCheck ();
 
-		this.db.destroy ();
+		this.db.end ();
 	}
 }
