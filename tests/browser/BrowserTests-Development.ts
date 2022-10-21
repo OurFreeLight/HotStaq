@@ -110,6 +110,8 @@ Execute this code to debug in browser:
 				elm = await common.driver.wait (until.elementLocated (By.id ("testHelloWorldAPI2")));
 				await elm.click ();
 
+				await HotStaq.wait (100);
+
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				value = await elm.getAttribute ("innerHTML");
 				jsonObj = JSON.parse (value);

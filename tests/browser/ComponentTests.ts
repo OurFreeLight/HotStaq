@@ -98,6 +98,8 @@ Execute this code to debug in browser:
 				elm = await common.driver.wait (until.elementLocated (By.id ("dynamicHelloWorld")));
 				await elm.click ();
 
+				await HotStaq.wait (100);
+
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");
 				expect (value).to.equal (`"Hello!"`);
