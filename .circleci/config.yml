@@ -138,6 +138,15 @@ jobs:
           command: |
             echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
             npm publish --ignore-scripts
+      - run:
+          name: Build Docker Images
+          command: |
+            # Build Node 18 images
+            ./build.sh 18 0
+
+            # Build Node 16 images. Node 16 is still latest for now
+            ./build.sh 16 1
+
 
 workflows:
   version: 2

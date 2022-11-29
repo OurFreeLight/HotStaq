@@ -222,6 +222,7 @@ async function handleCreateCommands (): Promise<commander.Command>
 	let copyLibrariesPath: string = "";
 	const createCmd: commander.Command = new commander.Command ("create");
 	createCmd.description (`Create a new project.`);
+	createCmd.arguments ("<name>");
 	createCmd.action (async (cmdr: any, args: string) =>
 		{
 			createHotCreator ();
@@ -848,12 +849,12 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 	for (let iIdx = 0; iIdx < serverTypes.length; iIdx++)
 	{
 		let currentServerType: string = serverTypes[iIdx];
-		let httpPort: number = 80;
+		let httpPort: number = 6000;
 		let httpsPort: number = 443;
 
 		if (currentServerType === "api")
 		{
-			httpPort = 81;
+			httpPort = 6001;
 			httpsPort = 444;
 		}
 

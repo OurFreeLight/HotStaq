@@ -32,7 +32,7 @@ To stop it enter:
 * HTTP_PORT
     * Description: The http port to listen on.
     * Type: number
-    * Default: 80
+    * Default: 6000
 * HTTPS_PORT
     * Description: The https port to listen on.
     * Type: number
