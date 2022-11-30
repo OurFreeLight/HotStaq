@@ -269,6 +269,10 @@ async function handleCreateCommands (): Promise<commander.Command>
 		(path: string, previous: any) =>
 		{
 			createHotCreator ();
+
+			if ((path === "") || (path === "."))
+				path = process.cwd ();
+
 			creator.outputDir = path;
 		}, "");
 	createCmd.option (`--overwrite-cmd-create-init <value>`, 
@@ -1278,6 +1282,12 @@ async function handleGenerateCommands (): Promise<commander.Command>
 		{
 			createHotBuilder ();
 			generator.outputDir = arg;
+		});
+	generateCmd.option ("--copy-to <path>", "The directory to copy all built files to.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			generator.copyTo = arg;
 		});
 
 	return (generateCmd);

@@ -49,6 +49,10 @@ export class HotGenerator
 	 * The output directory.
 	 */
 	outputDir: string;
+	/**
+	 * The directory to copy all built files to.
+	 */
+	copyTo: string;
 
 	constructor (logger: HotLog)
 	{
@@ -59,6 +63,7 @@ export class HotGenerator
 		this.optimizeJS = false;
 		this.logger = logger;
 		this.outputDir = ppath.normalize (`${process.cwd ()}/build-web/`);
+		this.copyTo = "";
 	}
 
 	/**
@@ -316,6 +321,16 @@ export class HotGenerator
 				}
 
 				this.logger.info (`Wrote generated API files to ${this.outputDir}`);
+
+				if (this.copyTo !== "")
+				{
+					this.copyTo = ppath.normalize (this.copyTo);
+
+					await HotIO.copyFiles (this.outputDir, this.copyTo);
+
+					this.logger.info (`Copied generated API files to ${this.copyTo}`);
+				}
+
 				this.logger.info (`Finished generating Web API "${key}" from HotSite "${hotsite.name}"...`);
 			});
 	}

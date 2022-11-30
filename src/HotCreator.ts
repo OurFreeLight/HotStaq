@@ -93,17 +93,17 @@ export class HotCreator
 		this.outputDir = "";
 		this.logger = logger;
 		this.createCommands = {
-				init: "git init && npm install",
+				init: "npm install",
 				transpileTS: "npm run build",
-				generateAPI: "hotstaq generate"
+				generateAPI: "hotstaq generate --copy-to ./public/js/"
 			};
 		this.npmCommands = {
 				start: "",
 				dev: "",
 				test: "hotstaq test",
 				build: "",
-				buildWebAPI: "hotstaq generate",
-				buildWebAPIDebug: "hotstaq generate",
+				buildWebAPI: "hotstaq generate --copy-to ./public/js/",
+				buildWebAPIDebug: "hotstaq generate --copy-to ./public/js/",
 				buildDoc: "hotstaq generate --generate-type openapi-3.0.0-yaml"
 			};
 	}
@@ -128,7 +128,10 @@ export class HotCreator
 
 		HotStaq.checkHotSiteName (this.name, true);
 
-		this.outputDir = ppath.normalize (`${this.outputDir}`);
+		this.outputDir = ppath.normalize (this.outputDir);
+
+		this.logger.info (`Outputting to directory: ${this.outputDir}`);
+
 		await HotIO.mkdir (ppath.join (this.outputDir, "/public/js/"));
 		await HotIO.mkdir (ppath.join (this.outputDir, "/.vscode/"));
 		await HotIO.mkdir (ppath.join (this.outputDir, "/src/"));
@@ -443,9 +446,9 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		await HotIO.writeTextFile (ppath.normalize (`${this.outputDir}/.vscode/tasks.json`), tasksJSONstr);
 		this.logger.info (`Finished creating VSCode files...`);
 
-		this.logger.info (`Creating git repo and installing modules...`);
+		this.logger.info (`Creating installing modules...`);
 		await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.init}`);
-		this.logger.info (`Finished creating git repo and installing modules...`);
+		this.logger.info (`Finished creating installing modules...`);
 
 		if (this.language === "ts")
 		{
@@ -462,8 +465,9 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		if (this.createCommands.generateAPI !== "")
 		{
 			await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.generateAPI}`);
+			await HotStaq.wait (1000); /// @fixme Remove this temp hack...
 			await HotIO.copyFile (ppath.normalize (`${this.outputDir}/build-web/${this.name}Web_AppAPI.js`), 
-				ppath.normalize (`${this.outputDir}/js/${this.name}.js`));
+				ppath.normalize (`${this.outputDir}/public/js/${this.name}.js`));
 		}
 
 		this.logger.info (`Finished generating API JavaScript...`);
