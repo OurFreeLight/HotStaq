@@ -223,7 +223,7 @@ async function handleCreateCommands (): Promise<commander.Command>
 	const createCmd: commander.Command = new commander.Command ("create");
 	createCmd.description (`Create a new project.`);
 	createCmd.arguments ("<name>");
-	createCmd.action (async (cmdr: any, args: string) =>
+	createCmd.action (async (name: string, cmdr: any) =>
 		{
 			createHotCreator ();
 
@@ -234,13 +234,8 @@ async function handleCreateCommands (): Promise<commander.Command>
 				return;
 			}
 
-			if (args == null)
+			if (name == null)
 				throw new Error (`You must supply an npm compatible project name!`);
-
-			if (args.length < 1)
-				throw new Error (`You must supply an npm compatible project name!`);
-
-			const name: string = args[0];
 
 			creator.name = name;
 			creator.outputDir = ppath.normalize (`${process.cwd ()}/${name}/`);
