@@ -30,17 +30,13 @@ export class HotGenerator
 	 */
 	generateType: string;
 	/**
-	 * Compile the typescript using Webpack.
+	 * Compile the typescript. DOES NOT WORK.
 	 */
 	compileTS: boolean;
 	/**
 	 * Specify a custom tsconfig path.
 	 */
 	tsconfigPath: string;
-	/**
-	 * Specify a custom webpack config path.
-	 */
-	webpackConfigPath: string;
 	/**
 	 * Optimize the compiled JavaScript.
 	 */
@@ -60,7 +56,6 @@ export class HotGenerator
 		this.generateType = "javascript";
 		this.compileTS = true;
 		this.tsconfigPath = ppath.normalize(`${__dirname}/../../tsconfig-generator.json`);
-		this.webpackConfigPath = ppath.normalize(`${__dirname}/../../webpack.config.generator.js`);
 		this.optimizeJS = false;
 		this.logger = logger;
 		this.outputDir = ppath.normalize (`${process.cwd ()}/build-web/`);
@@ -287,6 +282,7 @@ export class HotGenerator
 
 				if (this.compileTS === true)
 				{
+					this.logger.info (`WARNING: TypeScript support does not entirely work at this time.`);
 					this.logger.info (`Compiling TypeScript...`);
 
 					const timestamp: string = Date.now ().toString ();
@@ -298,31 +294,16 @@ export class HotGenerator
 					const temptsconfig: string = ppath.normalize (`${outputDir}/tsconfig-generator-temp-${timestamp}.json`);
 					await HotIO.writeTextFile (temptsconfig, JSON.stringify (tsconfigObj, null, 4));
 
-					let content: string = await HotIO.readTextFile (this.webpackConfigPath);
-					const tempWebpackConfig: string = ppath.normalize (
-							`${outputDir}/webpack.config.generator-temp-${timestamp}.js`);
-
-					content = HotStaq.replaceKey (content, "WEBPACK_VERSION", "1.0.0");
-					content = HotStaq.replaceKey (content, "WEBPACK_ENTRY", `${outputFile}${outputFileExtension}`);
-					content = HotStaq.replaceKey (content, "WEBPACK_TSCONFIG", temptsconfig);
-					content = HotStaq.replaceKey (content, "WEBPACK_IGNORE_PLUGINS_REGEX", "null");
-					content = HotStaq.replaceKey (content, "WEBPACK_OUTPUT_FILE", `${libraryName}_${apiName}.js`);
-					content = HotStaq.replaceKey (content, "WEBPACK_OUTPUT_PATH", outputDir);
-					content = HotStaq.replaceKey (content, "WEBPACK_LIBRARY_NAME", `${libraryName}_${apiName}`);
-
-					await HotIO.writeTextFile (tempWebpackConfig, content);
-
-					try
+					/*try
 					{
 						// Build the TypeScript so it can run in a web browser.
-						await HotIO.exec (`cd ${outputDir} && webpack --mode=production -c ${tempWebpackConfig}`);
+						await HotIO.exec (`cd ${outputDir} && npm run buildweb`);
 					}
 					catch (ex)
 					{
-					}
+					}*/
 
 					await HotIO.rm (temptsconfig);
-					await HotIO.rm (tempWebpackConfig);
 
 					this.logger.info (`Finished compiling TypeScript...`);
 				}
@@ -334,6 +315,7 @@ export class HotGenerator
 					this.logger.info (`Finished optimizing JavaScript...`);
 				}
 
+				this.logger.info (`Wrote generated API files to ${this.outputDir}`);
 				this.logger.info (`Finished generating Web API "${key}" from HotSite "${hotsite.name}"...`);
 			});
 	}
