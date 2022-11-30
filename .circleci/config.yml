@@ -114,9 +114,8 @@ jobs:
           NPM_ACCESS_TOKEN: $NPM_ACCESS_TOKEN
           PUBLISH_LIBRARY: $PUBLISH_LIBRARY
           PUSH_IMAGES: $PUSH_IMAGES
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
+          DOCKER_USERNAME: $DOCKER_USERNAME
+          DOCKER_PASSWORD: $DOCKER_PASSWORD
     steps:
       - checkout
       - setup_remote_docker
@@ -158,6 +157,8 @@ jobs:
           name: Push Docker Images
           command: |
             if [ "$PUSH_IMAGES" == "1" ]; then
+              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
               # Build Node 18 images
               ./push.sh 18 0
 
