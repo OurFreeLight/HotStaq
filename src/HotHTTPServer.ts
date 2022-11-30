@@ -158,7 +158,7 @@ export class HotHTTPServer extends HotServer
 			afterUploadIdUse: boolean;
 		};
 	/**
-	 * If set to true, worker threads will be used. This is not ready yet.
+	 * If set to true, worker threads will be used. NOT WORKING YET. DO NOT USE.
 	 */
 	useWorkerThreads: boolean;
 	/**
@@ -439,7 +439,7 @@ export class HotHTTPServer extends HotServer
 
 						if (this.useWorkerThreads === false)
 						{
-							let response = await processRequest (this.logger, route, method, methodName, req, res);
+							let response = await processRequest (this, this.logger, route, method, methodName, req, res);
 							sendResponse (response);
 
 							return;

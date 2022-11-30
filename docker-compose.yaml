@@ -1,0 +1,49 @@
+version: "3.7"
+services:
+  database-mariadb:
+    image: mariadb:${MARIADB_VERSION}
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1"]
+      retries: 10
+      timeout: 10s
+    ports:
+      - "${MARIADB_DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: cdO1KjwiC8ksOqCV1s0
+      MYSQL_DATABASE: hotstaq
+      MYSQL_USER: 5NKVBAt7OrzrumQyQVs
+      MYSQL_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+    networks:
+      - hotstaq-build-network
+
+  database-influxdb:
+    image: influxdb:${INFLUXDB_VERSION}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      retries: 10
+      timeout: 10s
+    ports:
+      - "${INFLUX_DB_PORT}:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_ORG: freelight
+      DOCKER_INFLUXDB_INIT_BUCKET: hotstaq
+      DOCKER_INFLUXDB_INIT_USERNAME: 5NKVBAt7OrzrumQyQVs
+      DOCKER_INFLUXDB_INIT_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e
+    networks:
+      - hotstaq-build-network
+
+  testing-selenium-chrome:
+    image: selenium/standalone-chrome:${SELENIUM_VERSION}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/"]
+      retries: 10
+      timeout: 10s
+    shm_size: "2g"
+    environment:
+      SE_NODE_MAX_SESSIONS: 5
+    network_mode: "host"
+
+networks:
+  hotstaq-build-network:
