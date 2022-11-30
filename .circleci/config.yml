@@ -112,6 +112,8 @@ jobs:
       - image: cimg/node:lts
         environment:
           NPM_ACCESS_TOKEN: $NPM_ACCESS_TOKEN
+          PUBLISH_LIBRARY: $PUBLISH_LIBRARY
+          PUSH_IMAGES: $PUSH_IMAGES
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
@@ -138,18 +140,22 @@ jobs:
       - run:
           name: Publish library
           command: |
-            echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
-            npm publish --ignore-scripts
+            if [ "$PUBLISH_LIBRARY" == "1" ]; then
+              echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
+              npm publish --ignore-scripts
+            fi
       - run:
           name: Build Docker Images
           command: |
-            # Build Node 18 images
-            ./build.sh 18 0
-            ./push.sh 18 0
+            if [ "$PUSH_IMAGES" == "1" ]; then
+              # Build Node 18 images
+              ./build.sh 18 0
+              ./push.sh 18 0
 
-            # Build Node 16 images. Node 16 is still latest for now
-            ./build.sh 16 1
-            ./push.sh 16 1
+              # Build Node 16 images. Node 16 is still latest for now
+              ./build.sh 16 1
+              ./push.sh 16 1
+            fi
 
 workflows:
   version: 2
