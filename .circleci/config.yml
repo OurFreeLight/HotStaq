@@ -112,6 +112,9 @@ jobs:
       - image: cimg/node:lts
         environment:
           NPM_ACCESS_TOKEN: $NPM_ACCESS_TOKEN
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - checkout
       - setup_remote_docker
@@ -142,10 +145,11 @@ jobs:
           command: |
             # Build Node 18 images
             ./build.sh 18 0
+            ./push.sh 18 0
 
             # Build Node 16 images. Node 16 is still latest for now
             ./build.sh 16 1
-
+            ./push.sh 16 1
 
 workflows:
   version: 2
