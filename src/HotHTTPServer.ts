@@ -7,14 +7,15 @@ import { F_OK } from "constants";
 import express from "express";
 import mimeTypes from "mime-types";
 import { Fields, Files, IncomingForm, Options } from "formidable";
-import { v4 as uuidv4 } from "uuid";
 
 import { HotServer } from "./HotServer";
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HTTPMethod } from "./HotRouteMethod";
-import { EventExecutionType, HotAPI } from "./HotAPI";
+import { processRequest } from "./HotHTTPServerProcessRequest";
 import { HotIO } from "./HotIO";
+
+var Worker: any = null;
 
 /**
  * A static route.
@@ -157,6 +158,10 @@ export class HotHTTPServer extends HotServer
 			afterUploadIdUse: boolean;
 		};
 	/**
+	 * If set to true, worker threads will be used. NOT WORKING YET. DO NOT USE.
+	 */
+	useWorkerThreads: boolean;
+	/**
 	 * The function to execute when handling 404 errors.
 	 */
 	handle404: (req: express.Request, res: express.Response, next: any) => void;
@@ -188,6 +193,7 @@ export class HotHTTPServer extends HotServer
 		this.autoDeleteUploadOptions = {
 				afterUploadIdUse: true
 			};
+		this.useWorkerThreads = false;
 		this.handle404 = null;
 		this.handleOther = null;
 
@@ -425,173 +431,68 @@ export class HotHTTPServer extends HotServer
 				this.expressApp[expressType] (methodName, 
 					async (req: express.Request, res: express.Response) =>
 					{
-						let hasAuthorization: boolean = true;
-						let authorizationValue: any = null;
-						let jsonObj: any = req.body;
-						let queryObj: any = req.query;
-						let api: HotAPI = route.connection.api;
-						let thisObj: any = route;
+						let sendResponse = (value: any) =>
+							{
+								if (value !== undefined)
+									res.json (value);
+							};
 
-						if (api.executeEventsUsing === EventExecutionType.HotAPI)
-							thisObj = api;
-
-						if (api.executeEventsUsing === EventExecutionType.HotMethod)
-							thisObj = method;
-
-						this.logger.verbose (`${req.method} ${methodName}, JSON: ${JSON.stringify (jsonObj)}, Query: ${JSON.stringify (queryObj)}`);
-
-						if (method.onServerAuthorize != null)
+						if (this.useWorkerThreads === false)
 						{
-							try
-							{
-								authorizationValue = 
-									await method.onServerAuthorize.call (thisObj, req, res, jsonObj, queryObj);
-							}
-							catch (ex)
-							{
-								this.logger.verbose (`Authorization error: ${ex.message}`);
-								res.json ({ error: ex.message });
-								hasAuthorization = false;
+							let response = await processRequest (this, this.logger, route, method, methodName, req, res);
+							sendResponse (response);
 
-								return;
-							}
-
-							if (authorizationValue === undefined)
-								hasAuthorization = false;
-						}
-						else
-						{
-							if (route.onAuthorizeUser != null)
-							{
-								try
-								{
-									authorizationValue = await route.onAuthorizeUser (req, res);
-								}
-								catch (ex)
-								{
-									this.logger.verbose (`Authorization error: ${ex.message}`);
-									res.json ({ error: ex.message });
-									hasAuthorization = false;
-	
-									return;
-								}
-	
-								if (authorizationValue === undefined)
-									hasAuthorization = false;
-							}
+							return;
 						}
 
-						this.logger.verbose (`${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
-
-						if (hasAuthorization === true)
-						{
-							let uploadedFiles: any = await HotHTTPServer.getFileUploads(req);
-
-							if (Object.keys (uploadedFiles).length > 0)
+						await new Promise<void> (async (resolve, reject) =>
 							{
-								const hotstaqUploadId: string = uuidv4 ();
-
-								this.uploads[hotstaqUploadId] = {};
-								const tempDir: string = process.env["TEMP_UPLOAD_DIR"] || "./temp/";
-
-								try
-								{
-									await HotIO.mkdir (tempDir);
-								}
-								catch (ex)
-								{
-								}
-
-								for (let key in uploadedFiles)
-								{
-									let uploadedFile: File = uploadedFiles[key];
-									/// @ts-ignore
-									const newFilePath: string = ppath.normalize (`${tempDir}/${uploadedFile.originalFilename}`);
-
-									/// @ts-ignore
-									await HotIO.moveFile (uploadedFile.filepath, newFilePath, { overwrite: true });
-
-									let uploadedObj: any = {
-										/// @ts-ignore
-										name: uploadedFile.originalFilename,
-										size: uploadedFile.size,
-										// @ts-ignore
-										path: newFilePath
+								let resolveIt = () =>
+									{
+										resolve ();
 									};
 
-									this.uploads[hotstaqUploadId][key] = uploadedObj;
-								}
-
-								this.logger.verbose (`${req.method} ${methodName}, Upload ID: ${hotstaqUploadId}, Received uploads: ${JSON.stringify (this.uploads[hotstaqUploadId])}`);
-
-								res.json ({
-										hotstaq: {
-											uploads: {
-												uploadId: hotstaqUploadId
-											}
-										}
-									});
-
-								return;
-							}
-
-							if (method.onServerExecute != null)
-							{
-								let hotstaq: any = jsonObj["hotstaq"];
-								let foundUploadId: string = "";
-
-								if (hotstaq != null)
-								{
-									if (hotstaq["uploads"] != null)
-									{
-										if (hotstaq["uploads"]["uploadId"] != null)
-										{
-											let hotstaqUploadId: string = hotstaq["uploads"]["uploadId"];
-
-											if (this.uploads[hotstaqUploadId] != null)
-											{
-												hotstaq["uploads"]["files"] = this.uploads[hotstaqUploadId];
-												foundUploadId = hotstaqUploadId;
-											}
-										}
-									}
-								}
-
 								try
 								{
-									let files: any = {};
+									/**
+									 * 
+											"logger": this.logger,
+											"route": route,
+											"method": method,
+											"methodName": methodName,
+											"req": req,
+											"res": res
+									 */
+									let worker = new Worker (`${__dirname}/HotHTTPServerThread.js`, {
+											"workerData": {
+													"logger": this.logger,
+													"methodName": methodName
+												}
+										});
 
-									if (foundUploadId !== "")
-										files = this.uploads[foundUploadId];
-
-									let result: any = 
-										await method.onServerExecute.call (
-											thisObj, req, res, authorizationValue, 
-											jsonObj, queryObj, files);
-
-									this.logger.verbose (`${req.method} ${methodName}, Response: ${result}`);
-
-									if (result !== undefined)
-										res.json (result);
+									worker.on ("message", (value: any) =>
+										{
+											sendResponse (value);
+											resolveIt ();
+										});
+									worker.on ("error", (err: Error) =>
+										{
+											this.logger.error (`Error in worker: ${err.message}`);
+											resolveIt ();
+										});
+									worker.on ("exit", (code: number) =>
+										{
+											this.logger.error (`Worker exited with code: ${code}`);
+											resolveIt ();
+										});
+									worker.postMessage ({});
 								}
 								catch (ex)
 								{
-									this.logger.verbose (`Execution error: ${ex.message}`);
-									res.json ({ error: ex.message });
+									this.logger.error (`Unable to start worker thread ${ex.message}`);
+									resolveIt ();
 								}
-
-								if (foundUploadId !== "")
-								{
-									if (this.autoDeleteUploadOptions.afterUploadIdUse === true)
-										await this.deleteUploads (foundUploadId);
-								}
-							}
-						}
-						else
-						{
-							res.json (route.errors["not_authorized"]);
-							this.logger.verbose (`${req.method} ${methodName}, not_authorized`);
-						}
+							});
 					});
 			}
 
@@ -1077,6 +978,9 @@ export class HotHTTPServer extends HotServer
 			{
 				try
 				{
+					if (this.useWorkerThreads === true)
+						Worker = require ("node:worker_threads").Worker;
+
 					let completedSetup = () =>
 						{
 							let protocol: string = "http";
@@ -1266,7 +1170,7 @@ export class HotHTTPServer extends HotServer
 	 * @param processor The HotStaq or parent server being used for communication.
 	 */
 	static async startServer (localStaticPath: string | StaticRoute[] = null, 
-		httpPort: number = 80, httpsPort: number = 443, 
+		httpPort: number = 6000, httpsPort: number = 443, 
 		processor: HotServer | HotStaq = null,): 
 			Promise<{ processor: HotServer | HotStaq; server: HotHTTPServer; }>
 	{
