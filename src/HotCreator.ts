@@ -46,6 +46,10 @@ export class HotCreator
 			 * The transpile command to use after the project has been initialized.
 			 */
 			transpileTS: string;
+			/**
+			 * The generat api command to use when generating the api to use in web.
+			 */
+			generateAPI: string;
 		};
 	/**
 	 * The NPM commands used.
@@ -90,7 +94,8 @@ export class HotCreator
 		this.logger = logger;
 		this.createCommands = {
 				init: "git init && npm install",
-				transpileTS: "npm run build"
+				transpileTS: "npm run build",
+				generateAPI: "hotstaq generate"
 			};
 		this.npmCommands = {
 				start: "",
@@ -154,7 +159,6 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				"author": "",
 				"license": "ISC",
 				"dependencies": {
-					"copy-webpack-plugin": "^6.0.3",
 					"dotenv": "^10.0.0",
 					"hotstaq": `^${hotstaqVersion}`
 				},
@@ -168,9 +172,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 					"@types/node-fetch": "^2.6.1",
 					"@types/selenium-webdriver": "^4.1.5",
 					"@types/uuid": "^8.3.4",
-					"@types/mime-types": "^2.1.1",
-					"webpack": "^5.72.1",
-					"webpack-cli": "^4.9.2"
+					"@types/mime-types": "^2.1.1"
 				}
 			};
 
@@ -284,10 +286,6 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			{
 				const filesDir: string = ppath.normalize (`${__dirname}/../../creator/ts`);
 				await HotIO.copyFiles (filesDir, ppath.normalize (`${this.outputDir}/`));
-
-				await this.replaceKeysInFile (ppath.normalize (`${this.outputDir}/webpack-api.config.js`), {
-						"APPNAME": this.name
-					});
 			}
 		}
 
@@ -426,16 +424,6 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			{
 				tasksJSON["tasks"].push (
 					{
-						"type": "shell",
-						"group": "build",
-						"runOptions": {
-							"instanceLimit": 1
-						},
-						"problemMatcher": [],
-						"label": "Build Web API Debug",
-						"command": "npx webpack --mode=development --config=webpack-api.config.js --debug --watch"
-					},
-					{
 						"type": "typescript",
 						"tsconfig": "tsconfig.json",
 						"option": "watch",
@@ -462,10 +450,23 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		if (this.language === "ts")
 		{
 			this.logger.info (`Transpiling TypeScript...`);
-			await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.transpileTS}`);
+
+			if (this.createCommands.transpileTS !== "")
+				await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.transpileTS}`);
+
 			this.logger.info (`Finished transpiling TypeScript...`);
 		}
 
+		this.logger.info (`Generating API JavaScript...`);
+
+		if (this.createCommands.generateAPI !== "")
+		{
+			await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.generateAPI}`);
+			await HotIO.copyFile (ppath.normalize (`${this.outputDir}/build-web/${this.name}Web_AppAPI.js`), 
+				ppath.normalize (`${this.outputDir}/js/${this.name}.js`));
+		}
+
+		this.logger.info (`Finished generating API JavaScript...`);
 		this.logger.info (`Finished creating "${this.name}"...`);
 	}
 

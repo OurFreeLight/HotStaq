@@ -147,7 +147,7 @@ export class HotServer implements IHotServer
 			this.api = null;
 			this.listenAddress = "0.0.0.0";
 			this.ports = {
-					http: 6000,
+					http: 5000,
 					https: 443
 				};
 			this.ssl = {
@@ -167,7 +167,7 @@ export class HotServer implements IHotServer
 			this.api = processor.api || null;
 			this.listenAddress = processor.listenAddress || "0.0.0.0";
 			this.ports = processor.ports || {
-					http: 6000,
+					http: 5000,
 					https: 443
 				};
 			this.ssl = processor.ssl || {

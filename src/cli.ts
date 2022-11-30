@@ -285,6 +285,13 @@ async function handleCreateCommands (): Promise<commander.Command>
 			createHotCreator ();
 			creator.createCommands.transpileTS = value;
 		}, "");
+	createCmd.option (`--overwrite-cmd-generate-api <value>`, 
+		`Overwrite the generate command for generating the client API for use on the web.`, 
+		(value: string, previous: any) =>
+		{
+			createHotCreator ();
+			creator.createCommands.generateAPI = value;
+		}, "");
 	createCmd.option (`--overwrite-cmd-npm-build-web-api <value>`, 
 		`Overwrite the npm command for building the web api.`, 
 		(value: string, previous: any) =>
@@ -844,7 +851,7 @@ async function handleRunCommands (cmdName: string): Promise<commander.Command>
 	for (let iIdx = 0; iIdx < serverTypes.length; iIdx++)
 	{
 		let currentServerType: string = serverTypes[iIdx];
-		let httpPort: number = 6000;
+		let httpPort: number = 5000;
 		let httpsPort: number = 443;
 
 		if (currentServerType === "api")
@@ -1253,12 +1260,6 @@ async function handleGenerateCommands (): Promise<commander.Command>
 		{
 			createHotBuilder ();
 			generator.tsconfigPath = arg;
-		});
-	generateCmd.option ("--webpack-config <path>", "Specify the webpack config javascript file to use.", 
-		(arg: string, previous: any) =>
-		{
-			createHotBuilder ();
-			generator.webpackConfigPath = arg;
 		});
 	generateCmd.option ("--optimize", "Optimize the compiled JavaScript using the Google Closure Compiler.", 
 		(arg: string, previous: any) =>

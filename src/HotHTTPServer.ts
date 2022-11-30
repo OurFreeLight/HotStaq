@@ -1170,7 +1170,7 @@ export class HotHTTPServer extends HotServer
 	 * @param processor The HotStaq or parent server being used for communication.
 	 */
 	static async startServer (localStaticPath: string | StaticRoute[] = null, 
-		httpPort: number = 6000, httpsPort: number = 443, 
+		httpPort: number = 5000, httpsPort: number = 443, 
 		processor: HotServer | HotStaq = null,): 
 			Promise<{ processor: HotServer | HotStaq; server: HotHTTPServer; }>
 	{
