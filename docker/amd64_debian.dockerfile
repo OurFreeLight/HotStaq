@@ -5,11 +5,14 @@ ARG HOTSTAQ_VERSION
 
 # Update components and install curl
 RUN apt update && \
-    apt install -y curl git
+    apt install -y curl
 
 # Install NodeJS
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     apt install -y nodejs
+
+# Uninstall stuff we dont need
+RUN apt purge -y python python3
 
 # Build HotStaq
 RUN npm install --global hotstaq@${HOTSTAQ_VERSION}
