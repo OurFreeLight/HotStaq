@@ -691,7 +691,8 @@ export class HotHTTPServer extends HotServer
 									// will then request the real page that contains the file.
 
 									res.setHeader ("Content-Type", "text/html");
-									res.send (content);
+									this.logger.verbose (`Sending generated hott content with headers ${JSON.stringify (res.getHeaders ())}`);
+									res.status (200).send (content);
 								};
 							let sendFileContent = (path: string, fileExt: string, iServableFile: ServableFileExtension): void =>
 								{
@@ -718,6 +719,7 @@ export class HotHTTPServer extends HotServer
 															res = res.header (httpHeader.type, httpHeader.value);
 														}
 
+														this.logger.verbose (`Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
 														res = res.status (200);
 														res.sendFile (path);
 
@@ -738,6 +740,7 @@ export class HotHTTPServer extends HotServer
 											res.setHeader ("Content-Type", mimeType);
 									}
 
+									this.logger.verbose (`Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
 									res.status (200).sendFile (path);
 								};
 
