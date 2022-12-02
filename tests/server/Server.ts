@@ -91,6 +91,8 @@ describe ("Server Tests", () =>
 						{ "type": "Content-Type", "value": "application/wasm" }
 					] });
 
+				/// @todo Needs test case to ensure headers are sent for static files served.
+
 				let res = await fetch (`${url}/tests/browser/headers-test.pika.pika`);
 				let contentType: string = res.headers.get ("content-type");
 
