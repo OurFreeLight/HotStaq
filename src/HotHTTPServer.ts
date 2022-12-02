@@ -354,7 +354,42 @@ export class HotHTTPServer extends HotServer
 		this.clearErrorHandlingRoutes ();
 		this.preregisterRoute ();
 
-		this.expressApp.use (route.route, express.static (ppath.normalize (route.localPath)));
+		this.expressApp.use (route.route, express.static (ppath.normalize (route.localPath), {
+				setHeaders: (res: express.Response, path: string, stat: fs.Stats) =>
+				{
+					for (let iJdx = 0; iJdx < this.serveFileExtensions.length; iJdx++)
+					{
+						let servableFile: (string | ServableFileExtension) = this.serveFileExtensions[iJdx];
+
+						if (typeof (servableFile) === "string")
+							continue;
+
+						if (servableFile.headers == null)
+							continue;
+
+						if (servableFile.headers.length === 0)
+							continue;
+
+						if (path.indexOf (servableFile.fileExtension) > -1)
+						{
+							for (let iIdx = 0; iIdx < servableFile.headers.length; iIdx++)
+							{
+								let httpHeader: HTTPHeader = servableFile.headers[iIdx];
+
+								if (httpHeader.type == null)
+									throw new Error (`Missing HTTP header type on file extension ${servableFile.fileExtension}`);
+
+								if (httpHeader.value == null)
+									throw new Error (`Missing HTTP header value on file extension ${servableFile.fileExtension}`);
+
+								res.header (httpHeader.type, httpHeader.value);
+							}
+						}
+
+						this.logger.verbose (`Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+					}
+				}
+			}));
 		this.logger.verbose (`Adding static route ${route.route} at path ${route.localPath}`);
 
 		this.setErrorHandlingRoutes ();
@@ -850,6 +885,8 @@ export class HotHTTPServer extends HotServer
 									}
 								}
 							}
+							else
+								this.logger.verbose (`Received nahfam, content has already been sent.`);
 						}
 
 						next ();

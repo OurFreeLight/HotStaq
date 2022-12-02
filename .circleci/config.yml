@@ -143,28 +143,29 @@ jobs:
               echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ./.npmrc
               npm publish --ignore-scripts
             fi
-      - run:
-          name: Build Docker Images
-          command: |
-            if [ "$PUSH_IMAGES" == "1" ]; then
-              # Build Node 18 images
-              ./build.sh 18 0
+      # Don't build/push Docker images as they aren't as secure as what HotStaq itself generates for each app.
+      # - run:
+      #     name: Build Docker Images
+      #     command: |
+      #       if [ "$PUSH_IMAGES" == "1" ]; then
+      #         # Build Node 18 images
+      #         ./build.sh 18 0
 
-              # Build Node 16 images. Node 16 is still latest for now
-              ./build.sh 16 1
-            fi
-      - run:
-          name: Push Docker Images
-          command: |
-            if [ "$PUSH_IMAGES" == "1" ]; then
-              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      #         # Build Node 16 images. Node 16 is still latest for now
+      #         ./build.sh 16 1
+      #       fi
+      # - run:
+      #     name: Push Docker Images
+      #     command: |
+      #       if [ "$PUSH_IMAGES" == "1" ]; then
+      #         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-              # Build Node 18 images
-              ./push.sh 18 0
+      #         # Build Node 18 images
+      #         ./push.sh 18 0
 
-              # Build Node 16 images. Node 16 is still latest for now
-              ./push.sh 16 1
-            fi
+      #         # Build Node 16 images. Node 16 is still latest for now
+      #         ./push.sh 16 1
+      #       fi
 
 workflows:
   version: 2
