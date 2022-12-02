@@ -609,14 +609,12 @@ export class HotHTTPServer extends HotServer
 			this.logger.verbose (`Added route ${route.type} ${route.route}`);
 		}
 
-		let serveFileExtensions: (string | ServableFileExtension)[] = this.serveFileExtensions;
-
 		if (this.processor.hotSite != null)
 		{
 			if (this.processor.hotSite.server != null)
 			{
 				if (this.processor.hotSite.server.serveFileExtensions != null)
-					serveFileExtensions = this.processor.hotSite.server.serveFileExtensions;
+					this.serveFileExtensions = this.processor.hotSite.server.serveFileExtensions;
 			}
 
 			if (this.processor.hotSite.routes != null)
@@ -634,9 +632,9 @@ export class HotHTTPServer extends HotServer
 			}
 		}
 
-		if (serveFileExtensions.length > 0)
+		if (this.serveFileExtensions.length > 0)
 		{
-			this.logger.verbose (`Set to serve files: ${JSON.stringify (serveFileExtensions)}`);
+			this.logger.verbose (`Set to serve files: ${JSON.stringify (this.serveFileExtensions)}`);
 
 			this.expressApp.use ((req: express.Request, res: express.Response, next: any): void =>
 				{
@@ -804,9 +802,9 @@ export class HotHTTPServer extends HotServer
 									if ((checkDir === ".") || (checkDir === "./"))
 										checkDir = process.cwd ();
 
-									for (let iJdx = 0; iJdx < serveFileExtensions.length; iJdx++)
+									for (let iJdx = 0; iJdx < this.serveFileExtensions.length; iJdx++)
 									{
-										let servableFile: (string | ServableFileExtension) = serveFileExtensions[iJdx];
+										let servableFile: (string | ServableFileExtension) = this.serveFileExtensions[iJdx];
 										let serveFileExt: string = "";
 
 										if (typeof (servableFile) === "string")
