@@ -13,6 +13,7 @@ import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HelloWorldAPI } from "./HelloWorldAPI";
 import { DeveloperMode } from "../../src/Hot";
 import { HotIO } from "../../src/HotIO";
+import { HotLogLevel } from "../../src/HotLog";
 
 describe ("Server Tests", () =>
 	{
@@ -82,5 +83,17 @@ describe ("Server Tests", () =>
 
 				expect (fs.existsSync (jsonRes.path)).to.equal (true, "File was not uploaded properly!");
 				fs.unlinkSync (jsonRes.path);
+			});
+		it ("should add a file extension to serve with a header set", async () =>
+			{
+				server.serveFileExtensions.push ({
+					fileExtension: ".pika.pika", headers: [
+						{ "type": "Content-Type", "value": "application/wasm" }
+					] });
+
+				let res = await fetch (`${url}/tests/browser/headers-test.pika.pika`);
+				let contentType: string = res.headers.get ("content-type");
+
+				expect (contentType).to.equal ("application/wasm");
 			});
 	});

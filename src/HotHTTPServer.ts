@@ -63,7 +63,7 @@ export interface ServableFileExtension
 	 * If set to true, this will generate the content to serve the file.
 	 * Typically used for .hott files.
 	 * 
-	 * Default: true
+	 * Default: false
 	 */
 	generateContent?: boolean;
 	/**
@@ -113,7 +113,9 @@ export class HotHTTPServer extends HotServer
 			method: (req: express.Request, res: express.Response) => Promise<void>;
 		}[];
 	/**
-	 * Serve the following file extensions when requested.
+	 * Serve the following file extensions when requested. For any of these to be served 
+	 * there has to be at least one file extension added prior to starting the server.
+	 * Additional file extensions can be added after server start.
 	 */
 	serveFileExtensions: (string | ServableFileExtension)[];
 	/**
@@ -697,7 +699,7 @@ export class HotHTTPServer extends HotServer
 									{
 										if (iServableFile.fileExtension != null)
 										{
-											if (fileExt === iServableFile.fileExtension)
+											if (path.indexOf (iServableFile.fileExtension) > -1)
 											{
 												if (iServableFile.headers != null)
 												{
@@ -713,10 +715,11 @@ export class HotHTTPServer extends HotServer
 															if (httpHeader.value == null)
 																throw new Error (`Missing HTTP header value on file extension ${fileExt}`);
 
-															res.header (httpHeader.type, httpHeader.value);
+															res = res.header (httpHeader.type, httpHeader.value);
 														}
 
-														res.status (200).sendFile (path);
+														res = res.status (200);
+														res.sendFile (path);
 
 														return;
 													}
@@ -754,7 +757,7 @@ export class HotHTTPServer extends HotServer
 									const route: string = urlFilepath;
 									let tempFilepath: string = urlFilepath;
 									let sendContentFlag: boolean = false;
-									let generateContent: boolean = true;
+									let generateContent: boolean = false;
 									let foundServableFile: ServableFileExtension = null;
 
 									if (checkDir === "")
@@ -785,8 +788,8 @@ export class HotHTTPServer extends HotServer
 											{
 												sendContentFlag = true;
 
-												if (typeof (serveFileExt) !== "string")
-													foundServableFile = serveFileExt;
+												if (typeof (servableFile) !== "string")
+													foundServableFile = servableFile;
 
 												break;
 											}
@@ -799,8 +802,8 @@ export class HotHTTPServer extends HotServer
 											{
 												sendContentFlag = true;
 
-												if (typeof (serveFileExt) !== "string")
-													foundServableFile = serveFileExt;
+												if (typeof (servableFile) !== "string")
+													foundServableFile = servableFile;
 
 												url.pathname += serveFileExt;
 
@@ -817,8 +820,8 @@ export class HotHTTPServer extends HotServer
 												tempFilepath += `index${serveFileExt}`;
 												sendContentFlag = true;
 
-												if (typeof (serveFileExt) !== "string")
-													foundServableFile = serveFileExt;
+												if (typeof (servableFile) !== "string")
+													foundServableFile = servableFile;
 
 												break;
 											}
@@ -992,8 +995,11 @@ export class HotHTTPServer extends HotServer
 								port = this.ports.https;
 							}
 
+							this.logger.info (`HotStaq Version ${HotStaq.version}`);
 							this.logger.info (`${this.serverType} listening on ${protocol}://${this.listenAddress}:${port}/`);
-							this.logger.verbose (`Using HotSite object: ${JSON.stringify (this.processor.hotSite)}`);
+
+							if (this.processor.hotSite != null)
+								this.logger.verbose (`Using HotSite object: ${JSON.stringify (this.processor.hotSite)}`);
 
 							resolve ();
 						};
