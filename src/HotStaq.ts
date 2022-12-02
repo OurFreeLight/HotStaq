@@ -432,7 +432,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.6.5";
+	static version: string = "0.6.6";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1968,7 +1968,8 @@ export class HotStaq implements IHotStaq
 
 			expressApp.get (page.route, (req: any, res: any) =>
 				{
-					res.send (content);
+					this.logger.verbose (`Sending custom Express content.`);
+					res.status (200).send (content);
 				});
 		}
 	}
