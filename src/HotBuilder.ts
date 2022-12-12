@@ -19,6 +19,10 @@ export class HotBuilder
 	 */
 	api: boolean;
 	/**
+	 * The namespace to use when building the dockerfiles.
+	 */
+	dockerNamespace: string;
+	/**
 	 * Will build the Dockerfiles.
 	 */
 	dockerFiles: boolean;
@@ -50,6 +54,7 @@ export class HotBuilder
 	constructor (logger: HotLog)
 	{
 		this.api = true;
+		this.dockerNamespace = "ourfreelight";
 		this.dockerFiles = true;
 		this.dockerHardenSecurity = true;
 		this.appendReadMe = true;
@@ -81,10 +86,22 @@ export class HotBuilder
 			this.logger.info ("Building docker files...");
 
 			const dockerDir: string = ppath.normalize (`${__dirname}/../../builder/docker`);
-			const dockerFileContent: string = await HotIO.readTextFile (
-						ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`));
+			let dockerFileContent: string = "";
 			const startFileContent: string = await HotIO.readTextFile (
 						ppath.normalize (`${dockerDir}/app/start.sh`));
+
+			if (this.dockerHardenSecurity === true)
+			{
+				this.logger.info (`Hardening Dockerfile...`);
+				dockerFileContent = await HotIO.readTextFile (
+					ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`));
+			}
+			else
+			{
+				this.logger.info (`NOT hardening Dockerfile...`);
+				dockerFileContent = await HotIO.readTextFile (
+					ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`));
+			}
 
 			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
 			{
@@ -107,21 +124,17 @@ export class HotBuilder
 				let httpPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "http"]);
 				let httpsPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "https"]);
 				let hotsitePath: string = `/app/${hotsiteName}/HotSite.json`;
-				let hardenSecurity: string = 
-`
-RUN npm -g uninstall npm && \
-apk --purge del apk-tools
-`;
+
 				/**
 				 * Replace any keywords in a string.
 				 */
 				let replaceKeywords = (str: string): string =>
 					{
+						str = str.replace (/\$\{NAMESPACE\}/g, this.dockerNamespace);
 						str = str.replace (/\$\{HOTSITE_NAME\}/g, hotsiteName);
 						str = str.replace (/\$\{DOCKERFILE_PORTS\}/g, dockerfilePortsStr);
 						str = str.replace (/\$\{DOCKER_COMPOSE_APP_PORTS\}/g, dockercomposeAppPortsStr);
 						str = str.replace (/\$\{DOCKER_COMPOSE_APP_API_PORTS\}/g, dockercomposeAppAPIPortsStr);
-						str = str.replace (/\$\{HARDEN\_SECURITY\}/g, hardenSecurity);
 						str = str.replace (/\$\{HOTSITE_PATH\}/g, hotsitePath);
 
 						return (str);
@@ -129,16 +142,13 @@ apk --purge del apk-tools
 				/**
 				 * Replace any keywords in a file.
 				 */
-				let replaceKeywordsInFile = async (filepath: string): Promise<string> =>
+				let replaceKeywordsInFile = async (filepath: string): Promise<void> =>
 					{
-						let fileContent: string = await HotIO.readTextFile (ppath.normalize (filepath));
+						const filepathnormalized: string = ppath.normalize (filepath);
+						let fileContent: string = await HotIO.readTextFile (filepathnormalized);
 						fileContent = replaceKeywords (fileContent);
-
-						return (fileContent);
+						await HotIO.writeTextFile (filepathnormalized, fileContent);
 					};
-
-				if (this.dockerHardenSecurity === false)
-					hardenSecurity = "";
 
 				await HotIO.mkdir (`${outputDir}/docker/${hotsiteName}/app/`);
 
@@ -180,6 +190,13 @@ ports:
 				await HotIO.writeTextFile (`${outputDir}/start-app.sh`, 
 					await HotIO.readTextFile (ppath.normalize (`${outputDir}/start-app.sh`)));
 				await HotIO.copyFile (`${dockerDir}/dockerignore`, `${outputDir}/.dockerignore`);
+
+				await replaceKeywordsInFile (`${outputDir}/build.bat`);
+				await replaceKeywordsInFile (`${outputDir}/build.sh`);
+				await replaceKeywordsInFile (`${outputDir}/start-app.bat`);
+				await replaceKeywordsInFile (`${outputDir}/start-app.sh`);
+				await replaceKeywordsInFile (`${outputDir}/stop-app.bat`);
+				await replaceKeywordsInFile (`${outputDir}/stop-app.sh`);
 
 				if (await HotIO.exists (`${outputDir}/README.md`) === true)
 				{

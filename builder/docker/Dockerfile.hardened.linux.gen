@@ -5,7 +5,7 @@ ARG HOTSTAQ_VERSION="latest"
 # Install build dependencies
 RUN apk update && \
 	apk add git && \
-	npm install -g typescript hotstaq@${HOTSTAQ_VERSION} && \
+	npm install -g typescript hotstaq@${HOTSTAQ_VERSION} pkg && \
 	mkdir -p /tmp/app
 
 COPY ./package.json /tmp/app/package.json
@@ -20,10 +20,12 @@ RUN cd /tmp/app && \
 	npm run build && \
 	npm run build-web
 
-FROM node:16.15.0-alpine3.15
+RUN cd /tmp/app && \
+	pkg -c ./package.json -t node16-linux-x64 ./build/index.js
 
-RUN mkdir -p /app/build/ && \
-	apk add curl
+FROM debian:bullseye
+
+RUN mkdir -p /app/build/
 
 COPY --from=builder /tmp/app/build/ /app/build/
 COPY --from=builder /tmp/app/public/ /app/public/
@@ -38,6 +40,9 @@ RUN chmod 500 /app/start.sh
 RUN npm install -g hotstaq@${HOTSTAQ_VERSION}
 
 ${DOCKERFILE_PORTS}
+
+RUN npm -g uninstall npm && \
+	apk --purge del apk-tools
 
 ARG NODEJS_START_ARGS=""
 ENV NODEJS_START_ARGS=${NODEJS_START_ARGS}

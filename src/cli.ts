@@ -173,11 +173,17 @@ async function handleBuildCommands (): Promise<commander.Command>
 			createHotBuilder ();
 			builder.dockerFiles = true;
 		});
+	buildCmd.option ("--docker-namespace", "The namespace to tag the built docker image.", 
+		(arg: string, previous: any) =>
+		{
+			createHotBuilder ();
+			builder.dockerNamespace = arg;
+		});
 	buildCmd.option ("--dont-get-hard", "Do not use the default security hardening when generating the docker image.", 
 		(arg: string, previous: any) =>
 		{
 			createHotBuilder ();
-			builder.dockerHardenSecurity = true;
+			builder.dockerHardenSecurity = false;
 		});
 	buildCmd.option ("--dont-append-readme", "Do not add the additional docker documentation to the existing README.md.", 
 		(arg: string, previous: any) =>
@@ -1307,7 +1313,7 @@ function checkIfPathExists (path: string): boolean
 /**
  * Start the CLI app.
  */
-async function start ()
+export async function start (args: string[]): Promise<void>
 {
 	try
 	{
@@ -1474,13 +1480,11 @@ async function start ()
 			}
 		}
 
-		if (process.argv.length > 2)
-			program.parse (process.argv);
+		if (args.length > 2)
+			program.parse (args);
 	}
 	catch (ex)
 	{
 		processor.logger.error (ex.stack);
 	}
 }
-
-start ();

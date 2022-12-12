@@ -307,7 +307,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"type": "node",
 						"request": "launch",
 						"name": "Debug Web Server",
-						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
 						"skipFiles": [
 							"<node_internals>/**"
 						],
@@ -335,7 +335,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"type": "node",
 						"request": "launch",
 						"name": "Debug Web/API Server",
-						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
 						"skipFiles": [
 							"<node_internals>/**"
 						],
@@ -359,7 +359,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"type": "node",
 						"request": "launch",
 						"name": "Debug API Server",
-						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
 						"skipFiles": [
 							"<node_internals>/**"
 						],
@@ -388,7 +388,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				"skipFiles": [
 					"<node_internals>/**"
 				],
-				"program": "${workspaceFolder}/node_modules/hotstaq/build/src/cli.js",
+				"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
 				"args": [
 					"--development-mode",
 					"--hotsite",
