@@ -1,3 +1,5 @@
+import { start } from "./cli";
+
 import { HotStaq, HotStartOptions, IHotStaq, 
 	HotSite, HotSiteRoute, HotSiteMapPath } from "./HotStaq";
 import { Hot, DeveloperMode } from "./Hot";
@@ -45,6 +47,7 @@ import { InfluxSchema } from "./schemas/influx/InfluxSchema";
 HotStaq.isWeb = false;
 
 export {
+		start,
 		HotStaq, 
 		HotStartOptions, 
 		IHotStaq,

@@ -32,7 +32,7 @@ describe ("CLI Tests", () =>
 			{
 				// Make a spawn version later and have it shutdown when test is complete.
 				// As long as there's no JSON parsing issues, it should still run.
-                let output = HotIO.spawn ("node", ["./build/src/cli.js", "--dev", "-o", "./tests/hotsite/HotSite-Bad.json", "run"]);
+                let output = HotIO.spawn ("node", ["./build/src/index.js", "--dev", "-o", "./tests/hotsite/HotSite-Bad.json", "run"]);
 
                 await HotStaq.wait (startUpTime);
 
@@ -46,7 +46,7 @@ describe ("CLI Tests", () =>
 		it ("should run the good hotsite", async () =>
 			{
 				let output = HotIO.spawn ("node", [
-					"./build/src/cli.js",
+					"./build/src/index.js",
 					"--dev",
 					"--cwd", "./tests/hotsite/",
 					"-o", "./HotSite.json",
@@ -65,7 +65,7 @@ describe ("CLI Tests", () =>
 		it ("should run the good hotsite and get the index from the / route", async () =>
 			{
 				let output = HotIO.spawn ("node", [
-					"./build/src/cli.js",
+					"./build/src/index.js",
 					"--dev",
 					"--cwd", "./tests/hotsite/",
 					"run",
@@ -86,7 +86,7 @@ describe ("CLI Tests", () =>
 				// Make a spawn version later and have it shutdown when test is complete.
 				// As long as there's no JSON parsing issues, it should still run.
 				let output = HotIO.spawn ("node", [
-						"./build/src/cli.js",
+						"./build/src/index.js",
 						"--dev",
 						"-o", "./tests/hotsite/HotSite.json",
 						"run",
@@ -110,7 +110,7 @@ describe ("CLI Tests", () =>
 				// Make a spawn version later and have it shutdown when test is complete.
 				// As long as there's no JSON parsing issues, it should still run.
 				let output = HotIO.spawn ("node", [
-						"./build/src/cli.js",
+						"./build/src/index.js",
 						"--dev",
 						"-o", "./tests/hotsite/HotSite.json",
 						"run",

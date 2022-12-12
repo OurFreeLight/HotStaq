@@ -1,4 +1,6 @@
-import { HotRoute, HTTPMethod, HotRouteMethod, HotStaq } from "./api";
+import { HotStaq } from "./HotStaq";
+import { HotRoute } from "./HotRoute";
+import { HotRouteMethod, HTTPMethod } from "./HotRouteMethod";
 import { HotAgentAPI } from "./HotAgentAPI";
 
 import * as fs from "fs";

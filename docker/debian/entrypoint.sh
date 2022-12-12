@@ -6,7 +6,7 @@ if [ "$SERVER_TYPE" == "api" ]; then
     API_PORTS="--api-http-port ${API_HTTP_PORT} --api-https-port ${API_HTTPS_PORT}";
 fi
 
-node ${NODEJS_START_ARGS} /usr/lib/node_modules/hotstaq/build/src/cli.js run ${HOTSTAQ_RUN_ARGS} \
+node ${NODEJS_START_ARGS} /usr/lib/node_modules/hotstaq/build/src/index.js run ${HOTSTAQ_RUN_ARGS} \
     --hotsite $(pwd)/HotSite.json \
     --server-type ${SERVER_TYPE} \
     --web-base-url "${WEB_BASE_URL}" \

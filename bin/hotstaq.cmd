@@ -1,1 +1,1 @@
-node ../build/src/cli.js %*
+node ../build/src/index.js %*
