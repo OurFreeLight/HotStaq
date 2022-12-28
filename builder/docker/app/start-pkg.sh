@@ -7,8 +7,9 @@ if [ "$SERVER_TYPE" == "api" ]; then
 fi
 
 # Start the application
-node ${NODEJS_START_ARGS} $(pwd)/build/cli.js run ${HOT_RUN_ARGS} \
+$(pwd)/hotapp run ${HOT_RUN_ARGS} \
     --hotsite $(pwd)/HotSite.json --server-type ${SERVER_TYPE} \
+    --dont-load-apis-from-hotsite \
     --log-level ${LOG_LEVEL} --web-base-url "${BASE_URL}" \
     --web-http-port ${HTTP_PORT} --web-https-port ${HTTPS_PORT} \
     ${API_PORTS} \

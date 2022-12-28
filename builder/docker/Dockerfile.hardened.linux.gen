@@ -1,17 +1,20 @@
-FROM node:16.15.0-alpine3.15 AS builder
+ARG NODEJS_VERSION="16"
+FROM node:${NODEJS_VERSION}-bullseye AS builder
 
-ARG HOTSTAQ_VERSION="latest"
+ARG HOTSTAQ_VERSION
+ARG NODEJS_VERSION
 
 # Install build dependencies
-RUN apk update && \
-	apk add git && \
-	npm install -g typescript hotstaq@${HOTSTAQ_VERSION} pkg && \
+RUN apt update && apt upgrade -y && \
+	apt install -y git && \
+	npm install -g typescript@4.9.4 hotstaq@${HOTSTAQ_VERSION} pkg@5.8.0 && \
 	mkdir -p /tmp/app
 
 COPY ./package.json /tmp/app/package.json
 COPY ./package-lock.json /tmp/app/package-lock.json
 
 RUN cd /tmp/app && \
+	npm install hotstaq@${HOTSTAQ_VERSION} && \
 	npm install
 
 COPY . /tmp/app
@@ -21,31 +24,23 @@ RUN cd /tmp/app && \
 	npm run build-web
 
 RUN cd /tmp/app && \
-	pkg -c ./package.json -t node16-linux-x64 ./build/index.js
+	pkg -c ./package.json -t node${NODEJS_VERSION}-linux-x64 -o ./build/hotapp ./build/pkg.js
 
-FROM debian:bullseye
+FROM debian:bullseye-slim
 
-RUN mkdir -p /app/build/
-
-COPY --from=builder /tmp/app/build/ /app/build/
+COPY --from=builder /tmp/app/build/hotapp /app/hotapp
 COPY --from=builder /tmp/app/public/ /app/public/
-COPY --from=builder /tmp/app/node_modules/ /app/node_modules/
 COPY --from=builder /tmp/app/HotSite.json /app/HotSite.json
-COPY --from=builder /tmp/app/package.json /app/package.json
-COPY --from=builder /tmp/app/package-lock.json /app/package-lock.json
-COPY ./docker/${HOTSITE_NAME}/app/start.sh /app/start.sh
+COPY ./docker/${HOTSITE_NAME}/app/start-pkg.sh /app/start.sh
 
 RUN chmod 500 /app/start.sh
 
-RUN npm install -g hotstaq@${HOTSTAQ_VERSION}
-
 ${DOCKERFILE_PORTS}
 
-RUN npm -g uninstall npm && \
-	apk --purge del apk-tools
-
-ARG NODEJS_START_ARGS=""
-ENV NODEJS_START_ARGS=${NODEJS_START_ARGS}
+RUN apt clean autoclean && \
+	apt autoremove -y && \
+	rm -Rf /var/lib/{apt,dpkg,cache,log}/ && \
+	rm -Rf /var/lib/apt/lists/*
 
 ARG HOT_RUN_ARGS=""
 ENV HOT_RUN_ARGS=${HOT_RUN_ARGS}

@@ -18,324 +18,12 @@ import { HotTester } from "./HotTester";
 import { HotTesterAPI } from "./HotTesterAPI";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotTestDestination, HotTestMap } from "./HotTestMap";
-import { ServableFileExtension } from "./HotHTTPServer";
+
+import { HotSite, HotSiteRoute } from "./HotSite";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
 var HotTestSeleniumDriver: any = null;
-
-/**
- * A map path for testing.
- */
-export interface HotSiteMapPath
-{
-	/**
-	 * If set to true, this will start automatically when tests start.
-	 * The default is true.
-	 */
-	autoStart?: boolean;
-	/**
-	 * The path to the 
-	 */
-	path?: string;
-}
-
-/**
- * A route used in a HotSite.
- */
-export interface HotSiteRoute
-{
-	/**
-	 * The name of the route. Will appear in the title.
-	 */
-	name: string;
-	/**
-	 * The url to the file to load.
-	 */
-	url: string;
-	/**
-	 * The name of the API to interface with.
-	 */
-	api?: string;
-	/**
-	 * The order in which destinations are supposed to execute. This is 
-	 * ignored if the destinations are an array.
-	 */
-	destinationOrder?: string[];
-	/**
-	 * The HotTesterMap to use. This can be the name of an 
-	 * existing one attached to the selected tester, or 
-	 * can be an array of destinations that will be used to 
-	 * create a new map.
-	 */
-	map?: string | string[] | { [name: string]: string | HotSiteMapPath; } | HotSiteMapPath[];
-}
-
-/**
- * A HotSite to load. This SHOULD NOT contain any private secret keys, passwords, 
- * or database connection information related to the server. As such, future 
- * versions of the HotSite interface should not contain any database related 
- * connection info.
- */
-export interface HotSite
-{
-	/**
-	 * The name of this HotSite.
-	 */
-	name: string;
-	/**
-	 * The version of this HotSite.
-	 */
-	version?: string;
-	/**
-	 * The description of this HotSite.
-	 */
-	description?: string;
-	/**
-	 * The path to the current HotSite. This is filled in during parsing.
-	 */
-	hotsitePath?: string;
-	/**
-	 * Additional web server configuration.
-	 */
-	server?: {
-			/**
-			 * The default name for a served Hott file.
-			 */
-			name?: string;
-			/**
-			 * If set to true, this will serve ALL files, including potentially secret files.
-			 */
-			serveSecretFiles?: boolean;
-			/**
-			 * Serve the following file extensions when requested.
-			 */
-			serveFileExtensions?: (string | ServableFileExtension)[];
-			/**
-			 * The name of the API to interface with across all pages.
-			 */
-			globalApi?: string;
-			/**
-			 * The base url for the server.
-			 */
-			url?: string;
-			/**
-			 * The JavaScript source path.
-			 */
-			jsSrcPath?: string;
-			/**
-			 * The ports to use.
-			 */
-			ports?: {
-					/**
-					 * The web HTTP port to serve on.
-					 */
-					http?: number;
-					/**
-					 * The web HTTPS port to serve on.
-					 */
-					https?: number;
-					/**
-					 * If set to true, this will redirect from HTTP to HTTPS for a web and web-api server.
-					 */
-					redirectHTTPtoHTTPS?: boolean;
-					/**
-					 * The api HTTP port to serve on.
-					 */
-					apiHttp?: number;
-					/**
-					 * The api HTTPS port to serve on.
-					 */
-					apiHttps?: number;
-					/**
-					 * If set to true, this will redirect from HTTP to HTTPS for an api server.
-					 */
-					apiRedirectHTTPtoHTTPS?: boolean;
-				};
-			/**
-			 * The list of directory to serve to the client from the server.
-			 */
-			serveDirectories?: {
-					/**
-					 * The web route to take.
-					 */
-					route: string;
-					/**
-					 * The local filesystem path to serve pages from.
-					 */
-					localPath: string;
-				}[];
-			/**
-			 * How to handle errors.
-			 */
-			errors?: {
-				/**
-				 * On a 404, serve a local file.
-				 */
-				on404?: string;
-				/**
-				 * On an error other than a 404, serve a local file.
-				 */
-				onOther?: string;
-			};
-		};
-	/**
-	 * Testing related functionality.
-	 */
-	testing?: {
-			web?: {
-				/**
-				 * The tester class to use. EX: HotTesterMochaSelenium
-				 */
-				tester?: string;
-				/**
-				 * The name of the tester to use.
-				 */
-				testerName?: string;
-				/**
-				 * If set to true, this will create a new tester.
-				 * Default Value: true
-				 */
-				createNewTester?: boolean;
-				/**
-				 * The url that connects to the tester api server.
-				 */
-				testerAPIUrl?: string;
-				/**
-				 * The name of the test driver to use.
-				 */
-				driver?: string;
-				/**
-				 * The number of milliseconds to wait before executing the next command.
-				 * Default is set to 20.
-				 */
-				commandDelay?: number;
-				/**
-				 * The url to the html that loads the hott files.
-				 */
-				launchpadUrl?: string;
-				/**
-				 * The maps to test in order.
-				 */
-				maps?: string[];
-			},
-			api?: {
-				/**
-				 * The tester class to use. EX: HotTesterMocha
-				 */
-				tester?: string;
-				/**
-				 * The name of the tester to use.
-				 */
-				testerName?: string;
-				/**
-				 * If set to true, this will create a new tester.
-				 * Default Value: true
-				 */
-				createNewTester?: boolean;
-				/**
-				 * The url that connects to the tester api server.
-				 */
-				testerAPIUrl?: string;
-				/**
-				 * The name of the test driver to use.
-				 */
-				driver?: string;
-				/**
-				 * The url to the html that loads the hott files.
-				 */
-				launchpadUrl?: string;
-				/**
-				 * The maps to test in order.
-				 */
-				maps?: string[];
-			}
-		};
-	/**
-	 * The routes to load.
-	 */
-	routes?: {
-			[routeName: string]: HotSiteRoute;
-		};
-	/**
-	 * The available APIs on the server. The server must already have these 
-	 * loaded.
-	 */
-	apis?: {
-			[name: string]: {
-					/**
-					 * The JS API file to load.
-					 */
-					jsapi?: string;
-					/**
-					 * The exported JS library name to use.
-					 */
-					libraryName?: string;
-					/**
-					 * The name of the api to use.
-					 */
-					apiName?: string;
-					/**
-					 * The port to use.
-					 */
-					port?: number;
-					/**
-					 * The public base url for the api.
-					 */
-					url?: string;
-					/**
-					 * The server-side filepath for the api.
-					 */
-					filepath?: string;
-					/**
-					 * The maps to test in order.
-					 */
-					map?: string[];
-				};
-		};
-	/**
-	 * Public keys that are embedded into the page.
-	 */
-	publicKeys?: {
-			[name: string]: string | {
-					/**
-					 * The key of an API secret to pass to the site to 
-					 * be used publicly.
-					 */
-					passSecretFromAPI?: string;
-					/**
-					 * Get the public secret from an environment variable.
-					 */
-					env?: string;
-				};
-		};
-	/**
-	 * The components to load and register.
-	 */
-	components?: {
-			[name: string]: {
-					/**
-					 * The url to the component to load and register.
-					 */
-					url: string;
-				};
-		};
-	/**
-	 * The files to load and save in memory.
-	 */
-	files?: {
-			[name: string]: {
-					/**
-					 * The url to the file to load.
-					 */
-					url: string;
-				};
-		};
-	/**
-	 * If set to true, this will disable loading files into memory.
-	 */
-	disableFileLoading?: boolean;
-}
 
 /**
  * The options to use when starting a page.
@@ -432,7 +120,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.6.8";
+	static version: string = "0.6.92";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -593,7 +281,7 @@ export class HotStaq implements IHotStaq
 </body>
 
 </html>`;
-		this.logger = new HotLog (HotLogLevel.None);
+		this.logger = new HotLog (HotLogLevel.All);
 		this.publicKeys = {};
 		this.testers = {};
 	}
@@ -622,15 +310,6 @@ export class HotStaq implements IHotStaq
 
 		if (value === "nah")
 			return (false);
-
-		try
-		{
-			if (parseInt (value) != 0)
-				return (true);
-		}
-		catch (ex)
-		{
-		}
 
 		return (false);
 	}
@@ -2215,64 +1894,64 @@ export class HotStaq implements IHotStaq
 	 */
 	static async useOutput (output: string): Promise<void>
 	{
-			let parser = new DOMParser ();
-			let child = parser.parseFromString (output, "text/html");
-			let htmlObj: HTMLHtmlElement = document.getElementsByTagName('html')[0];
+		let parser = new DOMParser ();
+		let child = parser.parseFromString (output, "text/html");
+		let htmlObj: HTMLHtmlElement = document.getElementsByTagName('html')[0];
 
-			htmlObj.innerHTML = child.getElementsByTagName('html')[0].innerHTML;
+		htmlObj.innerHTML = child.getElementsByTagName('html')[0].innerHTML;
 
-			// Thanks to newfurniturey at: 
-			// https://stackoverflow.com/questions/22945884/domparser-appending-script-tags-to-head-body-but-not-executing
-			let tmpScripts = document.getElementsByTagName('script');
-			if (tmpScripts.length > 0) {
-				// push all of the document's script tags into an array
-				// (to prevent dom manipulation while iterating over dom nodes)
-				let scripts: HTMLScriptElement[] = [];
-				for (let i = 0; i < tmpScripts.length; i++) {
-					scripts.push(tmpScripts[i]);
-				}
-
-				// iterate over all script tags and create duplicate tags for each
-				for (let i = 0; i < scripts.length; i++) {
-					let s: HTMLScriptElement = document.createElement('script');
-
-					// add the new node to the page
-					scripts[i].parentNode.appendChild(s);
-
-					// remove the original (non-executing) node from the page
-					scripts[i].parentNode.removeChild(scripts[i]);
-
-					await new Promise<void> ((resolve2, reject2) =>
-						{
-							s.onload = () =>
-								{
-									resolve2 ();
-								};
-
-							let hasSrc: boolean = false;
-
-							if (scripts[i].getAttribute ("src") != null)
-							{
-								if (scripts[i].getAttribute ("src") !== "")
-								{
-									s.setAttribute ("src", scripts[i].getAttribute ("src"));
-									hasSrc = true;
-								}
-							}
-
-							if (scripts[i].getAttribute ("type") != null)
-							{
-								if (scripts[i].getAttribute ("type") !== "")
-									s.setAttribute ("type", scripts[i].getAttribute ("type"));
-							}
-
-							s.innerHTML = scripts[i].innerHTML;
-
-							if (hasSrc === false)
-								resolve2 ();
-						});
-				}
+		// Thanks to newfurniturey at: 
+		// https://stackoverflow.com/questions/22945884/domparser-appending-script-tags-to-head-body-but-not-executing
+		let tmpScripts = document.getElementsByTagName('script');
+		if (tmpScripts.length > 0) {
+			// push all of the document's script tags into an array
+			// (to prevent dom manipulation while iterating over dom nodes)
+			let scripts: HTMLScriptElement[] = [];
+			for (let i = 0; i < tmpScripts.length; i++) {
+				scripts.push(tmpScripts[i]);
 			}
+
+			// iterate over all script tags and create duplicate tags for each
+			for (let i = 0; i < scripts.length; i++) {
+				let s: HTMLScriptElement = document.createElement('script');
+
+				// add the new node to the page
+				scripts[i].parentNode.appendChild(s);
+
+				// remove the original (non-executing) node from the page
+				scripts[i].parentNode.removeChild(scripts[i]);
+
+				await new Promise<void> ((resolve2, reject2) =>
+					{
+						s.onload = () =>
+							{
+								resolve2 ();
+							};
+
+						let hasSrc: boolean = false;
+
+						if (scripts[i].getAttribute ("src") != null)
+						{
+							if (scripts[i].getAttribute ("src") !== "")
+							{
+								s.setAttribute ("src", scripts[i].getAttribute ("src"));
+								hasSrc = true;
+							}
+						}
+
+						if (scripts[i].getAttribute ("type") != null)
+						{
+							if (scripts[i].getAttribute ("type") !== "")
+								s.setAttribute ("type", scripts[i].getAttribute ("type"));
+						}
+
+						s.innerHTML = scripts[i].innerHTML;
+
+						if (hasSrc === false)
+							resolve2 ();
+					});
+			}
+		}
 	}
 
 	/**

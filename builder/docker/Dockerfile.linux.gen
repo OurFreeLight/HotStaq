@@ -1,17 +1,18 @@
-FROM node:16.15.0-alpine3.15 AS builder
+FROM node:16-bullseye AS builder
 
-ARG HOTSTAQ_VERSION="latest"
+ARG HOTSTAQ_VERSION
 
 # Install build dependencies
-RUN apk update && \
-	apk add git && \
-	npm install -g typescript hotstaq@${HOTSTAQ_VERSION} && \
+RUN apt update && apt upgrade -y && \
+	apt install -y git && \
+	npm install -g typescript@4.9.4 hotstaq@${HOTSTAQ_VERSION} && \
 	mkdir -p /tmp/app
 
 COPY ./package.json /tmp/app/package.json
 COPY ./package-lock.json /tmp/app/package-lock.json
 
 RUN cd /tmp/app && \
+	npm install hotstaq@${HOTSTAQ_VERSION} && \
 	npm install
 
 COPY . /tmp/app
@@ -20,10 +21,11 @@ RUN cd /tmp/app && \
 	npm run build && \
 	npm run build-web
 
-FROM node:16.15.0-alpine3.15
+FROM node:16-bullseye-slim
 
-RUN mkdir -p /app/build/ && \
-	apk add curl
+RUN apt update && apt upgrade -y
+
+RUN mkdir -p /app/build/
 
 COPY --from=builder /tmp/app/build/ /app/build/
 COPY --from=builder /tmp/app/public/ /app/public/

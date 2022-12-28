@@ -1,10 +1,17 @@
 ## Docker Getting Started
-To execute the container run:
+Make sure to have [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
+
+First the docker image must be built. To do this, enter:
+```console
+./build.sh
+```
+
+Once the image has been built, you can execute the containers by running:
 ```console
 ./start.sh
 ```
 
-To stop it enter:
+To stop the container enter:
 ```console
 ./stop.sh
 ```

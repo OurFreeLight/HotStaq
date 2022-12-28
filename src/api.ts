@@ -1,7 +1,7 @@
-import { start } from "./cli";
+import { HotCLI } from "./HotCLI";
 
-import { HotStaq, HotStartOptions, IHotStaq, 
-	HotSite, HotSiteRoute, HotSiteMapPath } from "./HotStaq";
+import { HotStaq, HotStartOptions, IHotStaq } from "./HotStaq";
+import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
 import { Hot, DeveloperMode } from "./Hot";
 import { HotComponent, IHotComponent } from "./HotComponent";
 import { HotFile } from "./HotFile";
@@ -47,7 +47,7 @@ import { InfluxSchema } from "./schemas/influx/InfluxSchema";
 HotStaq.isWeb = false;
 
 export {
-		start,
+		HotCLI,
 		HotStaq, 
 		HotStartOptions, 
 		IHotStaq,

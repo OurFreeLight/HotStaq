@@ -13,7 +13,17 @@ import { HotDBSchema } from "./schemas/HotDBSchema";
  * The API to load.
  */
 export type APItoLoad = {
+	/**
+	 * The imported class to load.
+	 */
+	importedAPIClass: any;
+	/**
+	 * The exported class name to import and instantiate.
+	 */
 	exportedClassName: string;
+	/**
+	 * The path to the HotAPI class to load.
+	 */
 	path: string;
  };
 

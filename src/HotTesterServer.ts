@@ -530,7 +530,7 @@ export class HotTesterServer extends HotServer
 	static async startServer (baseUrl: string = `http://127.0.0.1:8182`, 
 		httpPort: number = 8182, httpsPort: number = 4142, 
 		processor: HotServer | HotStaq = null, 
-		logLevel: HotLogLevel = HotLogLevel.Info): 
+		logLevel: HotLogLevel = HotLogLevel.All): 
 			Promise<{ processor: HotServer | HotStaq; server: HotTesterServer; }>
 	{
 		if (processor == null)

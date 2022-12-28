@@ -101,6 +101,12 @@ You can configure how HotStaq starts by using:
 	* Default: 10
 	* Accepted values:
 		* Any integer.
+* JSON_LIMIT
+	* Type: string
+	* Description: The maximum amount of JSON that can be uploaded.
+	* Default: 1mb
+	* Accepted values:
+		* Any string.
 * LOGGING_LEVEL
 	* Type: string
 	* Description: The logging level to use.

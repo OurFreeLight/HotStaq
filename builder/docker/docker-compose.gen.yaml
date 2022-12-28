@@ -2,41 +2,47 @@ version: "3.8"
 services:
   ${HOTSITE_NAME}:
     image: ${NAMESPACE}/${HOTSITE_NAME}:latest
+    depends_on:
+      ${HOTSITE_NAME}-api:
+        condition: service_healthy
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", "curl", "http://127.0.0.1:80"]
+      test: ["CMD", ${APP_CMDS} "healthcheck", "--dont-output-result", "http://127.0.0.1:${HTTP_PORT}"]
       retries: 10
       timeout: 10s
-    ${DOCKER_COMPOSE_APP_PORTS}
+    ports:
+      - "${HTTP_PORT}:${HTTP_PORT}"
     environment:
       SERVER_TYPE: web
-    deploy:
-      replicas: 1
+      LOG_LEVEL: all
+      HTTP_PORT: ${HTTP_PORT}
 
   ${HOTSITE_NAME}-api:
     image: ${NAMESPACE}/${HOTSITE_NAME}-api:latest
+    depends_on:
+      ${HOTSITE_NAME}-database:
+        condition: service_healthy
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", "curl", "http://127.0.0.1:80"]
+      test: ["CMD", ${APP_CMDS} "healthcheck", "--dont-output-result", "http://127.0.0.1:${API_HTTP_PORT}"]
       retries: 10
       timeout: 10s
-    depends_on:
-      - ${HOTSITE_NAME}-database
-    ${DOCKER_COMPOSE_APP_API_PORTS}
+    ports:
+      - "${API_HTTP_PORT}:${API_HTTP_PORT}"
     environment:
       SERVER_TYPE: api
+      LOG_LEVEL: all
+      HTTP_PORT: ${API_HTTP_PORT}
       DATABASE_SERVER: " ${HOTSITE_NAME}-database"
       DATABASE_PORT: "3306"
       DATABASE_USERNAME: "${DATABASE_USERNAME}"
       DATABASE_PASSWORD: "${DATABASE_PASSWORD}"
       DATABASE_SCHEMA: "${DATABASE_SCHEMA}"
-    deploy:
-      replicas: 1
 
   ${HOTSITE_NAME}-database:
-    image: mariadb:10.6
+    image: mariadb:10.10
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
@@ -50,11 +56,9 @@ services:
       MYSQL_DATABASE: "${DATABASE_USERNAME}"
       MYSQL_USER: "${DATABASE_PASSWORD}"
       MYSQL_PASSWORD: "${DATABASE_SCHEMA}"
-    deploy:
-      replicas: 1
 
 volumes:
   ${HOTSITE_NAME}-database-volume:
 
-network:
+networks:
   ${HOTSITE_NAME}-network:

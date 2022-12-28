@@ -135,6 +135,7 @@ export class Common
 						let path: string = tempapi.filepath;
 	
 						let apiToLoad: APItoLoad = {
+								importedAPIClass: null,
 								exportedClassName: tempapi.apiName,
 								path: path
 							};

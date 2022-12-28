@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.6.8",
+  "version": "0.6.92",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -15,7 +15,7 @@
     "prepublishOnly": "npm run builddoc && npm run build && npm run buildweb && npm run version-check",
     "builddoc": "typedoc --theme markdown --tsconfig ./tsconfig.json --entryPoints './src/api.ts' --readme README.md --out ./docs/ ./src",
     "build": "tsc --build ./tsconfig.json",
-    "buildweb": "webpack --mode=production && npm_config_yes=true npx google-closure-compiler --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",
+    "buildweb": "webpack --mode=production && npm_config_yes=true npx google-closure-compiler@latest --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",
     "buildwebdebug": "webpack --mode=development && webpack --mode=development --config=webpack.config.tests.cjs",
     "build-test-api": "hotstaq --hotsite ./tests/hotsite/HotSite.json generate"
   },

@@ -1,6 +1,6 @@
 import { HotTestElement } from "./HotTestElement";
 import { HotTestDriver } from "./HotTestDriver";
-import { HotSiteMapPath } from "./HotStaq";
+import { HotSiteMapPath } from "./HotSite";
 
 /**
  * Create a test path for later execution.

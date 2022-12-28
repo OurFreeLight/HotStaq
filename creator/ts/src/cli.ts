@@ -1,3 +1,7 @@
-import { start } from "hotstaq";
+import { HotCLI } from "hotstaq";
 
-start (process.argv);
+let cli: HotCLI = new HotCLI ();
+cli.setup (process.argv).then (async () =>
+    {
+        await cli.start ();
+    });

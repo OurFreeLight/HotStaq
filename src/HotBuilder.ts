@@ -1,7 +1,8 @@
 import * as ppath from "path";
 import { HotIO } from "./HotIO";
 
-import { HotStaq, HotSite } from "./HotStaq";
+import { HotStaq } from "./HotStaq";
+import { HotSite } from "./HotSite";
 import { HotLog } from "./HotLog";
 
 /**
@@ -19,6 +20,10 @@ export class HotBuilder
 	 */
 	api: boolean;
 	/**
+	 * The version of HotStaq to use.
+	 */
+	hotstaqVersion: string;
+	/**
 	 * The namespace to use when building the dockerfiles.
 	 */
 	dockerNamespace: string;
@@ -35,10 +40,6 @@ export class HotBuilder
 	 */
 	appendReadMe: boolean;
 	/**
-	 * Will build the Docker compose file.
-	 */
-	dockerCompose: boolean;
-	/**
 	 * Will build a Kubernetes Helm Chart.
 	 */
 	helmChart: boolean;
@@ -54,11 +55,11 @@ export class HotBuilder
 	constructor (logger: HotLog)
 	{
 		this.api = true;
+		this.hotstaqVersion = "";
 		this.dockerNamespace = "ourfreelight";
 		this.dockerFiles = true;
 		this.dockerHardenSecurity = true;
 		this.appendReadMe = true;
-		this.dockerCompose = false;
 		this.helmChart = false;
 		this.hotsites = [];
 		this.logger = logger;
@@ -72,6 +73,14 @@ export class HotBuilder
 	 */
 	async build (): Promise<void>
 	{
+		let hotPackageJSONStr: string = await HotIO.readTextFile (ppath.normalize (`${__dirname}/../../package.json`));
+		let hotPackageJSONObj = JSON.parse (hotPackageJSONStr);
+
+		if (this.hotstaqVersion === "")
+			this.hotstaqVersion = hotPackageJSONObj.version;
+
+		this.logger.info (`Generating using HotStaq version: ${this.hotstaqVersion}`);
+
 		if (this.api === true)
 		{
 			this.logger.info ("Building web API...");
@@ -86,21 +95,17 @@ export class HotBuilder
 			this.logger.info ("Building docker files...");
 
 			const dockerDir: string = ppath.normalize (`${__dirname}/../../builder/docker`);
-			let dockerFileContent: string = "";
-			const startFileContent: string = await HotIO.readTextFile (
-						ppath.normalize (`${dockerDir}/app/start.sh`));
+			let dockerFilePath: string = "";
 
 			if (this.dockerHardenSecurity === true)
 			{
 				this.logger.info (`Hardening Dockerfile...`);
-				dockerFileContent = await HotIO.readTextFile (
-					ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`));
+				dockerFilePath = ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`);
 			}
 			else
 			{
 				this.logger.info (`NOT hardening Dockerfile...`);
-				dockerFileContent = await HotIO.readTextFile (
-					ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`));
+				dockerFilePath = ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`);
 			}
 
 			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
@@ -116,39 +121,12 @@ export class HotBuilder
 
 				const hotsiteName: string = hotsite.name;
 				let outputDir: string = ppath.normalize (`${this.outputDir}/`);
-				let newDockerfileContent: string = dockerFileContent;
-				let newStartFileContent: string = startFileContent;
 				let dockerfilePortsStr: string = "";
-				let dockercomposeAppPortsStr: string = "";
-				let dockercomposeAppAPIPortsStr: string = "";
 				let httpPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "http"]);
 				let httpsPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "https"]);
+				let httpApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttp"]);
+				let httpsApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttps"]);
 				let hotsitePath: string = `/app/${hotsiteName}/HotSite.json`;
-
-				/**
-				 * Replace any keywords in a string.
-				 */
-				let replaceKeywords = (str: string): string =>
-					{
-						str = str.replace (/\$\{NAMESPACE\}/g, this.dockerNamespace);
-						str = str.replace (/\$\{HOTSITE_NAME\}/g, hotsiteName);
-						str = str.replace (/\$\{DOCKERFILE_PORTS\}/g, dockerfilePortsStr);
-						str = str.replace (/\$\{DOCKER_COMPOSE_APP_PORTS\}/g, dockercomposeAppPortsStr);
-						str = str.replace (/\$\{DOCKER_COMPOSE_APP_API_PORTS\}/g, dockercomposeAppAPIPortsStr);
-						str = str.replace (/\$\{HOTSITE_PATH\}/g, hotsitePath);
-
-						return (str);
-					};
-				/**
-				 * Replace any keywords in a file.
-				 */
-				let replaceKeywordsInFile = async (filepath: string): Promise<void> =>
-					{
-						const filepathnormalized: string = ppath.normalize (filepath);
-						let fileContent: string = await HotIO.readTextFile (filepathnormalized);
-						fileContent = replaceKeywords (fileContent);
-						await HotIO.writeTextFile (filepathnormalized, fileContent);
-					};
 
 				await HotIO.mkdir (`${outputDir}/docker/${hotsiteName}/app/`);
 
@@ -157,9 +135,6 @@ export class HotBuilder
 					dockerfilePortsStr += `ARG HTTP_PORT=${httpPort}
 ENV HTTP_PORT \${HTTP_PORT}
 EXPOSE \${HTTP_PORT}`;
-					dockercomposeAppPortsStr += `
-    ports:
-      - "${httpPort}:${httpPort}"`;
 				}
 
 				if (httpsPort != null)
@@ -167,36 +142,53 @@ EXPOSE \${HTTP_PORT}`;
 					dockerfilePortsStr += `ARG HTTPS_PORT=${httpsPort}
 ENV HTTPS_PORT \${HTTPS_PORT}
 EXPOSE \${HTTPS_PORT}`;
-					dockercomposeAppPortsStr += `
-					- "${httpsPort}:${httpsPort}"`;
 				}
 
 				if (dockerfilePortsStr === "")
 				{
-					dockerfilePortsStr += `ARG HTTP_PORT=80
+					httpPort = 5000;
+					dockerfilePortsStr += `ARG HTTP_PORT=5000
 ENV HTTP_PORT \${HTTP_PORT}
 EXPOSE \${HTTP_PORT}`;
-					dockercomposeAppPortsStr += `
-ports:
-- "80:80"`;
 				}
 
-				newDockerfileContent = replaceKeywords (newDockerfileContent);
-				newStartFileContent = replaceKeywords (newStartFileContent);
+				if (httpApiPort == null)
+					httpApiPort = 5001;
 
-				await HotIO.writeTextFile (`${outputDir}/docker/${hotsiteName}/Dockerfile`, newDockerfileContent);
+				let appCmds: string = `"/app/hotapp",`;
+
+				if (this.dockerHardenSecurity === false)
+					appCmds = `"node", "./build/cli.js",`;
+
+				let replaceKeys = {
+						APP_CMDS: appCmds,
+						NAMESPACE: this.dockerNamespace,
+						HOTSITE_NAME: hotsiteName,
+						REAL_HOTSTAQ_VERSION: this.hotstaqVersion,
+						DOCKERFILE_PORTS: dockerfilePortsStr,
+						HTTP_PORT: httpPort.toString (),
+						API_HTTP_PORT: httpApiPort.toString (),
+						HOTSITE_PATH: hotsitePath
+					};
+
+				await HotIO.copyFile (dockerFilePath, `${outputDir}/docker/${hotsiteName}/Dockerfile`);
+				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/Dockerfile`, replaceKeys);
 				await HotIO.copyFiles (`${dockerDir}/scripts/`, `${outputDir}/`);
-				await HotIO.writeTextFile (`${outputDir}/docker/${hotsiteName}/app/start.sh`, newStartFileContent);
-				await HotIO.writeTextFile (`${outputDir}/start-app.sh`, 
-					await HotIO.readTextFile (ppath.normalize (`${outputDir}/start-app.sh`)));
+				await HotIO.copyFiles (`${dockerDir}/app/`, `${outputDir}/docker/${hotsiteName}/app/`);
 				await HotIO.copyFile (`${dockerDir}/dockerignore`, `${outputDir}/.dockerignore`);
+				await HotIO.copyFile (`${dockerDir}/docker-compose.gen.yaml`, `${outputDir}/docker-compose.yaml`);
+				await HotIO.copyFile (`${dockerDir}/env-skeleton`, `${outputDir}/env-skeleton`);
 
-				await replaceKeywordsInFile (`${outputDir}/build.bat`);
-				await replaceKeywordsInFile (`${outputDir}/build.sh`);
-				await replaceKeywordsInFile (`${outputDir}/start-app.bat`);
-				await replaceKeywordsInFile (`${outputDir}/start-app.sh`);
-				await replaceKeywordsInFile (`${outputDir}/stop-app.bat`);
-				await replaceKeywordsInFile (`${outputDir}/stop-app.sh`);
+				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/app/start.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/app/start-pkg.sh`, replaceKeys);
+
+				await this.replaceKeysInFile (`${outputDir}/docker-compose.yaml`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/build.bat`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/build.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/start.bat`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/start.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/stop.bat`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/stop.sh`, replaceKeys);
 
 				if (await HotIO.exists (`${outputDir}/README.md`) === true)
 				{
@@ -213,26 +205,22 @@ ports:
 
 			this.logger.info ("Finished building docker files...");
 		}
+	}
 
-		if (this.dockerCompose === true)
+	/**
+	 * Replace keys in a file.
+	 */
+	protected async replaceKeysInFile (filepath: string, keys: { [name: string]: string; }): Promise<void>
+	{
+		let contents: string = await HotIO.readTextFile (filepath);
+
+		for (let key in keys)
 		{
-			this.logger.info ("Building Docker Compose files...");
+			let value: string = keys[key];
 
-			const dockerDir: string = ppath.normalize (`${__dirname}/../../builder/docker-compose`);
-			const dockerFileContent: string = await HotIO.readTextFile (
-						ppath.normalize (`${dockerDir}/docker-compose.gen.yaml`));
-			const startFileContent: string = await HotIO.readTextFile (
-						ppath.normalize (`${dockerDir}/app/start.sh`));
-
-			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
-			{
-				const hotsite: HotSite = this.hotsites[iIdx];
-
-				this.logger.info ("Building Docker Compose files...");
-				this.logger.info (`Finished building Docker Compose  "${hotsite.name}"...`);
-			}
-
-			this.logger.info ("Finished building Docker Compose files...");
+			contents = HotStaq.replaceKey (contents, key, value);
 		}
+
+		await HotIO.writeTextFile (filepath, contents);
 	}
 }

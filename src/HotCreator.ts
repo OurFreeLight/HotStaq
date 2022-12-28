@@ -1,9 +1,9 @@
 import * as ppath from "path";
 
 import { HotIO } from "./HotIO";
-import { HotStaq, HotSite } from "./HotStaq";
+import { HotStaq } from "./HotStaq";
+import { HotSite } from "./HotSite";
 import { HotLog } from "./HotLog";
-import { isObject } from "util";
 
 /**
  * Creates stuff for the CLI.
@@ -21,6 +21,10 @@ export class HotCreator
 	 * * api
 	 */
 	type: string;
+	/**
+	 * The version of HotStaq to use.
+	 */
+	hotstaqVersion: string;
 	/**
 	 * The language to use when creating. Default is "ts". Can be:
 	 * * ts
@@ -88,6 +92,7 @@ export class HotCreator
 	constructor (logger: HotLog, name: string = "")
 	{
 		this.name = name;
+		this.hotstaqVersion = "";
 		this.type = "web-api";
 		this.language = "ts";
 		this.outputDir = "";
@@ -149,7 +154,11 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 
 		let hotPackageJSONStr: string = await HotIO.readTextFile (ppath.normalize (`${__dirname}/../../package.json`));
 		let hotPackageJSONObj = JSON.parse (hotPackageJSONStr);
-		let hotstaqVersion: string = hotPackageJSONObj.version;
+
+		if (this.hotstaqVersion === "")
+			this.hotstaqVersion = `^${hotPackageJSONObj.version}`;
+
+		this.logger.info (`Generating using NPM HotStaq version: ${this.hotstaqVersion}`);
 
 		let packageJSON: any = {
 				"name": this.name,
@@ -161,9 +170,14 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				"keywords": [],
 				"author": "",
 				"license": "ISC",
+				"pkg": {
+					"scripts": [
+						"node_modules/selenium-webdriver/**/*.js"
+					]
+				},
 				"dependencies": {
 					"dotenv": "^10.0.0",
-					"hotstaq": `^${hotstaqVersion}`
+					"hotstaq": `${this.hotstaqVersion}`
 				},
 				"devDependencies": {
 					"@types/express": "^4.17.13",
@@ -254,7 +268,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			{
 				hotSiteJSON.apis = {};
 				hotSiteJSON.apis["AppAPI"] = {
-						"jsapi": `./js/${this.name}.js`,
+						"jsapi": `./js/${this.name}Web_AppAPI.js`,
 						"libraryName": `${this.name}Web`,
 						"apiName": "AppAPI",
 						"filepath": "./build/AppAPI.js"
@@ -467,7 +481,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.generateAPI}`);
 			await HotStaq.wait (1000); /// @fixme Remove this temp hack...
 			await HotIO.copyFile (ppath.normalize (`${this.outputDir}/build-web/${this.name}Web_AppAPI.js`), 
-				ppath.normalize (`${this.outputDir}/public/js/${this.name}.js`));
+				ppath.normalize (`${this.outputDir}/public/js/${this.name}Web_AppAPI.js`));
 		}
 
 		this.logger.info (`Finished generating API JavaScript...`);

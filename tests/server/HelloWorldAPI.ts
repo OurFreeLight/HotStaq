@@ -101,6 +101,12 @@ export class HelloWorldAPI extends HotAPI
 		{
 			if (jsonObj.message != null)
 				message = (<string>jsonObj.message).toLowerCase ();
+
+			if (jsonObj.throwError != null)
+			{
+				if (jsonObj.throwError === "34598has98ehw3794")
+					throw new Error (`Error has been thrown!`);
+			}
 		}
 
 		if ((message === "hi") || (message === "hello"))

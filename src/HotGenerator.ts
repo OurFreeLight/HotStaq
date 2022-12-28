@@ -4,7 +4,8 @@ import YAML from "yaml";
 
 import { HotIO } from "./HotIO";
 
-import { HotStaq, HotSite } from "./HotStaq";
+import { HotStaq } from "./HotStaq";
+import { HotSite } from "./HotSite";
 import { HotLog } from "./HotLog";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { APItoLoad, HotAPI } from "./HotAPI";
@@ -113,7 +114,6 @@ export class HotGenerator
 
 		server.type = HotServerType.Generate;
 
-		process.chdir (process.cwd ());
 		let foundModulePath = require.resolve (loadedAPI.path, { paths: [process.cwd ()] });
 		let apiJS = require (foundModulePath);
 		let apiClass: any = apiJS[loadedAPI.exportedClassName];

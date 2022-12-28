@@ -73,6 +73,12 @@ describe ("Server Tests", () =>
 
 				expect (result).to.equal ("Hello!");
 			});
+		it ("should call the HelloWorldAPI forcing it to throw an exception", async () =>
+			{
+				let result: any = await api.makeCall ("/v1/hello_world/hello", { throwError: "34598has98ehw3794" });
+
+				expect (result.error).to.equal ("Error has been thrown!");
+			});
 		it ("should upload a file to HelloWorldAPI and delete it", async () =>
 			{
 				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
