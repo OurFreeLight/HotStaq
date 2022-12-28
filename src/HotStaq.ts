@@ -120,7 +120,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.6.92";
+	static version: string = "0.6.93";
 	/**
 	 * Indicates if this is a web build.
 	 */
