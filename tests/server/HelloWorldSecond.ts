@@ -1,5 +1,6 @@
 import { HelloWorldAPI } from "./HelloWorldAPI";
 import { HotRoute } from "../../src/HotRoute";
+import { ServerRequest } from "../../src/HotRouteMethod";
 
 /**
  * Hello World Second the route.
@@ -57,14 +58,14 @@ export class HelloWorldSecond extends HotRoute
 	/**
 	 * This executes a response saying Hello from the server side.
 	 */
-	async complicatedHello (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async complicatedHello (req: ServerRequest): Promise<any>
 	{
 		let message: string = "";
 
-		if (jsonObj != null)
+		if (req.jsonObj != null)
 		{
-			if (jsonObj.message != null)
-				message = (<string>jsonObj.message).toLowerCase ();
+			if (req.jsonObj.message != null)
+				message = (<string>req.jsonObj.message).toLowerCase ();
 		}
 
 		if ((message === "hi") || (message === "hello"))

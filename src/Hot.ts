@@ -6,6 +6,7 @@ import { HotTestElement } from "./HotTestElement";
 
 import Cookies from "js-cookie";
 import fetch from "node-fetch";
+import { HotEventMethod } from "./HotRouteMethod";
 
 /**
  * The available developer modes.
@@ -207,7 +208,7 @@ export class Hot
 	 * Make an api call.
 	 */
 	static async apiCall (route: string, data: any = null, 
-		httpMethod: string = "POST", 
+		httpMethod: HotEventMethod = HotEventMethod.POST, 
 		files: { [name: string]: any } = {}): Promise<any>
 	{
 		let result: any = null;
@@ -239,7 +240,7 @@ export class Hot
 	 * 
 	 * @returns The parsed JSON object.
 	 */
-	static async jsonRequest (url: string, data: any = null, httpMethod: string = "POST"): Promise<any>
+	static async jsonRequest (url: string, data: any = null, httpMethod: HotEventMethod = HotEventMethod.POST): Promise<any>
 	{
 		try
 		{
@@ -251,7 +252,7 @@ export class Hot
 					}
 			}
 
-			if (httpMethod === "POST")
+			if (httpMethod === HotEventMethod.POST)
 			{
 				/// @ts-ignore
 				fetchObj["body"] = JSON.stringify (data);

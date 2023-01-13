@@ -2,6 +2,8 @@ node_modules/
 db/
 !creator/
 
+static/
+
 .npmrc
 
 docs/

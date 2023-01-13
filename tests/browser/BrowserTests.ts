@@ -23,9 +23,7 @@ describe ("Browser Tests", () =>
 			});
 		after (async () =>
 			{
-				await common.driver.quit ();
 				await common.shutdown ();
-				await common.driver.sleep (1000);
 			});
 
 		it ("should load the Hello World html", async () =>

@@ -1,7 +1,13 @@
 # HotStaq
-HotStaq is a frontend/backend app framework that plays nicely with DevOps.
+<p align = "center">
+	<img src = "https://www.hotstaq.com/img/hotstaq-logo.png" />
+</p>
 
-More specifically, it's a client-side HTML preprocessor, with a design similar to that of PHP. Tech stacks have grown in size significantly over the years, and it can be hard for small teams to efficiently utilize all the different tech stacks properly. HotStaq helps reduce the headache of maintaining all the various tech while ensuring the application's security and quality.
+[![CircleCI](https://circleci.com/gh/OurFreeLight/HotStaq.svg?style=shield)](https://app.circleci.com/pipelines/github/OurFreeLight/HotStaq)
+
+HotStaq is a frontend/backend web framework that plays nicely with DevOps.
+
+More specifically, it's a client-side HTML preprocessor, with a feel similar to that of PHP. Tech stacks have grown in size significantly over the years, and it can be hard for small teams to efficiently utilize all the different tech stacks properly. HotStaq helps reduce the headache of maintaining all the various tech while ensuring the application's security and quality.
 
 Developers can quickly create their frontend and backends securely while adding their unit tests along the way in code During development, HotStaq developers know they can generate Dockerfiles to easily deploy their application to Kubernetes or Docker Swarm.
 
@@ -101,6 +107,12 @@ You can configure how HotStaq starts by using:
 	* Default: 10
 	* Accepted values:
 		* Any integer.
+* JSON_LIMIT
+	* Type: string
+	* Description: The maximum amount of JSON that can be uploaded.
+	* Default: 1mb
+	* Accepted values:
+		* Any string.
 * LOGGING_LEVEL
 	* Type: string
 	* Description: The logging level to use.

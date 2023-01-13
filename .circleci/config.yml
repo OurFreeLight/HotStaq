@@ -1,12 +1,12 @@
 version: 2.1
 
 orbs:
-  browser-tools: circleci/browser-tools@1.4.0
+  browser-tools: circleci/browser-tools@1.4.1
 
 jobs:
   test:
     docker:
-      - image: cimg/node:lts-browsers
+      - image: cimg/node:16.18-browsers
     steps:
       - checkout
       - setup_remote_docker
@@ -72,11 +72,6 @@ jobs:
           command: |
             export $(cat .env | xargs)
             mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
-      - run:
-          name: "Test: CLI"
-          command: |
-            export $(cat .env | xargs)
-            mocha --timeout 5000 --colors ./build/tests/cli/**/*.js
       - run:
           name: "Test: Create"
           command: |

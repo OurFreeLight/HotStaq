@@ -4,16 +4,28 @@ import FormData from "form-data";
 import { HotServer } from "./HotServer";
 import { HotRoute } from "./HotRoute";
 import { HotClient } from "./HotClient";
-import { HotRouteMethod, ServerAuthorizationFunction } from "./HotRouteMethod";
+import { HotEventMethod, HotRouteMethod, ServerAuthorizationFunction } from "./HotRouteMethod";
 import { HotDB } from "./HotDB";
 
 import { HotDBSchema } from "./schemas/HotDBSchema";
+import { HotWebSocketServer } from "./HotWebSocketServer";
+import { HotHTTPServer } from "./HotHTTPServer";
 
 /**
  * The API to load.
  */
 export type APItoLoad = {
+	/**
+	 * The imported class to load.
+	 */
+	importedAPIClass: any;
+	/**
+	 * The exported class name to import and instantiate.
+	 */
 	exportedClassName: string;
+	/**
+	 * The path to the HotAPI class to load.
+	 */
 	path: string;
  };
 
@@ -58,7 +70,7 @@ export abstract class HotAPI
 	 */
 	db: HotDB;
 	/**
-	 * The authorization credentials to use throughout the application. If using 
+	 * The authorization credentials the client uses throughout the application. If using 
 	 * basic authentication for HTTP requests, be sure to override the 
 	 * `toAuthorizationHeaderString` in this object.
 	 * 
@@ -94,8 +106,11 @@ export abstract class HotAPI
 	 */
 	onPostRegister: () => Promise<boolean>;
 
-	constructor (baseUrl: string, connection: HotServer | HotClient = null, db: HotDB = null)
+	constructor (baseUrl: string, connection: HotServer | HotClient, db: HotDB = null)
 	{
+		if (connection == null)
+			throw new Error (`No server attached to api with baseUrl: ${baseUrl}`);
+
 		this.connection = connection;
 		this.description = "";
 		this.baseUrl = baseUrl;
@@ -146,35 +161,46 @@ export abstract class HotAPI
 	}
 
 	/**
-	 * Add a route. If this.createFunctions is set to true, this will take the incoming 
+	 * Add a route. If this.createFunctions is set to true (which is default), this will take the incoming 
 	 * route and create an object in this HotAPI object using the name of the route. If there's 
 	 * any HotRouteMethods inside of the incoming HotRoute, it will create the methods 
 	 * and attach them to the newly created HotRoute object.
 	 * 
-	 * Example:
-	 * ```
-	 * export class Users extends HotRoute
+	 * @example
+	 * ```ts
+	 * import { HotAPI, HotRoute } from "hotstaq";
+	 * 
+	 * class AppAPI extends HotAPI
 	 * {
-	 * 		constructor (api: FreeLightAPI)
+	 * 		constructor (baseUrl: string, connection: HotServer | HotClient = null, db: any = null)
 	 * 		{
-	 * 			super (api.connection, "user");
+	 * 			super(baseUrl, connection, db);
 	 * 
-	 * 			this.addMethod ("create", this._create, HTTPMethod.POST);
+	 * 			// Creates the route http://127.0.0.1:8080/v1/hello_world/
+	 * 			this.addRoute (new ExampleRoute (this));
 	 * 		}
+	 * }
 	 * 
-	 * 		protected async _create (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	 * class ExampleRoute extends HotRoute
+	 * {
+	 * 		constructor (api: AppAPI)
 	 * 		{
-	 * 			return (true);
+	 * 			super (api.connection, "hello_world");
+	 * 
+	 * 			// Creates the HTTP GET endpoint: http://127.0.0.1:8080/v1/hello_world/hi
+	 * 			// When this endpoint is accessed, the JSON response will return "hello"
+	 * 			this.addMethod ("hi", async () =>
+	 * 			{
+	 * 				return ("hello");
+	 * 			});
 	 * 		}
 	 * }
 	 * ```
 	 * 
-	 * This in turn could be used like so:
+	 * In the client browser, this would be used like so:
 	 * ```
-	 * Hot.API.user.create ({});
+	 * await Hot.API.hello_world.hi ();
 	 * ```
-	 * 
-	 * Additionally it would create the endpoint: ```http://127.0.0.1:8080/v1/user/create```
 	 * 
 	 * @param route The route to add. Can be either a full HotRoute object, or just 
 	 * the route's name. If a HotRoute object is supplied, the rest of the parameters 
@@ -360,12 +386,12 @@ export abstract class HotAPI
 	/**
 	 * Make a call to the API.
 	 */
-	async makeCall (route: string, data: any, httpMethod: string = "POST", 
+	async makeCall (route: string, data: any, httpMethod: HotEventMethod = HotEventMethod.POST, 
 		files: { [name: string]: any } = {}): Promise<any>
 	{
 		let url: string = this.baseUrl;
 
-		httpMethod = httpMethod.toUpperCase ();
+		const httpMethodStr: string = httpMethod.toUpperCase ();
 
 		if (url[(url.length - 1)] === "/")
 			url = url.substr (0, (url.length - 1));
@@ -379,7 +405,7 @@ export abstract class HotAPI
 
 		if (numFiles > 0)
 		{
-			if (httpMethod !== "POST")
+			if (httpMethodStr !== "POST")
 				throw new Error (`To upload files, you must set the httpMethod to POST.`);
 
 			const formData: FormData = new FormData ();
@@ -417,8 +443,8 @@ export abstract class HotAPI
 					}
 			};
 
-		if ((httpMethod !== "GET") && 
-			(httpMethod !== "HEAD"))
+		if ((httpMethodStr !== "GET") && 
+			(httpMethodStr !== "HEAD"))
 		{
 			fetchObj["body"] = JSON.stringify (data);
 		}

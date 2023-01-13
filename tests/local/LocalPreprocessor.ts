@@ -62,6 +62,39 @@ describe ("Local Preprocessor Tests", () =>
 				processor = new HotStaq ();
 			});
 
+		it ("should test HotStaq.parseBoolean", async () =>
+			{
+				let trues: string[] = ["true", "yes", "yep"];
+				let falses: string[] = ["false", "no", "nah"];
+
+				for (let iIdx = 0; iIdx < trues.length; iIdx++)
+					expect (HotStaq.parseBoolean (trues[iIdx])).to.equal (true);
+
+				for (let iIdx = 0; iIdx < falses.length; iIdx++)
+					expect (HotStaq.parseBoolean (falses[iIdx])).to.equal (false);
+			});
+		it ("should test HotStaq.getParam", async () =>
+			{
+				let obj = {
+						"testParameter": "abc"
+					};
+
+				expect (HotStaq.getParam ("testParameter", obj)).to.equal ("abc");
+				expect (HotStaq.getParam ("missingParameter", obj, true, false)).to.equal (undefined);
+			});
+		it ("should test HotStaq.getParamDefault", async () =>
+			{
+				let obj = {
+						"testParameter": "abc"
+					};
+
+				expect (HotStaq.getParamDefault ("testParameter", obj, "peep")).to.equal ("abc");
+				expect (HotStaq.getParamDefault ("missingParameter", obj, "peep")).to.equal ("peep");
+			});
+		it ("should test HotStaq.checkHotSiteName", async () =>
+			{
+				expect (HotStaq.checkHotSiteName ("test-hotsite-name")).to.equal (true);
+			});
 		it ("should add a page and load the file", async () =>
 			{
 				let file: HotFile = new HotFile ({

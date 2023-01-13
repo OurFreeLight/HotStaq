@@ -4,12 +4,13 @@ import YAML from "yaml";
 
 import { HotIO } from "./HotIO";
 
-import { HotStaq, HotSite } from "./HotStaq";
+import { HotStaq } from "./HotStaq";
+import { HotSite } from "./HotSite";
 import { HotLog } from "./HotLog";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { APItoLoad, HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotRouteMethodParameter, HTTPMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotRouteMethodParameter, HotEventMethod } from "./HotRouteMethod";
 import { HotServerType } from "./HotServer";
 
 /**
@@ -113,7 +114,6 @@ export class HotGenerator
 
 		server.type = HotServerType.Generate;
 
-		process.chdir (process.cwd ());
 		let foundModulePath = require.resolve (loadedAPI.path, { paths: [process.cwd ()] });
 		let apiJS = require (foundModulePath);
 		let apiClass: any = apiJS[loadedAPI.exportedClassName];
@@ -247,13 +247,13 @@ export class HotGenerator
 						let methodName: string = method.name;
 						let methodType: string = "post";
 			
-						if (method.type === HTTPMethod.GET)
+						if (method.type === HotEventMethod.GET)
 							methodType = "get";
 			
-						if (method.type === HTTPMethod.POST)
+						if (method.type === HotEventMethod.POST)
 							methodType = "post";
 			
-						if (method.type === HTTPMethod.FILE_UPLOAD)
+						if (method.type === HotEventMethod.FILE_UPLOAD)
 							methodType = "post";
 
 						apiFileContent += this.getAPIContent (this.generateType, "class_function", 
@@ -898,7 +898,7 @@ class ${data.routeName}
 			let uploadFileBegin: string = "";
 			let uploadFileEnd: string = "";
 
-			if (method.type === HTTPMethod.FILE_UPLOAD)
+			if (method.type === HotEventMethod.FILE_UPLOAD)
 			{
 				uploadFileBegin = `
 				let uploadHeaders = {

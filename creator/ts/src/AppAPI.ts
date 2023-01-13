@@ -1,6 +1,4 @@
-import { HotAPI, HotServer, HotClient, HotRoute, 
-	HotRouteMethod, MySQLSchema, 
-	ServerAuthorizationFunction, HotStaq } from "hotstaq";
+import { HotAPI, HotServer, HotClient } from "hotstaq";
 import { HelloWorld } from "./HelloWorld";
 
 /**

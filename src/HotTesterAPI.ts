@@ -5,7 +5,7 @@ import { HotServer } from "./HotServer";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotTester } from "./HotTester";
 import { HotTestMap, HotTestPath, HotTestPage } from "./HotTestMap";
-import { HTTPMethod } from "./HotRouteMethod";
+import { HotEventMethod, ServerRequest } from "./HotRouteMethod";
 
 export class HotTesterAPI extends HotAPI
 {
@@ -67,7 +67,7 @@ export class HotTesterAPI extends HotAPI
 			});
 		route.addMethod ({
 				"name": "heartbeat",
-				"type": HTTPMethod.GET,
+				"type": HotEventMethod.GET,
 				"onServerExecute": this.heartbeat,
 				"returns": "Returns true as an acknowledgement."
 			});
@@ -77,7 +77,7 @@ export class HotTesterAPI extends HotAPI
 	/**
 	 * This is called when the page has finished loading in development mode.
 	 */
-	async pageLoaded (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async pageLoaded (request: ServerRequest): Promise<any>
 	{
 		let testerObj: {
 				testerName: string;
@@ -86,11 +86,11 @@ export class HotTesterAPI extends HotAPI
 				testElements: any;
 				testPathsStrs: any;
 			} = {
-				testerName: jsonObj["testerName"],
-				testerMap: jsonObj["testerMap"],
-				pageName: jsonObj["pageName"],
-				testElements: jsonObj["testElements"],
-				testPathsStrs: jsonObj["testPaths"]
+				testerName: request.jsonObj["testerName"],
+				testerMap: request.jsonObj["testerMap"],
+				pageName: request.jsonObj["pageName"],
+				testElements: request.jsonObj["testElements"],
+				testPathsStrs: request.jsonObj["testPaths"]
 			};
 
 		for (let key in testerObj)
@@ -155,10 +155,10 @@ export class HotTesterAPI extends HotAPI
 	/**
 	 * Execute the tests for a page.
 	 */
-	async executeTests (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async executeTests (req: ServerRequest): Promise<any>
 	{
-		let testerName: string = jsonObj["testerName"];
-		let testerMap: string = jsonObj["testerMap"];
+		let testerName: string = req.jsonObj["testerName"];
+		let testerMap: string = req.jsonObj["testerMap"];
 
 		if ((testerName == null) || (testerMap == null))
 			throw new Error ("TesterAPI: Not all required json objects were passed.");
@@ -181,7 +181,7 @@ export class HotTesterAPI extends HotAPI
 	/**
 	 * Responds with true to heartbeat requests.
 	 */
-	async heartbeat (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async heartbeat (req: ServerRequest): Promise<any>
 	{
 		return (true);
 	}

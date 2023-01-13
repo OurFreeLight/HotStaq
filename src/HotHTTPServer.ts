@@ -11,9 +11,10 @@ import { Fields, Files, IncomingForm, Options } from "formidable";
 import { HotServer } from "./HotServer";
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HTTPMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
 import { processRequest } from "./HotHTTPServerProcessRequest";
 import { HotIO } from "./HotIO";
+import { HotWebSocketServer } from "./HotWebSocketServer";
 
 var Worker: any = null;
 
@@ -90,6 +91,14 @@ export class HotHTTPServer extends HotServer
 	 */
 	httpsListener: https.Server;
 	/**
+	 * If set to true, the websocket server will be started.
+	 */
+	useWebsocketServer: boolean;
+	/**
+	 * The websocket server to use.
+	 */
+	websocketServer: HotWebSocketServer;
+	/**
 	 * The static files and folders to serve.
 	 */
 	staticRoutes: StaticRoute[];
@@ -102,7 +111,7 @@ export class HotHTTPServer extends HotServer
 			/**
 			 * The type of route.
 			 */
-			type: HTTPMethod;
+			type: HotEventMethod;
 			/**
 			 * The type of route.
 			 */
@@ -179,6 +188,8 @@ export class HotHTTPServer extends HotServer
 		this.expressApp = express ();
 		this.httpListener = null;
 		this.httpsListener = null;
+		this.useWebsocketServer = false;
+		this.websocketServer = null;
 		this.staticRoutes = [{
 				"localPath": process.cwd (),
 				"route": "/"
@@ -276,18 +287,21 @@ export class HotHTTPServer extends HotServer
 	/**
 	 * Get the method name to be used with Express.
 	 */
-	static getExpressMethodName (methodType: HTTPMethod): string
+	static getExpressMethodName (methodType: HotEventMethod): string
 	{
 		let expressMethod: string = "post";
 
-		if (methodType === HTTPMethod.GET)
+		if (methodType === HotEventMethod.GET)
 			expressMethod = "get";
 
-		if (methodType === HTTPMethod.POST)
+		if (methodType === HotEventMethod.POST)
 			expressMethod = "post";
 
-		if (methodType === HTTPMethod.FILE_UPLOAD)
+		if (methodType === HotEventMethod.FILE_UPLOAD)
 			expressMethod = "post";
+
+		if (methodType === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+			expressMethod = "ws_client_pub_event";
 
 		return (expressMethod);
 	}
@@ -326,8 +340,9 @@ export class HotHTTPServer extends HotServer
 	/**
 	 * Add a route. This will be registered before any APIs are registered.
 	 */
-	addRoute (route: string, method: (req: express.Request, res: express.Response) => Promise<void>, 
-				type: HTTPMethod = HTTPMethod.GET): void
+	addRoute (route: string, 
+		method: (req: express.Request, res: express.Response) => Promise<void>, 
+		type: HotEventMethod = HotEventMethod.GET): void
 	{
 		let newRoute = {
 				type: type,
@@ -446,6 +461,17 @@ export class HotHTTPServer extends HotServer
 						continue;
 				}
 
+				if (method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+				{
+					if (this.useWebsocketServer === true)
+					{
+						this.websocketServer.addRoute (route, method);
+						method.isRegistered = true;
+					}
+
+					continue;
+				}
+
 				let methodName: string = "/";
 
 				if (route.version !== "")
@@ -460,7 +486,7 @@ export class HotHTTPServer extends HotServer
 				methodName += method.name;
 				method.isRegistered = true;
 
-				this.logger.verbose (`Adding route ${method.type} ${methodName}`);
+				this.logger.verbose (`Adding HTTP route ${method.type} ${methodName}`);
 
 				const expressType: string = HotHTTPServer.getExpressMethodName (method.type);
 
@@ -491,15 +517,6 @@ export class HotHTTPServer extends HotServer
 
 								try
 								{
-									/**
-									 * 
-											"logger": this.logger,
-											"route": route,
-											"method": method,
-											"methodName": methodName,
-											"req": req,
-											"res": res
-									 */
 									let worker = new Worker (`${__dirname}/HotHTTPServerThread.js`, {
 											"workerData": {
 													"logger": this.logger,
@@ -1022,6 +1039,9 @@ export class HotHTTPServer extends HotServer
 					if (this.useWorkerThreads === true)
 						Worker = require ("node:worker_threads").Worker;
 
+					if (this.useWebsocketServer === true)
+						this.websocketServer = new HotWebSocketServer (this);
+
 					let completedSetup = () =>
 						{
 							let protocol: string = "http";
@@ -1172,6 +1192,9 @@ export class HotHTTPServer extends HotServer
 							}, this.expressApp);
 						this.httpsListener.listen (this.ports.https, this.listenAddress, completedSetup);
 					}
+
+					if (this.useWebsocketServer === true)
+						this.websocketServer.setup ();
 				}
 				catch (ex)
 				{
@@ -1249,18 +1272,54 @@ export class HotHTTPServer extends HotServer
 	async shutdown (): Promise<void>
 	{
 		this.logger.verbose (`Shutting down HTTP server...`);
-		await new Promise<void> ((resolve, reject) =>
+		await new Promise<void> (async (resolve, reject) =>
 			{
-				this.httpListener.close ((err: Error) =>
-					{
-						this.expressApp = null;
+				let promises: Promise<void>[] = [];
 
-						if (err != null)
-							throw err;
+				if (this.websocketServer != null)
+					promises.push (this.websocketServer.stop ());
 
-						this.logger.verbose (`HTTP server has shut down.`);
-						resolve ();
-					});
+				if (this.httpListener != null)
+				{
+					promises.push (new Promise<void> ((resolve2, reject) =>
+						{
+							this.httpListener.close ((err: NodeJS.ErrnoException) =>
+								{
+									this.expressApp = null;
+
+									if (err != null)
+									{
+										if (err.code !== "ERR_SERVER_NOT_RUNNING")
+											throw err;
+									}
+
+									this.logger.verbose (`HTTP server has shut down.`);
+									resolve2 ();
+								});
+						}));
+				}
+
+				if (this.httpsListener != null)
+				{
+					promises.push (new Promise<void> ((resolve2, reject) =>
+						{
+							this.httpsListener.close ((err: Error) =>
+								{
+									this.expressApp = null;
+
+									if (err != null)
+										throw err;
+
+									this.logger.verbose (`HTTPS server has shut down.`);
+									resolve2 ();
+								});
+						}));
+				}
+
+				await Promise.all (promises);
+
+				this.logger.verbose (`All servers have shut down.`);
+				resolve ();
 			});
 	}
 }
