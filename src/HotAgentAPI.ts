@@ -2,6 +2,7 @@ import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
 import { HotClient } from "./HotClient";
 import { HotAgentRoute } from "./HotAgentRoute";
+import { ServerRequest } from "./HotRouteMethod";
 
 /**
  * The App's API and routes.
@@ -29,10 +30,10 @@ export class HotAgentAPI extends HotAPI
         this.secret = "";
         this.commands = {};
 
-        this.userAuth = async (req: any, res: any, jsonObj: any, queryObj: any): Promise<any> =>
+        this.userAuth = async (req: ServerRequest): Promise<any> =>
             {
-                const apiKey: string = jsonObj["key"];
-                const apiSecret: string = jsonObj["secret"];
+                const apiKey: string = req.jsonObj["key"];
+                const apiSecret: string = req.jsonObj["secret"];
 
                 if ((apiKey !== this.key) && (apiSecret !== this.secret))
                     throw new Error ("Incorrect API key or secret!");

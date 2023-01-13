@@ -29,6 +29,7 @@ describe ("API Testing Tests", () =>
 				processor.mode = DeveloperMode.Development;
 
 				common = new Common (processor);
+				await common.setupServer ();
 				await common.startServer ();
 
 				let testMap: HotTestMap = new HotTestMap (["api:hello_world -> test_response -> TestAPIResponse -> test_response -> TestAPIResponseAgain"]);

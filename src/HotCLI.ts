@@ -1675,6 +1675,14 @@ export class HotCLI
 	}
 
 	/**
+	 * Add an existing API thats already been imported.
+	 */
+	addAPI (exportedClassName: string, importedClass: any): void
+	{
+		this.apis[exportedClassName] = { importedAPIClass: importedClass, exportedClassName: exportedClassName, path: "" };
+	}
+
+	/**
 	 * Start the CLI app.
 	 */
 	async start (): Promise<void>

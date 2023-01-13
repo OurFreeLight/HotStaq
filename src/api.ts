@@ -12,7 +12,7 @@ import { HotIO } from "./HotIO";
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HTTPMethod, ServerAuthorizationFunction, ServerExecutionFunction } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerAuthorizationFunction, ServerExecutionFunction, ServerRequest, IServerRequest } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotClient } from "./HotClient";
@@ -70,9 +70,11 @@ export {
 		ConnectionStatus,
 		HotRoute,
 		HotRouteMethod,
-		HTTPMethod,
+		HotEventMethod,
 		ServerAuthorizationFunction,
 		ServerExecutionFunction,
+		IServerRequest,
+		ServerRequest,
 		HotServer,
 		HotServerType,
 		HotHTTPServer,

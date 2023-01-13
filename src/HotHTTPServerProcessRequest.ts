@@ -4,12 +4,11 @@ import { v4 as uuidv4 } from "uuid";
 import * as ppath from "path";
 
 import { HotLog } from "./HotLog";
-import { HotRouteMethod } from "./HotRouteMethod";
+import { HotRouteMethod, ServerRequest } from "./HotRouteMethod";
 import { HotRoute } from "./HotRoute";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
 import { EventExecutionType } from "./HotAPI";
-import { HotServer } from "./HotServer";
 
 export async function processRequest (server: HotHTTPServer, logger: HotLog, route: HotRoute, 
 	method: HotRouteMethod, methodName: string, 
@@ -34,8 +33,16 @@ export async function processRequest (server: HotHTTPServer, logger: HotLog, rou
 	{
 		try
 		{
-			authorizationValue = 
-				await method.onServerAuthorize.call (thisObj, req, res, jsonObj, queryObj);
+			let request = new ServerRequest ({
+				req: req,
+				res: res,
+				authorizedValue: authorizationValue,
+				jsonObj: jsonObj,
+				queryObj: queryObj,
+				files: null
+			});
+
+			authorizationValue = await method.onServerAuthorize.call (thisObj, request);
 		}
 		catch (ex)
 		{
@@ -54,7 +61,12 @@ export async function processRequest (server: HotHTTPServer, logger: HotLog, rou
 		{
 			try
 			{
-				authorizationValue = await route.onAuthorizeUser (req, res);
+				let request = new ServerRequest ({
+					req: req,
+					res: res
+				});
+
+				authorizationValue = await route.onAuthorizeUser (request);
 			}
 			catch (ex)
 			{
@@ -143,14 +155,24 @@ export async function processRequest (server: HotHTTPServer, logger: HotLog, rou
 
 			try
 			{
-				let files: any = {};
+				let files: any = null;
 
 				if (foundUploadId !== "")
+				{
+					files = {};
 					files = server.uploads[foundUploadId];
+				}
 
-				let result: any = 
-					await method.onServerExecute.call (
-						thisObj, req, res, authorizationValue, jsonObj, queryObj, files);
+				let request = new ServerRequest ({
+						req: req,
+						res: res,
+						authorizedValue: authorizationValue,
+						jsonObj: jsonObj,
+						queryObj: queryObj,
+						files: files
+					});
+
+				let result: any = await method.onServerExecute.call (thisObj, request);
 
 				logger.verbose (`${req.method} ${methodName}, Response: ${result}`);
 

@@ -1,6 +1,4 @@
-import { HotRoute, HTTPMethod, HotDBMySQL, MySQLSchema, MySQLResults, 
-	MySQLSchemaTable, MySQLSchemaField, ConnectionStatus, HotStaq, 
-	HotServer, HotRouteMethod, ServerAuthorizationFunction, HotTestDriver } from "hotstaq";
+import { HotRoute, ServerRequest, HotTestDriver } from "hotstaq";
 import { AppAPI } from "./AppAPI";
 
 /**
@@ -59,7 +57,7 @@ export class HelloWorld extends HotRoute
 	/**
 	 * Say hi.
 	 */
-	protected async _hi (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	protected async _hi (req: ServerRequest): Promise<any>
 	{
         return ("hello");
 	}
@@ -67,11 +65,11 @@ export class HelloWorld extends HotRoute
 	/**
 	 * Will echo whatever message the user sends.
 	 */
-	protected async _echo (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	protected async _echo (req: ServerRequest): Promise<any>
 	{
-		if (jsonObj.message == null)
+		if (req.jsonObj.message == null)
 			throw new Error ("No message received!");
 
-        return (jsonObj.message);
+        return (req.jsonObj.message);
 	}
 }

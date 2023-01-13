@@ -8,6 +8,7 @@ import { Builder, WebDriver, Session } from "selenium-webdriver";
 import Chrome from "selenium-webdriver/chrome";
 import { HotTesterServer } from "../../src/HotTesterServer";
 import { ServableFileExtension } from "../../src/HotHTTPServer";
+import { io, Socket } from "socket.io-client";
 
 /**
  * Common testing features
@@ -38,6 +39,10 @@ export class Common
 	 * The tester server.
 	 */
 	testerServer: HotTesterServer;
+	/**
+	 * The client websocket.
+	 */
+	socket: Socket;
 
 	constructor (processor: HotStaq = new HotStaq ())
 	{
@@ -47,6 +52,7 @@ export class Common
 		this.session = null;
 		this.server = null;
 		this.testerServer = null;
+		this.socket = null;
 	}
 
 	/**
@@ -111,9 +117,17 @@ export class Common
 	}
 
 	/**
+	 * Get the Websocket url for the server.
+	 */
+	getWSUrl (): string
+	{
+		return (`ws://127.0.0.1:${this.server.ports.http}`);
+	}
+
+	/**
 	 * Start the web server.
 	 */
-	async startServer (serveFileExtensions: ServableFileExtension[] = HotHTTPServer.getDefaultServableExtensions ()): Promise<void>
+	async setupServer (serveFileExtensions: ServableFileExtension[] = HotHTTPServer.getDefaultServableExtensions ()): Promise<HotHTTPServer>
 	{
 		this.server = new HotHTTPServer (this.processor);
 
@@ -133,6 +147,14 @@ export class Common
 			this.testerServer = serverStarter.server;
 		}
 
+		return (this.server);
+	}
+
+	/**
+	 * Start the web server.
+	 */
+	async startServer (): Promise<void>
+	{
 		return (await this.server.listen ());
 	}
 
@@ -149,5 +171,40 @@ export class Common
 
 		await this.server.shutdown ();
 		await HotStaq.wait (1000);
+	}
+
+	/**
+	 * Have a client connect to a websocket server.
+	 */
+	async clientConnectToWebSocket (auth: any): Promise<string>
+	{
+		const url: string = this.getWSUrl ();
+		this.socket = io (url, {
+				"auth": auth
+			});
+
+		return (await new Promise<string> ((resolve, reject) =>
+			{
+				this.socket.on ("connect", () =>
+					{
+						resolve ("connected");
+					});
+				this.socket.on ("connect_error", (data: any) =>
+					{
+						resolve (data.message);
+					});
+				this.socket.on ("error", (data: any) =>
+					{
+						resolve (data.error);
+					});
+			}));
+	}
+
+	/**
+	 * Disconnect the websocket server.
+	 */
+	disconnectFromWebSocket (): void
+	{
+		this.socket.close ();
 	}
 }

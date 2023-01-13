@@ -9,7 +9,7 @@ import { HotPage } from "./HotPage";
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HTTPMethod, ServerAuthorizationFunction, ServerExecutionFunction } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { HotClient } from "./HotClient";
 
@@ -36,7 +36,8 @@ module.exports["HotLogLevel"] = HotLogLevel;
 module.exports["HotPage"] = HotPage;
 module.exports["HotRoute"] = HotRoute;
 module.exports["HotRouteMethod"] = HotRouteMethod;
-module.exports["HTTPMethod"] = HTTPMethod;
+module.exports["HotEventMethod"] = HotEventMethod;
+module.exports["ServerRequest"] = ServerRequest;
 module.exports["HotServer"] = HotServer;
 module.exports["HotServerType"] = HotServerType;
 module.exports["HotClient"] = HotClient;

@@ -7,7 +7,7 @@ if [ "$SERVER_TYPE" == "api" ]; then
 fi
 
 # Start the application
-$(pwd)/hotapp run ${HOT_RUN_ARGS} \
+exec $(pwd)/hotapp run ${HOT_RUN_ARGS} \
     --hotsite $(pwd)/HotSite.json --server-type ${SERVER_TYPE} \
     --dont-load-apis-from-hotsite \
     --log-level ${LOG_LEVEL} --web-base-url "${BASE_URL}" \

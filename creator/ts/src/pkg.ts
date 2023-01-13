@@ -6,6 +6,6 @@ import { AppAPI } from "./AppAPI";
 let cli: HotCLI = new HotCLI ();
 cli.setup (process.argv).then (async () =>
     {
-        cli.apis["AppAPI"] = { importedAPIClass: AppAPI, exportedClassName: "AppAPI", path: "" };
+        cli.addAPI ("AppAPI", AppAPI);
         await cli.start ();
     });

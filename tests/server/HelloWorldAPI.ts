@@ -7,21 +7,12 @@ import { HotAPI } from "../../src/HotAPI";
 import { HotRoute } from "../../src/HotRoute";
 import { HotClient } from "../../src/HotClient";
 import { HotServer } from "../../src/HotServer";
+import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HotStaq } from "../../src/HotStaq";
 import { HotTestDriver } from "../../src/HotTestDriver";
-import { HTTPMethod } from "../../src/HotRouteMethod";
+import { HotEventMethod, ServerRequest } from "../../src/HotRouteMethod";
 
 import { HelloWorldSecond } from "./HelloWorldSecond";
-
-/// @fixme This weirdness is due to WebPack. Gotta find another way around this...
-var HotHTTPServer: any = null;
-
-// @ts-ignore
-if (typeof (HotStaqWeb) === "undefined")
-{
-	if (HotStaq.isWeb === false)
-		HotHTTPServer = require ("../../src/HotHTTPServer").HotHTTPServer;
-}
 
 export class HelloWorldAPI extends HotAPI
 {
@@ -29,10 +20,10 @@ export class HelloWorldAPI extends HotAPI
 	{
 		super(baseUrl, connection, db);
 
-		this.userAuth = async (req: any, res: any, jsonObj: any, queryObj: any): Promise<any> =>
+		this.userAuth = async (req: ServerRequest): Promise<any> =>
 			{
-				const apiKey: string = jsonObj["ApiKey"];
-				const apiSecret: string = jsonObj["ApiSecret"];
+				const apiKey: string = req.jsonObj["ApiKey"];
+				const apiSecret: string = req.jsonObj["ApiSecret"];
 
 				if ((apiKey === "kjs1he4w57h") && (apiSecret === "3u4j5n978sd"))
 				{
@@ -42,6 +33,13 @@ export class HelloWorldAPI extends HotAPI
 					throw new Error ("Incorrect API key or secret!");
 
 				return (undefined);
+			};
+		this.onPreRegister = async (): Promise<boolean> =>
+			{
+				if ((<HotHTTPServer>connection).useWebsocketServer === true)
+					(<HotHTTPServer>connection).websocketServer.onServerAuthorize = this.userAuth;
+
+				return (true);
 			};
 
 		let route: HotRoute = new HotRoute (connection, "hello_world");
@@ -59,13 +57,22 @@ export class HelloWorldAPI extends HotAPI
 				"testCases": {},
 				returns: "The server says Hello World!"
 			});
-		route.addMethod ("is_up", 
-			async (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any> =>
+		route.addMethod ("is_up", async (req: ServerRequest): Promise<any> =>
 			{
 				return (true);
-			}, HTTPMethod.GET);
-		route.addMethod ("file_upload", this.fileUpload, HTTPMethod.FILE_UPLOAD);
-		route.addMethod ("test_response", this.testResponse, HTTPMethod.POST, [
+			}, HotEventMethod.GET);
+		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
+		route.addMethod ("ws_hello_event", async (req: ServerRequest) =>
+			{
+				const message: string = (<string>req.jsonObj.message).toLowerCase ();
+
+				if ((message === "hi") || (message === "hello"))
+					return ("Hello!");
+
+				return ({ error: "You didn't say hi." });
+			}, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
+		route.addMethod ("ws_test_response", this.testResponse, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
+		route.addMethod ("test_response", this.testResponse, HotEventMethod.POST, [
 						"TestAPIResponse",
 						async (driver: HotTestDriver): Promise<any> =>
 						{
@@ -93,18 +100,18 @@ export class HelloWorldAPI extends HotAPI
 	/**
 	 * This executes a response saying Hello from the server side.
 	 */
-	async helloCalled (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async helloCalled (req: ServerRequest): Promise<any>
 	{
 		let message: string = "";
 
-		if (jsonObj != null)
+		if (req.jsonObj != null)
 		{
-			if (jsonObj.message != null)
-				message = (<string>jsonObj.message).toLowerCase ();
+			if (req.jsonObj.message != null)
+				message = (<string>req.jsonObj.message).toLowerCase ();
 
-			if (jsonObj.throwError != null)
+			if (req.jsonObj.throwError != null)
 			{
-				if (jsonObj.throwError === "34598has98ehw3794")
+				if (req.jsonObj.throwError === "34598has98ehw3794")
 					throw new Error (`Error has been thrown!`);
 			}
 		}
@@ -118,15 +125,14 @@ export class HelloWorldAPI extends HotAPI
 	/**
 	 * This accepts a file upload.
 	 */
-	async fileUpload (req: any, res: any, authorizedValue: any, 
-		jsonObj: any, queryObj: any, files: any): Promise<any>
+	async fileUpload (req: ServerRequest): Promise<any>
 	{
 		let filename: string = "";
 		let filepath: string = "";
 
-		for (let key in files)
+		for (let key in req.files)
 		{
-			let file = files[key];
+			let file = req.files[key];
 			filename = file.name;
 			filepath = file.path;
 
@@ -139,9 +145,9 @@ export class HelloWorldAPI extends HotAPI
 	/**
 	 * Test a response from the api.
 	 */
-	async testResponse (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	async testResponse (req: ServerRequest): Promise<any>
 	{
-		let message: string = jsonObj.message;
+		let message: string = req.jsonObj.message;
 
 		if (message !== "YAY!")
 			throw new Error ("You did not yay me bro.");

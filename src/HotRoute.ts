@@ -1,5 +1,6 @@
 import { HotServer } from "./HotServer";
-import { HotRouteMethod, HTTPMethod, IHotRouteMethod, ServerExecutionFunction, TestCaseFunction, TestCaseObject } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, IHotRouteMethod, 
+	ServerExecutionFunction, TestCaseFunction, TestCaseObject, ServerRequest } from "./HotRouteMethod";
 import { HotClient } from "./HotClient";
 import { HotLog } from "./HotLog";
 
@@ -88,7 +89,7 @@ export class HotRoute
 	addMethod (
 		method: HotRouteMethod | IHotRouteMethod | string,
 		executeFunction: ServerExecutionFunction = null,
-		type: HTTPMethod = HTTPMethod.POST,
+		type: HotEventMethod = HotEventMethod.POST,
 		testCases: (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null
 		): void
 	{
@@ -149,5 +150,5 @@ export class HotRoute
 	 * called HotRouteMethod. Undefined returning from here will mean 
 	 * the authorization failed.
 	 */
-	onAuthorizeUser: (req: any, res: any) => Promise<any> = null;
+	onAuthorizeUser: (req: ServerRequest) => Promise<any> = null;
 }

@@ -1,7 +1,6 @@
 import "mocha";
 import { expect, should } from "chai";
 import fetch from "node-fetch";
-import FormData from "form-data";
 
 import * as fs from "fs";
 import * as ppath from "path";
@@ -11,9 +10,8 @@ import { Common } from "./Common";
 import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HelloWorldAPI } from "./HelloWorldAPI";
-import { DeveloperMode } from "../../src/Hot";
 import { HotIO } from "../../src/HotIO";
-import { HotLogLevel } from "../../src/HotLog";
+import { HotEventMethod } from "../../src/HotRouteMethod";
 
 describe ("Server Tests", () =>
 	{
@@ -27,6 +25,7 @@ describe ("Server Tests", () =>
 			{
 				common = new Common ();
 
+				await common.setupServer ();
 				await common.startServer ();
 
 				processor = common.processor;
@@ -83,7 +82,7 @@ describe ("Server Tests", () =>
 			{
 				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
 
-				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload", {}, "POST", {
+				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload", {}, HotEventMethod.POST, {
 						"indexFileKey": HotIO.readFileStream (filepath)
 					});
 

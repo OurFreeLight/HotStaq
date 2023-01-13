@@ -8,7 +8,7 @@ import express from "express";
 import { HotServer } from "./HotServer";
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HTTPMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
 import { HotTesterAPI } from "./HotTesterAPI";
 import { DeveloperMode } from "./Hot";
 import { HotLogLevel } from "./HotLog";
@@ -42,7 +42,7 @@ export class HotTesterServer extends HotServer
 			/**
 			 * The type of route.
 			 */
-			type: HTTPMethod;
+			type: HotEventMethod;
 			/**
 			 * The type of route.
 			 */
@@ -176,7 +176,7 @@ export class HotTesterServer extends HotServer
 	 * Add a route. This will be registered before any APIs are registered.
 	 */
 	addRoute (route: string, method: (req: express.Request, res: express.Response) => Promise<void>, 
-				type: HTTPMethod = HTTPMethod.GET): void
+				type: HotEventMethod = HotEventMethod.GET): void
 	{
 		let newRoute = {
 				type: type,
@@ -253,8 +253,16 @@ export class HotTesterServer extends HotServer
 					{
 						try
 						{
-							authorizationValue = 
-								await method.onServerAuthorize.call (thisObj, req, res, jsonObj, queryObj);
+							let request = new ServerRequest ({
+									req: req,
+									res: res,
+									authorizedValue: null,
+									jsonObj: jsonObj,
+									queryObj: queryObj,
+									files: null
+								});
+
+							authorizationValue = await method.onServerAuthorize.call (thisObj, request);
 						}
 						catch (ex)
 						{
@@ -272,7 +280,7 @@ export class HotTesterServer extends HotServer
 					{
 						if (route.onAuthorizeUser != null)
 						{
-							authorizationValue = await route.onAuthorizeUser (req, res);
+							authorizationValue = await route.onAuthorizeUser (new ServerRequest ({ req: req, res: res }));
 
 							if (authorizationValue === undefined)
 								hasAuthorization = false;
@@ -287,9 +295,16 @@ export class HotTesterServer extends HotServer
 						{
 							try
 							{
-								let result: any = 
-									await method.onServerExecute.call (
-										thisObj, req, res, authorizationValue, jsonObj, queryObj);
+								let request = new ServerRequest ({
+									req: req,
+									res: res,
+									authorizedValue: null,
+									jsonObj: jsonObj,
+									queryObj: queryObj,
+									files: null
+								});
+
+								let result: any = await method.onServerExecute.call (thisObj, request);
 
 								this.logger.verbose (`${req.method} ${methodName}, Response: ${result}`);
 
@@ -555,7 +570,49 @@ export class HotTesterServer extends HotServer
 	 */
 	async shutdown (): Promise<void>
 	{
-		this.httpListener.close ();
-		this.expressApp = null;
+		this.logger.verbose (`Shutting down HTTP tester server...`);
+		await new Promise<void> (async (resolve, reject) =>
+			{
+				let promises: Promise<void>[] = [];
+
+				if (this.httpListener != null)
+				{
+					promises.push (new Promise<void> ((resolve2, reject) =>
+						{
+							this.httpListener.close ((err: Error) =>
+								{
+									this.expressApp = null;
+
+									if (err != null)
+										throw err;
+
+									this.logger.verbose (`HTTP tester server has shut down.`);
+									resolve2 ();
+								});
+						}));
+				}
+
+				if (this.httpsListener != null)
+				{
+					promises.push (new Promise<void> ((resolve2, reject) =>
+						{
+							this.httpsListener.close ((err: Error) =>
+								{
+									this.expressApp = null;
+
+									if (err != null)
+										throw err;
+
+									this.logger.verbose (`HTTPS tester server has shut down.`);
+									resolve2 ();
+								});
+						}));
+				}
+
+				await Promise.all (promises);
+
+				this.logger.verbose (`All tester servers have shut down.`);
+				resolve ();
+			});
 	}
 }

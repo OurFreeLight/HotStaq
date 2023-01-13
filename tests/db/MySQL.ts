@@ -56,13 +56,18 @@ describe ("Database - MySQL Tests", () =>
 			});
 		it ("should create a new table", async () =>
 			{
-				let results = await api.db.query ("create table testTable (id INT(5) NOT NULL UNIQUE AUTOINCREMENT, primary key(id));", []);
+				let results = await api.db.query (`
+					create table if not exists testTable (
+							id       INT(5)        NOT NULL UNIQUE AUTO_INCREMENT,
+							name     VARCHAR(255)  NOT NULL DEFAULT '',
+							primary key(id));
+					`, []);
 
 				expect (results.results, "Did not create a table!");
 
 				let tableExists: boolean = await api.db.tableCheck ("testTable");
 
-				expect (tableExists, "Did not create a table!");
+				expect (tableExists).to.equal (true, "Did not create a table!");
 			});
 		it ("should insert data into the table", async () =>
 			{
@@ -77,7 +82,6 @@ describe ("Database - MySQL Tests", () =>
 				let dbresults = results.results;
 
 				should ().equal (dbresults.name, "test1", "Did not select data from the table!");
-				should ().equal (dbresults.description, "", "Did not select data from the table!");
 			});
 		it ("should select data from an incorrect table", async () =>
 			{
@@ -91,7 +95,8 @@ describe ("Database - MySQL Tests", () =>
 
 				should ().equal (results.error, null, "Did not drop the table!");
 			});
-		it ("should recreate the testTable", async () =>
+		/// @todo Remove these tests and functionality. HotStaq should not maintain databases, etc.
+		/*it ("should recreate the testTable", async () =>
 			{
 				let schema: MySQLSchema = new MySQLSchema ("test");
 				schema.addTable (new MySQLSchemaTable ("freeUsers", [
@@ -153,5 +158,5 @@ describe ("Database - MySQL Tests", () =>
 
 				tableExists =  await api.db.tableCheck ("authHashes");
 				expect (tableExists, "Did not create a table!");
-			});
+			});*/
 	});

@@ -3,10 +3,12 @@ import { HotTestDriver } from "./HotTestDriver";
 import { HotRoute } from "./HotRoute";
 import { HotServer } from "./HotServer";
 
+import express from "express";
+
 /**
- * Available HTTP methods.
+ * The available event methods.
  */
-export enum HTTPMethod
+export enum HotEventMethod
 {
 	/**
 	 * A HTTP GET request.
@@ -19,7 +21,110 @@ export enum HTTPMethod
 	/**
 	 * This will upload a file, then post the json request afterwards.
 	 */
-	FILE_UPLOAD = "file_upload_then_post_json"
+	FILE_UPLOAD = "file_upload_then_post_json",
+	/**
+	 * A websocket event.
+	 */
+	WEBSOCKET_CLIENT_PUB_EVENT = "websocket_client_pub_event"
+}
+
+/**
+ * The request that came from a client.
+ */
+export interface IServerRequest
+{
+	/**
+	 * The express request received from the client. Will be set to null if using worker 
+	 * threads or if this request was received from a websocket connection.
+	 */
+	req?: express.Request;
+	/**
+	 * The express response to send to the client. Will be set to null if using worker 
+	 * threads or if this request was received from a websocket connection.
+	 */
+	res?: express.Response;
+	/**
+	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
+	 * Will be null if this request was received from a websocket connection.
+	 */
+	authorizedValue?: any;
+	/**
+	 * The JSON received from the client.
+	 */
+	jsonObj?: any;
+	/**
+	 * Any query variables received from the client. Will be null if this request was 
+	 * received from a websocket connection.
+	 */
+	queryObj?: any;
+	/**
+	 * Any files received from the client. Will be null if no files were sent.
+	 * Once a file is uploaded, you can access it at the temporary path found in: 
+	 * files[uploadId].path
+	 */
+	files?: {
+		[key: string]: {
+			name: string;
+			size: number;
+			path: string;
+		}
+	};
+}
+
+/**
+ * The request that came from a client.
+ */
+export class ServerRequest implements IServerRequest
+{
+	/**
+	 * The express request received from the client. Will be set to null if using worker 
+	 * threads or if this request was received from a websocket connection.
+	 */
+	req: express.Request;
+	/**
+	 * The express response to send to the client. Will be set to null if using worker 
+	 * threads or if this request was received from a websocket connection.
+	 */
+	res: express.Response;
+	/**
+	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
+	 * Will be null if this request was received from a websocket connection.
+	 */
+	authorizedValue: any;
+	/**
+	 * The JSON received from the client.
+	 */
+	jsonObj: any;
+	/**
+	 * Any query variables received from the client. Will be null if this request was 
+	 * received from a websocket connection.
+	 */
+	queryObj: any;
+	/**
+	 * Any files received from the client. Will be null if no files were sent.
+	 * Once a file is uploaded, you can access it at the temporary path found in: 
+	 * files[uploadId].path
+	 */
+	files: {
+		[key: string]: {
+			name: string;
+			size: number;
+			path: string;
+		}
+	};
+
+	constructor (obj: IServerRequest = null)
+	{
+		if (obj == null)
+			obj = {};
+
+		this.req = obj.req || null;
+		this.res = obj.res || null;
+		this.authorizedValue = obj.authorizedValue || null;
+		this.jsonObj = obj.jsonObj || null;
+		this.queryObj = obj.queryObj || null;
+		this.files = obj.files || null;
+	}
 }
 
 /**
@@ -30,8 +135,7 @@ export type ServerRegistrationFunction = () => Promise<boolean>;
 /**
  * A function that will be executed by the server.
  */
-export type ServerExecutionFunction = 
-	(req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any, files?: any) => Promise<any>;
+export type ServerExecutionFunction = (request: ServerRequest) => Promise<any>;
 /**
  * A function that will be executed by the client.
  */
@@ -43,7 +147,7 @@ export type ClientExecutionFunction = (...args: any[]) => Promise<any>;
  * to authenticate the user, so the ServerExecutionFunction will not be 
  * executed.
  */
-export type ServerAuthorizationFunction = (req: any, res: any, jsonObj: any, queryObj: any) => Promise<any>;
+export type ServerAuthorizationFunction = (request: ServerRequest) => Promise<any>;
 /**
  * The test case function to execute.
  */
@@ -121,7 +225,7 @@ export interface IHotRouteMethod
 	/**
 	 * The api call name.
 	 */
-	type?: HTTPMethod;
+	type?: HotEventMethod;
 	/**
 	 * The authorization credentials to be used by the client 
 	 * when connecting to the server.
@@ -155,6 +259,8 @@ export interface IHotRouteMethod
 	 * If any exceptions are thrown from this function, they will be sent 
 	 * to the server as an { error: string; } object with the exception 
 	 * message as the error.
+	 * 
+	 * Currently this has no effect when using websockets.
 	 */
 	onServerAuthorize?: ServerAuthorizationFunction;
 
@@ -203,7 +309,7 @@ export class HotRouteMethod implements IHotRouteMethod
 	/**
 	 * The api call name.
 	 */
-	type: HTTPMethod;
+	type: HotEventMethod;
 	/**
 	 * Has this method been registered with the server? This 
 	 * prevents the method from being reregistered.
@@ -242,10 +348,10 @@ export class HotRouteMethod implements IHotRouteMethod
 	/**
 	 * Executes when authorizing a called method. If this method 
 	 * is set, this will not call onAuthorize for the parent HotRoute.
-	 * The value returned from here will be passed to onExecute. 
+	 * The value returned from here will be passed to onServerExecute. 
 	 * Undefined returning from here will mean the authorization failed.
 	 * If any exceptions are thrown from this function, they will be sent 
-	 * to the server as an { error: string; } object with the exception 
+	 * to the client as an { error: string; } object with the exception 
 	 * message as the error.
 	 */
 	onServerAuthorize?: ServerAuthorizationFunction;
@@ -268,7 +374,7 @@ export class HotRouteMethod implements IHotRouteMethod
 
 	constructor (route: HotRoute | IHotRouteMethod, name: string = "", 
 		onExecute: ServerExecutionFunction | ClientExecutionFunction = null, 
-		type: HTTPMethod = HTTPMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
+		type: HotEventMethod = HotEventMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
 		onRegister: ServerRegistrationFunction = null, authCredentials: any = null, 
 		testCases: { [name: string]: TestCaseObject; } | (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null)
 	{

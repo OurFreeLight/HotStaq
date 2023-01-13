@@ -165,6 +165,6 @@ export class Common
 			this.driver.quit ();
 
 		await this.server.shutdown ();
-		await HotStaq.wait (1000);
+		await HotStaq.wait (1500);
 	}
 }

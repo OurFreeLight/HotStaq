@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.6.93",
+  "version": "0.7.0",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -43,6 +43,7 @@
     "mysql2": "^2.3.3",
     "node-fetch": "^2.6.7",
     "selenium-webdriver": "^4.4.0",
+    "socket.io": "^4.5.4",
     "uuid": "^8.3.2",
     "validate-npm-package-name": "^3.0.0",
     "yaml": "^1.10.2"
@@ -64,7 +65,8 @@
     "@typescript-eslint/parser": "^5.3.1",
     "eslint": "^8.2.0",
     "nyc": "^15.1.0",
-    "ts-loader": "^7.0.5",
+    "socket.io-client": "^4.5.4",
+    "ts-loader": "^9.4.2",
     "typedoc": "^0.22.10",
     "typedoc-plugin-markdown": "^3.11.3",
     "typescript": "^4.5.4",

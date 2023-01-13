@@ -1,6 +1,6 @@
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HTTPMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
 import { HotAgentAPI } from "./HotAgentAPI";
 
 import * as fs from "fs";
@@ -23,7 +23,7 @@ export class HotAgentRoute extends HotRoute
         this.thisApi = api;
 
 		this.addMethod (new HotRouteMethod (this, "execute", this.execute, 
-			HTTPMethod.POST, api.userAuth));
+			HotEventMethod.POST, api.userAuth));
 	}
 
 	/**

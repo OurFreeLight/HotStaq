@@ -1,5 +1,7 @@
 db/
 
+static/
+
 .env
 
 build/
