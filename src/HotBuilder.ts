@@ -126,7 +126,14 @@ export class HotBuilder
 				let httpsPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "https"]);
 				let httpApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttp"]);
 				let httpsApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttps"]);
-				let hotsitePath: string = `/app/${hotsiteName}/HotSite.json`;
+				let hotsitePath: string = `/app/HotSite.json`;
+
+				if (await HotIO.exists (`${outputDir}/docker/${hotsiteName}/app/`) === true)
+				{
+					this.logger.info (`Unable to create Docker files because the directory "${outputDir}/docker/${hotsiteName}/app/" already exists!`);
+
+					return;
+				}
 
 				await HotIO.mkdir (`${outputDir}/docker/${hotsiteName}/app/`);
 
@@ -181,6 +188,7 @@ EXPOSE \${HTTP_PORT}`;
 
 				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/app/start.sh`, replaceKeys);
 				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/app/start-pkg.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/env-skeleton`, replaceKeys);
 
 				await this.replaceKeysInFile (`${outputDir}/docker-compose.yaml`, replaceKeys);
 				await this.replaceKeysInFile (`${outputDir}/build.bat`, replaceKeys);

@@ -32,7 +32,7 @@ cd my-app
 hotstaq start
 ```
 
-Your site starts at `http://localhost:8080`.
+Your site starts at `http://localhost:5000`.
 
 Open `public/index.hott` and change your landing page. Refresh your browser to see your changes immediately.
 

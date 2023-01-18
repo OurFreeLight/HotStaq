@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as dotenv from "dotenv";
 import * as commander from "commander";
 import fetch from "node-fetch";
+import { Headers } from "node-fetch";
 
 import { HotStaq } from "./HotStaq";
 import { HotHTTPServer } from "./HotHTTPServer";
@@ -1340,7 +1341,7 @@ export class HotCLI
 	async handleHealthcheckCommands (): Promise<commander.Command>
 	{
 		let timeout: number = 10000;
-		let outputResult: boolean = true;
+		let headers: Headers = new Headers ();
 
 		const healthcheckCmd: commander.Command = new commander.Command ("healthcheck");
 		healthcheckCmd.description (`Execute a healthcheck. Will exit with error code 1 if an HTTP status other than 200 returns.`);
@@ -1363,7 +1364,8 @@ export class HotCLI
 						this.processor.logger.verbose (`Starting healthcheck at ${url}`);
 
 						let res = await fetch (url, {
-								"signal": controller.signal
+								"signal": controller.signal,
+								"headers": headers
 							});
 						clearTimeout (signalTimeout);
 
@@ -1373,10 +1375,9 @@ export class HotCLI
 							process.exit (1);
 						}
 
-						let text: string = await res.text ();
-
-						if (outputResult === true)
-							this.processor.logger.info (text);
+						// Do not output the responses from the healthcheck. The responses 
+						// could still be used to launch an attack. Exiting with a 0 indicates 
+						// that the healthcheck was successful.
 
 						process.exit (0);
 					}
@@ -1393,10 +1394,14 @@ export class HotCLI
 			{
 				timeout = parseInt (value);
 			});
-		healthcheckCmd.option ("--dont-output-result", "If set to true, the output from the url healthcheck will not output.", 
+		healthcheckCmd.option ("--header <value>", `The key/value to add to the HTTP GET request before sending, in the form key=value. Example: --header "Content-Type=text/html; charset=utf-8"`, 
 			(value: string, previous: any) =>
 			{
-				outputResult = false;
+				let theSplits: string[] = value.split ("=");
+				let key: string = theSplits[0];
+				let value2: string = theSplits[1];
+
+				headers.append (key, value2);
 			});
 
 		return (healthcheckCmd);

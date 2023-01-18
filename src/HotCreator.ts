@@ -105,7 +105,7 @@ export class HotCreator
 		this.npmCommands = {
 				start: "",
 				dev: "",
-				test: "hotstaq test",
+				test: "hotstaq --dev run --server-type api --api-test",
 				build: "",
 				buildWebAPI: "hotstaq generate --copy-to ./public/js/",
 				buildWebAPIDebug: "hotstaq generate --copy-to ./public/js/",
@@ -184,7 +184,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 					"@types/formidable": "^1.2.4",
 					"@types/fs-extra": "^9.0.12",
 					"@types/js-cookie": "^2.2.7",
-					"@types/mocha": "^7.0.2",
+					"@types/mocha": "^10.0.1",
 					"@types/node": "^14.17.32",
 					"@types/node-fetch": "^2.6.1",
 					"@types/selenium-webdriver": "^4.1.5",
@@ -258,6 +258,12 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 					web: {
 						tester: "HotTesterMochaSelenium",
 						testerAPIUrl: "http://127.0.0.1:8182"
+					},
+					api: {
+						tester: "HotTesterMochaSelenium",
+						maps: [
+							"AppAPI"
+						]
 					}
 				}
 			};
@@ -271,7 +277,10 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"jsapi": `./js/${this.name}Web_AppAPI.js`,
 						"libraryName": `${this.name}Web`,
 						"apiName": "AppAPI",
-						"filepath": "./build/AppAPI.js"
+						"filepath": "./build/AppAPI.js",
+						"map": [
+							"api:hello_world -> hi -> HiTest"
+						]
 					};
 			}
 		}
@@ -449,7 +458,8 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						],
 						"group": "build",
 						"runOptions": {
-							"instanceLimit": 1
+							"instanceLimit": 1,
+							"runOn": "folderOpen"
 						},
 						"label": "Build Server"
 					});

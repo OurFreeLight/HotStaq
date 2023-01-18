@@ -17,8 +17,24 @@ To stop the container enter:
 ```
 
 ## Docker Environment Variables
+* WEB_IMAGE
+    * Description: The image name of the docker image to be built.
+    * Type: string
+    * Default:
+* WEB_IMAGE_VERSION
+    * Description: The image version of the docker image to be built.
+    * Type: string
+    * Default:
+* API_IMAGE
+    * Description: The image name of the docker image to be built.
+    * Type: string
+    * Default:
+* API_IMAGE_VERSION
+    * Description: The image version of the docker image to be built.
+    * Type: string
+    * Default:
 * NODEJS_START_ARGS
-    * Description: The start arguments to pass to NodeJS when starting the app.
+    * Description: The start arguments to pass to NodeJS when starting the app. Hardened images do not have this option.
     * Type: string
     * Default:
 * HOT_RUN_ARGS

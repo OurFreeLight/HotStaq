@@ -2,6 +2,10 @@ build/
 build-web/
 ./app/
 
+slim.report.json
+
+.npmrc
+
 create-test-temp/
 temp/
 

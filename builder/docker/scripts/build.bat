@@ -1,5 +1,11 @@
 @echo off
 
+if not exist ".\.env" (
+    echo "Missing .env file! Did you copy env-skeleton to .env?"
+
+    Exit /B 1
+)
+
 set HOTSTAQ_VERSION="${REAL_HOTSTAQ_VERSION}"
 
 set NAMESPACE="${NAMESPACE}"
