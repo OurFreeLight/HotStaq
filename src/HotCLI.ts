@@ -592,6 +592,8 @@ export class HotCLI
 						}
 
 						testerServer.addTester (tester);
+
+						this.processor.logger.info ("Running in development mode...");
 					}
 
 					if (this.hotsitePath !== "")
@@ -730,6 +732,8 @@ export class HotCLI
 
 					if ((serverType === "api") || (serverType === "web-api"))
 						runAPIServer = true;
+
+					this.processor.logger.verbose (`Connecting to ${dbinfo.type} database at ${dbinfo.server}:${dbinfo.port} using schema ${dbinfo.database}`);
 
 					/// @fixme Allow for multiple APIs to be loaded, and have their 
 					/// servers start in the future.
