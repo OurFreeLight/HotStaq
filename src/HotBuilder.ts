@@ -32,10 +32,6 @@ export class HotBuilder
 	 */
 	dockerFiles: boolean;
 	/**
-	 * Will harden the Dockerfiles security when possible.
-	 */
-	dockerHardenSecurity: boolean;
-	/**
 	 * Will append the docker documentation to the existing README.md.
 	 */
 	appendReadMe: boolean;
@@ -58,7 +54,6 @@ export class HotBuilder
 		this.hotstaqVersion = "";
 		this.dockerNamespace = "ourfreelight";
 		this.dockerFiles = true;
-		this.dockerHardenSecurity = true;
 		this.appendReadMe = true;
 		this.helmChart = false;
 		this.hotsites = [];
@@ -95,18 +90,6 @@ export class HotBuilder
 			this.logger.info ("Building docker files...");
 
 			const dockerDir: string = ppath.normalize (`${__dirname}/../../builder/docker`);
-			let dockerFilePath: string = "";
-
-			if (this.dockerHardenSecurity === true)
-			{
-				this.logger.info (`Hardening Dockerfile...`);
-				dockerFilePath = ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`);
-			}
-			else
-			{
-				this.logger.info (`NOT hardening Dockerfile...`);
-				dockerFilePath = ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`);
-			}
 
 			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
 			{
@@ -162,24 +145,20 @@ EXPOSE \${HTTP_PORT}`;
 				if (httpApiPort == null)
 					httpApiPort = 5001;
 
-				let appCmds: string = `"/app/hotapp",`;
-
-				if (this.dockerHardenSecurity === false)
-					appCmds = `"node", "./build/cli.js",`;
-
 				let replaceKeys = {
-						APP_CMDS: appCmds,
 						NAMESPACE: this.dockerNamespace,
 						HOTSITE_NAME: hotsiteName,
 						REAL_HOTSTAQ_VERSION: this.hotstaqVersion,
 						DOCKERFILE_PORTS: dockerfilePortsStr,
-						HTTP_PORT: httpPort.toString (),
-						API_HTTP_PORT: httpApiPort.toString (),
+						REAL_HTTP_PORT: httpPort.toString (),
+						REAL_API_HTTP_PORT: httpApiPort.toString (),
 						HOTSITE_PATH: hotsitePath
 					};
 
-				await HotIO.copyFile (dockerFilePath, `${outputDir}/docker/${hotsiteName}/Dockerfile`);
-				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/Dockerfile`, replaceKeys);
+				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`), `${outputDir}/docker/${hotsiteName}/prod.dockerfile`);
+				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`), `${outputDir}/docker/${hotsiteName}/dev.dockerfile`);
+				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/prod.dockerfile`, replaceKeys);
+				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/dev.dockerfile`, replaceKeys);
 				await HotIO.copyFiles (`${dockerDir}/scripts/`, `${outputDir}/`);
 				await HotIO.copyFiles (`${dockerDir}/app/`, `${outputDir}/docker/${hotsiteName}/app/`);
 				await HotIO.copyFile (`${dockerDir}/dockerignore`, `${outputDir}/.dockerignore`);

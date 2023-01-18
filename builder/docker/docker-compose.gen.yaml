@@ -8,15 +8,15 @@ services:
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", "/app/healthcheck.sh", "http://127.0.0.1:${HTTP_PORT}"]
+      test: ["CMD", "/app/healthcheck.sh", "http://127.0.0.1:${REAL_HTTP_PORT}"]
       retries: 10
       timeout: 10s
     ports:
-      - "${HTTP_PORT}:${HTTP_PORT}"
+      - "${HTTP_PORT}:${REAL_HTTP_PORT}"
     environment:
       SERVER_TYPE: web
       LOG_LEVEL: all
-      HTTP_PORT: ${HTTP_PORT}
+      HTTP_PORT: ${REAL_HTTP_PORT}
 
   ${HOTSITE_NAME}-api:
     image: ${API_IMAGE}:${API_IMAGE_VERSION}
@@ -26,16 +26,16 @@ services:
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", "/app/healthcheck.sh", "http://127.0.0.1:${API_HTTP_PORT}"]
+      test: ["CMD", "/app/healthcheck.sh", "http://127.0.0.1:${REAL_API_HTTP_PORT}"]
       retries: 10
       timeout: 10s
     ports:
-      - "${API_HTTP_PORT}:${API_HTTP_PORT}"
+      - "${API_HTTP_PORT}:${REAL_API_HTTP_PORT}"
     environment:
       SERVER_TYPE: api
       LOG_LEVEL: all
-      HTTP_PORT: ${API_HTTP_PORT}
-      DATABASE_SERVER: " ${HOTSITE_NAME}-database"
+      API_HTTP_PORT: ${REAL_API_HTTP_PORT}
+      DATABASE_SERVER: "${HOTSITE_NAME}-database"
       DATABASE_PORT: "3306"
       DATABASE_USERNAME: "${DATABASE_USERNAME}"
       DATABASE_PASSWORD: "${DATABASE_PASSWORD}"

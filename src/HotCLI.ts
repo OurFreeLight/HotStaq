@@ -267,12 +267,6 @@ export class HotCLI
 				createHotBuilder ();
 				builder.hotstaqVersion = arg;
 			});
-		buildCmd.option ("--dont-get-hard", "Do not use the default security hardening when generating the docker image.", 
-			(arg: string, previous: any) =>
-			{
-				createHotBuilder ();
-				builder.dockerHardenSecurity = false;
-			});
 		buildCmd.option ("--dont-append-readme", "Do not add the additional docker documentation to the existing README.md.", 
 			(arg: string, previous: any) =>
 			{
@@ -592,6 +586,8 @@ export class HotCLI
 						}
 
 						testerServer.addTester (tester);
+
+						this.processor.logger.info ("Running in development mode...");
 					}
 
 					if (this.hotsitePath !== "")
@@ -730,6 +726,8 @@ export class HotCLI
 
 					if ((serverType === "api") || (serverType === "web-api"))
 						runAPIServer = true;
+
+					this.processor.logger.verbose (`Connecting to ${dbinfo.type} database at ${dbinfo.server}:${dbinfo.port} using schema ${dbinfo.database}`);
 
 					/// @fixme Allow for multiple APIs to be loaded, and have their 
 					/// servers start in the future.

@@ -120,7 +120,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.7.1";
+	static version: string = "0.7.2";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1222,6 +1222,8 @@ export class HotStaq implements IHotStaq
 
 		if (tester != null)
 			this.addTester (tester);
+
+		this.logger.verbose (`Processed HotSite ${this.hotSite.name}`);
 	}
 
 	/**
