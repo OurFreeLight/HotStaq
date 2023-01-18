@@ -34,6 +34,7 @@ COPY --from=builder /tmp/app/HotSite.json /app/HotSite.json
 COPY --from=builder /tmp/app/package.json /app/package.json
 COPY --from=builder /tmp/app/package-lock.json /app/package-lock.json
 COPY ./docker/${HOTSITE_NAME}/app/start.sh /app/start.sh
+COPY ./docker/${HOTSITE_NAME}/app/healthcheck.sh /app/healthcheck.sh
 
 RUN chmod 500 /app/start.sh
 
@@ -54,6 +55,8 @@ ARG LOG_LEVEL="all"
 ENV LOG_LEVEL=${LOG_LEVEL}
 
 ENV HOTSITE_PATH=${HOTSITE_PATH}
+
+ENV HARDENED_IMAGE=0
 
 WORKDIR /app
 ENTRYPOINT [ "/app/start.sh" ]

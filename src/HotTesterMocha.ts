@@ -33,7 +33,8 @@ export class HotTesterMocha extends HotTester
     afterAll: () => Promise<void>;
 
 	constructor (processor: HotStaq, name: string, baseUrl: string, driver: HotTestDriver, 
-		testMaps: { [name: string]: HotTestMap; } = {}, beforeAll: () => Promise<void> = null, 
+		testMaps: { [name: string]: HotTestMap; } = {}, 
+		beforeAll: () => Promise<void> = null, 
 		afterAll: () => Promise<void> = null)
 	{
 		super (processor, name, baseUrl, driver, testMaps);

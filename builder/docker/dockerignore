@@ -4,6 +4,10 @@ build-web/
 
 ./*.sh
 
+.npmrc
+
+slim.report.json
+
 create-test-temp/
 
 # Logs

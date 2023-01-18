@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as ppath from "path";
 import * as fse from "fs-extra";
 
 const util = require ("util");
@@ -104,7 +105,7 @@ export class HotIO
 	static async copyFiles (src: string, dest: string, options: fse.CopyOptions = undefined): Promise<void>
 	{
 		return (fse.copy (src, dest, options));
-    }
+	}
 
 	/**
 	 * Copy a file to a location.
@@ -112,7 +113,7 @@ export class HotIO
 	static async copyFile (src: string, dest: string, flags?: number): Promise<void>
 	{
 		return (fse.copyFile (src, dest, flags));
-    }
+	}
 
 	/**
 	 * Move a file to a location.
@@ -120,7 +121,7 @@ export class HotIO
 	static async moveFile (src: string, dest: string, options: fse.MoveOptions = { overwrite: false }): Promise<void>
 	{
 		return (fse.move (src, dest, options));
-    }
+	}
 
 	/**
 	 * Checks if a file is at a location.
@@ -142,7 +143,7 @@ export class HotIO
 						resolve (true);
 					});
 			}));
-    }
+	}
 
 	/**
 	 * List files at a location.
@@ -159,7 +160,15 @@ export class HotIO
 						resolve (files);
 					});
 			}));
-    }
+	}
+
+	/**
+	 * Normalize a file path.
+	 */
+	static normalizePath (path: string): string
+	{
+		return (ppath.normalize (path));
+	}
 
 	/**
 	 * Execute a command.

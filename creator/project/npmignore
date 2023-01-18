@@ -2,6 +2,10 @@ node_modules/
 db/
 !creator/
 
+.npmrc
+
+slim.report.json
+
 build/tests/
 
 client/

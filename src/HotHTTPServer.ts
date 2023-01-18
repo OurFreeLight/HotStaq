@@ -517,6 +517,7 @@ export class HotHTTPServer extends HotServer
 
 								try
 								{
+									// workerData.logger, workerData.route, workerData.method, workerData.methodName, workerData.req, workerData.res
 									let worker = new Worker (`${__dirname}/HotHTTPServerThread.js`, {
 											"workerData": {
 													"logger": this.logger,

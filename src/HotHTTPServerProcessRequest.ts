@@ -10,7 +10,8 @@ import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
 import { EventExecutionType } from "./HotAPI";
 
-export async function processRequest (server: HotHTTPServer, logger: HotLog, route: HotRoute, 
+export async function processRequest (server: HotHTTPServer, 
+	logger: HotLog, route: HotRoute, 
 	method: HotRouteMethod, methodName: string, 
 	req: express.Request, res: express.Response): Promise<any>
 {

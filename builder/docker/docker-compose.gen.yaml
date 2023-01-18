@@ -1,14 +1,14 @@
 version: "3.8"
 services:
   ${HOTSITE_NAME}:
-    image: ${NAMESPACE}/${HOTSITE_NAME}:latest
+    image: ${WEB_IMAGE}:${WEB_IMAGE_VERSION}
     depends_on:
       ${HOTSITE_NAME}-api:
         condition: service_healthy
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", ${APP_CMDS} "healthcheck", "--dont-output-result", "http://127.0.0.1:${HTTP_PORT}"]
+      test: ["CMD", "/app/healthcheck.sh", "http://127.0.0.1:${HTTP_PORT}"]
       retries: 10
       timeout: 10s
     ports:
@@ -19,14 +19,14 @@ services:
       HTTP_PORT: ${HTTP_PORT}
 
   ${HOTSITE_NAME}-api:
-    image: ${NAMESPACE}/${HOTSITE_NAME}-api:latest
+    image: ${API_IMAGE}:${API_IMAGE_VERSION}
     depends_on:
       ${HOTSITE_NAME}-database:
         condition: service_healthy
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", ${APP_CMDS} "healthcheck", "--dont-output-result", "http://127.0.0.1:${API_HTTP_PORT}"]
+      test: ["CMD", "/app/healthcheck.sh", "http://127.0.0.1:${API_HTTP_PORT}"]
       retries: 10
       timeout: 10s
     ports:
