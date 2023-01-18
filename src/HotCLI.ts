@@ -267,12 +267,6 @@ export class HotCLI
 				createHotBuilder ();
 				builder.hotstaqVersion = arg;
 			});
-		buildCmd.option ("--dont-get-hard", "Do not use the default security hardening when generating the docker image.", 
-			(arg: string, previous: any) =>
-			{
-				createHotBuilder ();
-				builder.dockerHardenSecurity = false;
-			});
 		buildCmd.option ("--dont-append-readme", "Do not add the additional docker documentation to the existing README.md.", 
 			(arg: string, previous: any) =>
 			{
