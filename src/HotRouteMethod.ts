@@ -549,4 +549,28 @@ export class HotRouteMethod implements IHotRouteMethod
 		const testCase: TestCaseObject = (<TestCaseObject>newTestCase);
 		this.testCases[testCase.name] = testCase;
 	}
+
+	/**
+	 * Get the relative url from this method and its route.
+	 */
+	getRouteUrl (): string
+	{
+		if (this.route == null)
+			throw new Error (`Route method ${this.name} does not have a parent route!`);
+
+		let methodName: string = "/";
+
+		if (this.route.version !== "")
+			methodName += `${this.route.version}/`;
+
+		if (this.route.prefix !== "")
+			methodName += `${this.route.prefix}/`;
+
+		if (this.route.route !== "")
+			methodName += `${this.route.route}/`;
+
+		methodName += this.name;
+
+		return (methodName);
+	}
 }

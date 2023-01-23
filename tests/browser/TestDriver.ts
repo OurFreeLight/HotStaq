@@ -2,7 +2,7 @@ import * as oss from "os";
 
 import { HotTestElement, HotTestElementOptions } from "../../src/HotTestElement";
 import { HotTestDriver } from "../../src/HotTestDriver";
-import { HotTestPage } from "../../src/HotTestMap";
+import { HotTestPage } from "../../src/HotTestPage";
 import { HotStaq } from "../../src/HotStaq";
 
 import { By, until, WebDriver, WebElement, Session, Builder } from "selenium-webdriver";
@@ -188,5 +188,69 @@ export class TestDriver extends HotTestDriver
 	{
 		if (! (value))
 			throw new Error (errorMessage);
+	}
+
+	/**
+	 * Run a series of test elements.
+	 */
+	async run (executions: string[] | string[][]): Promise<any[]>
+	{
+		let results: any[] = [];
+
+		for (let iIdx = 0; iIdx < executions.length; iIdx++)
+		{
+			let execution: any = executions[iIdx];
+			let testElm: HotTestElement = null;
+			let func: string = "";
+			let value: string = "";
+
+			if (typeof (execution) === "string")
+			{
+				testElm = this.page.testElements[execution];
+
+				/// @fixme This is going to wreck selecting test elements by wildcards.
+				if (testElm == null)
+					throw new Error (`HotTestDriver: Unable to find test element ${execution}`);
+
+				func = testElm.func;
+				value = testElm.value;
+			}
+
+			if (execution instanceof Array)
+			{
+				let name: string = execution[0];
+				testElm = this.page.testElements[name];
+
+				// This null catch is specifically to help find wildcard test elements.
+				if (testElm == null)
+				{
+					testElm = new HotTestElement (name);
+					func = execution[1];
+					value = execution[2];
+				}
+				else
+				{
+					func = testElm.func;
+					value = testElm.value;
+
+					if (execution.length > 1)
+						func = execution[1];
+
+					if (execution.length > 2)
+						value = execution[2];
+				}
+			}
+
+			testElm.func = func;
+			testElm.value = value;
+
+			let result = await this.runCommand (testElm);
+
+			await HotStaq.wait (this.commandDelay);
+
+			results.push (result);
+		}
+
+		return (results);
 	}
 }

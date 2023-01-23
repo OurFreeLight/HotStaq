@@ -9,8 +9,6 @@
 		},
 	"testing": {
 		"web": {
-			"tester": "HotTesterMochaSelenium",
-			"createNewTester": false,
 			"testerAPIUrl": "http://127.0.0.1:8184",
 			"launchpadUrl": "http://127.0.0.1:3123",
 			"maps": [
@@ -19,8 +17,6 @@
 			]
 		},
 		"api": {
-			"tester": "HotTesterMochaSelenium",
-			"createNewTester": false,
 			"testerAPIUrl": "http://127.0.0.1:8184",
 			"launchpadUrl": "http://127.0.0.1:3123",
 			"maps": [

@@ -1,12 +1,15 @@
 import Mocha from "mocha";
 import { Suite, Test } from "mocha";
 
-import { HotTestMap, HotTestPage, HotTestPath } from "../../src/HotTestMap";
-import { HotDestination, HotTester, HotTestStop } from "../../src/HotTester";
+import { HotTestMap, HotTestPath } from "../../src/HotTestMap";
+import { HotTestPage } from "../../src/HotTestPage";
+import { HotTester } from "../../src/HotTester";
+import { HotDestination } from "../../src/HotDestination";
+import { HotTestStop } from "../../src/HotTestStop";
 import { TestDriver } from "./TestDriver";
-import { WebDriver } from "selenium-webdriver";
-import { HotTestDriver } from "../../src/HotTestDriver";
 import { HotStaq } from "../../src/HotStaq";
+
+import { WebDriver } from "selenium-webdriver";
 
 /**
  * The tester that tests testing capabilities for 

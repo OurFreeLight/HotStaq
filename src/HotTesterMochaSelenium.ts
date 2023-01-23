@@ -1,9 +1,13 @@
 import Mocha from "mocha";
 import { Suite, Test } from "mocha";
 
-import { HotTestMap, HotTestPage, HotTestPath } from "./HotTestMap";
-import { HotDestination, HotTester, HotTestStop } from "./HotTester";
+import { HotTestMap } from "./HotTestMap";
+import { HotTestPage } from "./HotTestPage";
+import { HotTester } from "./HotTester";
+import { HotDestination } from "./HotDestination";
+import { HotTestStop } from "./HotTestStop";
 import { HotStaq } from "./HotStaq";
+import { HotTesterMocha } from "./HotTesterMocha";
 import { HotTestSeleniumDriver } from "./HotTestSeleniumDriver";
 
 import { WebDriver } from "selenium-webdriver";
@@ -11,43 +15,23 @@ import { WebDriver } from "selenium-webdriver";
 /**
  * The tester that uses Mocha to executes all tests.
  */
-export class HotTesterMochaSelenium extends HotTester
+export class HotTesterMochaSelenium extends HotTesterMocha
 {
 	/**
 	 * The driver to use when running tests.
 	 */
-	driver: HotTestSeleniumDriver;
-	/**
-	 * The mocha instance to run.
-	 */
-	mocha: Mocha;
-	/**
-	 * The timeout for each test.
-	 */
-	timeout: number;
-	/**
-	 * The suite to execute.
-	 */
-	suite: Suite;
-    /**
-     * The Mocha beforeAll event to call before any tests are executed.
-     */
-    beforeAll: () => Promise<void>;
-    /**
-     * The Mocha afterAll event to call before any tests are executed.
-     */
-    afterAll: () => Promise<void>;
-    /**
-     * This event is executed after the Selenium driver and url have 
-	 * been loaded. If this returns true, Selenium will load the url.
-     */
-    onSetup: (driver: WebDriver, url: string) => Promise<boolean>;
+	override driver: HotTestSeleniumDriver;
 	/**
 	 * If set to true, this will wait for the tester API data. If 
 	 * onSetup is used, it will have to return true in order to 
 	 * wait for the tester data.
 	 */
 	waitForTesterData: boolean;
+    /**
+     * This event is executed after the Selenium driver and url have 
+	 * been loaded. If this returns true, Selenium will load the url.
+     */
+    onSetup: (driver: WebDriver, url: string) => Promise<boolean>;
 
 	constructor (processor: HotStaq, name: string, baseUrl: string, 
 		testMaps: { [name: string]: HotTestMap; } = {}, 
@@ -55,7 +39,7 @@ export class HotTesterMochaSelenium extends HotTester
 		beforeAll: () => Promise<void> = null, 
 		afterAll: () => Promise<void> = null)
 	{
-		super (processor, name, baseUrl, null, testMaps);
+		super (processor, name, baseUrl, testMaps, beforeAll, afterAll);
 
 		this.driver = new HotTestSeleniumDriver (processor);
         this.mocha = null;
@@ -78,8 +62,13 @@ export class HotTesterMochaSelenium extends HotTester
 	{
 		// Only execute web routes using Selenium.
 		if (isWebRoute === false)
-			return;
+		{
+			this.processor.logger.verbose (`HotTesterMochaSelenium: Not a web route. Skipping...`);
 
+			return;
+		}
+
+		this.processor.logger.verbose (`HotTesterMochaSelenium: Setting up`);
 		let testDriver: HotTestSeleniumDriver = (<HotTestSeleniumDriver>this.driver);
 
 		await testDriver.loadSeleniumDriver ();
@@ -92,18 +81,38 @@ export class HotTesterMochaSelenium extends HotTester
 
 		if (this.onSetup != null)
 		{
-			loadDriverUrl = await this.onSetup (driver, tempUrl);
+			await new Promise<void> ((resolve, reject) =>
+				{
+					this.onSetup (driver, tempUrl).then ((result: boolean) =>
+						{
+							loadDriverUrl = result;
+							resolve ();
+						})
+						.catch ((error) =>
+						{
+							this.processor.logger.error (`HotTesterMochaSelenium Error: ${error.message}`);
+							reject (error);
+						});
+				});
 
 			if (loadDriverUrl == null)
 				loadDriverUrl = true;
 		}
 
+		this.processor.logger.verbose (`HotTesterMochaSelenium: Finished setting up`);
+
 		if (loadDriverUrl === true)
 		{
+			this.processor.logger.verbose (`HotTesterMochaSelenium: Retreiving url ${tempUrl} and waiting for data...`);
+
 			this.finishedLoading = false;
 			await driver.get (tempUrl);
 			await this.waitForData ();
+
+			this.processor.logger.verbose (`HotTesterMochaSelenium: Received data...`);
 		}
+		else
+			this.processor.logger.verbose (`HotTesterMochaSelenium: Not retreiving url.`);
 	}
 
 	/**
@@ -125,6 +134,7 @@ export class HotTesterMochaSelenium extends HotTester
 		if (destinationKey !== "")
 			destinationName = ` - ${destinationKey}`;
 
+		this.processor.logger.verbose (`HotTesterMochaSelenium: Setting up Mocha and creating test suite...`);
 		this.mocha = new Mocha ();
 		this.suite = Mocha.Suite.create (this.mocha.suite, `${destination.page}${destinationName} Tests`);
 		this.suite.timeout (this.timeout);
@@ -140,12 +150,16 @@ export class HotTesterMochaSelenium extends HotTester
 	{
 		let testPathName: string = stop.path;
 
-		if (continueWhenTestIsComplete === true)
+		this.processor.logger.verbose (`HotTesterMochaSelenium: Adding test path ${testPathName}`);
+
+		/*if (continueWhenTestIsComplete === true)
 		{
 			await new Promise<void> ((resolve, reject) =>
 				{
 					this.suite.addTest (new Test (testPathName, async () =>
 						{
+							this.processor.logger.verbose (() => `HotTesterMochaSelenium: Executing ${testPathName} destination ${JSON.stringify (destination)} with stop ${stop}`);
+
 							// The true is a dumb hack to prevent any recursion.
 							await this.executeTestPagePath (destination, stop, true);
 							resolve ();
@@ -153,13 +167,15 @@ export class HotTesterMochaSelenium extends HotTester
 				});
 		}
 		else
-		{
+		{*/
 			this.suite.addTest (new Test (testPathName, async () =>
 				{
+					this.processor.logger.verbose (() => `HotTesterMochaSelenium: Executing ${testPathName} destination ${JSON.stringify (destination)} with stop ${stop}`);
+
 					// The true is a dumb hack to prevent any recursion.
 					await this.executeTestPagePath (destination, stop, true);
 				}));
-		}
+		//}
 
 		return (false);
 	}
@@ -169,19 +185,24 @@ export class HotTesterMochaSelenium extends HotTester
 	{
 		this.suite.addTest (new Test (cmd, async () =>
 			{
+				this.processor.logger.verbose (() => `HotTesterMochaSelenium: Executing command ${cmd} with arguments ${JSON.stringify (args)}`);
+
 				await cmdFunc (args);
 			}));
 	}
 
 	async onTestEnd (destination: HotDestination): Promise<void>
 	{
-		return (await new Promise ((resolve, reject) =>
+		return (new Promise ((resolve, reject) =>
 			{
 				if (this.afterAll != null)
 					this.suite.afterAll (this.afterAll);
 
+				this.processor.logger.verbose (`HotTesterMochaSelenium: Starting Mocha/Selenium and running tests...`);
+
 				this.mocha.run ((failures: number) =>
 					{
+						this.processor.logger.verbose (`HotTesterMochaSelenium: Tests complete!`);
 						resolve ();
 					});
 			}));

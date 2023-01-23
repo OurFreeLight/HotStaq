@@ -12,5 +12,6 @@ exec $(pwd)/hotapp run ${HOT_RUN_ARGS} \
     --dont-load-apis-from-hotsite \
     --log-level ${LOG_LEVEL} --web-base-url "${BASE_URL}" \
     --web-http-port ${HTTP_PORT} --web-https-port ${HTTPS_PORT} \
+    --api-base-url "${BASE_API_URL}" \
     ${API_PORTS} \
     --web-route "/=$(pwd)/public"

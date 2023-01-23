@@ -247,7 +247,7 @@ export class HotTesterServer extends HotServer
 					if (api.executeEventsUsing === EventExecutionType.HotMethod)
 						thisObj = method;
 
-					this.logger.verbose (`${req.method} ${methodName}, JSON: ${JSON.stringify (jsonObj)}, Query: ${JSON.stringify (queryObj)}`);
+					this.logger.verbose (() => `${req.method} ${methodName}, JSON: ${JSON.stringify (jsonObj)}, Query: ${JSON.stringify (queryObj)}`);
 
 					if (method.onServerAuthorize != null)
 					{
@@ -313,7 +313,7 @@ export class HotTesterServer extends HotServer
 							}
 							catch (ex)
 							{
-								this.logger.verbose (`Execution error: ${ex.message}`);
+								this.logger.error (`Execution error: ${ex.message}`);
 								res.json ({ error: ex.message });
 							}
 						}
@@ -359,7 +359,7 @@ export class HotTesterServer extends HotServer
 		this.expressApp.use ((req: express.Request, res: express.Response, next: any): void =>
 			{
 				const url: string = `${req.protocol}://${req.hostname}${req.originalUrl}`;
-				this.logger.verbose (`Requested: ${req.method} ${req.httpVersion} ${url}`);
+				this.logger.verbose (`Tester Server Requested: ${req.method} ${req.httpVersion} ${url}`);
 
 				next ();
 			});

@@ -28,7 +28,7 @@ export async function processRequest (server: HotHTTPServer,
 	if (api.executeEventsUsing === EventExecutionType.HotMethod)
 		thisObj = method;
 
-	logger.verbose (`${req.method} ${methodName}, JSON: ${JSON.stringify (jsonObj)}, Query: ${JSON.stringify (queryObj)}`);
+	logger.verbose (() => `${req.method} ${methodName}, JSON: ${JSON.stringify (jsonObj)}, Query: ${JSON.stringify (queryObj)}`);
 
 	if (method.onServerAuthorize != null)
 	{
@@ -82,11 +82,11 @@ export async function processRequest (server: HotHTTPServer,
 		}
 	}
 
-	logger.verbose (`${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
+	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
 
 	if (hasAuthorization === true)
 	{
-		let uploadedFiles: any = await HotHTTPServer.getFileUploads(req);
+		let uploadedFiles: any = await HotHTTPServer.getFileUploads (req);
 
 		if (Object.keys (uploadedFiles).length > 0)
 		{
@@ -119,7 +119,7 @@ export async function processRequest (server: HotHTTPServer,
 				server.uploads[hotstaqUploadId][key] = uploadedObj;
 			}
 
-			logger.verbose (`${req.method} ${methodName}, Upload ID: ${hotstaqUploadId}, Received uploads: ${JSON.stringify (server.uploads[hotstaqUploadId])}`);
+			logger.verbose (() => `${req.method} ${methodName}, Upload ID: ${hotstaqUploadId}, Received uploads: ${JSON.stringify (server.uploads[hotstaqUploadId])}`);
 
 			res.json ({
 					hotstaq: {
@@ -175,7 +175,7 @@ export async function processRequest (server: HotHTTPServer,
 
 				let result: any = await method.onServerExecute.call (thisObj, request);
 
-				logger.verbose (`${req.method} ${methodName}, Response: ${result}`);
+				logger.verbose (() => `${req.method} ${methodName}, Response: ${JSON.stringify (result)}`);
 
 				if (result !== undefined)
 					return (result);

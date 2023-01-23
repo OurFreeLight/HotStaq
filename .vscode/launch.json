@@ -162,6 +162,9 @@
 			"autoAttachChildProcesses": true,
 			"preLaunchTask": "Build web test api",
 			"program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
+			"runtimeArgs": [
+				"--trace-warnings"
+			],
 			"args": [
 				"--timeout", "6000", 
 				"--colors", 

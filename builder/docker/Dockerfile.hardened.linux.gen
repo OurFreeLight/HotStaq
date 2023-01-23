@@ -31,10 +31,10 @@ FROM debian:bullseye-slim
 COPY --from=builder /tmp/app/build/hotapp /app/hotapp
 COPY --from=builder /tmp/app/public/ /app/public/
 COPY --from=builder /tmp/app/HotSite.json /app/HotSite.json
-COPY ./docker/${HOTSITE_NAME}/app/start-pkg.sh /app/start.sh
-COPY ./docker/${HOTSITE_NAME}/app/healthcheck.sh /app/healthcheck.sh
+COPY ./docker/${HOTSITE_NAME}/app/start-pkg.sh /app/docker/${HOTSITE_NAME}/app/start-pkg.sh
+COPY ./docker/${HOTSITE_NAME}/app/healthcheck.sh /app/docker/${HOTSITE_NAME}/app/healthcheck.sh
 
-RUN chmod 500 /app/start.sh
+RUN chmod 500 /app/docker/${HOTSITE_NAME}/app/*.sh
 
 ${DOCKERFILE_PORTS}
 
@@ -57,5 +57,5 @@ ENV HOTSITE_PATH=${HOTSITE_PATH}
 ENV HARDENED_IMAGE=1
 
 WORKDIR /app
-ENTRYPOINT [ "/app/start.sh" ]
+ENTRYPOINT [ "/app/docker/${HOTSITE_NAME}/app/start-pkg.sh" ]
 

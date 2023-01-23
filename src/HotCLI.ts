@@ -489,21 +489,27 @@ export class HotCLI
 		let testerSettings: {
 				tester: string;
 				address: string;
+				timeout: number;
 				browser: string;
 				openDevTools: boolean;
 				headless: boolean;
 				remoteServer: string;
 				http: number;
 				https: number;
+				shutdownAfterTests: boolean;
+				commandDelay: number;
 			} = {
-				tester: "HotTesterMochaSelenium",
+				tester: "",
 				address: "127.0.0.1",
+				timeout: 10000,
 				browser: "chrome",
 				openDevTools: false,
 				headless: false,
 				remoteServer: "",
 				http: 8182,
-				https: 4143
+				https: 4143,
+				shutdownAfterTests: true,
+				commandDelay: 20
 			};
 		let dbinfo: HotDBConnectionInterface = null;
 		let setupDB = () =>
@@ -555,6 +561,7 @@ export class HotCLI
 					let runWebServer: boolean = false;
 					let runAPIServer: boolean = false;
 					let testerServer: HotTesterServer = null;
+					let tester: HotTester = null;
 
 					if (this.processor.mode === DeveloperMode.Development)
 					{
@@ -565,12 +572,19 @@ export class HotCLI
 						if (this.globalLogLevel != null)
 							testerServer.logger.logLevel = this.globalLogLevel;
 
-						let tester: HotTester = null;
+						if (testerSettings.tester === "")
+						{
+							if (runWebTestMap === true)
+								testerSettings.tester = "HotTesterMochaSelenium";
+
+							if (runAPITestMap === true)
+								testerSettings.tester = "HotTesterMocha";
+						}
 
 						if (testerSettings.tester === "HotTesterMocha")
 						{
 							let mochaTester: HotTesterMocha = new HotTesterMocha (
-								this.processor, "HotTesterMocha", baseWebUrl, null);
+								this.processor, "HotTesterMocha", baseWebUrl);
 							tester = mochaTester;
 						}
 
@@ -585,7 +599,11 @@ export class HotCLI
 							tester = mochaSeleniumTester;
 						}
 
+						tester.timeout = testerSettings.timeout;
+						tester.driver.commandDelay = testerSettings.commandDelay;
+
 						testerServer.addTester (tester);
+						this.processor.addTester (tester);
 
 						this.processor.logger.info ("Running in development mode...");
 					}
@@ -636,7 +654,7 @@ export class HotCLI
 							}
 						}
 
-						await this.processor.processHotSite ();
+						await this.processor.processHotSite (tester);
 
 						if (dontLoadAPIFiles === false)
 							this.apis = this.loadAPIs (this.processor);
@@ -727,7 +745,8 @@ export class HotCLI
 					if ((serverType === "api") || (serverType === "web-api"))
 						runAPIServer = true;
 
-					this.processor.logger.verbose (`Connecting to ${dbinfo.type} database at ${dbinfo.server}:${dbinfo.port} using schema ${dbinfo.database}`);
+					if (dbinfo != null)
+						this.processor.logger.verbose (`Connecting to ${dbinfo.type} database at ${dbinfo.server}:${dbinfo.port} using schema ${dbinfo.database}`);
 
 					/// @fixme Allow for multiple APIs to be loaded, and have their 
 					/// servers start in the future.
@@ -860,6 +879,7 @@ export class HotCLI
 						if (serverType === "api")
 							throw new Error (`In order to execute web tests, you must set the server type to either web or web-api.`);
 
+						this.processor.logger.info (`Executing web tests...`);
 						await testerServer.executeAllWebTests (testerSettings.tester);
 					}
 
@@ -871,7 +891,35 @@ export class HotCLI
 						if (serverType === "web")
 							throw new Error (`In order to execute API tests, you must set the server type to either api or web-api.`);
 
+						this.processor.logger.info (`Executing api tests...`);
 						await testerServer.executeAllAPITests (testerSettings.tester);
+					}
+
+					if ((runWebTestMap === true) ||
+						(runAPITestMap === true))
+					{
+						if (testerSettings.shutdownAfterTests === true)
+						{
+							if (testerServer != null)
+							{
+								await testerServer.shutdown ();
+								testerServer = null;
+							}
+
+							if (webServer != null)
+							{
+								await webServer.shutdown ();
+								webServer = null;
+							}
+
+							if (apiServer != null)
+							{
+								await apiServer.shutdown ();
+								apiServer = null;
+							}
+
+							process.exit (0);
+						}
 					}
 				};
 			});
@@ -941,7 +989,39 @@ export class HotCLI
 			(tester: string, previous: any) =>
 			{
 				testerSettings.tester = tester;
-			}, "HotTesterMochaSelenium");
+			}, "");
+		runCmd.option (`--tester-dont-shutdown`, 
+			`Do not shutdown after the tests have been completed.`, 
+			(value: string, previous: any) =>
+			{
+				testerSettings.shutdownAfterTests = false;
+			}, "");
+		runCmd.option (`--tester-test-timeout <value>`, 
+			`Set the timeout for each test that executes.`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					testerSettings.timeout = parseInt (value);
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse --tester-test-timeout ${value}`);
+				}
+			}, "10000");
+		runCmd.option (`--tester-command-delay <value>`, 
+			`Set the command delay for each command that executes.`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					testerSettings.commandDelay = parseInt (value);
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse --tester-command-delay ${value}`);
+				}
+			}, "10000");
 		runCmd.option (`--tester-address <address>`, 
 			`Set the tester address to listen on.`, 
 			(address: string, previous: any) =>

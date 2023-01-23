@@ -4,7 +4,7 @@ import { HotClient } from "./HotClient";
 import { HotServer } from "./HotServer";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotTester } from "./HotTester";
-import { HotTestMap, HotTestPath, HotTestPage } from "./HotTestMap";
+import { HotTestMap, HotTestPath } from "./HotTestMap";
 import { HotEventMethod, ServerRequest } from "./HotRouteMethod";
 
 export class HotTesterAPI extends HotAPI
@@ -130,7 +130,7 @@ export class HotTesterAPI extends HotAPI
 		let tester: HotTester = this.connection.processor.testers[testerObj.testerName];
 
 		if (tester == null)
-			throw new Error (`TesterAPI: Tester ${testerObj.testerMap} does not exist!`);
+			throw new Error (`TesterAPI: Tester ${testerObj.testerName} does not exist!`);
 
 		let testMap: HotTestMap = tester.testMaps[testerObj.testerMap];
 
