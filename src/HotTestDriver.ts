@@ -1,11 +1,11 @@
 import { HotStaq } from "./HotStaq";
 import { HotTestElement, HotTestElementOptions } from "./HotTestElement";
-import { HotTestPage } from "./HotTestMap";
+import { HotTestPage } from "./HotTestPage";
 
 /**
  * This actually executes the tests.
  */
-export abstract class HotTestDriver
+export class HotTestDriver
 {
 	/**
 	 * The current page.
@@ -24,7 +24,7 @@ export abstract class HotTestDriver
 	 */
 	persistentData: any;
 
-	constructor (processor: HotStaq, page: HotTestPage = null)
+	constructor (processor: HotStaq, page: HotTestPage | null = null)
 	{
 		this.processor = processor;
 		this.page = page;
@@ -93,29 +93,10 @@ export abstract class HotTestDriver
 	/**
 	 * Disconnect this server or destroy anything associated with this HotTestDriver.
 	 */
-	abstract destroy (): Promise<void>;
+	async destroy (): Promise<void>
+	{
+	}
 
-	/**
-	 * Navigate to a url.
-	 */
-	abstract navigateToUrl (url: string): Promise<void>;
-	/**
-	 * Wait for a HotTestElement to load.
-	 */
-	abstract waitForTestElement (name: string | HotTestElement, options?: HotTestElementOptions): Promise<any>;
-	/**
-	 * Find a HotTestElement to utilize.
-	 */
-	abstract findTestElement (name: string | HotTestElement, options?: HotTestElementOptions): Promise<any>;
-	/**
-	 * Run a HotTestElement command.
-	 */
-	abstract runCommand (testElm: string | HotTestElement, funcName?: string, valueStr?: string): Promise<any>;
-	/**
-	 * An expression to test.
-	 */
-	abstract assertElementValue (name: string | HotTestElement, value: any, 
-		errorMessage?: string, options?: HotTestElementOptions): Promise<any>;
 	/**
 	 * An expression to test.
 	 */
@@ -123,69 +104,5 @@ export abstract class HotTestDriver
 	{
 		if (! (value))
 			throw new Error (errorMessage);
-	}
-
-	/**
-	 * Run a series of test elements.
-	 */
-	async run (executions: string[] | string[][]): Promise<any[]>
-	{
-		let results: any[] = [];
-
-		for (let iIdx = 0; iIdx < executions.length; iIdx++)
-		{
-			let execution: any = executions[iIdx];
-			let testElm: HotTestElement = null;
-			let func: string = "";
-			let value: string = "";
-
-			if (typeof (execution) === "string")
-			{
-				testElm = this.page.testElements[execution];
-
-				/// @fixme This is going to wreck selecting test elements by wildcards.
-				if (testElm == null)
-					throw new Error (`HotTestDriver: Unable to find test element ${execution}`);
-
-				func = testElm.func;
-				value = testElm.value;
-			}
-
-			if (execution instanceof Array)
-			{
-				let name: string = execution[0];
-				testElm = this.page.testElements[name];
-
-				// This null catch is specifically to help find wildcard test elements.
-				if (testElm == null)
-				{
-					testElm = new HotTestElement (name);
-					func = execution[1];
-					value = execution[2];
-				}
-				else
-				{
-					func = testElm.func;
-					value = testElm.value;
-
-					if (execution.length > 1)
-						func = execution[1];
-
-					if (execution.length > 2)
-						value = execution[2];
-				}
-			}
-
-			testElm.func = func;
-			testElm.value = value;
-
-			let result = await this.runCommand (testElm);
-
-			await HotStaq.wait (this.commandDelay);
-
-			results.push (result);
-		}
-
-		return (results);
 	}
 }

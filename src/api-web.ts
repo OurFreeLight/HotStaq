@@ -16,9 +16,15 @@ import { HotClient } from "./HotClient";
 // Testing stuff
 import { HotTestDriver } from "./HotTestDriver";
 import { IHotTestElement, HotTestElement, HotTestElementOptions, IHotTestElementOptions } from "./HotTestElement";
-import { HotTester, HotTestStop, HotDestination } from "./HotTester";
+import { HotTester } from "./HotTester";
+import { HotTestStop } from "./HotTestStop";
+import { HotDestination } from "./HotDestination";
+//import { HotTesterMocha } from "./HotTesterMocha";
+//import { HotTesterMochaSelenium } from "./HotTesterMochaSelenium";
 import { HotTesterAPI } from "./HotTesterAPI";
-import { HotTestMap, HotTestDestination, HotTestPath, HotTestPage } from "./HotTestMap";
+import { HotTestMap, HotTestPath } from "./HotTestMap";
+import { HotTestDestination } from "./HotTestDestination";
+import { HotTestPage } from "./HotTestPage";
 
 HotStaq.isWeb = true;
 
@@ -43,6 +49,8 @@ module.exports["HotServerType"] = HotServerType;
 module.exports["HotClient"] = HotClient;
 module.exports["HotTester"] = HotTester;
 module.exports["HotTesterAPI"] = HotTesterAPI;
+//module.exports["HotTesterMocha"] = HotTesterMocha;
+//module.exports["HotTesterMochaSelenium"] = HotTesterMochaSelenium;
 module.exports["HotTestMap"] = HotTestMap;
 module.exports["HotTestDestination"] = HotTestDestination;
 module.exports["HotTestElement"] = HotTestElement;

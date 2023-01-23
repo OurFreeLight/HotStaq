@@ -4,8 +4,9 @@ import { Common } from "./Common";
 import { Tester } from "./Tester";
 import { TestDriver } from "./TestDriver";
 
-import { DeveloperMode, HotStaq, HotTestDriver, HotTestElement, HotTester } from "../../src/api";
+import { DeveloperMode, HotStaq, HotTestDriver, HotTestElement } from "../../src/api";
 import { HotTestMap } from "../../src/HotTestMap";
+import { HotTestSeleniumDriver } from "../../src/HotTestSeleniumDriver";
 
 describe ("Browser Manual Testing From Server Tests - Custom Tester - Development Mode", () =>
 	{
@@ -35,7 +36,7 @@ describe ("Browser Manual Testing From Server Tests - Custom Tester - Developmen
 									"result": new HotTestElement ("result")
 								},
 								"testPaths": {
-									"Form-SignIn-FillOut": async (driver: HotTestDriver): Promise<any> =>
+									"Form-SignIn-FillOut": async (driver: TestDriver): Promise<any> =>
 										{
 											await driver.waitForTestElement ("username");
 											await driver.run ([
@@ -46,7 +47,7 @@ describe ("Browser Manual Testing From Server Tests - Custom Tester - Developmen
 											await driver.wait (50);
 											await driver.assertElementValue ("result", "\"Hello!\"", "Element result is incorrect!");
 										}, 
-									"Form-SignIn-FillOut2": async (driver: HotTestDriver): Promise<any> =>
+									"Form-SignIn-FillOut2": async (driver: TestDriver): Promise<any> =>
 										{
 											await driver.waitForTestElement ("username");
 											await driver.run ([

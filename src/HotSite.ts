@@ -161,18 +161,9 @@ export interface HotSite
 	testing?: {
 			web?: {
 				/**
-				 * The tester class to use. EX: HotTesterMochaSelenium
-				 */
-				tester?: string;
-				/**
 				 * The name of the tester to use.
 				 */
 				testerName?: string;
-				/**
-				 * If set to true, this will create a new tester.
-				 * Default Value: true
-				 */
-				createNewTester?: boolean;
 				/**
 				 * The url that connects to the tester api server.
 				 */
@@ -197,18 +188,9 @@ export interface HotSite
 			},
 			api?: {
 				/**
-				 * The tester class to use. EX: HotTesterMocha
-				 */
-				tester?: string;
-				/**
 				 * The name of the tester to use.
 				 */
 				testerName?: string;
-				/**
-				 * If set to true, this will create a new tester.
-				 * Default Value: true
-				 */
-				createNewTester?: boolean;
 				/**
 				 * The url that connects to the tester api server.
 				 */

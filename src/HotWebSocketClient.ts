@@ -63,7 +63,7 @@ export class HotWebSocketClient
 		if (this.socket.connected === true)
 		{
 			this.socket.disconnect (true);
-			this.webSocketServer.logger.verbose (`Websocket Disconnected ${this.getId ()}`);
+			this.webSocketServer.logger.verbose (() => `Websocket Disconnected ${this.getId ()}`);
 		}
 	}
 }

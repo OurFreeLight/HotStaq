@@ -276,17 +276,7 @@ export abstract class HotAPI
 							{
 								let httpMethod: string = newRouteMethod.type;
 								// Construct the url here. Base + route + route method
-								let routeStr: string = "";
-
-								if (currentRoute.version !== "")
-									routeStr += `/${currentRoute.version}`;
-
-								if (currentRoute.route !== "")
-									routeStr += `/${currentRoute.route}`;
-
-								if (newRouteMethod.name !== "")
-									routeStr += `/${newRouteMethod.name}`;
-
+								let routeStr: string = newRouteMethod.getRouteUrl ();
 								let authCredentials: any = null;
 
 								// Getting the authorization credentials from the API is the lowest 
@@ -453,9 +443,14 @@ export abstract class HotAPI
 			{
 				fetch (url, fetchObj).then (async (res) =>
 					{
-						let jsonObj: any = await res.json ();
-		
-						resolve (jsonObj);
+						res.json ().then ((jsonObj: any) =>
+							{
+								resolve (jsonObj);
+							})
+							.catch ((reason: any) =>
+							{
+								throw new Error (`${url}: ${reason.message}`);
+							});
 					})
 					.catch ((reason: any) =>
 					{

@@ -1,8 +1,6 @@
-import * as oss from "os";
-
 import { HotTestElement, HotTestElementOptions } from "./HotTestElement";
 import { HotTestDriver } from "./HotTestDriver";
-import { HotTestPage } from "./HotTestMap";
+import { HotTestPage } from "./HotTestPage";
 import { HotStaq } from "./HotStaq";
 
 import { By, until, WebDriver, WebElement, Session, Builder } from "selenium-webdriver";
@@ -328,9 +326,10 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	/**
 	 * Run a command using Selenium Webdriver.
 	 */
-	async runCommand (testElm: string | HotTestElement, funcName: string = "", 
-			valueStr: string = "", 
-			options: HotTestElementOptions = new HotTestElementOptions ()): Promise<any>
+	async runCommand (testElm: string | HotTestElement, 
+		funcName: string = "", 
+		valueStr: string = "", 
+		options: HotTestElementOptions = new HotTestElementOptions ()): Promise<any>
 	{
 		let name: string = "";
 		let func: string = "";
@@ -349,7 +348,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			value = valueStr;
 		}
 
-		this.processor.logger.verbose (`HotTestSeleniumDriver: runCommand - Running ${func} with value ${value} for ${name}`);
+		this.processor.logger.verbose (`HotTestSeleniumDriver: runCommand - Running Selenium function ${func} with value ${value} using element ${name}`);
 
 		let elm: WebElement = await this.findTestElement (name, options);
 		let result: any = null;
@@ -379,7 +378,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			}
 		}
 
-		this.processor.logger.verbose (`HotTestSeleniumDriver: runCommand - Finished running ${func} with value ${value} for ${name}`);
+		this.processor.logger.verbose (() => `HotTestSeleniumDriver: runCommand - Finished Running Selenium function ${func}`);
 
 		return (result);
 	}
@@ -439,5 +438,69 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 		if (finalElmValue != value)
 			throw new Error (`Error: ${errorMessage}. Expected: ${JSON.stringify (value)}, Actual: ${JSON.stringify (finalElmValue)}`);
+	}
+
+	/**
+	 * Run a series of test elements.
+	 */
+	async run (executions: string[] | string[][]): Promise<any[]>
+	{
+		let results: any[] = [];
+
+		for (let iIdx = 0; iIdx < executions.length; iIdx++)
+		{
+			let execution: any = executions[iIdx];
+			let testElm: HotTestElement = null;
+			let func: string = "";
+			let value: string = "";
+
+			if (typeof (execution) === "string")
+			{
+				testElm = this.page.testElements[execution];
+
+				/// @fixme This is going to wreck selecting test elements by wildcards.
+				if (testElm == null)
+					throw new Error (`HotTestDriver: Unable to find test element ${execution}`);
+
+				func = testElm.func;
+				value = testElm.value;
+			}
+
+			if (execution instanceof Array)
+			{
+				let name: string = execution[0];
+				testElm = this.page.testElements[name];
+
+				// This null catch is specifically to help find wildcard test elements.
+				if (testElm == null)
+				{
+					testElm = new HotTestElement (name);
+					func = execution[1];
+					value = execution[2];
+				}
+				else
+				{
+					func = testElm.func;
+					value = testElm.value;
+
+					if (execution.length > 1)
+						func = execution[1];
+
+					if (execution.length > 2)
+						value = execution[2];
+				}
+			}
+
+			testElm.func = func;
+			testElm.value = value;
+
+			let result = await this.runCommand (testElm);
+
+			await HotStaq.wait (this.commandDelay);
+
+			results.push (result);
+		}
+
+		return (results);
 	}
 }

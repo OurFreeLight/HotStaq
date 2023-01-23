@@ -90,7 +90,7 @@ export class HotPage implements IHotPage
 		{
 			this.processor = copy;
 			this.name = "";
-			this.testerName = "";
+			this.testerName = "HotTesterMochaSelenium";
 			this.testerMap = "";
 			this.route = "";
 			this.files = [];
@@ -101,7 +101,7 @@ export class HotPage implements IHotPage
 		{
 			this.processor = copy.processor;
 			this.name = copy.name || "";
-			this.testerName = copy.testerName || "";
+			this.testerName = copy.testerName || "HotTesterMochaSelenium";
 			this.testerMap = copy.testerMap || "";
 			this.route = copy.route || "";
 			this.files = copy.files || [];

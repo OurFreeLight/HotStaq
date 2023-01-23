@@ -8,7 +8,7 @@ import { DeveloperMode, HotHTTPServer, HotLogLevel, HotStaq, HotTester,
 	HotTesterMochaSelenium, HotTesterServer, HotTestMap, HotTestSeleniumDriver } from "../../src/api";
 import { HelloWorldAPI } from "../server/HelloWorldAPI";
 
-describe ("Hotsite Testing Multi Tests", () =>
+describe ("Hotsite Testing Multi Tests - Mocha/Selenium", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;
@@ -52,9 +52,10 @@ describe ("Hotsite Testing Multi Tests", () =>
 					tester.driver.headless = true;
 
 				testerServer.addTester (tester);
+				processor.addTester (tester);
 
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
-				await processor.processHotSite ();
+				await processor.processHotSite (tester);
 
 				let api: HelloWorldAPI = new HelloWorldAPI (common.getUrl (server), server);
 				await server.setAPI (api);
@@ -63,9 +64,5 @@ describe ("Hotsite Testing Multi Tests", () =>
 		it ("should have executed tests for ALL web maps", async () =>
 			{
 				await testerServer.executeAllWebTests ("HotTesterMochaSelenium");
-			});
-		it ("should have executed tests for ALL api maps", async () =>
-			{
-				await testerServer.executeAllAPITests ("HotTesterMochaSelenium");
 			});
 	});

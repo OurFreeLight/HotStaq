@@ -17,7 +17,8 @@ import { HotClient } from "./HotClient";
 import { HotTester } from "./HotTester";
 import { HotTesterAPI } from "./HotTesterAPI";
 import { HotTestDriver } from "./HotTestDriver";
-import { HotTestDestination, HotTestMap } from "./HotTestMap";
+import { HotTestMap } from "./HotTestMap";
+import { HotTestDestination} from "./HotTestDestination";
 
 import { HotSite, HotSiteRoute } from "./HotSite";
 
@@ -120,7 +121,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.7.3";
+	static version: string = "0.8.0";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1016,74 +1017,11 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Process a HotSite.
 	 */
-	async processHotSite (): Promise<void>
+	async processHotSite (tester: HotTester = null): Promise<void>
 	{
 		HotStaq.checkHotSiteName (this.hotSite.name, true);
 
 		let routes = this.hotSite.routes;
-		let testerUrl: string = "http://127.0.0.1:8182";
-		let tester: HotTester = null;
-		let driver: HotTestDriver = null;
-
-		if (HotStaq.isWeb === false)
-		{
-			if (this.mode === DeveloperMode.Development)
-			{
-				if (this.hotSite.testing != null)
-				{
-					let setupTester = (parentObj: any) => 
-						{
-							let createNewTester: boolean = true;
-		
-							if (parentObj.createNewTester != null)
-								createNewTester = parentObj.createNewTester;
-		
-							let testerName: string = "Tester";
-		
-							if (parentObj.tester != null)
-								testerName = parentObj.tester;
-		
-							if (parentObj.testerName != null)
-								testerName = parentObj.testerName;
-		
-							if (createNewTester === true)
-							{
-								/// @fixme Find a way to securely allow devs to use their own drivers and testers...
-								/// @fixme Hack for dealing with WebPack's bs.
-								HotTesterMocha = require ("./HotTesterMocha").HotTesterMocha;
-								HotTesterMochaSelenium = require ("./HotTesterMochaSelenium").HotTesterMochaSelenium;
-								HotTestSeleniumDriver = require ("./HotTestSeleniumDriver").HotTestSeleniumDriver;
-		
-								if (parentObj.testerAPIUrl === "")
-									testerUrl = parentObj.testerAPIUrl;
-		
-								if (parentObj.driver === "HotTestSeleniumDriver")
-									driver = new HotTestSeleniumDriver ();
-		
-								if (parentObj.tester === "HotTesterMocha")
-									tester = new HotTesterMocha (this, testerName, testerUrl, driver);
-		
-								if (parentObj.tester === "HotTesterMochaSelenium")
-									tester = new HotTesterMochaSelenium (this, testerName, testerUrl);
-							}
-							else
-								tester = this.testers[testerName];
-
-							if (tester.driver == null)
-								throw new Error (`Tester ${testerName} does not have a driver set!`);
-
-							if (parentObj.commandDelay != null)
-								tester.driver.commandDelay = parentObj.commandDelay;
-						};
-
-					if (this.hotSite.testing.web != null)
-						setupTester (this.hotSite.testing.web);
-
-					if (this.hotSite.testing.api != null)
-						setupTester (this.hotSite.testing.api);
-				}
-			}
-		}
 
 		if (routes != null)
 		{
@@ -1183,7 +1121,7 @@ export class HotStaq implements IHotStaq
 						}
 
 						if (tester == null)
-							throw new Error (`A tester was not created first! You must specify one in the CLI or in HotSite.json.`);
+							throw new Error (`A tester was not created first! You must specify one in the CLI.`);
 
 						tester.testMaps[mapName] = testMap;
 					}
@@ -1580,7 +1518,13 @@ export class HotStaq implements IHotStaq
 				let testerMap: string = routeKey;
 				let testerUrl: string = "";
 				let testerLaunchpadUrl: string = "";
-				let testerName: string = "Tester";
+				let testerName: string = "HotTesterMochaSelenium";
+
+				for (let key in this.testers)
+				{
+					testerName = key;
+					break;
+				}
 
 				if (this.hotSite != null)
 				{
@@ -1588,9 +1532,6 @@ export class HotStaq implements IHotStaq
 					{
 						if (this.hotSite.testing.web != null)
 						{
-							if (this.hotSite.testing.web.tester != null)
-								testerName = this.hotSite.testing.web.tester;
-
 							if (this.hotSite.testing.web.testerName != null)
 								testerName = this.hotSite.testing.web.testerName;
 
@@ -1794,6 +1735,8 @@ export class HotStaq implements IHotStaq
 
 		if (tester == null)
 			throw new Error (`Unable to execute tests. Tester ${testerName} does not exist!`);
+
+		this.logger.verbose (() => `Executing all API tests for tester ${testerName}. Maps: ${JSON.stringify (maps)}`);
 
 		for (let iIdx = 0; iIdx < maps.length; iIdx++)
 		{

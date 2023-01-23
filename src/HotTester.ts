@@ -2,62 +2,11 @@ import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, TestCaseObject } from "./HotRouteMethod";
 import { HotTestDriver } from "./HotTestDriver";
-import { HotTestDestination, HotTestMap, HotTestPage, HotTestPath } from "./HotTestMap";
-
-/**
- * The test stop that is executed as either a destination or 
- * a path.
- */
-export interface HotTestStop
-{
-	/**
-	 * A command to execute. Can be:
-	 * * print(x)
-	 *   * Print a message to the server's console.
-	 * * println(x)
-	 *   * Print a message with a new line to the server's console.
-	 * * url(x)
-	 *   * Open a url. Must be an absolute url.
-	 * * waitForTesterAPIData
-	 *   * This will wait for the tester API to receive data.
-	 * * wait(x)
-	 *   * This will wait for x number of milliseconds.
-	 * * waitForTestObject(x)
-	 *   * This will wait for a test object to be loaded.
-	 */
-	cmd: string;
-	/**
-	 * The destination to execute.
-	 */
-	dest: string;
-	/**
-	 * The path to execute.
-	 */
-	path: string;
-}
-
-/**
- * The destination for a test to take.
- */
-export interface HotDestination
-{
-	/**
-	 * The name of the map.
-	 */
-	mapName: string;
-	/**
-	 * The page to start at.
-	 */
-	page: string;
-	/**
-	 * The API route to start using.
-	 */
-	api: string;
-	/**
-	 * The paths to take on the page.
-	 */
-	paths: HotTestStop[];
-}
+import { HotTestMap, HotTestPath } from "./HotTestMap";
+import { HotTestDestination } from "./HotTestDestination";
+import { HotTestPage } from "./HotTestPage";
+import { HotDestination } from "./HotDestination";
+import { HotTestStop } from "./HotTestStop";
 
 /**
  * Executes tests.
@@ -68,6 +17,10 @@ export abstract class HotTester
 	 * The tester name.
 	 */
 	name: string;
+	/**
+	 * The timeout for each test.
+	 */
+	timeout: number;
 	/**
 	 * The base url that will construct future urls.
 	 */
@@ -100,8 +53,12 @@ export abstract class HotTester
 	constructor (processor: HotStaq, name: string, baseUrl: string, 
 		driver: HotTestDriver, testMaps: { [name: string]: HotTestMap; } = {})
 	{
+		if (testMaps == null)
+			throw new Error (`The testMaps parameter can be an empty object, but cannot be null! It is set to null.`);
+
 		this.processor = processor;
 		this.name = name;
+        this.timeout = 10000;
 		this.baseUrl = baseUrl;
 		this.testMaps = testMaps;
 		this.driver = driver;
@@ -113,11 +70,16 @@ export abstract class HotTester
 	/**
 	 * Executed when setting up the tester.
 	 */
-	abstract setup (isWebRoute: boolean, url: string, destinationKey?: string): Promise<void>;
+	async setup (isWebRoute: boolean, url: string, destinationKey?: string): Promise<void>
+	{
+	}
+
 	/**
 	 * Executed when destroying up the tester.
 	 */
-	abstract destroy (): Promise<void>;
+	async destroy (): Promise<void>
+	{
+	}
 
 	/**
 	 * Executed when tests are started. If this returns true, it will 
@@ -307,7 +269,7 @@ export abstract class HotTester
 		let testMap: HotTestMap = this.testMaps[destination.mapName];
 
 		if (testMap == null)
-			throw new Error (`HotTester: Map ${destination.mapName} does not exist!`);
+			throw new Error (`HotTester: API Map ${destination.mapName} does not exist!`);
 
 		if (this.processor.api == null)
 			throw new Error (`HotTester: Associated processor does not have an API!`);
@@ -348,7 +310,7 @@ export abstract class HotTester
 
 		/// @fixme For some reason the errors being thrown here are not being thrown.
 		if (testMap == null)
-			throw new Error (`HotTester: Map ${destination.mapName} does not exist!`);
+			throw new Error (`HotTester: Web Map ${destination.mapName} does not exist!`);
 
 		let page: HotTestPage = testMap.pages[destination.page];
 
@@ -372,9 +334,7 @@ export abstract class HotTester
 		if (runTestPath === true)
 		{
 			if (testPath == null)
-			{
 				throw new Error (`HotTester: Test path ${testPathName} does not have a function!`);
-			}
 
 			result = await testPath (this.driver);
 		}
@@ -445,8 +405,44 @@ export abstract class HotTester
 				return (results);
 			};
 
+		let seleniumTester: any = null;
 		let cmdFunc: ((cmdArgs: string[]) => Promise<void>) = null;
 		let args: string[] = [];
+
+		// @ts-ignore
+		if (typeof (HotTesterMochaSelenium) != "undefined")
+		{// @ts-ignore
+			// @ts-ignore - Hack to prevent recursive importing.
+			if (this instanceof HotTesterMochaSelenium)
+				seleniumTester = this;
+		}
+
+		if (seleniumTester != null)
+		{
+			if (hasCmd (stop.cmd, "url", true) === true)
+			{
+				args = getCmdArgs (stop.cmd);
+
+				cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+					{
+						let input: string = cmdArgs[0];
+
+						await seleniumTester.driver.navigateToUrl (input);
+					};
+			}
+
+			if (hasCmd (stop.cmd, "waitForTestObject", true) === true)
+			{
+				args = getCmdArgs (stop.cmd);
+	
+				cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+					{
+						let testObject: string = JSON.parse (cmdArgs[0]);
+	
+						await seleniumTester.driver.waitForTestElement (testObject);
+					};
+			}
+		}
 
 		if (hasCmd (stop.cmd, "waitForTesterAPIData", false) === true)
 		{
@@ -466,18 +462,6 @@ export abstract class HotTester
 					let numMilliseconds: number = parseInt (cmdArgs[0]);
 
 					await HotStaq.wait (numMilliseconds);
-				};
-		}
-
-		if (hasCmd (stop.cmd, "url", true) === true)
-		{
-			args = getCmdArgs (stop.cmd);
-
-			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
-				{
-					let input: string = cmdArgs[0];
-
-					await this.driver.navigateToUrl (input);
 				};
 		}
 
@@ -505,18 +489,6 @@ export abstract class HotTester
 				};
 		}
 
-		if (hasCmd (stop.cmd, "waitForTestObject", true) === true)
-		{
-			args = getCmdArgs (stop.cmd);
-
-			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
-				{
-					let testObject: string = JSON.parse (cmdArgs[0]);
-
-					await this.driver.waitForTestElement (testObject);
-				};
-		}
-
 		if (cmdFunc == null)
 			throw new Error (`HotTester: Command ${stop.cmd} does not exist!`);
 
@@ -533,7 +505,7 @@ export abstract class HotTester
 
 		/// @fixme For some reason the errors being thrown here are not being thrown.
 		if (testMap == null)
-			throw new Error (`HotTester: Map ${destination.mapName} does not exist!`);
+			throw new Error (`HotTester: Web Map ${destination.mapName} does not exist!`);
 
 		// Iterate through each path in the destination until complete.
 		for (let iIdx = 0; iIdx < destination.paths.length; iIdx++)
@@ -580,6 +552,8 @@ export abstract class HotTester
 		if (map == null)
 			throw new Error (`HotTester: Map ${mapName} does not exist!`);
 
+		this.processor.logger.verbose (`HotTester: Executing map ${mapName}...`);
+
 		// Process routes testing first.
 		let routeKey: string = this.processor.getRouteKeyFromName (mapName);
 		let url: string = "";
@@ -593,46 +567,54 @@ export abstract class HotTester
 				if (testDest.autoStart === false)
 					return;
 
-				let destination: HotDestination = HotTester.interpretDestination (mapName, testDest);
-				let isWebRoute: boolean = false;
-				let runTestPaths: boolean = true;
+				try
+				{
+					this.processor.logger.verbose (() => `HotTester: Executing ${mapName} destination ${JSON.stringify (testDest)}...`);
+					let destination: HotDestination = HotTester.interpretDestination (mapName, testDest);
+					let isWebRoute: boolean = false;
+					let runTestPaths: boolean = true;
 
-				if (destination.page !== "")
-					isWebRoute = true;
-	
-				if (this.setup != null)
-				{
-					if (this.hasBeenSetup === false)
-					{
-						await this.setup (isWebRoute, url, destinationKey);
-						this.hasBeenSetup = true;
-						this.hasBeenDestroyed = false;
-					}
-				}
-	
-				if (this.onTestStart != null)
-					runTestPaths = await this.onTestStart (destination, url, destinationKey);
-	
-				if (runTestPaths === true)
-				{
 					if (destination.page !== "")
-						await this.executeTestPagePaths (destination);
-	
-					if (destination.api !== "")
-						await this.executeTestAPIPaths (destination);
-				}
-		
-				if (this.onTestEnd != null)
-					await this.onTestEnd (destination);
-	
-				if (this.destroy != null)
-				{
-					if (this.hasBeenDestroyed === false)
+						isWebRoute = true;
+
+					if (this.setup != null)
 					{
-						await this.destroy ();
-						this.hasBeenDestroyed = true;
-						this.hasBeenSetup = false;
+						if (this.hasBeenSetup === false)
+						{
+							await this.setup (isWebRoute, url, destinationKey);
+							this.hasBeenSetup = true;
+							this.hasBeenDestroyed = false;
+						}
 					}
+		
+					if (this.onTestStart != null)
+						runTestPaths = await this.onTestStart (destination, url, destinationKey);
+		
+					if (runTestPaths === true)
+					{
+						if (destination.page !== "")
+							await this.executeTestPagePaths (destination);
+		
+						if (destination.api !== "")
+							await this.executeTestAPIPaths (destination);
+					}
+			
+					if (this.onTestEnd != null)
+						await this.onTestEnd (destination);
+
+					if (this.destroy != null)
+					{
+						if (this.hasBeenDestroyed === false)
+						{
+							await this.destroy ();
+							this.hasBeenDestroyed = true;
+							this.hasBeenSetup = false;
+						}
+					}
+				}
+				catch (ex)
+				{
+					throw ex;
 				}
 			};
 
@@ -702,10 +684,5 @@ export abstract class HotTester
 				}
 			}
 		}
-
-		// End of routes testing
-
-		// Start of API testing
-
 	}
 }

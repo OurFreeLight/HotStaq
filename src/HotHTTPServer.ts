@@ -8,7 +8,7 @@ import express from "express";
 import mimeTypes from "mime-types";
 import { Fields, Files, IncomingForm, Options } from "formidable";
 
-import { HotServer } from "./HotServer";
+import { HotServer, HotServerType } from "./HotServer";
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
@@ -401,7 +401,7 @@ export class HotHTTPServer extends HotServer
 							}
 						}
 
-						this.logger.verbose (`Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+						this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
 					}
 				}
 			}));
@@ -472,18 +472,7 @@ export class HotHTTPServer extends HotServer
 					continue;
 				}
 
-				let methodName: string = "/";
-
-				if (route.version !== "")
-					methodName += `${route.version}/`;
-
-				if (route.prefix !== "")
-					methodName += `${route.prefix}/`;
-
-				if (route.route !== "")
-					methodName += `${route.route}/`;
-
-				methodName += method.name;
+				let methodName: string = method.getRouteUrl ();
 				method.isRegistered = true;
 
 				this.logger.verbose (`Adding HTTP route ${method.type} ${methodName}`);
@@ -612,7 +601,7 @@ export class HotHTTPServer extends HotServer
 		this.expressApp.use ((req: express.Request, res: express.Response, next: any): void =>
 			{
 				const url: string = `${req.protocol}://${req.get ("host")}${req.originalUrl}`;
-				this.logger.verbose (`Requested: ${req.method} ${req.httpVersion} ${url}`);
+				this.logger.verbose (`IP ${req.ip} initial request: ${req.method} ${req.httpVersion} ${url}`);
 
 				next ();
 			});
@@ -652,7 +641,10 @@ export class HotHTTPServer extends HotServer
 
 		if (this.serveFileExtensions.length > 0)
 		{
-			this.logger.verbose (`Set to serve files: ${JSON.stringify (this.serveFileExtensions)}`);
+			if (this.isAPIServerOnly () === true)
+				return;
+
+			this.logger.verbose (() => `Set to serve files: ${JSON.stringify (this.serveFileExtensions)}`);
 
 			this.expressApp.use ((req: express.Request, res: express.Response, next: any): void =>
 				{
@@ -661,7 +653,7 @@ export class HotHTTPServer extends HotServer
 						let bodyObj: any = req.body;
 						let queryObj: any = req.query;
 
-						this.logger.verbose (`Method: ${req.method} Requested URL: ${req.originalUrl} Body: ${JSON.stringify (bodyObj)}, Query: ${JSON.stringify (queryObj)}`);
+						this.logger.verbose (() => `Method: ${req.method} Requested URL: ${req.originalUrl} Body: ${JSON.stringify (bodyObj)}, Query: ${JSON.stringify (queryObj)}`);
 
 						let requestedUrl: string = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 						let foundUrl: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "url"]);
@@ -742,7 +734,7 @@ export class HotHTTPServer extends HotServer
 									// will then request the real page that contains the file.
 
 									res.setHeader ("Content-Type", "text/html");
-									this.logger.verbose (`Sending generated hott content with headers ${JSON.stringify (res.getHeaders ())}`);
+									this.logger.verbose (() => `Sending generated hott content with headers ${JSON.stringify (res.getHeaders ())}`);
 									res.status (200).send (content);
 								};
 							let sendFileContent = (path: string, fileExt: string, iServableFile: ServableFileExtension): void =>
@@ -770,7 +762,7 @@ export class HotHTTPServer extends HotServer
 															res = res.header (httpHeader.type, httpHeader.value);
 														}
 
-														this.logger.verbose (`Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+														this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
 														res = res.status (200);
 														res.sendFile (path);
 
@@ -791,7 +783,7 @@ export class HotHTTPServer extends HotServer
 											res.setHeader ("Content-Type", mimeType);
 									}
 
-									this.logger.verbose (`Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+									this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
 									res.status (200).sendFile (path);
 								};
 
@@ -920,21 +912,33 @@ export class HotHTTPServer extends HotServer
 				enabledPlugins: ["octetstream", "multipart"]
 			}): Promise<Files>
 	{
-		return (await new Promise<Files> ((resolve, reject) =>
+		return (new Promise<Files> ((resolve, reject) =>
 			{
-				const form = new IncomingForm (options);
-		
-				form.parse (req, (err: any, fields: Fields, files: Files) =>
+				let resolveIt: boolean = true;
+
+				if (req.headers["content-type"] != null)
+				{
+					if (req.headers["content-type"].indexOf ("multipart/form-data") > -1)
 					{
-						if (err != null)
-						{
-							/// @fixme Is it ok to ignore this error?
-							if (err.message !== "no parser found")
-								throw err;
-						}
-		
-						resolve (files);
-					});
+						const form = new IncomingForm (options);
+
+						form.parse (req, (err: any, fields: Fields, files: Files) =>
+							{
+								if (err != null)
+								{
+									/// @fixme Is it ok to ignore this error?
+									if (err.message !== "no parser found")
+										throw err;
+								}
+				
+								resolve (files);
+							});
+						resolveIt = false;
+					}
+				}
+
+				if (resolveIt === true)
+					resolve ({});
 			}));
 	}
 
@@ -949,7 +953,7 @@ export class HotHTTPServer extends HotServer
 		{
 			this.handle404 = (req: express.Request, res: express.Response, next: any): void =>
 				{
-					this.logger.verbose (`404 ${JSON.stringify (req.url)}`);
+					this.logger.verbose (() => `404 ${JSON.stringify (req.url)}`);
 
 					let on404: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "errors", "on404"]);
 
@@ -973,7 +977,7 @@ export class HotHTTPServer extends HotServer
 						msg = err.message;
 					}
 
-					this.logger.verbose (`500 Server error ${JSON.stringify (stack)}`);
+					this.logger.verbose (() => `500 Server error ${JSON.stringify (stack)}`);
 
 					let onOther: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "errors", "onOther"]);
 
@@ -1058,7 +1062,7 @@ export class HotHTTPServer extends HotServer
 							this.logger.info (`${this.serverType} listening on ${protocol}://${this.listenAddress}:${port}/`);
 
 							if (this.processor.hotSite != null)
-								this.logger.verbose (`Using HotSite object: ${JSON.stringify (this.processor.hotSite)}`);
+								this.logger.verbose (() => `Using HotSite object: ${JSON.stringify (this.processor.hotSite)}`);
 
 							resolve ();
 						};
@@ -1071,14 +1075,17 @@ export class HotHTTPServer extends HotServer
 						{
 							if (hotsiteServer.serveDirectories != null)
 							{
-								for (let iIdx = 0; iIdx < hotsiteServer.serveDirectories.length; iIdx++)
+								if (this.isAPIServerOnly () === false)
 								{
-									let directory = hotsiteServer.serveDirectories[iIdx];
-					
-									this.staticRoutes.push ({
-											"route": directory.route,
-											"localPath": ppath.normalize (directory.localPath)
-										});
+									for (let iIdx = 0; iIdx < hotsiteServer.serveDirectories.length; iIdx++)
+									{
+										let directory = hotsiteServer.serveDirectories[iIdx];
+						
+										this.staticRoutes.push ({
+												"route": directory.route,
+												"localPath": ppath.normalize (directory.localPath)
+											});
+									}
 								}
 							}
 
@@ -1096,13 +1103,16 @@ export class HotHTTPServer extends HotServer
 						}
 					}
 
-					this.processor.createExpressRoutes (this.expressApp);
-
-					for (let iIdx = 0; iIdx < this.staticRoutes.length; iIdx++)
+					if (this.isAPIServerOnly () === false)
 					{
-						let staticRoute: StaticRoute = this.staticRoutes[iIdx];
+						this.processor.createExpressRoutes (this.expressApp);
 
-						this.registerStaticRoute (staticRoute);
+						for (let iIdx = 0; iIdx < this.staticRoutes.length; iIdx++)
+						{
+							let staticRoute: StaticRoute = this.staticRoutes[iIdx];
+
+							this.registerStaticRoute (staticRoute);
+						}
 					}
 
 					if (this.api != null)
@@ -1265,6 +1275,31 @@ export class HotHTTPServer extends HotServer
 		await webServer.listen ();
 
 		return ({ processor: processor, server: webServer });
+	}
+
+	/**
+	 * Is this server running with an API server?
+	 */
+	isAPIServerOnly (): boolean
+	{
+		if (this.serverType === "API Server")
+			return (true);
+
+		return (false);
+	}
+
+	/**
+	 * Is this server running with an API server?
+	 */
+	isAPIServerRunning (): boolean
+	{
+		if ((this.serverType === "Web-API Server") || 
+			(this.serverType === "API Server"))
+		{
+			return (true);
+		}
+
+		return (false);
 	}
 
 	/**

@@ -105,7 +105,7 @@ export class HotCreator
 		this.npmCommands = {
 				start: "",
 				dev: "",
-				test: "hotstaq --dev run --server-type api --api-test",
+				test: "hotstaq --dev --env-file .env run --server-type api --api-test && hotstaq --dev --env-file .env run --server-type web --web-test",
 				build: "",
 				buildWebAPI: "hotstaq generate --copy-to ./public/js/",
 				buildWebAPIDebug: "hotstaq generate --copy-to ./public/js/",
@@ -256,11 +256,9 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				},
 				testing: {
 					web: {
-						tester: "HotTesterMochaSelenium",
 						testerAPIUrl: "http://127.0.0.1:8182"
 					},
 					api: {
-						tester: "HotTesterMochaSelenium",
 						maps: [
 							"AppAPI"
 						]

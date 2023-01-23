@@ -98,10 +98,15 @@ export class HotLog
 	/**
 	 * Log a verbose message.
 	 */
-	verbose (message: string)
+	verbose (message: string | Function)
 	{
 		if (this.logLevel === HotLogLevel.Verbose)
-			console.info (message);
+		{
+			if (typeof (message) === "string")
+				console.info (message);
+			else
+				console.info (message ());
+		}
 	}
 
 	/**

@@ -47,4 +47,9 @@
 			await driver.assertElementValue (
 				"apiResult", `"Hello!"`, "Element result is incorrect!");
 		});
+	Hot.CurrentPage.createTestPath ("Throw-Ex", async (driver) =>
+		{
+			/// @todo Create testpath method that can assert exceptions being thrown.
+			throw new Error ("Test error");
+		});
 *>

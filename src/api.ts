@@ -20,12 +20,16 @@ import { HotClient } from "./HotClient";
 // Testing stuff
 import { HotTestDriver } from "./HotTestDriver";
 import { IHotTestElement, HotTestElement, HotTestElementOptions, IHotTestElementOptions } from "./HotTestElement";
-import { HotTester, HotTestStop, HotDestination } from "./HotTester";
+import { HotTester } from "./HotTester";
+import { HotTestStop } from "./HotTestStop";
+import { HotDestination } from "./HotDestination";
 import { HotTesterAPI } from "./HotTesterAPI";
 import { HotTesterMocha } from "./HotTesterMocha";
 import { HotTesterMochaSelenium } from "./HotTesterMochaSelenium";
 import { HotTesterServer } from "./HotTesterServer";
-import { HotTestMap, HotTestDestination, HotTestPath, HotTestPage } from "./HotTestMap";
+import { HotTestMap, HotTestPath } from "./HotTestMap";
+import { HotTestDestination } from "./HotTestDestination";
+import { HotTestPage } from "./HotTestPage";
 import { HotTestSeleniumDriver } from "./HotTestSeleniumDriver";
 
 // Database stuff
