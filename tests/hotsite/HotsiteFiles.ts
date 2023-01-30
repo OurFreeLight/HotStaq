@@ -28,7 +28,6 @@ describe ("Hotsite Files Tests", () =>
 				server = new HotHTTPServer (processor);
 
 				processor.logger.logLevel = HotLogLevel.Verbose;
-				processor.startDelay = 5000;
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
 				await processor.processHotSite ();
 
