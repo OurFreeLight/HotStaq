@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as ppath from "path";
 
 import fetch from "node-fetch";
@@ -11,7 +10,7 @@ import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent"
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
-import { DeveloperMode, Hot } from "./Hot";
+import { DeveloperMode, Hot, HotAsset, HotModule } from "./Hot";
 import { HotClient } from "./HotClient";
 
 import { HotTester } from "./HotTester";
@@ -93,6 +92,10 @@ export interface IHotStaq
 	 */
 	pages?: { [name: string]: HotPage };
 	/**
+	 * The imported modules.
+	 */
+	modules?: { [name: string]: HotModule };
+	/**
 	 * The components that can be constructed.
 	 */
 	components?: {
@@ -121,7 +124,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.0";
+	static version: string = "0.8.1";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -154,6 +157,10 @@ export class HotStaq implements IHotStaq
 	 * The pages that can be constructed.
 	 */
 	pages: { [name: string]: HotPage };
+	/**
+	 * The imported modules.
+	 */
+	modules: { [name: string]: HotModule };
 	/**
 	 * The components that can be constructed.
 	 */
@@ -189,6 +196,10 @@ export class HotStaq implements IHotStaq
 	 */
 	logger: HotLog;
 	/**
+	 * Add a start delay before starting. This is for debugging purposes mostly.
+	 */
+	startDelay: number;
+	/**
 	 * The public keys to be exposed.
 	 */
 	publicKeys: any;
@@ -199,10 +210,13 @@ export class HotStaq implements IHotStaq
 
 	constructor (copy: IHotStaq = {})
 	{
+		this.logger = new HotLog (HotLogLevel.All);
+		this.startDelay = 0;
 		this.api = copy.api || null;
 		this.testerAPI = copy.testerAPI || null;
 		this.mode = copy.mode || DeveloperMode.Production;
 		this.pages = copy.pages || {};
+		this.modules = copy.modules || {};
 		this.components = copy.components || {};
 		this.files = copy.files || {};
 		this.hotSite = copy.hotSite || null;
@@ -229,25 +243,25 @@ export class HotStaq implements IHotStaq
 
 	<script type = "text/javascript" src = "%hotstaq_js_src%"></script>
 	<script type = "text/javascript">
-		window.HotStaq = HotStaqWeb.HotStaq;
-		window.HotClient = HotStaqWeb.HotClient;
-		window.HotAPI = HotStaqWeb.HotAPI;
-		window.Hot = HotStaqWeb.Hot;
+		for (let key in HotStaqWeb)
+			window[key] = HotStaqWeb[key];
 	</script>
 
 %apis_to_load%
 
 	<script type = "text/javascript">
-		function hotstaq_startApp ()
+		async function hotstaq_startApp ()
 		{
 			let tempMode = 0;
 
 			if (window["Hot"] != null)
 				tempMode = Hot.Mode;
 
-			%load_hot_site%
+			%start_delay%
 
 			var processor = new HotStaq ();
+			processor.logger.logLevel = %logging_level%;
+
 			var promises = [];
 			%developer_mode%
 
@@ -282,7 +296,6 @@ export class HotStaq implements IHotStaq
 </body>
 
 </html>`;
-		this.logger = new HotLog (HotLogLevel.All);
 		this.publicKeys = {};
 		this.testers = {};
 	}
@@ -423,6 +436,22 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Add an imported module.
+	 */
+	addModule (name: string, module: HotModule): void
+	{
+		this.modules[name] = module;
+	}
+
+	/**
+	 * Get an imported module.
+	 */
+	getModule (name: string): HotModule
+	{
+		return (this.modules[name]);
+	}
+
+	/**
 	 * Add a file.
 	 */
 	addFile (file: HotFile): void
@@ -441,10 +470,24 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Get a file.
 	 */
-	getFile (name: string): HotFile
+	getFile (name: string, throwEx: boolean = true): HotFile
 	{
 		if (this.files[name] == null)
-			throw new Error (`Unable to find file ${name}`);
+		{
+			let pos: number = name.indexOf ("?hstqserve=");
+			let tempName: string = name;
+
+			if (pos > -1)
+				tempName = name.substring (0, pos);
+
+			if (this.files[tempName] != null)
+				return (this.files[tempName]);
+
+			if (throwEx === true)
+				throw new Error (`Unable to find file ${name}`);
+
+			return (null);
+		}
 
 		return (this.files[name]);
 	}
@@ -767,12 +810,12 @@ export class HotStaq implements IHotStaq
 										break;
 									}
 								}
-			
+
 								if (isNewFunction === true)
 								{
 									// @ts-ignore
 									newObj[objFunc] = HotStaq.keepContext (this.component[objFunc], this.component);
-			
+
 									if (addFunctionsTo !== "")
 									{
 										let query: HTMLElement = document.querySelector (addFunctionsTo);
@@ -1154,7 +1197,7 @@ export class HotStaq implements IHotStaq
 			disableFileLoading = this.hotSite.disableFileLoading;
 
 		if (disableFileLoading === false)
-			await this.loadHotFiles (this.hotSite.files);
+			await this.loadHotFiles (this.hotSite.files, false, false);
 		else
 			this.logger.verbose (`Hotsite has file loading disabled...`);
 
@@ -1174,11 +1217,11 @@ export class HotStaq implements IHotStaq
 
 		if (HotStaq.isWeb === true)
 		{
-			this.logger.info (`Downloading HotSite ${path}`);
+			this.logger.verbose (`Downloading HotSite ${path}`);
 
 			let res: any = await fetch (path);
 
-			this.logger.info (`Downloaded site ${path}`);
+			this.logger.verbose (`Downloaded site ${path}`);
 
 			jsonStr = res.text ();
 		}
@@ -1186,27 +1229,34 @@ export class HotStaq implements IHotStaq
 		{
 			path = ppath.normalize (path);
 
-			this.logger.info (`Accessing HotSite ${path}`);
+			this.logger.verbose (`Accessing HotSite ${path}`);
 
-			jsonStr = await new Promise (
-				(resolve: any, reject: any): void =>
-				{
-					fs.readFile (path, (err: NodeJS.ErrnoException, data: Buffer): void =>
-						{
-							if (err != null)
-								throw err;
-	
-							let content: string = data.toString ();
-
-							this.logger.info (`Accessed site ${path}`);
-	
-							resolve (content);
-						});
-				});
+			let HotIO = eval ("require")("./HotIO").HotIO;
+			jsonStr = await HotIO.readTextFile (path);
+			this.logger.verbose (`Accessed site ${path}`);
 		}
 
 		this.hotSite = JSON.parse (jsonStr);
+
+		if (this.hotSite == null)
+			throw new Error (`HotSite ${path} cannot be null!`);
+
 		this.hotSite.hotsitePath = path;
+	}
+
+	/**
+	 * Save the current HotSite to a file.
+	 */
+	async saveHotSite (path: string): Promise<void>
+	{
+		if (HotStaq.isWeb === true)
+			throw new Error (`Cannot save a HotSite on the web!`);
+
+		const hotsiteStr: string = JSON.stringify (this.hotSite, null, 2);
+
+		let HotIO = eval ("require")("./HotIO").HotIO;
+		await HotIO.writeTextFile (path, hotsiteStr);
+		this.logger.verbose (`Saved site ${path}`);
 	}
 
 	/**
@@ -1214,7 +1264,7 @@ export class HotStaq implements IHotStaq
 	 * unless forceContentLoading is set to true.
 	 */
 	async loadHotFiles (files: { [name: string]: { url?: string; localFile?: string; content?: string; } }, 
-			forceContentLoading: boolean = false): Promise<void>
+			forceContentLoading: boolean = false, loadUrlContent: boolean = true): Promise<void>
 	{
 		this.logger.verbose (`Loading Hott files...`);
 
@@ -1237,7 +1287,12 @@ export class HotStaq implements IHotStaq
 			}
 
 			if (file.url != null)
-				newFile.url = file.url;
+			{
+				if (HotStaq.isWeb === true)
+					newFile.url = `${file.url}?hstqserve=nahfam`;
+				else
+					newFile.url = file.url;
+			}
 
 			if (HotStaq.isWeb === false)
 			{
@@ -1256,19 +1311,17 @@ export class HotStaq implements IHotStaq
 			if (forceContentLoading === true)
 				loadContent = true;
 
+			if (loadUrlContent === false)
+			{
+				if (newFile.url !== "")
+					loadContent = false;
+			}
+
 			if (loadContent === true)
 			{
-				let filepath: string = "";
-
-				if (newFile.url !== "")
-					filepath = newFile.url;
-
-				if (newFile.localFile !== "")
-					filepath = newFile.localFile;
-
-				this.logger.verbose (`Loading Hott file: ${filepath}`);
+				this.logger.verbose (`Loading Hott file: ${newFile.url}`);
 				await newFile.load ();
-				this.logger.verbose (`Finished loading Hott file: ${filepath}`);
+				this.logger.verbose (`Finished loading Hott file: ${newFile.url}`);
 			}
 
 			this.addFile (newFile);
@@ -1280,9 +1333,9 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Generate the content to send to a client.
 	 */
-	generateContent (routeKey: string, name: string = "", url: string = "./",
+	async generateContent (routeKey: string, name: string = "", url: string = "./",
 			jsSrcPath: string = "./js/HotStaq.min.js", passArgs: boolean = true, 
-			args: any = null): string
+			args: any = null): Promise<string>
 	{
 		let apiScripts: string = "";
 		let apiCode: string = "";
@@ -1451,7 +1504,7 @@ export class HotStaq implements IHotStaq
 		}
 
 		let content: string = this.pageContent;
-		let fixContent = (tempContent: string) =>
+		let fixContent = async (tempContent: string) =>
 			{
 				let developerModeStr: string = "";
 				let testerAPIStr: string = "";
@@ -1486,22 +1539,35 @@ export class HotStaq implements IHotStaq
 					for (let key in this.files)
 					{
 						let file = this.files[key];
-						let fileUrl: string = `"${file.url}"`;
-						let fileContent: string = "";
+						let asset: HotAsset = new HotAsset ("html", key);
+
+						if (file.localFile !== "")
+							asset.path = file.localFile;
+
+						if (file.url !== "")
+							asset.path = file.url;
 
 						if (file.content !== "")
 						{
-							let escapedContent: string = JSON.stringify (file.content);
-
-							// Find any script tags and interrupt them so the HTML parsers 
-							// don't get confused.
-							escapedContent = escapedContent.replace (new RegExp ("\\<script", "gmi"), "<scr\" + \"ipt");
-							escapedContent = escapedContent.replace (new RegExp ("\\<\\/script", "gmi"), "</scr\" + \"ipt");
-
-							fileContent = `, "content": ${escapedContent}`;
+							asset.path = "";
+							asset.content = file.content;
 						}
 
-						loadFiles += `\t\t\tfiles["${key}"] = { "url": ${fileUrl}${fileContent} };\n`;
+						let output = await asset.output ();
+
+						if (typeof (output) === "string")
+							throw new Error (`During initial load, HTML assets cannot be outputted using only a string!`);
+
+						let fileUrl: string = "";
+						let fileContent: string = "";
+
+						if (output.url != null)
+							fileUrl = `"url": "${output.url}", `;
+
+						if (output.content != null)
+							fileContent = `"content": ${output.content}`; // May have to escape the content?
+
+						loadFiles += `\t\t\tfiles["${output.name}"] = { ${fileUrl}${fileContent} };\n`;
 					}
 
 					loadFiles += `\t\t\tpromises.push (processor.loadHotFiles (files));\n`;
@@ -1553,11 +1619,17 @@ export class HotStaq implements IHotStaq
 					}
 				}
 
+				let startDelayStr: string = "";
+
+				if (this.startDelay !== 0)
+					startDelayStr = `await HotStaq.wait (${this.startDelay});`;
+
+				tempContent = tempContent.replace (/\%start\_delay\%/g, startDelayStr);
+				tempContent = tempContent.replace (/\%logging\_level\%/g, `HotLogLevel.${HotLogLevel[this.logger.logLevel]}`);
 				tempContent = tempContent.replace (/\%hotstaq\_js\_src\%/g, jsSrcPath);
 				tempContent = tempContent.replace (/\%developer\_mode\%/g, developerModeStr);
 				tempContent = tempContent.replace (/\%tester\_api\%/g, testerAPIStr);
 				tempContent = tempContent.replace (/\%apis\_to\_load\%/g, apiScripts);
-				tempContent = tempContent.replace (/\%load\_hot\_site\%/g, ""); /// @fixme Should this only be done server-side?
 				tempContent = tempContent.replace (/\%load\_files\%/g, loadFiles);
 				tempContent = tempContent.replace (/\%api\_code\%/g, apiCode);
 				tempContent = tempContent.replace (/\%public\_secrets\%/g, publicKeys);
@@ -1569,7 +1641,7 @@ export class HotStaq implements IHotStaq
 
 				return (tempContent);
 			};
-		content = fixContent (content);
+		content = await fixContent (content);
 
 		return (content);
 	}
@@ -1581,12 +1653,12 @@ export class HotStaq implements IHotStaq
 	 * from this HotStaq object with HotHTTPServer, be sure to use 
 	 * the loadHotSite method in HotHTTPServer.
 	 */
-	createExpressRoutes (expressApp: any, jsSrcPath: string = "./js/HotStaq.min.js"): void
+	async createExpressRoutes (expressApp: any, jsSrcPath: string = "./js/HotStaq.min.js"): Promise<void>
 	{
 		for (let key in this.pages)
 		{
 			let page: HotPage = this.pages[key];
-			const content: string = this.generateContent (page.route, page.name, page.files[0].url, jsSrcPath);
+			const content: string = await this.generateContent (page.route, page.name, page.files[0].url, jsSrcPath);
 
 			expressApp.get (page.route, (req: any, res: any) =>
 				{
@@ -2213,6 +2285,8 @@ if (typeof (document) !== "undefined")
 						};
 
 					let loadPage: string = getAttr (hotstaqElm, ["load-page", "loadPage", "src"]) || "";
+					let loggingLevel: string = getAttr (hotstaqElm, ["logging-level", "loggingLevel"]) || null;
+					let startDelay: string = getAttr (hotstaqElm, ["start-delay", "startDelay"]) || null;
 					let router: string = getAttr (hotstaqElm, ["router"]) || "";
 					let name: string = getAttr (hotstaqElm, ["name"]) || "default";
 					let args: string = getAttr (hotstaqElm, ["args"]) || null;
@@ -2229,6 +2303,9 @@ if (typeof (document) !== "undefined")
 					let routerManager: { [path: string]: { redirect: string; baseRedirect: string; base: string; src: string; } } = {};
 					let routerWildcards: string[] = [];
 					let search: URLSearchParams = new URLSearchParams (window.location.search);
+
+					if (startDelay != null)
+						await HotStaq.wait (parseInt (startDelay));
 
 					if (getAttr (hotstaqElm, ["src"]) != null)
 						loadPage = getAttr (hotstaqElm, ["src"]);
@@ -2425,6 +2502,9 @@ if (typeof (document) !== "undefined")
 
 					if (processor == null)
 						processor = new HotStaq ();
+
+					if (loggingLevel != null)
+						processor.logger.logLevel = HotLog.parse (loggingLevel);
 
 					processor.mode = tempMode;
 

@@ -45,6 +45,34 @@ export class HotLog
 	}
 
 	/**
+	 * Parse the logging level.
+	 */
+	static parse (logLevel: string): HotLogLevel
+	{
+		let level: HotLogLevel = HotLogLevel.All;
+
+		if (logLevel === "info")
+			level = HotLogLevel.Info;
+
+		if (logLevel === "warning")
+			level = HotLogLevel.Warning;
+
+		if (logLevel === "error")
+			level = HotLogLevel.Error;
+
+		if (logLevel === "verbose")
+			level = HotLogLevel.Verbose;
+
+		if (logLevel === "all")
+			level = HotLogLevel.All;
+
+		if (logLevel === "none")
+			level = HotLogLevel.None;
+
+		return (level);
+	}
+
+	/**
 	 * Log a message.
 	 */
 	log (level: HotLogLevel, message: string)

@@ -7,8 +7,8 @@
 
 <body>
 <*
-	Hot.runFile ("Button");
-	Hot.runFile ("Content");
+	await Hot.runFile ("Button");
+	await Hot.runFile ("Content");
 *>
 </body>
 

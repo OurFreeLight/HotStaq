@@ -61,6 +61,10 @@ export class HotCLI
 	 */
 	apis: { [name: string]: APItoLoad; };
 	/**
+	 * The install action to execute.
+	 */
+	onInstallAction: () => Promise<void>;
+	/**
 	 * The create action to execute.
 	 */
 	onCreateAction: () => Promise<void>;
@@ -97,6 +101,7 @@ export class HotCLI
 		this.apis = {};
 
 		this.creator = null;
+		this.onInstallAction = null;
 		this.onCreateAction = null;
 		this.onRunAction = null;
 		this.onAgentAction = null;
@@ -440,6 +445,66 @@ export class HotCLI
 			}, "");
 
 		return (createCmd);
+	}
+
+	/**
+	 * Handle install commands.
+	 */
+	async handleInstallCommands (): Promise<commander.Command>
+	{
+		let installStr: string = "install";
+		let outDir: string = "";
+		let baseUrl: string = "";
+
+		const installCmd: commander.Command = new commander.Command ("install");
+		installCmd.description (`Install a dependency from NPM.`);
+		installCmd.arguments ("<name>");
+		installCmd.action ((name: string, cmdr: any) =>
+			{
+				this.onInstallAction = async () =>
+					{
+						if (this.hotsitePath === "")
+							throw new Error (`When installing a dependency, you must specify a HotSite.json!`);
+	
+						await this.processor.loadHotSite (this.hotsitePath);
+
+						let hotsite = this.processor.hotSite;
+
+						if (hotsite.dependencies == null)
+							hotsite.dependencies = { web: {} };
+
+						await HotBuilder.installModule ({
+								installType: installStr, 
+								name: name,
+								processor: this.processor, 
+								hotsite: hotsite,
+								hotsitePath: this.hotsitePath,
+								outDir: outDir,
+								baseUrl: baseUrl,
+								cwd: process.cwd ()
+							});
+					};
+			});
+		installCmd.option (`--out <value>`, 
+			`Output the public files into a specific directory.`, 
+			(value: string, previous: any) =>
+			{
+				outDir = value;
+			}, `${process.cwd ()}/public/hotstaq_modules/MODULE_NAME/`);
+		installCmd.option (`--base-url <value>`, 
+			`The base url to use when accessing the files from the web. Typically just needs to be a relative directory.`, 
+			(value: string, previous: any) =>
+			{
+				outDir = value;
+			}, "./hotstaq_modules/MODULE_NAME/");
+		installCmd.option (`--use-link`, 
+			`Link a module instead of installing it.`, 
+			(value: string, previous: any) =>
+			{
+				installStr = "link";
+			}, "");
+
+		return (installCmd);
 	}
 
 	/**
@@ -918,6 +983,7 @@ export class HotCLI
 								apiServer = null;
 							}
 
+							/// @todo Remove this once the shutdown process is fixed.
 							process.exit (0);
 						}
 					}
@@ -1713,6 +1779,9 @@ export class HotCLI
 			let createCmd: commander.Command = await this.handleCreateCommands ();
 			command.addCommand (createCmd);
 
+			let installCmd: commander.Command = await this.handleInstallCommands ();
+			command.addCommand (installCmd);
+
 			let runCmd: commander.Command = await this.handleRunCommands ("run");
 			command.addCommand (runCmd);
 
@@ -1770,6 +1839,9 @@ export class HotCLI
 	 */
 	async start (): Promise<void>
 	{
+		if (this.onInstallAction != null)
+			await this.onInstallAction ();
+
 		if (this.onCreateAction != null)
 			await this.onCreateAction ();
 

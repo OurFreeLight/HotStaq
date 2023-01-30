@@ -1,4 +1,5 @@
 node_modules/
+hotstaq_modules/
 db/
 !creator/
 

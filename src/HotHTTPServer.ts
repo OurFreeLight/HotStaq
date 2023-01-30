@@ -721,12 +721,12 @@ export class HotHTTPServer extends HotServer
 						}
 						else
 						{
-							let sendHottContent = (fullUrl: URL, route: string): void =>
+							let sendHottContent = async (fullUrl: URL, route: string): Promise<void> =>
 								{
 									// Appending hstqserve ensures that the content will not be resent.
 									fullUrl.searchParams.append ("hstqserve", "nahfam");
 
-									const content: string = this.processor.generateContent (route, 
+									const content: string = await this.processor.generateContent (route, 
 										this.hottFilesAssociatedInfo.name,
 										fullUrl.toString (),
 										this.hottFilesAssociatedInfo.jsSrcPath);
@@ -880,7 +880,7 @@ export class HotHTTPServer extends HotServer
 									if (sendContentFlag === true)
 									{
 										if (generateContent === true)
-											sendHottContent (url, route);
+											await sendHottContent (url, route);
 										else
 										{
 											sendFileContent (
@@ -1105,7 +1105,7 @@ export class HotHTTPServer extends HotServer
 
 					if (this.isAPIServerOnly () === false)
 					{
-						this.processor.createExpressRoutes (this.expressApp);
+						await this.processor.createExpressRoutes (this.expressApp);
 
 						for (let iIdx = 0; iIdx < this.staticRoutes.length; iIdx++)
 						{
