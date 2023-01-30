@@ -7,7 +7,7 @@
 		{
 			"type": "node",
 			"name": "Debug Web Server",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"request": "launch",
 			"skipFiles": [
 				"<node_internals>/**"
@@ -20,7 +20,7 @@
 		{
 			"type": "node",
 			"name": "Debug API Server",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"request": "launch",
 			"skipFiles": [
 				"<node_internals>/**"
@@ -40,7 +40,7 @@
 		{
 			"type": "node",
 			"name": "Debug Web-API Server",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"request": "launch",
 			"skipFiles": [
 				"<node_internals>/**"
@@ -69,7 +69,7 @@
 		{
 			"type": "node",
 			"name": "Debug Web Server - HotSite",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"request": "launch",
 			"skipFiles": [
 				"<node_internals>/**"
@@ -90,7 +90,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Debug Web Server - Development",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
@@ -106,7 +106,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Generate API from HotSite",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
@@ -121,7 +121,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Create an App",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"cwd": "/home/squigglet/temp2/app",
 			"skipFiles": [
 				"<node_internals>/**"
@@ -138,7 +138,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Create an App API",
-			"program": "${workspaceFolder}/build/src/cli.js",
+			"program": "${workspaceFolder}/build/src/index.js",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
