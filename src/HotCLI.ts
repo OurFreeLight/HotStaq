@@ -664,11 +664,16 @@ export class HotCLI
 							tester = mochaSeleniumTester;
 						}
 
-						tester.timeout = testerSettings.timeout;
-						tester.driver.commandDelay = testerSettings.commandDelay;
+						if (tester != null)
+						{
+							tester.timeout = testerSettings.timeout;
+							tester.driver.commandDelay = testerSettings.commandDelay;
 
-						testerServer.addTester (tester);
-						this.processor.addTester (tester);
+							testerServer.addTester (tester);
+							this.processor.addTester (tester);
+						}
+						else
+							this.processor.logger.warning ("Warning: No tester set!");
 
 						this.processor.logger.info ("Running in development mode...");
 					}
