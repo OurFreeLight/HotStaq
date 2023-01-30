@@ -1,6 +1,6 @@
 import { HotStaq, HotStartOptions, IHotStaq } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
-import { Hot, DeveloperMode } from "./Hot";
+import { Hot, HotModule, HotAsset, DeveloperMode } from "./Hot";
 import { HotComponent, IHotComponent } from "./HotComponent";
 import { HotFile } from "./HotFile";
 import { HotLog, HotLogLevel } from "./HotLog";
@@ -32,6 +32,8 @@ HotStaq.isWeb = true;
 
 module.exports["HotStaq"] = HotStaq;
 module.exports["Hot"] = Hot;
+module.exports["HotModule"] = HotModule
+module.exports["HotAsset"] = HotAsset;
 module.exports["DeveloperMode"] = DeveloperMode;
 module.exports["HotComponent"] = HotComponent;
 module.exports["HotAPI"] = HotAPI;

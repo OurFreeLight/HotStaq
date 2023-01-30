@@ -32,7 +32,8 @@ module.exports = {
 					Cookies: "js-cookie/src/js.cookie.js"
 				}),
 			new webpack.IgnorePlugin ({
-					resourceRegExp: /HotHTTPServer|HotTesterMochaSelenium|HotTestSeleniumDriver|HotTesterMocha|express|mysql/
+					resourceRegExp: 
+						/HotHTTPServer|HotTesterMochaSelenium|HotTestSeleniumDriver|HotIO|HotCreator|HotBuilder|HotTesterMocha|express|mysql|rimraf|graceful-fs|fs-extra/
 				})
 		],
 		resolve: {
@@ -58,6 +59,9 @@ module.exports = {
 		},
 		externals: {
 			"validate-npm-package-name": "{}",
+			"fs-extra": "{}",
+			"HotIO": "{}",
+			"graceful-fs": "{}",
 			"node:path": "{}",
 			"node:buffer": "{}",
 			"node:fs": "{}",

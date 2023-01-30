@@ -27,18 +27,18 @@ describe ("Hotsite Files Tests", () =>
 			{
 				server = new HotHTTPServer (processor);
 
-				server.logger.logLevel = HotLogLevel.All;
+				processor.logger.logLevel = HotLogLevel.Verbose;
+				processor.startDelay = 5000;
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
 				await processor.processHotSite ();
 
 				common = new Common (processor);
 				await common.load ();
 				await common.startServer ();
-
-				await common.driver.get (`${common.getUrl (server)}/files`);
 			});
 		it ("should have loaded the /files route", async () =>
 			{
+				await common.driver.get (`${common.getUrl (server)}/files`);
 				await HotStaq.wait (100);
 				let elm = await common.driver.wait (until.elementLocated (By.css (".btn")));
 				expect (elm).to.not.equal (null, "Page did not load!");

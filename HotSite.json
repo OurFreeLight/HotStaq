@@ -71,6 +71,11 @@
 					"url": "./tests/components/HelloWorldComponent.ts"
 				}
 		},
+	"dependencies": {
+		"web": {
+			
+		}
+	},
 	"files": {
 			"Button": {
 					"localFile": "./tests/components/Button.hott"

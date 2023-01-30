@@ -41,6 +41,280 @@ export interface CSSObject
 }
 
 /**
+ * An asset to load.
+ */
+export class HotAsset
+{
+	/**
+	 * The type of asset. Can be:
+	 * * js
+	 * * css
+	 * * html
+	 * * component
+	 */
+	type: string;
+	/**
+	 * The name of the asset to load.
+	 */
+	name?: string;
+	/**
+	 * The path to the assets to load.
+	 */
+	path?: string;
+	/**
+	 * The preloaded content to load. Requires name to be set.
+	 */
+	content?: string;
+
+	constructor (type: string, name: string = "")
+	{
+		this.type = type;
+		this.name = name;
+		this.path = "";
+		this.content = "";
+	}
+
+	load (): void
+	{
+	}
+
+	/**
+	 * Load the asset.
+	 */
+	output (): string | { name: string; url?: string; content?: string; }
+	{
+		if ((this.path == null) && (this.content == null))
+			throw new Error (`HotAsset ${this.name} of type ${this.type} does not have a path or content set!`);
+
+		let output: string | { name: string; url?: string; content?: string; } = "";
+
+		if (this.path != null)
+		{
+			if (this.path !== "")
+			{
+				if (this.type === "js")
+					output = `<script type = "text/javascript" src = "${this.path}"></script>`;
+
+				if (this.type === "css")
+					output = `<link href = "${this.path}" rel = "stylesheet" />`;
+
+				if ((this.type === "html") || 
+					(this.type === "component"))
+				{
+					if (this.name === "")
+						throw new Error (`Loading an HTML or component asset requires a name to be set!`);
+
+					let fileUrl: string = `"${this.path}"`;
+					output = { name: this.name, url: this.path };
+				}
+			}
+		}
+
+		if (this.content != null)
+		{
+			if (this.content !== "")
+			{
+				if (this.type === "js")
+					throw new Error (`Loading JS assets using content is not supported yet!`);
+
+				if (this.type === "css")
+					throw new Error (`Loading CSS assets using content is not supported yet!`);
+
+				if (this.type === "html")
+				{
+					if (this.name === "")
+						throw new Error (`Loading an HTML asset requires a name to be set!`);
+
+					let escapedContent: string = JSON.stringify (this.content);
+					let fileUrl: string = this.path;
+					let fileContent: string = "";
+
+					// Find any script tags and interrupt them so the HTML parsers 
+					// don't get confused.
+					escapedContent = escapedContent.replace (new RegExp ("\\<script", "gmi"), "<scr\" + \"ipt");
+					escapedContent = escapedContent.replace (new RegExp ("\\<\\/script", "gmi"), "</scr\" + \"ipt");
+
+					fileContent = escapedContent;
+
+					output = { name: this.name, url: fileUrl, content: escapedContent };
+				}
+			}
+		}
+
+		return (output);
+	}
+}
+
+/**
+ * Load a module that contains the assets to load for the frontend.
+ */
+export class HotModule
+{
+	/**
+	 * The name of the module.
+	 */
+	name: string;
+	/**
+	 * The list of NPM modules to import.
+	 */
+	import?: string[];
+	/**
+	 * The HTML files to load.
+	 */
+	html?: (string | HotAsset)[];
+	/**
+	 * The CSS files to load.
+	 */
+	css?: (string | HotAsset)[];
+	/**
+	 * The JS files to load.
+	 */
+	js?: (string | HotAsset)[];
+	/**
+	 * The components to load.
+	 */
+	components?: (string | HotAsset)[];
+
+	constructor (name: string)
+	{
+		this.name = name;
+		this.import = [];
+		this.html = [];
+		this.css = [];
+		this.js = [];
+		this.components = [];
+	}
+
+	/**
+	 * Output CSS.
+	 */
+	outputCSS (echoOut: boolean = true): string
+	{
+		if (this.css == null)
+			return;
+
+		let output: string = "";
+
+		this.outputAsset ("css", this.css, (asset: HotAsset) =>
+			{
+				const content: string | any = asset.output ();
+				output += `${content}\n`;
+			});
+
+		if (echoOut === true)
+			Hot.echo (output);
+
+		return (output);
+	}
+
+	/**
+	 * Output JS.
+	 */
+	outputJS (echoOut: boolean = true): string
+	{
+		if (this.js == null)
+			return;
+
+		let output: string = "";
+
+		this.outputAsset ("js", this.js, (asset: HotAsset) =>
+			{
+				const content: string | any = asset.output ();
+				output += `${content}\n`;
+			});
+
+		if (echoOut === true)
+			Hot.echo (output);
+
+		return (output);
+	}
+
+	/**
+	 * Output a loaded HTML asset.
+	 */
+	async output (assetName: string, args: any[] = null): Promise<void>
+	{
+		await Hot.include (`${this.name}/${assetName}.hott`, args);
+	}
+
+	/**
+	 * Load HTML assets.
+	 */
+	async loadHTML (): Promise<void>
+	{
+		if (this.html == null)
+			return;
+
+		let files: any = {};
+
+		this.outputAsset ("html", this.html, (asset: HotAsset) =>
+			{
+				const file = asset.output ();
+
+				if (typeof (file) === "string")
+					throw new Error (`HTML assets cannot be outputted using only a string!`);
+
+				files[file.name] = file;
+			});
+
+		await Hot.CurrentPage.processor.loadHotFiles (files);
+	}
+
+	/**
+	 * Load components assets.
+	 */
+	async loadComponents (): Promise<void>
+	{
+		if (this.components == null)
+			return;
+
+		let files: any = {};
+
+		this.outputAsset ("component", this.components, (asset: HotAsset) =>
+			{
+				const file = asset.output ();
+
+				if (typeof (file) === "string")
+					throw new Error (`HTML assets cannot be outputted using only a string!`);
+
+				files[file.name] = file;
+			});
+
+		await Hot.CurrentPage.processor.loadHotFiles (files);
+	}
+
+	/**
+	 * Output an asset to HTML.
+	 */
+	protected outputAsset (assetType: string, assets: (string | HotAsset)[] = [], 
+		callback: (asset: HotAsset) => void): void
+	{
+		for (let iIdx = 0; iIdx < assets.length; iIdx++)
+		{
+			let asset: string | HotAsset = assets[iIdx];
+			let loadAsset: HotAsset = null;
+			loadAsset = new HotAsset (assetType);
+
+			if (typeof (asset) === "string")
+				loadAsset.path = asset;
+			else
+			{
+				if (asset.name != null)
+					loadAsset.name = asset.name;
+
+				if (asset.path != null)
+					loadAsset.path = asset.path;
+
+				if (asset.content != null)
+					loadAsset.content = asset.content;
+			}
+
+			callback (loadAsset);
+		}
+	}
+}
+
+/**
  * The api used during processing.
  */
 export class Hot
@@ -150,15 +424,59 @@ export class Hot
 	/**
 	 * Include and execute JavaScript for use when running the preprocessor.
 	 */
-	static async includeJS (file: string): Promise<any>
+	static async includeJS (file: HotFile | string, args: any[] = null, parentObject: any = null): Promise<any>
 	{
-		const res = await Hot.httpRequest (file);
-		const output: string = await res.text ();
+		const output: string = await Hot.getFile (file, args);
 
 		if (HotStaq.isWeb === true)
-			eval.apply (window, [output]);
+		{
+			if (parentObject == null)
+				parentObject = window;
+		}
 		else
-			eval (output);
+		{
+			if (parentObject == null)
+				parentObject = global;
+		}
+
+		return (eval.apply (parentObject, [output]));
+	}
+
+	/**
+	 * Retrieve a file and echo out it's contents.
+	 */
+	static async import (moduleName: string, args: any[] = null, parentObject: any = null): Promise<any>
+	{
+		let foundModule: HotModule = Hot.CurrentPage.processor.getModule (moduleName);
+
+		if (foundModule != null)
+			return (foundModule);
+
+		const file: string = `./hotstaq_modules/${moduleName}/index.js`;
+		const output: string = await Hot.getFile (file, args);
+
+		if (HotStaq.isWeb === true)
+		{
+			if (parentObject == null)
+				parentObject = window;
+		}
+		else
+		{
+			if (parentObject == null)
+				parentObject = global;
+		}
+
+		let newModule = new Function (output).apply (parentObject);
+
+		if (newModule.loadHTML != null)
+			await newModule.loadHTML ();
+
+		if (newModule.loadComponents != null)
+			await newModule.loadComponents ();
+
+		Hot.CurrentPage.processor.addModule (moduleName, newModule);
+
+		return (newModule);
 	}
 
 	/**
@@ -187,6 +505,7 @@ export class Hot
 		if (typeof (path) === "string")
 		{
 			tempFile = new HotFile ();
+			tempFile.name = path;
 
 			if (HotStaq.isWeb === true)
 				tempFile.url = path;
@@ -195,6 +514,11 @@ export class Hot
 		}
 		else
 			tempFile = path;
+
+		let checkFile: HotFile = Hot.CurrentPage.processor.getFile (tempFile.name, false);
+
+		if (checkFile != null)
+			tempFile = checkFile;
 
 		await tempFile.load ();
 

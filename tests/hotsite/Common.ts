@@ -122,7 +122,6 @@ export class Common
 	{
 		this.server = new HotHTTPServer (this.processor);
 
-		this.server.logger.logLevel = HotLogLevel.All;
 		this.server.staticRoutes.push ({
 				"route": "/",
 				"localPath": ppath.normalize (`${process.cwd ()}/`)

@@ -279,6 +279,26 @@ export interface HotSite
 				};
 		};
 	/**
+	 * The dependencies used by this application.
+	 */
+	dependencies?: {
+		/**
+		 * The web dependencies to load. These are loaded in the browser.
+		 */
+		web?: {
+			/**
+			 * The NPM dependency to load. The key is the name of the 
+			 * NPM package and the value is the version to load.
+			 */
+			[name: string]: string;
+		};
+		/**
+		 * The path to the web export that contains the BuildAssets function 
+		 * to execute.
+		 */
+		webExport?: string;
+	};
+	/**
 	 * The files to load and save in memory.
 	 */
 	files?: {

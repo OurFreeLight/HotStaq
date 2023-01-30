@@ -183,7 +183,7 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns If set to false, the component will not be registered.
 	 */
-	onPreOutput?: () => Promise<boolean>;
+	onPreOutput? (): Promise<boolean>;
 	/**
 	 * Execute after getting the output, but before the DOM parsing.
 	 * 
@@ -192,31 +192,31 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns The final output to be parsed as a DOM element.
 	 */
-	onPostOutput?: (output: (string | HotComponentOutput[])) => Promise<(string | HotComponentOutput[])>;
+	onPostOutput? (output: (string | HotComponentOutput[])): Promise<(string | HotComponentOutput[])>;
 	/**
 	 * Execute when its time to fix the HTML prior to DOM parsing. This will skip the HotStaq default fixing.
 	 */
-	onFixHTML?: (output: string) => Promise<{ fixedStr: string, querySelector: string; }>;
+	onFixHTML? (output: string): Promise<{ fixedStr: string, querySelector: string; }>;
 	/**
 	 * Execute a custom DOM parser.
 	 */
-	onParseDOM?: (output: string) => Promise<Document>;
+	onParseDOM? (output: string): Promise<Document>;
 	/**
 	 * Execute after the output has been parsed and is ready to be placed into the DOM.
 	 */
-	onParsed?: (output: string) => Promise<string>;
+	onParsed? (output: string): Promise<string>;
 	/**
 	 * Execute prior to placing the new DOM element.
 	 */
-	onPrePlace?: (htmlElement: HTMLElement) => Promise<HTMLElement>;
+	onPrePlace? (htmlElement: HTMLElement): Promise<HTMLElement>;
 	/**
 	 * Execute after placing the new DOM element. Can be manipulated one final time prior to being rendered.
 	 */
-	onPostPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<HTMLElement>;
+	onPostPlace? (parentHtmlElement: HTMLElement, htmlElement: HTMLElement): Promise<HTMLElement>;
 	/**
 	 * Execute after placing the DOM element onto the newly created parent.
 	 */
-	onParentPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<void>;
+	onParentPlace? (parentHtmlElement: HTMLElement, htmlElement: HTMLElement): Promise<void>;
 
 	constructor (copy: IHotComponent | HotStaq, api: HotAPI = null)
 	{
@@ -272,7 +272,7 @@ export abstract class HotComponent implements IHotComponent
 	/**
 	 * Handle a click event.
 	 */
-	abstract click? (): Promise<void>;
+	click? (): Promise<void>;
 
 	/**
 	 * Output the component.

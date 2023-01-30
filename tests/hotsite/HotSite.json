@@ -73,7 +73,7 @@
 		},
 	"files": {
 			"Button": {
-					"localFile": "./tests/components/Button.hott"
+					"url": "http://127.0.0.1:3123/tests/components/Button.hott"
 				},
 			"Content": {
 					"localFile": "./tests/hotsite/Content.hott"
