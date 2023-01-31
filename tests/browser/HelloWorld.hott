@@ -10,6 +10,9 @@
 	<script type = "text/javascript">
 		async function sayHello ()
 		{
+			if (Hot.Cookies.get ("test") != "23")
+				throw new Error ("Cookies not working");
+
 			let result = await Hot.apiCall ('/v1/hello_world/hello', { message: 'hi' });
 			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
 		}
@@ -40,6 +43,7 @@
 
 		(() =>
 		{
+			Hot.Cookies.set ("test", "23");
 			document.getElementById ('iifeTest').innerHTML = "IIFE Worked";
 		})();
 	</script>
