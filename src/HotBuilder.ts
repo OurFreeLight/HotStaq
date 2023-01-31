@@ -134,15 +134,6 @@ export class HotBuilder
 		if (cwd == null)
 			cwd = process.cwd ();
 
-		if (outDir === "")
-			outDir = `${cwd}/public/hotstaq_modules/${name}/`;
-
-		if (baseUrl === "")
-			baseUrl = `./hotstaq_modules/${name}/`;
-
-		if (await HotIO.exists (outDir) === false)
-			await HotIO.mkdir (outDir);
-
 		let atCount: number = (name.match (/@/g) || []).length;
 		let version: string = "latest";
 
@@ -152,6 +143,15 @@ export class HotBuilder
 			version = name.slice (lastAtIndex + 1);
 			name = name.substring (0, lastAtIndex);
 		}
+
+		if (outDir === "")
+			outDir = `${cwd}/public/hotstaq_modules/${name}/`;
+
+		if (baseUrl === "")
+			baseUrl = `./hotstaq_modules/${name}/`;
+
+		if (await HotIO.exists (outDir) === false)
+			await HotIO.mkdir (outDir);
 
 		let appendVersionStr: string = "";
 
