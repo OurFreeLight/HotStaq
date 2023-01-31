@@ -140,6 +140,9 @@ export class HotBuilder
 		if (baseUrl === "")
 			baseUrl = `./hotstaq_modules/${name}/`;
 
+		if (await HotIO.exists (outDir) === false)
+			await HotIO.mkdir (outDir);
+
 		let atCount: number = (name.match (/@/g) || []).length;
 		let version: string = "latest";
 
