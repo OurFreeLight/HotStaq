@@ -7,6 +7,7 @@ import { HotTestElement } from "./HotTestElement";
 import Cookies from "js-cookie";
 import fetch from "node-fetch";
 import { HotEventMethod } from "./HotRouteMethod";
+import { HotComponent, IHotComponent } from "./HotComponent";
 
 /**
  * The available developer modes.
@@ -171,9 +172,13 @@ export class HotModule
 	 */
 	js?: (string | HotAsset)[];
 	/**
+	 * The exported component library that contains all the components to load.
+	 */
+	componentLibrary?: string;
+	/**
 	 * The components to load.
 	 */
-	components?: (string | HotAsset)[];
+	components?: (new  (copy: IHotComponent | HotStaq, api?: HotAPI) => HotComponent)[];
 
 	constructor (name: string)
 	{
@@ -182,6 +187,7 @@ export class HotModule
 		this.html = [];
 		this.css = [];
 		this.js = [];
+		this.componentLibrary = "";
 		this.components = [];
 	}
 
@@ -261,48 +267,35 @@ export class HotModule
 	}
 
 	/**
-	 * Load components assets.
+	 * Output components assets.
 	 */
-	async loadComponents (): Promise<void>
+	outputComponents (echoOut: boolean = true): string
 	{
 		if (this.components == null)
-			return;
+			return ("");
 
-		let files: { [name: string]: {
-				name: string;
-				url?: string;
-				content?: string;
-			}} = {};
+		if (this.components.length < 1)
+			return ("");
 
-		this.outputAsset ("component", this.components, (asset: HotAsset) =>
-			{
-				const file = asset.output ();
+		let output: string = `<script type = "text/javascript">`;
+		let componentLibrary: string = "";
 
-				if (typeof (file) === "string")
-					throw new Error (`HTML assets cannot be outputted using only a string!`);
+		if (this.componentLibrary != null)
+			componentLibrary = `${this.componentLibrary}.`;
 
-				files[file.name] = file;
-			});
-
-		for (let key in files)
+		for (let iIdx = 0; iIdx < this.components.length; iIdx++)
 		{
-			let file = files[key];
+			let component = this.components[iIdx];
 
-			if (file.url != null)
-				await Hot.includeJS (file.url);
-
-			if (file.content != null)
-			{
-				let parentObject = null;
-
-				if (HotStaq.isWeb === true)
-					parentObject = window;
-				else
-					parentObject = global;
-
-				await eval.apply (parentObject, [file.content]);
-			}
+			output += `Hot.CurrentPage.processor.addComponent (${componentLibrary}${component});\n`;
 		}
+
+		output += `</script>`;
+
+		if (echoOut === true)
+			Hot.echo (output);
+
+		return (output);
 	}
 
 	/**
@@ -492,9 +485,6 @@ export class Hot
 
 		if (newModule.loadHTML != null)
 			await newModule.loadHTML ();
-
-		if (newModule.loadComponents != null)
-			await newModule.loadComponents ();
 
 		Hot.CurrentPage.processor.addModule (moduleName, newModule);
 
