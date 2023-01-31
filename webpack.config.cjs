@@ -29,7 +29,7 @@ module.exports = {
 					__VERSION__: `\"${packageVersion}\"`
 				}),
 			new webpack.ProvidePlugin ({
-					Cookies: "js-cookie/src/js.cookie.js"
+					Cookies: "js-cookie/dist/js.cookie.min.js"
 				}),
 			new webpack.IgnorePlugin ({
 					resourceRegExp: 
@@ -60,8 +60,6 @@ module.exports = {
 		externals: {
 			"validate-npm-package-name": "{}",
 			"fs-extra": "{}",
-			"js-cookie": "{}",
-			"form-data": "{}",
 			"HotIO": "{}",
 			"graceful-fs": "{}",
 			"node:path": "{}",
