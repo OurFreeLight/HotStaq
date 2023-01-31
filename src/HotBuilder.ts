@@ -150,6 +150,7 @@ export class HotBuilder
 		{
 			let lastAtIndex: number = name.lastIndexOf ("@");
 			version = name.slice (lastAtIndex + 1);
+			name = name.substring (0, lastAtIndex);
 		}
 
 		let appendVersionStr: string = "";
