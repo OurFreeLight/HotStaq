@@ -268,7 +268,11 @@ export class HotModule
 		if (this.components == null)
 			return;
 
-		let files: any = {};
+		let files: { [name: string]: {
+				name: string;
+				url?: string;
+				content?: string;
+			}} = {};
 
 		this.outputAsset ("component", this.components, (asset: HotAsset) =>
 			{
@@ -280,7 +284,25 @@ export class HotModule
 				files[file.name] = file;
 			});
 
-		await Hot.CurrentPage.processor.loadHotFiles (files);
+		for (let key in files)
+		{
+			let file = files[key];
+
+			if (file.url != null)
+				await Hot.includeJS (file.url);
+
+			if (file.content != null)
+			{
+				let parentObject = null;
+
+				if (HotStaq.isWeb === true)
+					parentObject = window;
+				else
+					parentObject = global;
+
+				await eval.apply (parentObject, [file.content]);
+			}
+		}
 	}
 
 	/**
