@@ -558,6 +558,11 @@ export abstract class HotTester
 		let routeKey: string = this.processor.getRouteKeyFromName (mapName);
 		let url: string = "";
 
+		if (this.baseUrl === "")
+		{
+			
+		}
+
 		if (routeKey !== "")
 			url = `${this.baseUrl}${routeKey}`;
 

@@ -587,6 +587,12 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 	{
 		let thisContent: string = this.content;
 
+		if (args != null)
+		{
+			if (args instanceof Array)
+				throw new Error (`In ${this.name}, the passed arguments received cannot be an array!`);
+		}
+
 		Hot.Mode = this.page.processor.mode;
 		Hot.Arguments = args;
 		Hot.CurrentPage = this.page;

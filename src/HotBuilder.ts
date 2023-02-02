@@ -16,6 +16,70 @@ type FilesImported = {
 	};
 
 /**
+ * The options for building a NPM module that utilizes HotStaq.
+ */
+export interface ModuleBuildOptions
+{
+	/**
+	 * The type of install to do. Can be:
+	 * * install
+	 * * link
+	 * 
+	 * Default value is "install".
+	 */
+	installType?: string;
+	/**
+	 * The type of build to do. Can be:
+	 * * build
+	 * 
+	 * Default value is "build".
+	 */
+	buildType?: string;
+	/**
+	 * The name of the NPM module to install.
+	 */
+	name: string;
+	/**
+	 * The associated processor.
+	 */
+	processor: HotStaq;
+	/**
+	 * The associated HotSite to parse.
+	 */
+	hotsite: HotSite;
+	/**
+	 * The path to the HotSite to parse.
+	 */
+	hotsitePath: string;
+	/**
+	 * The path to the module to install/build.
+	 */
+	modulePath: string;
+	/**
+	 * The path to the module's HotSite to install/build from.
+	 */
+	moduleHotsite: string;
+	/**
+	 * The output directory to place all built files.
+	 * 
+	 * Default value is ${cwd}/public/hotstaq_modules/${name}/
+	 */
+	outDir?: string;
+	/**
+	 * The base url used to access the files on the web.
+	 * 
+	 * Default value is ./hotstaq_modules/${name}/
+	 */
+	baseUrl?: string;
+	/**
+	 * The current working directory to work out of.
+	 * 
+	 * Default value is the current working directory.
+	 */
+	cwd?: string;
+}
+
+/**
  * Builds stuff for the CLI like docker images and Kubernetes Helm charts.
  */
 export class HotBuilder
@@ -74,50 +138,7 @@ export class HotBuilder
 	/**
 	 * Install a NPM module that utilizes HotStaq.
 	 */
-	static async installModule (options: {
-			/**
-			 * installType The type of install to do. Can be:
-			 * * install
-			 * * link
-			 * 
-			 * Default value is "install".
-			 */
-			installType?: string;
-			/**
-			 * The name of the NPM module to install.
-			 */
-			name: string;
-			/**
-			 * The associated processor.
-			 */
-			processor: HotStaq;
-			/**
-			 * The associated HotSite to parse.
-			 */
-			hotsite: HotSite;
-			/**
-			 * The path to the HotSite to parse.
-			 */
-			hotsitePath: string;
-			/**
-			 * The output directory to place all built files.
-			 * 
-			 * Default value is ${cwd}/public/hotstaq_modules/${name}/
-			 */
-			outDir?: string;
-			/**
-			 * The base url used to access the files on the web.
-			 * 
-			 * Default value is ./hotstaq_modules/${name}/
-			 */
-			baseUrl?: string;
-			/**
-			 * The current working directory to work out of.
-			 * 
-			 * Default value is the current working directory.
-			 */
-			cwd?: string;
-		})
+	static async installModule (options: ModuleBuildOptions): Promise<void>
 	{
 		let name: string = options.name;
 		let installType: string = options.installType;
@@ -170,20 +191,11 @@ export class HotBuilder
 
 		await processor.saveHotSite (hotsitePath);
 
-		let modulePath: string = `${cwd}/node_modules/${name}/`;
-		let moduleHotsite: string = `${cwd}/node_modules/${name}/HotSite.json`;
+		let moduleHotsite: string = options.moduleHotsite;
 		moduleHotsite = ppath.resolve (moduleHotsite);
 		let moduleHotsiteStr: string = await HotIO.readTextFile (moduleHotsite);
 		let moduleHotsiteJSON: HotSite = JSON.parse (moduleHotsiteStr);
 		let deps = moduleHotsiteJSON.dependencies;
-
-		let componentLibrary: string = "";
-		let files: FilesImported = {
-				js: [],
-				css: [],
-				html: [],
-				components: []
-			};
 
 		if (deps != null)
 		{
@@ -207,7 +219,61 @@ export class HotBuilder
 
 				processor.logger.verbose (`NPM Finished installed`);
 			}
+		}
 
+		processor.logger.info (`Finished installing Node Module ${name}${appendVersionStr}`);
+	}
+
+	/**
+	 * Build a NPM module that utilizes HotStaq.
+	 */
+	static async buildModule (options: ModuleBuildOptions): Promise<void>
+	{
+		let name: string = options.name;
+		let buildType: string = options.buildType;
+		let processor: HotStaq = options.processor;
+		let cwd: string = options.cwd;
+		let outDir: string = options.outDir;
+		let baseUrl: string = options.baseUrl;
+
+		let atCount: number = (name.match (/@/g) || []).length;
+		let version: string = "latest";
+
+		if (atCount > 1)
+		{
+			let lastAtIndex: number = name.lastIndexOf ("@");
+			version = name.slice (lastAtIndex + 1);
+			name = name.substring (0, lastAtIndex);
+		}
+
+		let modulePath: string = options.modulePath;
+		let moduleHotsite: string = options.moduleHotsite;
+		moduleHotsite = ppath.resolve (moduleHotsite);
+		let moduleHotsiteStr: string = await HotIO.readTextFile (moduleHotsite);
+		let moduleHotsiteJSON: HotSite = JSON.parse (moduleHotsiteStr);
+		let deps = moduleHotsiteJSON.dependencies;
+
+		if (outDir === "")
+			outDir = `${cwd}/public/hotstaq_modules/${name}/`;
+
+		if (baseUrl === "")
+			baseUrl = `./hotstaq_modules/${name}/`;
+
+		if (await HotIO.exists (outDir) === false)
+			await HotIO.mkdir (outDir);
+
+		processor.logger.info (`Building HotStaq Module ${name}`);
+
+		let componentLibrary: string = "";
+		let files: FilesImported = {
+				js: [],
+				css: [],
+				html: [],
+				components: []
+			};
+
+		if (deps != null)
+		{
 			if (deps.webExport != null)
 			{
 				let webExportAbsPath: string = ppath.normalize (`${modulePath}/${deps.webExport}`);
@@ -315,6 +381,9 @@ export class HotBuilder
 								assetPath = assetObj.path;
 							else
 								assetPath = assetObj;
+
+							if (modulePath.endsWith ("/") === false)
+								modulePath += "/";
 
 							assetPath = ppath.normalize (`${modulePath}${assetPath}`);
 
@@ -426,7 +495,25 @@ return (newModule);
 `);
 
 		processor.logger.verbose (`Created index.js file`);
-		processor.logger.info (`Finished copying files`);
+		processor.logger.info (`Finished building HotStaq Module ${name}`);
+	}
+
+	/**
+	 * Get the correct NPM name from the given name. This will remove the version.
+	 */
+	static getNameFromNPMName (name: string): string
+	{
+		let atCount: number = (name.match (/@/g) || []).length;
+		let version: string = "latest";
+
+		if (atCount > 1)
+		{
+			let lastAtIndex: number = name.lastIndexOf ("@");
+			version = name.slice (lastAtIndex + 1);
+			name = name.substring (0, lastAtIndex);
+		}
+
+		return (name);
 	}
 
 	/**

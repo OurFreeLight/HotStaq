@@ -3,6 +3,8 @@ hotstaq_modules/
 db/
 !creator/
 
+public/hotstaq_modules/
+
 .npmrc
 
 slim.report.json
