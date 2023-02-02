@@ -10,6 +10,9 @@ export class HelloWorld extends HotComponent
 
 	constructor (copy: IHotComponent | HotStaq, api: HelloWorldAPI)
 	{
+		if (api == null)
+			throw new Error ("HelloWorldComponent: API cannot be null!");
+
 		super (copy, api);
 
 		this.name = "hello-world";

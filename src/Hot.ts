@@ -281,7 +281,10 @@ export class HotModule
 		let componentLibrary: string = "";
 
 		if (this.componentLibrary != null)
-			componentLibrary = `${this.componentLibrary}.`;
+		{
+			if (this.componentLibrary !== "")
+				componentLibrary = `${this.componentLibrary}.`;
+		}
 
 		for (let iIdx = 0; iIdx < this.components.length; iIdx++)
 		{

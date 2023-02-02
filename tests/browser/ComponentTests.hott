@@ -9,9 +9,7 @@
 	<script type = "text/javascript">
 		var HelloWorld = HotStaqTests.HelloWorld;
 
-		/// @fixme Hot should already exist at this point? Is this a bug?
-		if (typeof (Hot) !== "undefined")
-			Hot.CurrentPage.processor.addComponent (HelloWorld);
+		Hot.CurrentPage.processor.addComponent (HelloWorld);
 	</script>
 </head>
 

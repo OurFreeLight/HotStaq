@@ -11,7 +11,7 @@ import { HotHTTPServer } from "./HotHTTPServer";
 import { HotLogLevel } from "./HotLog";
 import { DeveloperMode } from "./Hot";
 import { HotTesterServer } from "./HotTesterServer";
-import { HotBuilder } from "./HotBuilder";
+import { HotBuilder, ModuleBuildOptions } from "./HotBuilder";
 import { HotGenerator } from "./HotGenerator";
 import { HotCreator } from "./HotCreator";
 import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
@@ -61,9 +61,13 @@ export class HotCLI
 	 */
 	apis: { [name: string]: APItoLoad; };
 	/**
-	 * The install action to execute.
+	 * The module install action to execute.
 	 */
-	onInstallAction: () => Promise<void>;
+	onModuleInstallAction: () => Promise<void>;
+	/**
+	 * The module build action to execute.
+	 */
+	onModuleBuildAction: () => Promise<void>;
 	/**
 	 * The create action to execute.
 	 */
@@ -101,7 +105,8 @@ export class HotCLI
 		this.apis = {};
 
 		this.creator = null;
-		this.onInstallAction = null;
+		this.onModuleInstallAction = null;
+		this.onModuleBuildAction = null;
 		this.onCreateAction = null;
 		this.onRunAction = null;
 		this.onAgentAction = null;
@@ -448,20 +453,38 @@ export class HotCLI
 	}
 
 	/**
-	 * Handle install commands.
+	 * Handle module commands.
 	 */
-	async handleInstallCommands (): Promise<commander.Command>
+	async handleModuleCommands (): Promise<commander.Command>
+	{
+		const moduleCmd: commander.Command = new commander.Command ("module");
+		moduleCmd.description (`Install and build HotStaq modules.`);
+
+		let moduleInstallCmd: commander.Command = await this.handleModuleInstallCommands ();
+		moduleCmd.addCommand (moduleInstallCmd);
+
+		let moduleBuildCmd: commander.Command = await this.handleModuleBuildCommands ();
+		moduleCmd.addCommand (moduleBuildCmd);
+
+		return (moduleCmd);
+	}
+
+	/**
+	 * Handle module install commands.
+	 */
+	async handleModuleInstallCommands (): Promise<commander.Command>
 	{
 		let installStr: string = "install";
 		let outDir: string = "";
 		let baseUrl: string = "";
+		let cwd: string = process.cwd ();
 
 		const installCmd: commander.Command = new commander.Command ("install");
-		installCmd.description (`Install a dependency from NPM.`);
-		installCmd.arguments ("<name>");
-		installCmd.action ((name: string, cmdr: any) =>
+		installCmd.description (`Install dependencies from NPM.`);
+		installCmd.arguments ("<name...>");
+		installCmd.action ((names: string[], cmdr: any) =>
 			{
-				this.onInstallAction = async () =>
+				this.onModuleInstallAction = async () =>
 					{
 						if (this.hotsitePath === "")
 							throw new Error (`When installing a dependency, you must specify a HotSite.json!`);
@@ -473,16 +496,26 @@ export class HotCLI
 						if (hotsite.dependencies == null)
 							hotsite.dependencies = { web: {} };
 
-						await HotBuilder.installModule ({
-								installType: installStr, 
-								name: name,
-								processor: this.processor, 
-								hotsite: hotsite,
-								hotsitePath: this.hotsitePath,
-								outDir: outDir,
-								baseUrl: baseUrl,
-								cwd: process.cwd ()
-							});
+						for (let iIdx = 0; iIdx < names.length; iIdx++)
+						{
+							let name: string = names[iIdx];
+							let realName: string = HotBuilder.getNameFromNPMName (name);
+
+							let buildOptions: ModuleBuildOptions = {
+									installType: installStr, 
+									name: name,
+									processor: this.processor, 
+									hotsite: hotsite,
+									hotsitePath: this.hotsitePath,
+									modulePath: `${cwd}/node_modules/${realName}/`,
+									moduleHotsite: `${cwd}/node_modules/${realName}/HotSite.json`,
+									outDir: outDir,
+									baseUrl: baseUrl,
+									cwd: cwd
+								};
+							await HotBuilder.installModule (buildOptions);
+							await HotBuilder.buildModule (buildOptions);
+						}
 					};
 			});
 		installCmd.option (`--out <value>`, 
@@ -490,12 +523,12 @@ export class HotCLI
 			(value: string, previous: any) =>
 			{
 				outDir = value;
-			}, `${process.cwd ()}/public/hotstaq_modules/MODULE_NAME/`);
+			}, `${cwd}/public/hotstaq_modules/MODULE_NAME/`);
 		installCmd.option (`--base-url <value>`, 
 			`The base url to use when accessing the files from the web. Typically just needs to be a relative directory.`, 
 			(value: string, previous: any) =>
 			{
-				outDir = value;
+				baseUrl = value;
 			}, "./hotstaq_modules/MODULE_NAME/");
 		installCmd.option (`--use-link`, 
 			`Link a module instead of installing it.`, 
@@ -505,6 +538,72 @@ export class HotCLI
 			}, "");
 
 		return (installCmd);
+	}
+
+	/**
+	 * Handle module build commands.
+	 */
+	async handleModuleBuildCommands (): Promise<commander.Command>
+	{
+		let buildStr: string = "build";
+		let baseUrl: string = "";
+		let cwd: string = process.cwd ();
+
+		const buildCmd: commander.Command = new commander.Command ("build");
+		buildCmd.description (`Build a HotStaq module.`);
+		buildCmd.arguments ("[path]");
+		buildCmd.action ((buildPath: string, cmdr: any) =>
+			{
+				this.onModuleBuildAction = async () =>
+					{
+						let outDir: string = "";
+
+						if (buildPath != null)
+						{
+							if (buildPath !== "")
+								outDir = buildPath;
+						}
+
+						if (this.hotsitePath === "")
+							throw new Error (`When installing a dependency, you must specify a HotSite.json!`);
+	
+						await this.processor.loadHotSite (this.hotsitePath);
+
+						let hotsite = this.processor.hotSite;
+
+						if (hotsite.dependencies == null)
+							hotsite.dependencies = { web: {} };
+
+						const pkgObjStr: string = await HotIO.readTextFile (`${cwd}/package.json`);
+						const pkgObj: any = JSON.parse (pkgObjStr);
+						const name: string = pkgObj.name;
+
+						if (hotsite.name !== name)
+							this.processor.logger.warning (`WARNING: Hotsite name ${hotsite.name} does not match package.json name ${name}!`);
+
+						let buildOptions: ModuleBuildOptions = {
+								buildType: buildStr, 
+								name: name,
+								processor: this.processor, 
+								hotsite: hotsite,
+								hotsitePath: this.hotsitePath, 
+								modulePath: cwd,
+								moduleHotsite: `${cwd}/HotSite.json`,
+								outDir: outDir,
+								baseUrl: baseUrl,
+								cwd: cwd
+							};
+						await HotBuilder.buildModule (buildOptions);
+					};
+			});
+		buildCmd.option (`--base-url <value>`, 
+			`The base url to use when accessing the files from the web. Typically just needs to be a relative directory.`, 
+			(value: string, previous: any) =>
+			{
+				baseUrl = value;
+			}, "./hotstaq_modules/MODULE_NAME/");
+
+		return (buildCmd);
 	}
 
 	/**
@@ -551,6 +650,16 @@ export class HotCLI
 	{
 		let webServer: HotHTTPServer = new HotHTTPServer (this.processor);
 		let apiServer: HotHTTPServer = new HotHTTPServer (this.processor);
+		let serverType: string = "web";
+		let globalApi: string = "";
+		let baseWebUrl: string = "";
+		let baseAPIUrl: string = "";
+		let runWebTestMap: boolean = false;
+		let runAPITestMap: boolean = false;
+		let listAPIRoutes: boolean = false;
+		let disableFileLoading: boolean = false;
+		let skipSecretFiles: boolean = true;
+		let dontLoadAPIFiles: boolean = false;
 		let testerSettings: {
 				tester: string;
 				address: string;
@@ -606,17 +715,6 @@ export class HotCLI
 				}
 			};
 
-		let serverType: string = "web";
-		let globalApi: string = "";
-		let baseWebUrl: string = "";
-		let baseAPIUrl: string = "";
-		let runWebTestMap: boolean = false;
-		let runAPITestMap: boolean = false;
-		let listAPIRoutes: boolean = false;
-		let disableFileLoading: boolean = false;
-		let skipSecretFiles: boolean = true;
-		let dontLoadAPIFiles: boolean = false;
-
 		const runCmd: commander.Command = new commander.Command (cmdName);
 		runCmd.description (`Run commands.`);
 		runCmd.action (() =>
@@ -630,6 +728,9 @@ export class HotCLI
 
 					if (this.processor.mode === DeveloperMode.Development)
 					{
+						if (baseWebUrl === "")
+							baseWebUrl = `http://127.0.0.1:${webServer.ports.http}`;
+
 						let serverStarter = await HotTesterServer.startServer (
 							`http://${testerSettings.address}:${testerSettings.http}`, testerSettings.http, testerSettings.https, this.processor);
 						testerServer = serverStarter.server;
@@ -1068,7 +1169,7 @@ export class HotCLI
 				testerSettings.shutdownAfterTests = false;
 			}, "");
 		runCmd.option (`--tester-test-timeout <value>`, 
-			`Set the timeout for each test that executes.`, 
+			`Set the timeout for each test that executes. Set to 0 to disable timeouts.`, 
 			(value: string, previous: any) =>
 			{
 				try
@@ -1780,12 +1881,26 @@ export class HotCLI
 				{
 					this.processor.mode = DeveloperMode.Development;
 				});
+			command.option ("--start-delay <value>", "Set a start delay to use when starting the server. This is useful when debugging and you want to attach a debugger to the process.", 
+				(value: string, previous: any) =>
+				{
+					try
+					{
+						const tempValue: number = parseInt (value);
+
+						this.processor.startDelay = tempValue;
+					}
+					catch (ex)
+					{
+						this.processor.logger.error (`Unable to parse start delay ${value}`);
+					}
+				});
 
 			let createCmd: commander.Command = await this.handleCreateCommands ();
 			command.addCommand (createCmd);
 
-			let installCmd: commander.Command = await this.handleInstallCommands ();
-			command.addCommand (installCmd);
+			let moduleCmd: commander.Command = await this.handleModuleCommands ();
+			command.addCommand (moduleCmd);
 
 			let runCmd: commander.Command = await this.handleRunCommands ("run");
 			command.addCommand (runCmd);
@@ -1844,8 +1959,11 @@ export class HotCLI
 	 */
 	async start (): Promise<void>
 	{
-		if (this.onInstallAction != null)
-			await this.onInstallAction ();
+		if (this.onModuleInstallAction != null)
+			await this.onModuleInstallAction ();
+
+		if (this.onModuleBuildAction != null)
+			await this.onModuleBuildAction ();
 
 		if (this.onCreateAction != null)
 			await this.onCreateAction ();

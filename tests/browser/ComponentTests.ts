@@ -37,13 +37,12 @@ Execute this code to debug in browser:
 {
 	var HotStaq = HotStaqWeb.HotStaq;
 	var HotClient = HotStaqWeb.HotClient;
-	var HelloWorld = HotStaqTests.HelloWorld;
 	var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
 	var processor = new HotStaq ();
 	var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}");
 	helloWorldAPI.connection = new HotClient (processor);
 	helloWorldAPI.connection.api = helloWorldAPI;
-	processor.addComponent (HelloWorld, helloWorldAPI);
+	processor.api = helloWorldAPI;
 	await HotStaq.displayUrl ("/tests/browser/ComponentTests.hott", processor);
 })();
 */
@@ -51,13 +50,12 @@ Execute this code to debug in browser:
 				var done = arguments[0];
 				var HotStaq = HotStaqWeb.HotStaq;
 				var HotClient = HotStaqWeb.HotClient;
-				var HelloWorld = HotStaqTests.HelloWorld;
 				var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
 				var processor = new HotStaq ();
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
 				helloWorldAPI.connection.api = helloWorldAPI;
-				processor.addComponent (HelloWorld, helloWorldAPI);
+				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl ("/tests/browser/ComponentTests.hott", "Hello World Components!", processor);
 				done ();`);
 			});

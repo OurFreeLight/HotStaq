@@ -105,6 +105,15 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 		{
 			this.processor.logger.verbose (`HotTesterMochaSelenium: Retreiving url ${tempUrl} and waiting for data...`);
 
+			try
+			{
+				let url: URL = new URL (tempUrl);
+			}
+			catch (ex)
+			{
+				throw new Error (`HotTesterMochaSelenium: Cannot start tests. Invalid URL: ${tempUrl}`);
+			}
+
 			this.finishedLoading = false;
 			await driver.get (tempUrl);
 			await this.waitForData ();

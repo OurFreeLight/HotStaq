@@ -240,7 +240,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		}
 
 		if (this.language === "ts")
-			packageJSON.main = "build/AppAPI.js";
+			packageJSON.main = "build/index.js";
 
 		let packageJSONstr: string = JSON.stringify (packageJSON, null, 2);
 		await HotIO.writeTextFile (ppath.normalize (`${this.outputDir}/package.json`), packageJSONstr);
@@ -328,18 +328,15 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"type": "node",
 						"request": "launch",
 						"name": "Debug Web Server",
-						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
+						"program": "${workspaceFolder}/build/cli.js",
 						"skipFiles": [
 							"<node_internals>/**"
 						],
 						"outputCapture": "std",
 						"args": [
 							"--development-mode",
-							"--hotsite",
-							"./HotSite.json",
-							"run",
-							"--web-http-port",
-							"8080"
+							"--hotsite", "./HotSite.json",
+							"run"
 						],
 						"env": {
 						}
@@ -356,22 +353,16 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"type": "node",
 						"request": "launch",
 						"name": "Debug Web/API Server",
-						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
+						"program": "${workspaceFolder}/build/cli.js",
 						"skipFiles": [
 							"<node_internals>/**"
 						],
 						"outputCapture": "std",
 						"args": [
 							"--development-mode",
-							"--hotsite",
-							"./HotSite.json",
+							"--hotsite", "./HotSite.json",
 							"run",
-							"--server-type",
-							"web-api",
-							"--web-http-port",
-							"8080",
-							"--api-http-port",
-							"8081"
+							"--server-type", "web-api"
 						],
 						"env": {
 						}
@@ -380,20 +371,16 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 						"type": "node",
 						"request": "launch",
 						"name": "Debug API Server",
-						"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
+						"program": "${workspaceFolder}/build/cli.js",
 						"skipFiles": [
 							"<node_internals>/**"
 						],
 						"outputCapture": "std",
 						"args": [
 							"--development-mode",
-							"--hotsite",
-							"./HotSite.json",
+							"--hotsite", "./HotSite.json",
 							"run",
-							"--server-type",
-							"api",
-							"--api-http-port",
-							"8081"
+							"--server-type", "api"
 						],
 						"env": {
 						}
@@ -409,18 +396,39 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				"skipFiles": [
 					"<node_internals>/**"
 				],
-				"program": "${workspaceFolder}/node_modules/hotstaq/build/src/index.js",
+				"program": "${workspaceFolder}/build/cli.js",
 				"args": [
 					"--development-mode",
-					"--hotsite",
-					"./HotSite.json",
-					"test",
-					"--web-http-port",
-					"8080"
+					"--hotsite", "./HotSite.json",
+					"run",
+					"--web-test"
 				],
 				"env": {
 				}
 			});
+
+		if ((this.type === "web-api") || (this.type === "api"))
+		{
+			launchJSON["configurations"].push (
+				{
+					"type": "node",
+					"request": "launch",
+					"name": "Run API Tests",
+					"skipFiles": [
+						"<node_internals>/**"
+					],
+					"program": "${workspaceFolder}/build/cli.js",
+					"args": [
+						"--development-mode",
+						"--hotsite", "./HotSite.json",
+						"run",
+						"--api-test"
+					],
+					"env": {
+					}
+				});
+		}
+
 		launchJSON["configurations"].push (
 			{
 				"type": "pwa-node",
@@ -432,7 +440,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				"localRoot": "${workspaceFolder}",
 				"address": "127.0.0.1",
 				"port": 9229,
-				"remoteRoot": `/app/${this.name}`
+				"remoteRoot": `/app`
 			});
 
 		let launchJSONstr: string = JSON.stringify (launchJSON, null, "\t");

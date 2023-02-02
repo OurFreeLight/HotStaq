@@ -124,7 +124,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.7";
+	static version: string = "0.8.8";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -521,11 +521,11 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Add and register a component.
 	 */
-	addComponent (ComponentType: (new  (copy: IHotComponent | HotStaq, api?: HotAPI) => HotComponent), api: HotAPI = null, 
+	addComponent (ComponentType: (new (copy: IHotComponent | HotStaq, api?: HotAPI) => HotComponent), api: HotAPI = null, 
 		elementOptions: ElementDefinitionOptions = undefined): void
 	{
 		let tempApi = this.api
-		
+
 		if (api != null)
 			tempApi = api;
 
@@ -770,7 +770,7 @@ export class HotStaq implements IHotStaq
 						this.replaceWith (newObj);
 			
 						if (this.component.click != null)
-							newObj.onclick = this.component.click.bind (this.component);
+							newObj.addEventListener ("click", this.component.click.bind (this.component));
 			
 						for (let key in this.component.events)
 						{
@@ -1412,45 +1412,48 @@ export class HotStaq implements IHotStaq
 						if (api == null)
 							throw new Error (`Unable to find API ${route.api}`);
 
-						let sendJSContent: boolean = true;
-
-						if (api.jsapi == null)
+						if (route.api !== this.hotSite.server.globalApi)
 						{
-							sendJSContent = false;
-							this.logger.warning (`API with name ${route.api} doesn't have a jsapi set. Will not send js content to client.`);
-						}
+							let sendJSContent: boolean = true;
 
-						if (api.libraryName == null)
-						{
-							sendJSContent = false;
-							this.logger.warning (`API with name ${route.api} doesn't have a libraryName set. Will not send js content to client.`);
-						}
+							if (api.jsapi == null)
+							{
+								sendJSContent = false;
+								this.logger.warning (`API with name ${route.api} doesn't have a jsapi set. Will not send js content to client.`);
+							}
 
-						if (api.apiName == null)
-						{
-							sendJSContent = false;
-							this.logger.warning (`API with name ${route.api} doesn't have a apiName set. Will not send js content to client.`);
-						}
+							if (api.libraryName == null)
+							{
+								sendJSContent = false;
+								this.logger.warning (`API with name ${route.api} doesn't have a libraryName set. Will not send js content to client.`);
+							}
 
-						if (sendJSContent === true)
-						{
-							let jsapipath = api.jsapi;
-							apiScripts += `\t<script type = "text/javascript" src = "${jsapipath}"></script>\n`;
+							if (api.apiName == null)
+							{
+								sendJSContent = false;
+								this.logger.warning (`API with name ${route.api} doesn't have a apiName set. Will not send js content to client.`);
+							}
 
-							let baseUrl: string = "\"\"";
+							if (sendJSContent === true)
+							{
+								let jsapipath = api.jsapi;
+								apiScripts += `\t<script type = "text/javascript" src = "${jsapipath}"></script>\n`;
 
-							if (api.url != null)
-								baseUrl = `\"${api.url}\"`;
+								let baseUrl: string = "\"\"";
 
-							if (this.api != null)
-								baseUrl = `\"${this.api.baseUrl}\"`;
+								if (api.url != null)
+									baseUrl = `\"${api.url}\"`;
 
-							let tempAPIContent: string = this.apiContent;
-							tempAPIContent = tempAPIContent.replace (/\%api\_name\%/g, api.apiName);
-							tempAPIContent = tempAPIContent.replace (/\%api\_exported\_name\%/g, api.libraryName);
-							tempAPIContent = tempAPIContent.replace (/\%base\_url\%/g, baseUrl);
+								if (this.api != null)
+									baseUrl = `\"${this.api.baseUrl}\"`;
 
-							apiCode += tempAPIContent;
+								let tempAPIContent: string = this.apiContent;
+								tempAPIContent = tempAPIContent.replace (/\%api\_name\%/g, api.apiName);
+								tempAPIContent = tempAPIContent.replace (/\%api\_exported\_name\%/g, api.libraryName);
+								tempAPIContent = tempAPIContent.replace (/\%base\_url\%/g, baseUrl);
+
+								apiCode += tempAPIContent;
+							}
 						}
 					}
 				}

@@ -29,7 +29,7 @@ module.exports = {
 					__VERSION__: `\"${packageVersion}\"`
 				}),
 			new webpack.ProvidePlugin ({
-					Cookies: "js-cookie/dist/js.cookie.min.js"
+					Cookies: "js-cookie"
 				}),
 			new webpack.IgnorePlugin ({
 					resourceRegExp: 
