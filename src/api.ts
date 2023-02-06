@@ -3,7 +3,7 @@ import { HotCLI } from "./HotCLI";
 import { HotStaq, HotStartOptions, IHotStaq } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
 import { Hot, DeveloperMode } from "./Hot";
-import { HotComponent, IHotComponent } from "./HotComponent";
+import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent";
 import { HotFile } from "./HotFile";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotPage } from "./HotPage";
@@ -61,6 +61,7 @@ export {
 		Hot,
 		DeveloperMode,
 		HotComponent,
+		HotComponentOutput,
 		IHotComponent,
 		HotAPI,
 		EventExecutionType,

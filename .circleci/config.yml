@@ -73,6 +73,11 @@ jobs:
             export $(cat .env | xargs)
             mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
       - run:
+          name: "Test: Components"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/components/**/*.js
+      - run:
           name: "Test: Create"
           command: |
             export $(cat .env | xargs)

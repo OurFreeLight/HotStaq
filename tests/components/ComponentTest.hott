@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+</head>
+
+<body>
+    <main-component>
+        <table-component>
+            <table-header>Field</table-header>
+        </table-component>
+    </main-component>
+</body>
+</html>

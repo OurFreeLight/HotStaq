@@ -72,6 +72,9 @@ Execute this code to debug in browser:
 				let elm = await common.driver.wait (until.elementLocated (By.id ("testButtonFromPage")));
 				let value: string = await elm.getAttribute ("innerHTML");
 				expect (value).to.equal ("Test Button from Page: TESTING", "Variables not passing properly to components!");
+
+				value = await elm.getAttribute ("data-test");
+				expect (value).to.equal ("yay", "Variables not passing properly to components!");
 			});
 		it ("should have executed the IIFE on the page", async () =>
 			{

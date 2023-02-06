@@ -41,7 +41,7 @@ export class HelloWorld extends HotComponent
 		return (this.storedTestValue);
 	}
 
-	async output (): Promise<string>
+	output (): string
 	{
 		return (`<button id = "${this.htmlElements[0].id}">
 			${this.value}

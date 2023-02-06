@@ -6,7 +6,7 @@ import { Common } from "./Common";
 
 import { HotStaq } from "../../src/HotStaq";
 
-describe ("Component Tests", () =>
+describe ("Basic Component Tests", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;

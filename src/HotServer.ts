@@ -10,7 +10,9 @@ export enum HotServerType
 {
 	HTTP,
 	WebSockets,
-	Generate
+	Generate,
+	WebTesting,
+	APITesting
 }
 
 /**

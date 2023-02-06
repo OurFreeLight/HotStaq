@@ -1,1 +1,5 @@
-<button ?(JSON.stringify (Parent + "_Button")) id = "testButtonFromPage">Test Button from Page: ${Parent}</button>
+<*
+    if (typeof (MISSING_PARENT_VALUE) === "undefined")
+        MISSING_PARENT_VALUE = "yay";
+*>
+<button ?(JSON.stringify (Parent + "_Button")) id = "testButtonFromPage" data-test="${MISSING_PARENT_VALUE}">Test Button from Page: ${Parent}</button>

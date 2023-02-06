@@ -20,11 +20,18 @@ export interface HotComponentOutput
 	 */
 	placeHereParent?: string;
 	/**
-	 * Append the output to an existing element.
+	 * Append the output to an existing element using a CSS selector that is 
+	 * the closest.
 	 * 
 	 * @example div .testClass
 	 */
-	parentSelector?: string;
+	closestSelector?: string;
+	/**
+	 * Append the output to an existing element somewhere on the document.
+	 * 
+	 * @example div .testClass
+	 */
+	documentSelector?: string;
 }
 
 /**
@@ -87,7 +94,7 @@ export interface IHotComponent
 	 * 
 	 * @returns If set to false, the component will not be registered.
 	 */
-	onPreOutput?: () => Promise<boolean>;
+	onPreOutput?: () => boolean;
 	/**
 	 * Execute after getting the output, but before the DOM parsing.
 	 * 
@@ -96,31 +103,31 @@ export interface IHotComponent
 	 * 
 	 * @returns The final output to be parsed as a DOM element.
 	 */
-	onPostOutput?: (output: (string | HotComponentOutput[])) => Promise<(string | HotComponentOutput[])>;
+	onPostOutput?: (output: (string | HotComponentOutput[])) => (string | HotComponentOutput[]);
 	/**
 	 * Execute when its time to fix the HTML prior to DOM parsing. This will skip the HotStaq default fixing.
 	 */
-	onFixHTML?: (output: string) => Promise<{ fixedStr: string, querySelector: string; }>;
+	onFixHTML?: (output: string) => { fixedStr: string, querySelector: string; };
 	/**
 	 * Execute a custom DOM parser.
 	 */
-	onParseDOM?: (output: string) => Promise<Document>;
+	onParseDOM?: (output: string) => Document;
 	/**
 	 * Execute after the output has been parsed and is ready to be placed into the DOM.
 	 */
-	onParsed?: (output: string) => Promise<string>;
+	onParsed?: (output: string) => string;
 	/**
 	 * Execute prior to placing the new DOM element.
 	 */
-	onPrePlace?: (htmlElement: HTMLElement) => Promise<HTMLElement>;
+	onPrePlace?: (htmlElement: HTMLElement) => HTMLElement;
 	/**
 	 * Execute after placing the new DOM element. Can be manipulated one final time prior to being rendered.
 	 */
-	onPostPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<HTMLElement>;
+	onPostPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => HTMLElement;
 	/**
 	 * Execute after placing the DOM element onto the newly created parent.
 	 */
-	onParentPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => Promise<void>;
+	onParentPlace?: (parentHtmlElement: HTMLElement, htmlElement: HTMLElement) => void;
 }
 
 /**
@@ -183,7 +190,7 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns If set to false, the component will not be registered.
 	 */
-	onPreOutput? (): Promise<boolean>;
+	onPreOutput? (): boolean;
 	/**
 	 * Execute after getting the output, but before the DOM parsing.
 	 * 
@@ -192,31 +199,31 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns The final output to be parsed as a DOM element.
 	 */
-	onPostOutput? (output: (string | HotComponentOutput[])): Promise<(string | HotComponentOutput[])>;
+	onPostOutput? (output: (string | HotComponentOutput[])): (string | HotComponentOutput[]);
 	/**
 	 * Execute when its time to fix the HTML prior to DOM parsing. This will skip the HotStaq default fixing.
 	 */
-	onFixHTML? (output: string): Promise<{ fixedStr: string, querySelector: string; }>;
+	onFixHTML? (output: string): { fixedStr: string, querySelector: string; };
 	/**
 	 * Execute a custom DOM parser.
 	 */
-	onParseDOM? (output: string): Promise<Document>;
+	onParseDOM? (output: string): Document;
 	/**
 	 * Execute after the output has been parsed and is ready to be placed into the DOM.
 	 */
-	onParsed? (output: string): Promise<string>;
+	onParsed? (output: string): string;
 	/**
 	 * Execute prior to placing the new DOM element.
 	 */
-	onPrePlace? (htmlElement: HTMLElement): Promise<HTMLElement>;
+	onPrePlace? (htmlElement: HTMLElement): HTMLElement;
 	/**
 	 * Execute after placing the new DOM element. Can be manipulated one final time prior to being rendered.
 	 */
-	onPostPlace? (parentHtmlElement: HTMLElement, htmlElement: HTMLElement): Promise<HTMLElement>;
+	onPostPlace? (parentHtmlElement: HTMLElement, htmlElement: HTMLElement): HTMLElement;
 	/**
 	 * Execute after placing the DOM element onto the newly created parent.
 	 */
-	onParentPlace? (parentHtmlElement: HTMLElement, htmlElement: HTMLElement): Promise<void>;
+	onParentPlace? (parentHtmlElement: HTMLElement, htmlElement: HTMLElement): void;
 
 	constructor (copy: IHotComponent | HotStaq, api: HotAPI = null)
 	{
@@ -259,7 +266,7 @@ export abstract class HotComponent implements IHotComponent
 	 * 
 	 * @returns The modified DOM element.
 	 */
-	async onCreated (element: HTMLElement): Promise<any>
+	onCreated (element: HTMLElement): any
 	{
 		return (element);
 	}
@@ -267,7 +274,7 @@ export abstract class HotComponent implements IHotComponent
 	/**
 	 * Handle the attributes manually.
 	 */
-	async handleAttributes? (attributes: NamedNodeMap): Promise<void>;
+	handleAttributes? (attributes: NamedNodeMap): void;
 
 	/**
 	 * Handle a click event.
@@ -277,5 +284,5 @@ export abstract class HotComponent implements IHotComponent
 	/**
 	 * Output the component.
 	 */
-	abstract output (): Promise<string | HotComponentOutput[]>;
+	abstract output (): string | HotComponentOutput[];
 }
