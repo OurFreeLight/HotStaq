@@ -24,6 +24,7 @@ import { HotTester } from "./HotTester";
 import { HotTesterMocha } from "./HotTesterMocha";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod } from "./HotRouteMethod";
+import { HotServerType } from "./HotServer";
 
 HotStaq.isWeb = false;
 
@@ -737,6 +738,18 @@ export class HotCLI
 			
 						if (this.globalLogLevel != null)
 							testerServer.logger.logLevel = this.globalLogLevel;
+
+						if (runWebTestMap === true)
+						{
+							webServer.type = HotServerType.WebTesting;
+							apiServer.type = HotServerType.WebTesting;
+						}
+
+						if (runAPITestMap === true)
+						{
+							webServer.type = HotServerType.APITesting;
+							apiServer.type = HotServerType.APITesting;
+						}
 
 						if (testerSettings.tester === "")
 						{

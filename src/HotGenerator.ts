@@ -237,6 +237,9 @@ export class HotGenerator
 					let route: HotRoute = serverResult.api.routes[key2];
 					let routeName: string = route.route;
 
+					if (typeof (routeName) !== "string")
+						throw new Error (`Provided route name is not a string: ${JSON.stringify (route)}`);
+
 					apiFileContent += this.getAPIContent (this.generateType, "class_header", 
 						{ routeName: routeName, baseAPIUrl: serverResult.baseAPIUrl, 
 							libraryName: libraryName, apiName: apiName });
@@ -377,6 +380,9 @@ export class HotGenerator
 					let route: HotRoute = serverResult.api.routes[key2];
 					let routeName: string = route.route;
 					let routeDescription: string = "";
+
+					if (typeof (routeName) !== "string")
+						throw new Error (`Provided route name is not a string: ${JSON.stringify (route)}`);
 
 					if (route.description != null)
 						routeDescription = route.description;

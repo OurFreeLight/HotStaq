@@ -434,6 +434,7 @@ export class HotFile implements IHotFile
 
 				let tempOutput4: string = "";
 
+				// Any ?() will be ignored in production mode.
 				if (Hot.Mode === DeveloperMode.Production)
 				{
 					tempOutput4 = HotFile.processNestedContent (
