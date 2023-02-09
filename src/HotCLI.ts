@@ -308,7 +308,7 @@ export class HotCLI
 		let createHotCreator = () =>
 			{
 				if (this.creator == null)
-					this.creator = new HotCreator (this.processor.logger);
+					this.creator = new HotCreator (this.processor.logger, "");
 			};
 
 		let copyLibrariesPath: string = "";
@@ -1237,6 +1237,13 @@ export class HotCLI
 			{
 				testerSettings.remoteServer = remoteServer;
 			}, "");
+		runCmd.option (`--accept-websocket-connections`, 
+			`This will allow the all servers to accept websocket connections.`, 
+			(remoteServer: string, previous: any) =>
+			{
+				webServer.useWebsocketServer = true;
+				apiServer.useWebsocketServer = true;
+			}, "");
 
 		const serverTypes: string[] = ["web", "api"];
 
@@ -1709,7 +1716,12 @@ export class HotCLI
 						await generator.generateAPI (this.processor, apis);
 
 					if (generateType === "api-documentation")
+					{
+						if (generator.generateType === "javascript")
+							generator.generateType = "openapi-3.0.0-yaml";
+
 						await generator.generateAPIDocumentation (this.processor, apis);
+					}
 				};
 			});
 

@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import crypto from "crypto";
 import * as ppath from "path";
 import * as fse from "fs-extra";
 
@@ -8,6 +9,8 @@ const asyncExec = util.promisify (child_process.exec);
 
 /**
  * Handles IO for the server.
+ * 
+ * @todo Add tests for all these functions!
  */
 export class HotIO
 {
@@ -39,6 +42,47 @@ export class HotIO
 		let stream: fs.ReadStream = fs.createReadStream (path);
 
 		return (stream);
+	}
+
+	/**
+	 * Read a text file, parse it, and return the parsed JSON.
+	 */
+	static async readJSONFile (path: string): Promise<any>
+	{
+		const textStr: string = await HotIO.readTextFile (path);
+		const jsonObj: any = JSON.parse (textStr);
+
+		return (jsonObj);
+	}
+
+	/**
+	 * Get the SHA256 hash of a file.
+	 */
+	static async sha256File (path: string): Promise<string>
+	{
+		return (new Promise<string> ((resolve, reject) =>
+			{
+				const input: fs.ReadStream = HotIO.readFileStream (path);
+				const hash: crypto.Hash = crypto.createHash ("sha256");
+
+				input.on ("readable", () =>
+					{
+						const data: any = input.read ();
+
+						if (data)
+							hash.update (data);
+						else
+						{
+							const hashStr: string = hash.digest ("hex");
+							resolve (hashStr);
+						}
+					});
+
+				input.on ("error", (err: NodeJS.ErrnoException) =>
+					{
+						reject (err);
+					});
+			}));
 	}
 
 	/**

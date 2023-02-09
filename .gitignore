@@ -2,6 +2,8 @@ build/
 build-web/
 ./app/
 
+!/tests/build/
+
 **/HotStaq.js
 **/HotStaq.min.js
 

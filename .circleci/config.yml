@@ -107,6 +107,11 @@ jobs:
           command: |
             export $(cat .env | xargs)
             mocha --timeout 5000 --colors ./build/tests/server/**/*.js
+      - run:
+          name: "Test: Creator"
+          command: |
+            export $(cat .env | xargs)
+            mocha --timeout 5000 --colors ./build/tests/create/**/*.js
   publish:
     docker:
       - image: cimg/node:lts

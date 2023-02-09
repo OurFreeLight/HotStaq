@@ -127,7 +127,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.9";
+	static version: string = "0.8.10";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -622,21 +622,25 @@ export class HotStaq implements IHotStaq
 	 */
 	static checkHotSiteName (hotsiteName: string, throwException: boolean = false): boolean
 	{
-		let throwTheException = () =>
-			{
-				if (throwException === true)
-					throw new Error (`HotSite ${hotsiteName} has an invalid name! The name cannot be empty and must have a valid NPM module name.`);
-			};
-
 		let results = validateModuleName (hotsiteName);
+		let isValid: boolean = true;
+
+		if (results.validForNewPackages === false)
+			isValid = false;
 
 		if (results.errors != null)
 		{
 			if (results.errors.length > 0)
-				throwTheException ();
+				isValid = false;
 		}
 
-		return (true);
+		if (isValid === false)
+		{
+			if (throwException === true)
+				throw new Error (`HotSite ${hotsiteName} has an invalid name! The name cannot be empty and must have a valid NPM module name.`);
+		}
+
+		return (isValid);
 	}
 
 	/**
@@ -793,10 +797,10 @@ export class HotStaq implements IHotStaq
 							testMap.destinations.push (new HotTestDestination (map));
 						}
 
-						if (tester == null)
-							throw new Error (`A tester was not created first! You must specify one in the CLI.`);
-
-						tester.testMaps[mapName] = testMap;
+						if (tester != null)
+							tester.testMaps[mapName] = testMap;
+						else
+							this.logger.warning ("A tester was not created first! You must specify one in the CLI.");
 					}
 				}
 			}

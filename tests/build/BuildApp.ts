@@ -6,18 +6,20 @@ import { Common } from "./Common";
 
 import { APItoLoad, DeveloperMode, HotHTTPServer, HotIO, HotLogLevel, HotStaq, 
 	HotTester, HotTesterMochaSelenium, HotTesterServer, HotTestMap } from "../../src/api";
+import { HotBuilder } from "../../src/HotBuilder";
 import { HotCreator } from "../../src/HotCreator";
 
-describe ("Create App Tests", function ()
+describe ("Builder Tests", function ()
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;
 		let server: HotHTTPServer = null;
 		let creator: HotCreator = null;
-		let baseDir: string = `${process.cwd ()}/temp/app`;
+		let builder: HotBuilder = null;
+		let baseDir: string = `${process.cwd ()}/temp/app/`;
 		let apis: { [name: string]: APItoLoad; } = {};
 
-		this.timeout (30000);
+		this.timeout (240000);
 
 		before (async () =>
 			{
@@ -37,12 +39,6 @@ describe ("Create App Tests", function ()
 				creator.hotstaqVersion = `0.8.9`; // Be sure to set the previous version for testing
 				await creator.create ();
 			});
-		it ("should check that the node_modules folder exists", async () =>
-			{
-				let value = await HotIO.exists (`${baseDir}/node_modules/`);
-
-				expect (value).to.equal (true, `Node modules does not exist!`);
-			});
 		it ("should check that package.json and HotSite.json exists", async () =>
 			{
 				let value = await HotIO.exists (`${baseDir}/package.json`);
@@ -50,28 +46,31 @@ describe ("Create App Tests", function ()
 				value = await HotIO.exists (`${baseDir}/HotSite.json`);
 				expect (value).to.equal (true, `HotSite.json does not exist!`);
 			});
-		it (`should check that ${baseDir}/build/ exists`, async () =>
+		it ("should load the HotSite", async () =>
 			{
-				let value = await HotIO.exists (`${baseDir}/build/`);
-
-				expect (value).to.equal (true, `${baseDir}/build/ does not exist!`);
+				await processor.loadHotSite (`${baseDir}/HotSite.json`);
+				await processor.processHotSite ();
 			});
-		it (`should check that ${baseDir}/build-web/ exists`, async () =>
+		it ("should build the app's dockerfiles", async () =>
 			{
-				let value = await HotIO.exists (`${baseDir}/build-web/`);
-
-				expect (value).to.equal (true, `${baseDir}/build-web/ does not exist!`);
+				builder = new HotBuilder (processor.logger);
+				builder.dockerFiles = true;
+				builder.outputDir = baseDir;
+				builder.hotsites = [processor.hotSite];
+				builder.hotstaqVersion = `0.8.9`; // Be sure to set the previous version for testing
+				await builder.build ();
 			});
-		it (`should check that ${baseDir}/.vscode/ exists`, async () =>
+		it ("should build the app's docker dev containers", async () =>
 			{
-				let value = await HotIO.exists (`${baseDir}/.vscode/`);
+				await HotIO.copyFile (`${baseDir}/env-skeleton`, `${baseDir}/.env`);
 
-				expect (value).to.equal (true, `${baseDir}/.vscode/ does not exist!`);
-			});
-		it (`should check that ${baseDir}/public/ exists`, async () =>
-			{
-				let value = await HotIO.exists (`${baseDir}/public/`);
+				let value = await HotIO.exec (`cd ${baseDir} && ./build.sh 0`);
+				console.log (value);
 
-				expect (value).to.equal (true, `${baseDir}/public/ does not exist!`);
+				value = await HotIO.exec (`docker images | grep ourfreelight/app`);
+				let index = value.indexOf ("ourfreelight/app");
+
+				// Obviously not a very good test, this needs to be improved.
+				expect (index).to.greaterThan (-1, `Docker image ourfreelight/app does not exist!`);
 			});
 	});
