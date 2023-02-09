@@ -1,5 +1,5 @@
 {
-	"name": "HotSiteTest",
+	"name": "hotsitetest",
 	"server": {
 			"jsSrcPath": "/build-web/HotStaq.js",
 			"serveDirectories": [{

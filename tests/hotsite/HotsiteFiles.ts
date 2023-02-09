@@ -39,7 +39,7 @@ describe ("Hotsite Files Tests", () =>
 			{
 				await common.driver.get (`${common.getUrl (server)}/files`);
 				await HotStaq.wait (100);
-				debugger;
+
 				let elm = await common.driver.wait (until.elementLocated (By.css (".btn")));
 				expect (elm).to.not.equal (null, "Page did not load!");
 			});

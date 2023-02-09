@@ -89,13 +89,13 @@ export class HotCreator
 			buildDoc: string;
 		};
 
-	constructor (logger: HotLog, name: string = "")
+	constructor (logger: HotLog, name: string)
 	{
 		this.name = name;
 		this.hotstaqVersion = "";
 		this.type = "web-api";
 		this.language = "ts";
-		this.outputDir = "";
+		this.outputDir = ppath.normalize (`${process.cwd ()}/${name}/`);
 		this.logger = logger;
 		this.createCommands = {
 				init: "npm install",
@@ -129,6 +129,9 @@ export class HotCreator
 	 */
 	async create (): Promise<void>
 	{
+		if ((this.name == null) || (this.name === ""))
+			throw new Error ("Name cannot be empty.");
+
 		this.logger.info (`Creating "${this.name}" of type ${this.type} for language ${this.language}...`);
 
 		HotStaq.checkHotSiteName (this.name, true);
