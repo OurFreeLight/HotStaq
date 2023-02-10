@@ -36,7 +36,7 @@ describe ("Builder Tests", function ()
 
 				creator = new HotCreator (processor.logger, "app");
 				creator.outputDir = baseDir;
-				creator.hotstaqVersion = `0.8.9`; // Be sure to set the previous version for testing
+				creator.hotstaqVersion = `link`; // Be sure to set the previous version for testing
 				await creator.create ();
 			});
 		it ("should check that package.json and HotSite.json exists", async () =>
@@ -57,7 +57,7 @@ describe ("Builder Tests", function ()
 				builder.dockerFiles = true;
 				builder.outputDir = baseDir;
 				builder.hotsites = [processor.hotSite];
-				builder.hotstaqVersion = `0.8.9`; // Be sure to set the previous version for testing
+				builder.hotstaqVersion = `latest`; // Be sure to set the previous version for testing
 				await builder.build ();
 			});
 		it ("should build the app's docker dev containers", async () =>
