@@ -23,12 +23,12 @@ describe ("Hotsite Files Tests", () =>
 				await common.shutdown ();
 			});
 
-		it ("should load the HotSite", async () =>
+		it ("should load the HotSite's yaml", async () =>
 			{
 				server = new HotHTTPServer (processor);
 
 				processor.logger.logLevel = HotLogLevel.Verbose;
-				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
+				await processor.loadHotSite (`./tests/hotsite/HotSite.yaml`);
 				await processor.processHotSite ();
 
 				common = new Common (processor);

@@ -4,8 +4,8 @@ import { HotCLI } from "hotstaq";
 import { AppAPI } from "./AppAPI";
 
 let cli: HotCLI = new HotCLI ();
-cli.setup (process.argv).then (async () =>
+cli.setup ().then (async () =>
     {
         cli.addAPI ("AppAPI", AppAPI);
-        await cli.start ();
+        await cli.start (process.argv);
     });

@@ -157,11 +157,18 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 
 		let hotPackageJSONStr: string = await HotIO.readTextFile (ppath.normalize (`${__dirname}/../../package.json`));
 		let hotPackageJSONObj = JSON.parse (hotPackageJSONStr);
+		let hotstaqVersion: string = this.hotstaqVersion;
 
-		if (this.hotstaqVersion === "")
-			this.hotstaqVersion = `^${hotPackageJSONObj.version}`;
+		if (hotstaqVersion === "")
+		{
+			hotstaqVersion = `^${hotPackageJSONObj.version}`;
+			this.hotstaqVersion = hotstaqVersion;
+		}
 
-		this.logger.info (`Generating using NPM HotStaq version: ${this.hotstaqVersion}`);
+		if (hotstaqVersion === "link")
+			hotstaqVersion = "latest";
+
+		this.logger.info (`Generating using NPM HotStaq version: ${hotstaqVersion}`);
 
 		let packageJSON: any = {
 				"name": this.name,
@@ -180,7 +187,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				},
 				"dependencies": {
 					"dotenv": "^10.0.0",
-					"hotstaq": `${this.hotstaqVersion}`
+					"hotstaq": `${hotstaqVersion}`
 				},
 				"devDependencies": {
 					"@types/express": "^4.17.13",
@@ -479,9 +486,16 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		await HotIO.writeTextFile (ppath.normalize (`${this.outputDir}/.vscode/tasks.json`), tasksJSONstr);
 		this.logger.info (`Finished creating VSCode files...`);
 
-		this.logger.info (`Creating installing modules...`);
+		this.logger.info (`Installing modules...`);
 		await HotIO.exec (`cd ${this.outputDir} && ${this.createCommands.init}`);
-		this.logger.info (`Finished creating installing modules...`);
+
+		if (this.hotstaqVersion === "link")
+		{
+			this.logger.info (`Linking HotStaq...`);
+			await HotIO.exec (`cd ${this.outputDir} && npm link hotstaq`);
+		}
+
+		this.logger.info (`Finished installing modules...`);
 
 		if (this.language === "ts")
 		{

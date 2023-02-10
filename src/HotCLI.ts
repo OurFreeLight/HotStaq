@@ -34,6 +34,22 @@ HotStaq.isWeb = false;
 export class HotCLI
 {
 	/**
+	 * The name of this CLI application.
+	 * 
+	 * Default: hotstaq
+	 */
+	name: string;
+	/**
+	 * The description of this CLI application.
+	 * 
+	 * Default: hotstaq
+	 */
+	description: string;
+	/**
+	 * The commander program that parses the cli arguments.
+	 */
+	program: commander.Command;
+	/**
 	 * The current HotStaq version.
 	 */
 	VERSION: string;
@@ -96,6 +112,9 @@ export class HotCLI
 
 	constructor ()
 	{
+		this.name = "hotstaq";
+		this.description = `Copyright(c) 2023, FreeLight, Inc. Under the MIT License.`;
+		this.program = null;
 		this.VERSION = "";
 		this.packagePath = ppath.normalize (`${__dirname}/../../package.json`);
 		this.processor = new HotStaq ();
@@ -1774,8 +1793,27 @@ export class HotCLI
 	/**
 	 * Setup the CLI app.
 	 */
-	async setup (args: string[]): Promise<void>
+	async setup (): Promise<{
+			program: commander.Command;
+			mainCommand: commander.Command;
+			createCmd: commander.Command;
+			moduleCmd: commander.Command;
+			runCmd: commander.Command;
+			generateCmd: commander.Command;
+			buildCmd: commander.Command;
+			agentCmd: commander.Command;
+			healthcheckCmd: commander.Command;
+		}>
 	{
+		let command: commander.Command = null;
+		let createCmd: commander.Command = null;
+		let moduleCmd: commander.Command = null;
+		let runCmd: commander.Command = null;
+		let buildCmd: commander.Command = null;
+		let generateCmd: commander.Command = null;
+		let agentCmd: commander.Command = null;
+		let healthcheckCmd: commander.Command = null;
+
 		try
 		{
 			if (await HotIO.exists (this.packagePath) === false)
@@ -1820,10 +1858,9 @@ export class HotCLI
 
 			let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
 
-			const program: commander.Command = new commander.Command ("hotstaq");
-
-			program.description (`Copyright(c) 2022, FreeLight, Inc. Under the MIT License.`);
-			let command: commander.Command = program.version (this.VERSION);
+			this.program = new commander.Command ("hotstaq");
+			this.program.description (this.description);
+			command = this.program.version (this.VERSION);
 
 			let hotsiteExists: boolean = false;
 			let foundHotsitePath: string = "";
@@ -1958,17 +1995,23 @@ export class HotCLI
 						process.env[key] = value;
 				}
 			}
-
-			if (args.length > 2)
-				program.parse (args);
-
-			if (this.globalLogLevel != null)
-				this.processor.logger.logLevel = this.globalLogLevel;
 		}
 		catch (ex)
 		{
 			this.processor.logger.error (ex.stack);
 		}
+
+		return ({
+				program: this.program,
+				mainCommand: command,
+				createCmd: createCmd,
+				moduleCmd: moduleCmd,
+				runCmd: runCmd,
+				generateCmd: generateCmd,
+				buildCmd: buildCmd,
+				agentCmd: agentCmd,
+				healthcheckCmd: healthcheckCmd
+			});
 	}
 
 	/**
@@ -1980,10 +2023,16 @@ export class HotCLI
 	}
 
 	/**
-	 * Start the CLI app.
+	 * Parse the CLI arguments and start the CLI app.
 	 */
-	async start (): Promise<void>
+	async start (args: string[]): Promise<void>
 	{
+		if (args.length > 2)
+			this.program.parse (args);
+
+		if (this.globalLogLevel != null)
+			this.processor.logger.logLevel = this.globalLogLevel;
+
 		if (this.onModuleInstallAction != null)
 			await this.onModuleInstallAction ();
 

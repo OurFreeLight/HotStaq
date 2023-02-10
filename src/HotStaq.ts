@@ -127,7 +127,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.10";
+	static version: string = "0.8.11";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -848,6 +848,7 @@ export class HotStaq implements IHotStaq
 	async loadHotSite (path: string): Promise<void>
 	{
 		let jsonStr: string = "";
+		const ext: string = ppath.extname (path).toLowerCase ();
 
 		if (HotStaq.isWeb === true)
 		{
@@ -870,7 +871,16 @@ export class HotStaq implements IHotStaq
 			this.logger.verbose (`Accessed site ${path}`);
 		}
 
-		this.hotSite = JSON.parse (jsonStr);
+		if ((ext === ".yaml") || (ext === ".yml"))
+		{
+			if (HotStaq.isWeb === true)
+				throw new Error (`YAML support for HotSites is not available on the web yet!`);
+
+			let yaml = eval ("require")("yaml"); // Hack to get around Webpack.
+			this.hotSite = yaml.parse (jsonStr);
+		}
+		else
+			this.hotSite = JSON.parse (jsonStr);
 
 		if (this.hotSite == null)
 			throw new Error (`HotSite ${path} cannot be null!`);

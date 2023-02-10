@@ -1,7 +1,7 @@
 import { HotCLI } from "./HotCLI";
 
 let cli: HotCLI = new HotCLI ();
-cli.setup (process.argv).then (async () =>
+cli.setup ().then (async () =>
     {
-        await cli.start ();
+        await cli.start (process.argv);
     });
