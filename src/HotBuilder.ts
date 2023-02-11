@@ -433,7 +433,7 @@ export class HotBuilder
 						for (let iIdx = 0; iIdx < assetsToCopyObj.components.length; iIdx++)
 						{
 							// @ts-ignore
-							files.components.push (assetsToCopyObj.components[iIdx].name);
+							files.components.push (assetsToCopyObj.components[iIdx]);
 						}
 					}
 				}

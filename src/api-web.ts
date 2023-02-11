@@ -1,6 +1,8 @@
 import { HotStaq, HotStartOptions, IHotStaq } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
-import { Hot, HotModule, HotAsset, DeveloperMode } from "./Hot";
+import { Hot, DeveloperMode } from "./Hot";
+import { HotAsset } from "./HotAsset";
+import { HotModule } from "./HotModule";
 import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent";
 import { HotFile } from "./HotFile";
 import { HotLog, HotLogLevel } from "./HotLog";
