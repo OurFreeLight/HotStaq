@@ -10,7 +10,9 @@ import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent"
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
-import { DeveloperMode, Hot, HotAsset, HotModule } from "./Hot";
+import { DeveloperMode } from "./Hot";
+import { HotAsset } from "./HotAsset";
+import { HotModule } from "./HotModule";
 import { HotClient } from "./HotClient";
 
 import { HotTester } from "./HotTester";
@@ -127,7 +129,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.11";
+	static version: string = "0.8.12";
 	/**
 	 * Indicates if this is a web build.
 	 */

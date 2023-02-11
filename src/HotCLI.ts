@@ -1858,17 +1858,28 @@ export class HotCLI
 
 			let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
 
-			this.program = new commander.Command ("hotstaq");
+			this.program = new commander.Command (this.name);
 			this.program.description (this.description);
 			command = this.program.version (this.VERSION);
 
 			let hotsiteExists: boolean = false;
 			let foundHotsitePath: string = "";
 
+			/// @fixme Temporary hack to find a HotSite.json file. Come up with a better 
+			/// solution for this.
 			if (await HotIO.exists ("./HotSite.json") === true)
 			{
 				hotsiteExists = true;
 				foundHotsitePath = ppath.normalize ("./HotSite.json");
+			}
+
+			if (hotsiteExists === false)
+			{
+				if (await HotIO.exists ("./HotSite.yaml") === true)
+				{
+					hotsiteExists = true;
+					foundHotsitePath = ppath.normalize ("./HotSite.yaml");
+				}
 			}
 
 			if (hotsiteExists === false)

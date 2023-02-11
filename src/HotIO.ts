@@ -2,6 +2,7 @@ import * as fs from "fs";
 import crypto from "crypto";
 import * as ppath from "path";
 import * as fse from "fs-extra";
+import * as yaml from "yaml";
 
 const util = require ("util");
 import * as child_process from "child_process";
@@ -51,6 +52,17 @@ export class HotIO
 	{
 		const textStr: string = await HotIO.readTextFile (path);
 		const jsonObj: any = JSON.parse (textStr);
+
+		return (jsonObj);
+	}
+
+	/**
+	 * Read a YAML file, parse it, and return the parsed object.
+	 */
+	static async readYAMLFile (path: string): Promise<any>
+	{
+		const textStr: string = await HotIO.readTextFile (path);
+		const jsonObj: any = yaml.parse (textStr);
 
 		return (jsonObj);
 	}
