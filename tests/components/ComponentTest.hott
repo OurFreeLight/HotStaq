@@ -8,6 +8,7 @@
         <table-component>
             <table-header>Field</table-header>
         </table-component>
+        <button hot-place-parent = "mainBody">Test</button>
     </main-component>
 </body>
 </html>

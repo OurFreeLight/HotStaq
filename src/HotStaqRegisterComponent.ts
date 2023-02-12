@@ -135,10 +135,10 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 						//newDOM = this.looseParseFromString (new DOMParser (), str);
 						newDOM = new DOMParser ().parseFromString (htmlHandler.fixedStr, "text/html");
 					}
-		
+
 					if (newDOM.body.children.length < 1)
-						throw new Error (`No component output from ${this.component.name}`);
-		
+						throw new Error (`No component output from ${this.component.name} with tag ${this.component.tag}`);
+
 					if (newDOM.body.children.length > 1)
 					{
 						let throwErr: boolean = true;
@@ -291,10 +291,9 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 							compHtmlElement2.hotComponent.onParentPlace (parentNode, compHtmlElement2);
 						}
 					}
-		
-					if (output.placeHereParent != null)
+
+					let placeElmInParent = (parentNodeToCheck: ParentNode, placeHereParent: string, childToPlace: Node): ParentNode =>
 					{
-						let parentNodeToCheck = compHtmlElement2.parentNode;
 						let parentNodeCheckCounter: number = 0;
 		
 						while (parentNodeCheckCounter < 10) /// @todo Make this controllable with a variable from the component.
@@ -307,20 +306,22 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 		
 							// If the hot-place-here exists, place the children there. If not, place it under the 
 							// new element.
-							let placeHereArray = parentNodeToCheck.querySelectorAll (`hot-place-here[name="${output.placeHereParent}"]`);
+							let placeHereArray = parentNodeToCheck.querySelectorAll (`hot-place-here[name="${placeHereParent}"]`);
 		
 							if (placeHereArray.length > 0)
 							{
 								let placeHere = placeHereArray[0];
 		
-								compHtmlElement2.parentNode.removeChild (compHtmlElement2);
-								placeHere.appendChild (compHtmlElement2);
+								if (childToPlace.parentNode != null)
+									childToPlace.parentNode.removeChild (childToPlace);
+
+								placeHere.appendChild (childToPlace);
 		
 								// @ts-ignore
-								if (compHtmlElement2.onParentPlace != null)
+								if (childToPlace.onParentPlace != null)
 								{
 									// @ts-ignore
-									compHtmlElement2.hotComponent.onParentPlace (placeHere, compHtmlElement2);
+									childToPlace.hotComponent.onParentPlace (placeHere, childToPlace);
 								}
 		
 								break;
@@ -328,19 +329,22 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 		
 							if (placeHereArray.length < 1)
 							{
-								let placeHereAttrArray = parentNodeToCheck.querySelectorAll (`[hot-place-here="${output.placeHereParent}"]`);
+								let placeHereAttrArray = parentNodeToCheck.querySelectorAll (`[hot-place-here="${placeHereParent}"]`);
 		
 								if (placeHereAttrArray.length > 0)
 								{
 									let placeHere = placeHereAttrArray[0];
-									compHtmlElement2.parentNode.removeChild (compHtmlElement2);
-									placeHere.appendChild (compHtmlElement2);
+
+									if (childToPlace.parentNode != null)
+										childToPlace.parentNode.removeChild (childToPlace);
+
+									placeHere.appendChild (childToPlace);
 		
 									// @ts-ignore
-									if (compHtmlElement2.onParentPlace != null)
+									if (childToPlace.onParentPlace != null)
 									{
 										// @ts-ignore
-										compHtmlElement2.hotComponent.onParentPlace (placeHere, compHtmlElement2);
+										childToPlace.hotComponent.onParentPlace (placeHere, childToPlace);
 									}
 		
 									break;
@@ -351,6 +355,14 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 							parentNodeCheckCounter++;
 						}
 
+						return (parentNodeToCheck);
+					};
+		
+					if (output.placeHereParent != null)
+					{
+						let parentNodeToCheck = compHtmlElement2.parentNode;
+						parentNodeToCheck = placeElmInParent (parentNodeToCheck, output.placeHereParent, compHtmlElement2);
+
 						if (parentNodeToCheck == null)
 							throw new Error (`Unable to find parent node with hot-place-here attribute '${output.placeHereParent}'`);
 					}
@@ -358,10 +370,29 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 					// Append the children to the newly created HTML element.
 					for (let iIdx = 0; iIdx < childrenToReadd.length; iIdx++)
 					{
-						const child: Node = childrenToReadd[iIdx];
+						const child: HTMLElement = (<HTMLElement>childrenToReadd[iIdx]);
+						let placedChild: boolean = false;
+
+						// Get the attribute hot-place-parent in child.
+						if (typeof (child.getAttribute) !== "undefined")
+						{
+							let placeHereParentAttr = child.getAttribute ("hot-place-parent");
+
+							if ((placeHereParentAttr != null) && (placeHereParentAttr !== ""))
+							{
+								let parentNodeToCheck: ParentNode = compHtmlElement2;
+								parentNodeToCheck = placeElmInParent (parentNodeToCheck, placeHereParentAttr, child);
 		
-						compHtmlElement2.appendChild (child);
+								if (parentNodeToCheck == null)
+									throw new Error (`Unable to find parent node with hot-place-here attribute '${output.placeHereParent}'`);
+								else
+									placedChild = true;
+							}
+						}
 		
+						if (placedChild === false)
+							compHtmlElement2.appendChild (child);
+
 						// @ts-ignore
 						if (child.onParentPlace != null)
 						{
