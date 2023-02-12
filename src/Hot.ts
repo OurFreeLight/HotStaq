@@ -281,6 +281,18 @@ export class Hot
 	}
 
 	/**
+	 * Get a HTTP JSON file or request.
+	 * 
+	 * @param url The full url to make the HTTP call.
+	 * 
+	 * @returns The parsed JSON object.
+	 */
+	static async getJSON (url: string): Promise<any>
+	{
+		return (Hot.jsonRequest (url, null, HotEventMethod.GET));
+	}
+
+	/**
 	 * Make a HTTP JSON request.
 	 * 
 	 * @param url The full url to make the HTTP call.
