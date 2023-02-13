@@ -423,12 +423,7 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 								componentName = this.id;
 
 							if (componentName !== "")
-							{
-								if (Hot.CurrentPage.components[componentName] != null)
-									throw new Error (`Component with name ${componentName} already exists!`);
-
 								Hot.CurrentPage.components[componentName] = this.component;
-							}
 						}
 					}
 				}
