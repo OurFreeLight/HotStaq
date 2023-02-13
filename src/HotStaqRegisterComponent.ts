@@ -414,15 +414,21 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 					{
 						if (Hot.CurrentPage != null)
 						{
-							let componentName: string = this.component.name;
+							let componentName: string = "";
+
+							if (this.component.name != null)
+								componentName = this.component.name;
 
 							if ((componentName == null) || (componentName === ""))
 								componentName = this.id;
 
-							if (Hot.CurrentPage.components[componentName] != null)
-								throw new Error (`Component with name ${componentName} already exists!`);
+							if (componentName !== "")
+							{
+								if (Hot.CurrentPage.components[componentName] != null)
+									throw new Error (`Component with name ${componentName} already exists!`);
 
-							Hot.CurrentPage.components[componentName] = this.component;
+								Hot.CurrentPage.components[componentName] = this.component;
+							}
 						}
 					}
 				}
