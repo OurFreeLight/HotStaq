@@ -102,6 +102,8 @@ export interface IHotStaq
 	modules?: { [name: string]: HotModule };
 	/**
 	 * The components that can be constructed.
+	 * 
+	 * @fixme Rename this to componentTags.
 	 */
 	components?: {
 		[tagName: string]: {
@@ -129,7 +131,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.13";
+	static version: string = "0.8.14";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -168,6 +170,8 @@ export class HotStaq implements IHotStaq
 	modules: { [name: string]: HotModule };
 	/**
 	 * The components that can be constructed.
+	 * 
+	 * @fixme Rename this to componentTags.
 	 */
 	components: {
 		[tagName: string]: {
