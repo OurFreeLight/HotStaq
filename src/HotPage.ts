@@ -24,6 +24,10 @@ export interface IHotPage
 	 */
 	route?: string;
 	/**
+	 * The components added to this page.
+	 */
+	components?: { [name: string]: HotComponent };
+	/**
 	 * The name of the page. File ordering matters here.
 	 * Every file is processed incrementally.
 	 */
@@ -98,6 +102,7 @@ export class HotPage implements IHotPage
 			this.testerName = "HotTesterMochaSelenium";
 			this.testerMap = "";
 			this.route = "";
+			this.components = {};
 			this.files = [];
 			this.testElements = {};
 			this.testPaths = {};
@@ -109,6 +114,7 @@ export class HotPage implements IHotPage
 			this.testerName = copy.testerName || "HotTesterMochaSelenium";
 			this.testerMap = copy.testerMap || "";
 			this.route = copy.route || "";
+			this.components = copy.components || {};
 			this.files = copy.files || [];
 			this.testElements = copy.testElements || {};
 			this.testPaths = copy.testPaths || {};
