@@ -4,6 +4,7 @@ import { HotStaq } from "./HotStaq";
 import { HotAPI } from "./HotAPI";
 import { HotTestElement } from "./HotTestElement";
 import { HotTestMap, HotTestPath } from "./HotTestMap";
+import { HotComponent } from "./HotComponent";
 
 /**
  * A page to preprocess.
@@ -62,6 +63,10 @@ export class HotPage implements IHotPage
 	 * The route used to get to this page.
 	 */
 	route: string;
+	/**
+	 * The components added to this page.
+	 */
+	components: { [name: string]: HotComponent };
 	/**
 	 * The name of the page. File ordering matters here.
 	 * Every file is processed incrementally.

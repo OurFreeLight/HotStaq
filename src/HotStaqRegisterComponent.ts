@@ -1,6 +1,7 @@
 import { HotFile } from "./HotFile";
 import { HotComponent, HotComponentOutput } from "./HotComponent";
 import { HotStaq } from "./HotStaq";
+import { Hot } from "./Hot";
 
 /**
  * Register a component for use as a HTML tag.
@@ -407,6 +408,22 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 
 						if (temp != null)
 							compHtmlElement2 = temp;
+					}
+
+					if (typeof (Hot) !== "undefined")
+					{
+						if (Hot.CurrentPage != null)
+						{
+							let componentName: string = this.component.name;
+
+							if ((componentName == null) || (componentName === ""))
+								componentName = this.id;
+
+							if (Hot.CurrentPage.components[componentName] != null)
+								throw new Error (`Component with name ${componentName} already exists!`);
+
+							Hot.CurrentPage.components[componentName] = this.component;
+						}
 					}
 				}
 			}
