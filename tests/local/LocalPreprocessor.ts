@@ -148,7 +148,7 @@ describe ("Local Preprocessor Tests", () =>
 			{
 				let output: string = await HotStaq.processLocalFile (
 							"./tests/local/placeholder.hott", "Test", { TEST2: "TEST2" });
-				const comparison: string = `TEST1\nTEST2\nTEST3`.replace (/\s/g, "");
+				const comparison: string = `TEST1\nTEST2\nTEST3\${TEST4}`.replace (/\s/g, "");
 
 				output = output.replace (/\s/g, "");
 

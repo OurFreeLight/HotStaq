@@ -413,7 +413,12 @@ export class HotFile implements IHotFile
 
 						if (parserOptions.outputCommands === true)
 						{
-							out = `*&&%*%@#@!try { Hot.echo (${regexFound2}); }catch (ex){Hot.echo ("");}*&!#%@!@*!`;
+							let escapeOutput = (content: string): string =>
+								{
+									return (content.replace(/[`]/g, '\\`'));
+								};
+
+							out = `*&&%*%@#@!try { Hot.echo (${regexFound2}); }catch (ex){Hot.echo (\`\\\${${escapeOutput (regexFound2)}}\`);}*&!#%@!@*!`;
 
 							if (throwAllErrors === true)
 								out = `*&&%*%@#@!Hot.echo (${regexFound2});*&!#%@!@*!`;
@@ -638,7 +643,6 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 				contentName = this.url;
 
 			executionContent += `
-
 			function echoOutput (content, throwErrors)
 			{
 				if (throwErrors == null)

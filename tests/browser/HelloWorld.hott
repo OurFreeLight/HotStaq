@@ -13,7 +13,11 @@
 			if (Hot.Cookies.get ("test") != "23")
 				throw new Error ("Cookies not working");
 
-			let result = await Hot.apiCall ('/v1/hello_world/hello', { message: 'hi' });
+			const msg = "hi";
+
+			let result = await Hot.apiCall ('/v1/hello_world/hello', {
+					message: `${msg}` // Helps ensure that existing template strings still work.
+				});
 			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
 		}
 
