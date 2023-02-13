@@ -413,7 +413,7 @@ export class HotFile implements IHotFile
 
 						if (parserOptions.outputCommands === true)
 						{
-							out = `*&&%*%@#@!try { Hot.echo (${regexFound2}); }catch (ex){Hot.echo ("");}*&!#%@!@*!`;
+							out = `*&&%*%@#@!try { Hot.echo (${regexFound2}); }catch (ex){Hot.echo ("\${${regexFound2}}");}*&!#%@!@*!`;
 
 							if (throwAllErrors === true)
 								out = `*&&%*%@#@!Hot.echo (${regexFound2});*&!#%@!@*!`;
