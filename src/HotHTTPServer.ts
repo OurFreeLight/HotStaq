@@ -475,6 +475,12 @@ export class HotHTTPServer extends HotServer
 				let methodName: string = method.getRouteUrl ();
 				method.isRegistered = true;
 
+				if (typeof (method.type) !== "string")
+					throw new Error (`When registering HTTP route, received invalid method type ${JSON.stringify (method.type)}`);
+
+				if (methodName == null)
+					throw new Error (`When registering HTTP route, a null/undefined method name was given.`);
+
 				this.logger.verbose (`Adding HTTP route ${method.type} ${methodName}`);
 
 				const expressType: string = HotHTTPServer.getExpressMethodName (method.type);
