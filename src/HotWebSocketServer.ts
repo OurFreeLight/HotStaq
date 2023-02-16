@@ -171,7 +171,7 @@ export class HotWebSocketServer
 
 									if (args != null)
 									{
-										if (args.length > 1)
+										if (args.length > 0)
 											jsonObj = args[0];
 									}
 
