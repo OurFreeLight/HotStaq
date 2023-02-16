@@ -370,25 +370,25 @@ export class HotWebSocketServer
 	{
 		let routeName: string = "";
 
-		if (route instanceof HotRoute)
-		{
-			routeName = route.route;
-			this.routes[route.route] = route;
-		}
-		else
+		if (typeof (route) === "string")
 		{
 			routeName = route;
 
 			if (this.routes[routeName] == null)
 				this.routes[routeName] = new HotRoute (this.connection, routeName);
 
-			if (routeMethod instanceof HotRouteMethod)
-				this.routes[routeName].addMethod (routeMethod);
-			else
+			if (typeof (routeMethod) === "string")
 			{
 				this.routes[routeName].addMethod (new HotRouteMethod (
 					this.routes[routeName], routeMethod, executeFunction));
 			}
+			else
+				this.routes[routeName].addMethod (routeMethod);
+		}
+		else
+		{
+			routeName = route.route;
+			this.routes[route.route] = route;
 		}
 	}
 
