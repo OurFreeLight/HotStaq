@@ -15,11 +15,16 @@ export class HotWebSocketClient
 	 * The connected socket.
 	 */
 	socket: Socket;
+	/**
+	 * Any data that this client socket should contain.
+	 */
+	persistentData: any;
 
 	constructor (webSocketServer: HotWebSocketServer, socket: Socket)
 	{
 		this.webSocketServer = webSocketServer;
 		this.socket = socket;
+		this.persistentData = {};
 	}
 
 	/**

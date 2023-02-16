@@ -130,6 +130,9 @@ export class HotGenerator
 				res.json ({ "status": "ok" });
 			});
 
+		if (server.api.onPreRegister != null)
+			await server.api.onPreRegister ();
+
 		//server.serverType = "API Server";
 		//await server.listen ();
 
@@ -387,6 +390,8 @@ export class HotGenerator
 					if (route.description != null)
 						routeDescription = route.description;
 
+					this.logger.verbose (`Generating Route ${routeName}...`);
+
 					for (let iJdx = 0; iJdx < route.methods.length; iJdx++)
 					{
 						let method: HotRouteMethod = route.methods[iJdx];
@@ -398,6 +403,9 @@ export class HotGenerator
 							};
 						let component: any = null;
 						let componentName: string = "";
+
+						this.logger.verbose (`Generating method ${methodName} at path ${path}`);
+
 						let getChildParameters = (param: HotRouteMethodParameter): any =>
 							{
 								let createdObj: any = {
@@ -552,6 +560,7 @@ export class HotGenerator
 					fileContent = yamldoc.toString ();
 				}
 
+				this.logger.verbose (`Writing to file ${outputFile}${outputFileExtension}`);
 				await HotIO.writeTextFile (`${outputFile}${outputFileExtension}`, fileContent);
 
 				this.logger.info (`Finished generating API Documentation "${key}" from HotSite "${hotsite.name}"...`);
