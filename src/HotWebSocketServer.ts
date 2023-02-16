@@ -167,9 +167,21 @@ export class HotWebSocketServer
 							{
 								try
 								{
+									let jsonObj: any = null;
+
+									if (args != null)
+									{
+										if (args.length > 0)
+											jsonObj = args[0];
+									}
+
+									const socketId: string = socket.id;
+									let wsSocket: HotWebSocketClient = this.clients[socketId];
+
 									let request: ServerRequest = new ServerRequest ({
 											"authorizedValue": authorizationValue,
-											"jsonObj": args[0]
+											"jsonObj": jsonObj,
+											"wsSocket": wsSocket
 										});
 					
 									let result: any = await method.onServerExecute.call (this, request);
@@ -189,7 +201,7 @@ export class HotWebSocketServer
 					}
 				}
 
-				let socketId: string = socket.id;
+				const socketId: string = socket.id;
 
 				socket.on ("disconnect", () =>
 					{
