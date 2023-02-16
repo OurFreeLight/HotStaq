@@ -47,6 +47,8 @@ import { MySQLSchemaTable } from "./schemas/mysql/MySQLSchemaTable";
 // Influx specific stuff
 import { HotDBInflux } from "./schemas/HotDBInflux";
 import { InfluxSchema } from "./schemas/influx/InfluxSchema";
+import { HotWebSocketClient } from "./HotWebSocketClient";
+import { HotWebSocketServer } from "./HotWebSocketServer";
 
 HotStaq.isWeb = false;
 
@@ -83,6 +85,8 @@ export {
 		HotServer,
 		HotServerType,
 		HotHTTPServer,
+		HotWebSocketClient,
+		HotWebSocketServer,
 		HotClient,
 		HotTesterServer,
 		HotTester,

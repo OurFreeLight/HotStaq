@@ -4,6 +4,7 @@ import { HotRoute } from "./HotRoute";
 import { HotServer } from "./HotServer";
 
 import express from "express";
+import { HotWebSocketClient } from "./HotWebSocketClient";
 
 /**
  * The available event methods.
@@ -43,6 +44,11 @@ export interface IServerRequest
 	 * threads or if this request was received from a websocket connection.
 	 */
 	res?: express.Response;
+	/**
+	 * The client websocket that was used to send the message. Will be set to null if using worker 
+	 * threads or if this request was received from a HTTP connection.
+	 */
+	wsSocket?: HotWebSocketClient;
 	/**
 	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
@@ -87,6 +93,11 @@ export class ServerRequest implements IServerRequest
 	 */
 	res: express.Response;
 	/**
+	 * The client websocket that was used to send the message. Will be set to null if using worker 
+	 * threads or if this request was received from a HTTP connection.
+	 */
+	wsSocket: HotWebSocketClient;
+	/**
 	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
 	 */
@@ -120,6 +131,7 @@ export class ServerRequest implements IServerRequest
 
 		this.req = obj.req || null;
 		this.res = obj.res || null;
+		this.wsSocket = obj.wsSocket || null;
 		this.authorizedValue = obj.authorizedValue || null;
 		this.jsonObj = obj.jsonObj || null;
 		this.queryObj = obj.queryObj || null;
