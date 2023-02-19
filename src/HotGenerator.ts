@@ -371,7 +371,7 @@ export class HotGenerator
 				if (this.generateType.indexOf ("openapi-3.0.0") > -1)
 					jsonObj.openapi = "3.0.0";
 
-				let filename: string = `${libraryName}_${apiName}`;
+				let filename: string = `${libraryName}_${apiName}_${this.generateType}`;
 				jsonObj.info = {};
 				jsonObj.info.title = hotsite.name;
 				jsonObj.info.version = hotsite.name;
