@@ -182,7 +182,7 @@ export async function processRequest (server: HotHTTPServer,
 			}
 			catch (ex)
 			{
-				logger.verbose (`Execution error: ${ex.message}`);
+				logger.error (`Execution error: ${ex.message}`);
 				return ({ error: ex.message });
 			}
 

@@ -183,6 +183,8 @@ export class HotWebSocketServer
 											"jsonObj": jsonObj,
 											"wsSocket": wsSocket
 										});
+
+									socket.data.wsSocket = wsSocket;
 					
 									let result: any = await method.onServerExecute.call (this, request);
 					
@@ -193,7 +195,7 @@ export class HotWebSocketServer
 								}
 								catch (ex)
 								{
-									this.logger.verbose (`Execution error: ${ex.message}`);
+									this.logger.error (`Execution error: ${ex.message}`);
 									socket.emit (`sub/${routeName}/${method.name}`, { error: ex.message });
 								}
 							});
