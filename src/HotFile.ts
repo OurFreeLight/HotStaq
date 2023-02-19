@@ -4,7 +4,6 @@ import fetch from "node-fetch";
 
 import { DeveloperMode, Hot } from "./Hot";
 import { HotPage } from "./HotPage";
-import { HotTestElement } from "./HotTestElement";
 
 /**
  * A file to process.

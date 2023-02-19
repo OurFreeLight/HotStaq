@@ -371,6 +371,7 @@ export class HotGenerator
 				if (this.generateType.indexOf ("openapi-3.0.0") > -1)
 					jsonObj.openapi = "3.0.0";
 
+				let filename: string = `${libraryName}_${apiName}_${this.generateType}`;
 				jsonObj.info = {};
 				jsonObj.info.title = hotsite.name;
 				jsonObj.info.version = hotsite.name;
@@ -409,7 +410,7 @@ export class HotGenerator
 						let getChildParameters = (param: HotRouteMethodParameter): any =>
 							{
 								let createdObj: any = {
-										type: param.type,
+										type: param.type || "string",
 										description: param.description || "",
 										properties: {}
 									};
@@ -441,8 +442,8 @@ export class HotGenerator
 										else
 										{
 											createdObj.properties[key3] = {
-													type: tempParam.type,
-													description: tempParam.description
+													type: tempParam.type || "string",
+													description: tempParam.description || ""
 												};
 										}
 									}
@@ -459,7 +460,7 @@ export class HotGenerator
 							if (method.returns.type === "object")
 							{
 								returnsDescription = {
-										description: method.returns.description,
+										description: method.returns.description || "",
 										content: {
 											"application/json": {
 												schema: getChildParameters (method.returns)
@@ -470,12 +471,12 @@ export class HotGenerator
 							else
 							{
 								returnsDescription = {
-										description: method.returns.description,
+										description: method.returns.description || "",
 										content: {
 											"application/json": {
 													schema: {
 														type: "string", 
-														description: method.returns.description
+														description: method.returns.description || ""
 													}
 												}
 										}
@@ -497,7 +498,6 @@ export class HotGenerator
 							{
 								components[`${routeName}_${methodName}`] = {
 									type: "object",
-									required: [],
 									properties: {}
 								};
 								component = components[`${routeName}_${methodName}`];
@@ -513,13 +513,18 @@ export class HotGenerator
 								else
 								{
 									component.properties[key3] = {
-											type: param.type,
-											description: param.description
+											type: param.type || "string",
+											description: param.description || ""
 										};
 								}
 
 								if (param.required === true)
+								{
+									if (component.required == null)
+										component.required = [];
+
 									component.required.push (key3);
+								}
 							}
 						}
 
@@ -543,7 +548,7 @@ export class HotGenerator
 					schemas: components
 				};
 
-				const outputFile: string = ppath.normalize (`${outputDir}/${jsonObj.info.title}`);
+				const outputFile: string = ppath.normalize (`${outputDir}/${filename}`);
 				let outputFileExtension: string = ".json";
 				let fileContent: string = "";
 
@@ -842,7 +847,7 @@ class ${data.routeName}
 							else
 							{
 								outputParams += `
-	 * @property {${tempParam.type}} ${key3} ${tempParam.description}`;
+	 * @property {${tempParam.type || "string"}} ${key3} ${tempParam.description || ""}`;
 							}
 						}
 					}
@@ -868,7 +873,7 @@ class ${data.routeName}
 					else
 					{
 						paramsToOutput += `
-	 * @property {${param.type}} ${key} ${param.description}`;
+	 * @property {${param.type || "string"}} ${key} ${param.description || ""}`;
 					}
 				}
 
@@ -900,13 +905,13 @@ class ${data.routeName}
 	`;
 					jsonReturnOutput = `
 	 * 
-	 * @returns {${returnObjType}} ${method.returns.description}`;
+	 * @returns {${returnObjType}} ${method.returns.description || ""}`;
 				}
 				else
 				{
 					jsonReturnOutput = `
 	 * 
-	 * @returns {${method.returns.type}} ${method.returns.description}`;
+	 * @returns {${method.returns.type}} ${method.returns.description || ""}`;
 				}
 			}
 
