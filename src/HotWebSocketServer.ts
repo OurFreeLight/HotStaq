@@ -77,12 +77,22 @@ export class HotWebSocketServer
 	{
 		if (this.connection.httpsListener != null)
 		{
-			this.io = new Server (this.connection.httpsListener);
+			this.io = new Server (this.connection.httpsListener, {
+					"cors": {
+						"origin": this.connection.cors.origin,
+						"allowedHeaders": this.connection.cors.allowedHeaders
+					}
+				});
 			this.logger.info (`Secure WebSocket server listening...`);
 		}
 		else
 		{
-			this.io = new Server (this.connection.httpListener);
+			this.io = new Server (this.connection.httpListener, {
+					"cors": {
+						"origin": this.connection.cors.origin,
+						"allowedHeaders": this.connection.cors.allowedHeaders
+					}
+				});
 			this.logger.info (`WebSocket server listening...`);
 		}
 

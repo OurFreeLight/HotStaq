@@ -173,6 +173,43 @@ export class HotHTTPServer extends HotServer
 	 */
 	useWorkerThreads: boolean;
 	/**
+	 * The options to use when a new client has made a request.
+	 */
+	options: {
+			/**
+			 * Executes when the new client has requested the headers.
+			 */
+			onCall: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>;
+			/**
+			 * The headers to send with the response. Default:
+			 * [
+			 *	 { type: "Access-Control-Allow-Origin", value: "*" },
+			 *	 { type: "Access-Control-Allow-Methods", value: "GET,HEAD,PUT,PATCH,POST,DELETE" },
+			 *	 { type: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept" }
+			 * ]
+			 */
+			headers: HTTPHeader[];
+		};
+	/**
+	 * The CORS settings. By default the origin will be open to all.
+	 * The CORS settings that are set here will also be used for the 
+	 * websocket server as well.
+	 */
+	cors: {
+			/**
+			 * Executed when a CORS call has been made.
+			 */
+			onCORSCall: (req: express.Request, res: express.Response, next: express.NextFunction) => Promise<void>;
+			/**
+			 * The allowed CORS origins. Default: *
+			 */
+			origin: string;
+			/**
+			 * The allowed headers. Default: ["Origin", "X-Requested-With", "Content-Type", "Accept"]
+			 */
+			allowedHeaders: string[];
+		};
+	/**
 	 * The function to execute when handling 404 errors.
 	 */
 	handle404: (req: express.Request, res: express.Response, next: any) => void;
@@ -207,6 +244,19 @@ export class HotHTTPServer extends HotServer
 				afterUploadIdUse: true
 			};
 		this.useWorkerThreads = false;
+		this.options = {
+				onCall: null,
+				headers: [
+					{ type: "Access-Control-Allow-Origin", value: "*" },
+					{ type: "Access-Control-Allow-Methods", value: "GET,HEAD,PUT,PATCH,POST,DELETE" },
+					{ type: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept" }
+				]
+			};
+		this.cors = {
+			onCORSCall: null,
+			origin: "*",
+			allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept"]
+		};
 		this.handle404 = null;
 		this.handleOther = null;
 
@@ -263,20 +313,37 @@ export class HotHTTPServer extends HotServer
 				JSONLimit = process.env.JSON_LIMIT;
 		}
 
-		this.expressApp.options ("*", (req: express.Request, res: express.Response, next: express.NextFunction) =>
+		this.expressApp.options ("*", async (req: express.Request, res: express.Response, next: express.NextFunction) =>
 			{
-				res.header ("Access-Control-Allow-Origin", "*");
-				res.header ("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE");
-				res.header ("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+				if (this.options.onCall != null)
+				{
+					await this.options.onCall (req, res, next);
+
+					return;
+				}
+
+				for (let iIdx = 0; iIdx < this.options.headers.length; iIdx++)
+				{
+					let header: HTTPHeader = this.options.headers[iIdx];
+
+					res.header (header.type, header.value);
+				}
 
 				res.statusCode = 204;
 				res.setHeader ("Content-Length", "0");
 				res.end ();
 			});
-		this.expressApp.use ((req: express.Request, res: express.Response, next: express.NextFunction) =>
+		this.expressApp.use (async (req: express.Request, res: express.Response, next: express.NextFunction) =>
 			{
-				res.header ("Access-Control-Allow-Origin", "*");
-				res.header ("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+				if (this.cors.onCORSCall != null)
+				{
+					await this.cors.onCORSCall (req, res, next);
+
+					return;
+				}
+
+				res.header ("Access-Control-Allow-Origin", this.cors.origin);
+				res.header ("Access-Control-Allow-Headers", this.cors.allowedHeaders);
 
 				next ();
 			});
