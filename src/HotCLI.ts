@@ -1256,7 +1256,7 @@ export class HotCLI
 			{
 				testerSettings.remoteServer = remoteServer;
 			}, "");
-		runCmd.option (`--accept-websocket-connections`, 
+		runCmd.option (`--ws, --accept-websocket-connections`, 
 			`This will allow the all servers to accept websocket connections.`, 
 			(remoteServer: string, previous: any) =>
 			{
