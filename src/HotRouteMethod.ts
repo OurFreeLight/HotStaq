@@ -52,6 +52,7 @@ export interface IServerRequest
 	/**
 	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
+	 * DO NOT STORE SENSITIVE INFORMATION HERE SUCH AS PASSWORDS.
 	 */
 	authorizedValue?: any;
 	/**
