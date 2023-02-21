@@ -66,7 +66,7 @@ export class HotWebSocketServer
 	/**
 	 * Executes right after a user disconnects.
 	 */
-	onDisconnect: (socket: HotWebSocketClient) => Promise<void>;
+	onDisconnect: (socket: HotWebSocketClient) => void;
 
 	constructor (server: HotHTTPServer)
 	{
