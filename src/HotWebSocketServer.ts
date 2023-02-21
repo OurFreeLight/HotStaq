@@ -196,7 +196,7 @@ export class HotWebSocketServer
 
 									socket.data.wsSocket = wsSocket;
 					
-									let result: any = await method.onServerExecute.call (this, request);
+									let result: any = await method.onServerExecute.call (route, request);
 					
 									this.logger.verbose (`WebSocket Event ${eventName}, Response: ${result}`);
 					
@@ -405,14 +405,20 @@ export class HotWebSocketServer
 			{
 				this.routes[routeName].addMethod (new HotRouteMethod (
 					this.routes[routeName], routeMethod, executeFunction));
+				this.logger.verbose (`Added WebSocket route ${routeName} with method ${routeMethod}`);
 			}
 			else
+			{
 				this.routes[routeName].addMethod (routeMethod);
+				this.logger.verbose (`Added WebSocket route ${routeName}`);
+			}
 		}
 		else
 		{
 			routeName = route.route;
 			this.routes[route.route] = route;
+
+			this.logger.verbose (`Added WebSocket route ${routeName}`);
 		}
 	}
 
