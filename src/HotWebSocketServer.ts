@@ -48,15 +48,25 @@ export class HotWebSocketServer
 	 * The socket.handshake.auth will be passed into the jsonObj in the 
 	 * ServerRequest parameter.
 	 */
-	onServerAuthorize?: ServerAuthorizationFunction;
+	onServerAuthorize: ServerAuthorizationFunction;
 	/**
 	 * Executes after a successful connection.
 	 */
-	onSuccessfulConnection?: (client: HotWebSocketClient) => Promise<void>;
+	onSuccessfulConnection: (client: HotWebSocketClient) => Promise<void>;
+	/**
+	 * Executes right when a user connects before onServerAuthorize is called.
+	 * If this function returns false, the connection will be closed. Be sure 
+	 * to use onServerAuthorize to handle authorization, NOT here.
+	 */
+	onConnection: (socket: Socket) => Promise<boolean>;
 	/**
 	 * Executes after a connection is unable to authenticate.
 	 */
-	onConnectionError?: (socket: Socket, errorMessage: string) => Promise<void>;
+	onConnectionError: (socket: Socket, errorMessage: string) => Promise<void>;
+	/**
+	 * Executes right after a user disconnects.
+	 */
+	onDisconnect: (socket: HotWebSocketClient) => void;
 
 	constructor (server: HotHTTPServer)
 	{
@@ -66,8 +76,11 @@ export class HotWebSocketServer
 		this.routes = {};
 		this.clients = {};
 		this.tags = {};
+
 		this.onServerAuthorize = null;
 		this.onSuccessfulConnection = null;
+		this.onConnection = null;
+		this.onDisconnect = null;
 	}
 
 	/**
@@ -102,6 +115,18 @@ export class HotWebSocketServer
 				let authorizationValue: any = null;
 				let hasAuthorization: boolean = true;
 				let executedFailedFunc: boolean = false;
+
+				if (this.onConnection != null)
+				{
+					const canConnect: boolean = await this.onConnection (socket);
+
+					if (canConnect === false)
+					{
+						socket.disconnect (true);
+
+						return;
+					}
+				}
 
 				if (this.onServerAuthorize != null)
 				{
@@ -377,6 +402,9 @@ export class HotWebSocketServer
 					delete this.tags[tag][clientId2];
 			}
 		}
+
+		if (this.onDisconnect != null)
+			this.onDisconnect (client);
 
 		if (closeConnection === true)
 			client.disconnect (false);

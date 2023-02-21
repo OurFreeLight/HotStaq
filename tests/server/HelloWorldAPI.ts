@@ -43,6 +43,8 @@ export class HelloWorldAPI extends HotAPI
 			};
 
 		let route: HotRoute = new HotRoute (connection, "hello_world");
+		// @ts-ignore
+		route.wsReturnMessage = "Hello!";
 		route.addMethod ({
 				name: "hello",
 				description: "Say hello to the server and it will respond.",
@@ -62,12 +64,12 @@ export class HelloWorldAPI extends HotAPI
 				return (true);
 			}, HotEventMethod.GET);
 		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
-		route.addMethod ("ws_hello_event", async (req: ServerRequest) =>
+		route.addMethod ("ws_hello_event", function async (req: ServerRequest)
 			{
 				const message: string = (<string>req.jsonObj.message).toLowerCase ();
 
 				if ((message === "hi") || (message === "hello"))
-					return ("Hello!");
+					return (this.wsReturnMessage); // In this case, "this" should be the route.
 
 				return ({ error: "You didn't say hi." });
 			}, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
