@@ -19,12 +19,18 @@ export class HotWebSocketClient
 	 * Any data that this client socket should contain.
 	 */
 	persistentData: any;
+	/**
+	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
+	 * DO NOT STORE SENSITIVE INFORMATION HERE SUCH AS PASSWORDS.
+	 */
+	authorizedValue: any;
 
 	constructor (webSocketServer: HotWebSocketServer, socket: Socket)
 	{
 		this.webSocketServer = webSocketServer;
 		this.socket = socket;
 		this.persistentData = {};
+		this.authorizedValue = null;
 	}
 
 	/**

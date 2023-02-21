@@ -174,6 +174,11 @@ export class HotWebSocketServer
 				this.logger.verbose (`Incoming WebSocket connection from ${incomingIP}, Authorized: true, Authorization Value: ${authorizationValue}`);
 
 				socket.data.authorizationValue = authorizationValue;
+
+				const socketId: string = socket.id;
+				this.clients[socketId] = new HotWebSocketClient (this, socket);
+				this.clients[socketId].authorizedValue = authorizationValue;
+
 				next ();
 			});
 		this.io.on ("connection", async (socket: Socket) =>
@@ -245,8 +250,7 @@ export class HotWebSocketServer
 						this.disconnect (socketId);
 					});
 
-				this.clients[socketId] = new HotWebSocketClient (this, socket);
-				this.logger.verbose (`Client connected ${socketId}`);
+				this.logger.verbose (`Client successfully connected ${socketId}`);
 
 				if (this.onSuccessfulConnection != null)
 					await this.onSuccessfulConnection (this.clients[socketId]);
