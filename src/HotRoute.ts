@@ -94,7 +94,7 @@ export class HotRoute
 		): void
 	{
 		if (typeof (method) === "string")
-			method = new HotRouteMethod (this, method, executeFunction, type, null, null, null, testCases);
+			method = HotRouteMethod.create (this, method, executeFunction, type, null, null, null, testCases);
 
 		if (method instanceof HotRouteMethod)
 			this.methods.push (method);
@@ -103,7 +103,7 @@ export class HotRoute
 			if (method.route == null)
 				method.route = this;
 
-			method = new HotRouteMethod (method);
+			method = HotRouteMethod.create (method);
 			this.methods.push ((<HotRouteMethod>method));
 		}
 	}

@@ -1,6 +1,6 @@
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
 import { HotAgentAPI } from "./HotAgentAPI";
 
 import * as fs from "fs";
@@ -22,17 +22,21 @@ export class HotAgentRoute extends HotRoute
 
         this.thisApi = api;
 
-		this.addMethod (new HotRouteMethod (this, "execute", this.execute, 
-			HotEventMethod.POST, api.userAuth));
+		this.addMethod ({
+				name: "execute", 
+				onServerExecute: this.execute, 
+				type: HotEventMethod.POST,
+				onServerAuthorize: api.userAuth
+			});
 	}
 
 	/**
 	 * Execute a file.
 	 */
-	protected async execute (req: any, res: any, authorizedValue: any, jsonObj: any, queryObj: any): Promise<any>
+	protected async execute (req: ServerRequest): Promise<any>
 	{
-		const cmd: string = HotStaq.getParam ("cmd", jsonObj);
-		const data: any = HotStaq.getParamDefault ("data", jsonObj, undefined);
+		const cmd: string = HotStaq.getParam ("cmd", req.jsonObj);
+		const data: any = HotStaq.getParamDefault ("data", req.jsonObj, undefined);
         let foundCmd: string = this.thisApi.commands[cmd];
 
         if (foundCmd == null)
