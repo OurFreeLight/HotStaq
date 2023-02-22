@@ -434,6 +434,8 @@ export class HotGenerator
 
 										if (typeof (param2) === "string")
 											tempParam["type"] = param2;
+										else if (typeof (param2) === "function")
+											tempParam = param2 ();
 										else
 											tempParam = param2;
 		
@@ -839,6 +841,8 @@ class ${data.routeName}
 
 							if (typeof (param2) === "string")
 								tempParam["type"] = param2;
+							else if (typeof (param2) === "function")
+								tempParam = param2 ();
 							else
 								tempParam = param2;
 

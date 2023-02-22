@@ -1,7 +1,7 @@
 import { DeveloperMode } from "./Hot";
 import { HotTestDriver } from "./HotTestDriver";
 import { HotRoute } from "./HotRoute";
-import { HotServer } from "./HotServer";
+import { HotServer, HotServerType } from "./HotServer";
 
 import express from "express";
 import { HotWebSocketClient } from "./HotWebSocketClient";
@@ -205,9 +205,10 @@ export interface HotRouteMethodParameter
 	 */
 	required?: boolean;
 	/**
-	 * The parameters in the object.
+	 * The parameters in the object. If using the function, the function 
+	 * will only execute if the application's connection type is set to generation.
 	 */
-	parameters?: { [name: string]: string | HotRouteMethodParameter; };
+	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => HotRouteMethodParameter); };
 }
 
 /**
@@ -230,11 +231,11 @@ export interface IHotRouteMethod
 	/**
 	 * The description of what returns from the api method.
 	 */
-	returns?: string | HotRouteMethodParameter;
+	returns?: string | HotRouteMethodParameter | (() => HotRouteMethodParameter);
 	/**
 	 * The parameters in the api method.
 	 */
-	parameters?: { [name: string]: string | HotRouteMethodParameter; };
+	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => HotRouteMethodParameter); };
 	/**
 	 * The api call name.
 	 */
@@ -418,6 +419,13 @@ export class HotRouteMethod implements IHotRouteMethod
 							"description": route.returns
 						};
 				}
+				else if (typeof (route.returns) === "function")
+				{
+					if (this.route.connection.type === HotServerType.Generate)
+						this.returns = route.returns ();
+					else
+						this.returns = null;
+				}
 				else
 					this.returns = route.returns;
 			}
@@ -437,6 +445,19 @@ export class HotRouteMethod implements IHotRouteMethod
 								"required": false,
 								"description": ""
 							};
+					}
+					else if (typeof (param) === "function")
+					{
+						if (this.route.connection.type === HotServerType.Generate)
+							this.parameters[key] = param ();
+						else
+						{
+							this.parameters[key] = {
+									"type": "string",
+									"required": false,
+									"description": ""
+								};
+						}
 					}
 					else
 					{
