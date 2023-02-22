@@ -25,6 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
+import { HotRouteMethodParameter } from "./HotRouteMethod";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
@@ -131,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.26";
+	static version: string = "0.8.27";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -335,6 +336,44 @@ export class HotStaq implements IHotStaq
 			return (false);
 
 		return (false);
+	}
+
+	/**
+	 * Convert an interface to a route parameter.
+	 */
+	static async convertInterfaceToRouteParameters (sourceCodePath: string, interfaceName: string): Promise<HotRouteMethodParameter>
+	{
+		let parameters: HotRouteMethodParameter = {};
+
+		if (HotStaq.isWeb === true)
+			throw new Error (`HotStaq.convertInterfaceToRouteParameters is not supported in the browser.`);
+
+		let HotIO = eval ("require")("./HotIO").HotIO; // Hack to get around Webpack.
+		const sourceCodeContent: string = await HotIO.readTextFile (sourceCodePath);
+
+		let parseInterface = eval ("require")("./HotConvertInterfaceToRouteParameters").parseInterface;
+		const output = parseInterface ("./temp.ts", sourceCodeContent, interfaceName);
+
+		for (let i = 0; i < output.properties.length; i++)
+		{
+			let prop = output.properties[i];
+			let name: string = prop.name;
+			let propType: string = prop.type;
+			let isOptional: boolean = prop.isOptional;
+			let description: string = "";
+
+			if (prop.comments.length > 0)
+				description = prop.comments[0];
+
+			// @ts-ignore
+			parameters[name] = {
+					"type": propType,
+					"required": !isOptional,
+					"description": description
+				};
+		}
+
+		return (parameters);
 	}
 
 	/**
