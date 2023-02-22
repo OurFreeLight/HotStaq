@@ -447,12 +447,8 @@ export class HotRouteMethod implements IHotRouteMethod
 				}
 				else if (typeof (route.returns) === "function")
 				{
-					if (newMethod.route.connection.type === HotServerType.Generate)
-					{
-						/// @fixme Can't run await here for many reasons. await is required 
-						/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
-					}
-
+					/// @fixme Can't run await here for many reasons. await is required 
+					/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
 					newMethod.returns = null;
 				}
 				else
@@ -477,28 +473,14 @@ export class HotRouteMethod implements IHotRouteMethod
 					}
 					else if (typeof (param) === "function")
 					{
-						if (newMethod.route.connection.type === HotServerType.Generate)
-						{
-							if (newMethod.route.connection.type === HotServerType.Generate)
-							{
-								/// @fixme Can't run await here for many reasons. await is required 
-								/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
-							}
+						/// @fixme Can't run await here for many reasons. await is required 
+						/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
 
-							newMethod.parameters[key] = {
-									"type": "string",
-									"required": false,
-									"description": ""
-								};
-						}
-						else
-						{
-							newMethod.parameters[key] = {
-									"type": "string",
-									"required": false,
-									"description": ""
-								};
-						}
+						newMethod.parameters[key] = {
+								"type": "string",
+								"required": false,
+								"description": ""
+							};
 					}
 					else
 					{
