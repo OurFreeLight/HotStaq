@@ -208,7 +208,7 @@ export interface HotRouteMethodParameter
 	 * The parameters in the object. If using the function, the function 
 	 * will only execute if the application's connection type is set to generation.
 	 */
-	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => HotRouteMethodParameter); };
+	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 }
 
 /**
@@ -231,11 +231,11 @@ export interface IHotRouteMethod
 	/**
 	 * The description of what returns from the api method.
 	 */
-	returns?: string | HotRouteMethodParameter | (() => HotRouteMethodParameter);
+	returns?: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>);
 	/**
 	 * The parameters in the api method.
 	 */
-	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => HotRouteMethodParameter); };
+	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 	/**
 	 * The api call name.
 	 */
@@ -386,12 +386,38 @@ export class HotRouteMethod implements IHotRouteMethod
 	 */
 	onClientExecute?: ClientExecutionFunction;
 
-	constructor (route: HotRoute | IHotRouteMethod, name: string = "", 
-		onExecute: ServerExecutionFunction | ClientExecutionFunction = null, 
-		type: HotEventMethod = HotEventMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
-		onRegister: ServerRegistrationFunction = null, authCredentials: any = null, 
-		testCases: { [name: string]: TestCaseObject; } | (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null)
+	private constructor ()
 	{
+		this.route = null;
+		this.name = "";
+		this.description = "";
+		this.returns = null;
+		this.parameters = {};
+		this.type = HotEventMethod.POST;
+		this.isRegistered = false;
+		this.executeSetup = true;
+		this.authCredentials = null;
+		this.testCases = {};
+		this.onPreRegister = null;
+		this.onRegister = null;
+		this.onPostRegister = null;
+
+		this.onServerAuthorize = null;
+		this.onServerExecute = null;
+		this.onClientExecute = null;
+	}
+
+	/**
+	 * Create a new route method.
+	 */
+	static create (route: HotRoute | IHotRouteMethod, name: string = "", 
+			onExecute: ServerExecutionFunction | ClientExecutionFunction = null, 
+			type: HotEventMethod = HotEventMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
+			onRegister: ServerRegistrationFunction = null, authCredentials: any = null, 
+			testCases: { [name: string]: TestCaseObject; } | (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null
+		): HotRouteMethod
+	{
+		let newMethod: HotRouteMethod = new HotRouteMethod ();
 		let newRoute: HotRoute = null;
 
 		if (route instanceof HotRoute)
@@ -407,13 +433,13 @@ export class HotRouteMethod implements IHotRouteMethod
 				name = route.name;
 
 			if (route.description != null)
-				this.description = route.description;
+				newMethod.description = route.description;
 
 			if (route.returns != null)
 			{
 				if (typeof (route.returns) === "string")
 				{
-					this.returns = {
+					newMethod.returns = {
 							"type": "string",
 							"required": true,
 							"description": route.returns
@@ -421,18 +447,21 @@ export class HotRouteMethod implements IHotRouteMethod
 				}
 				else if (typeof (route.returns) === "function")
 				{
-					if (this.route.connection.type === HotServerType.Generate)
-						this.returns = route.returns ();
-					else
-						this.returns = null;
+					if (newMethod.route.connection.type === HotServerType.Generate)
+					{
+						/// @fixme Can't run await here for many reasons. await is required 
+						/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
+					}
+
+					newMethod.returns = null;
 				}
 				else
-					this.returns = route.returns;
+					newMethod.returns = route.returns;
 			}
 
 			if (route.parameters != null)
 			{
-				this.parameters = {};
+				newMethod.parameters = {};
 
 				for (let key in route.parameters)
 				{
@@ -440,7 +469,7 @@ export class HotRouteMethod implements IHotRouteMethod
 
 					if (typeof (param) === "string")
 					{
-						this.parameters[key] = {
+						newMethod.parameters[key] = {
 								"type": param,
 								"required": false,
 								"description": ""
@@ -448,11 +477,23 @@ export class HotRouteMethod implements IHotRouteMethod
 					}
 					else if (typeof (param) === "function")
 					{
-						if (this.route.connection.type === HotServerType.Generate)
-							this.parameters[key] = param ();
+						if (newMethod.route.connection.type === HotServerType.Generate)
+						{
+							if (newMethod.route.connection.type === HotServerType.Generate)
+							{
+								/// @fixme Can't run await here for many reasons. await is required 
+								/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
+							}
+
+							newMethod.parameters[key] = {
+									"type": "string",
+									"required": false,
+									"description": ""
+								};
+						}
 						else
 						{
-							this.parameters[key] = {
+							newMethod.parameters[key] = {
 									"type": "string",
 									"required": false,
 									"description": ""
@@ -464,7 +505,7 @@ export class HotRouteMethod implements IHotRouteMethod
 						if (param.type == null)
 							param.type = "string";
 
-						this.parameters[key] = param;
+						newMethod.parameters[key] = param;
 					}
 				}
 			}
@@ -482,13 +523,13 @@ export class HotRouteMethod implements IHotRouteMethod
 				onRegister = route.onRegister;
 
 			if (route.onPostRegister != null)
-				this.onPostRegister = route.onPostRegister;
+				newMethod.onPostRegister = route.onPostRegister;
 
 			if (route.onServerExecute != null)
-				this.onServerExecute = route.onServerExecute;
+				newMethod.onServerExecute = route.onServerExecute;
 
 			if (route.onClientExecute != null)
-				this.onClientExecute = route.onClientExecute;
+				newMethod.onClientExecute = route.onClientExecute;
 
 			if (route.testCases != null)
 				testCases = route.testCases;
@@ -497,17 +538,17 @@ export class HotRouteMethod implements IHotRouteMethod
 		if (name === "")
 			throw new Error (`All route methods must have a name!`);
 
-		this.route = newRoute;
-		this.name = name;
-		this.type = type;
-		this.isRegistered = false;
-		this.executeSetup = false;
-		this.authCredentials = authCredentials;
-		this.onServerAuthorize = onServerAuthorize;
-		this.onRegister = onRegister;
-		this.testCases = {};
+		newMethod.route = newRoute;
+		newMethod.name = name;
+		newMethod.type = type;
+		newMethod.isRegistered = false;
+		newMethod.executeSetup = false;
+		newMethod.authCredentials = authCredentials;
+		newMethod.onServerAuthorize = onServerAuthorize;
+		newMethod.onRegister = onRegister;
+		newMethod.testCases = {};
 
-		if (this.route.connection.processor.mode === DeveloperMode.Development)
+		if (newMethod.route.connection.processor.mode === DeveloperMode.Development)
 		{
 			if (testCases != null)
 			{
@@ -522,11 +563,11 @@ export class HotRouteMethod implements IHotRouteMethod
 							const testCaseName: string = obj;
 							const func: TestCaseFunction = (<TestCaseFunction>testCases[iIdx + 1]);
 
-							this.addTestCase (testCaseName, func);
+							newMethod.addTestCase (testCaseName, func);
 							iIdx++;
 						}
 						else
-							this.addTestCase (obj);
+							newMethod.addTestCase (obj);
 					}
 				}
 				else
@@ -535,16 +576,18 @@ export class HotRouteMethod implements IHotRouteMethod
 					{
 						let obj = testCases[key];
 
-						this.addTestCase (obj);
+						newMethod.addTestCase (obj);
 					}
 				}
 			}
 		}
 
-		if (this.route.connection instanceof HotServer)
-			this.onServerExecute = onExecute;
+		if (newMethod.route.connection instanceof HotServer)
+			newMethod.onServerExecute = onExecute;
 		//else
-			//this.onClientExecute = onExecute;
+			//newMethod.onClientExecute = onExecute;
+
+		return (newMethod);
 	}
 
 	/**

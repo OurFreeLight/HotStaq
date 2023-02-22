@@ -435,7 +435,7 @@ export class HotWebSocketServer
 
 			if (typeof (routeMethod) === "string")
 			{
-				this.routes[routeName].addMethod (new HotRouteMethod (
+				this.routes[routeName].addMethod (HotRouteMethod.create (
 					this.routes[routeName], routeMethod, executeFunction));
 				this.logger.verbose (`Added WebSocket route ${routeName} with method ${routeMethod}`);
 			}

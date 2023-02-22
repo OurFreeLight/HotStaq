@@ -230,7 +230,7 @@ export class HotGenerator
 
 				let apiFileContent: string = "";
 
-				apiFileContent += this.getAPIContent (this.generateType, "header", 
+				apiFileContent += await this.getAPIContent (this.generateType, "header", 
 					{ libraryName: libraryName, apiName: apiName, baseAPIUrl: serverResult.baseAPIUrl });
 
 				let collectedRoutes: { libraryName: string; apiName: string; routeName: string; }[] = [];
@@ -243,7 +243,7 @@ export class HotGenerator
 					if (typeof (routeName) !== "string")
 						throw new Error (`Provided route name is not a string: ${JSON.stringify (route)}`);
 
-					apiFileContent += this.getAPIContent (this.generateType, "class_header", 
+					apiFileContent += await this.getAPIContent (this.generateType, "class_header", 
 						{ routeName: routeName, baseAPIUrl: serverResult.baseAPIUrl, 
 							libraryName: libraryName, apiName: apiName });
 
@@ -262,13 +262,13 @@ export class HotGenerator
 						if (method.type === HotEventMethod.FILE_UPLOAD)
 							methodType = "post";
 
-						apiFileContent += this.getAPIContent (this.generateType, "class_function", 
+						apiFileContent += await this.getAPIContent (this.generateType, "class_function", 
 							{ methodName: methodName, routeVersion: route.version, 
 								routeName: routeName, methodType: methodType.toUpperCase (), 
 								libraryName: libraryName, apiName: apiName, method: method });
 					}
 
-					apiFileContent += this.getAPIContent (this.generateType, "class_footer", 
+					apiFileContent += await this.getAPIContent (this.generateType, "class_footer", 
 						{ libraryName: libraryName, baseAPIUrl: serverResult.baseAPIUrl, apiName: apiName, routeName: routeName });
 
 					collectedRoutes.push ({
@@ -276,7 +276,7 @@ export class HotGenerator
 						});
 				}
 
-				apiFileContent += this.getAPIContent (this.generateType, "footer", {
+				apiFileContent += await this.getAPIContent (this.generateType, "footer", {
 						libraryName: libraryName, apiName: apiName, collectedRoutes: collectedRoutes
 					});
 
@@ -407,7 +407,7 @@ export class HotGenerator
 
 						this.logger.verbose (`Generating method ${methodName} at path ${path}`);
 
-						let getChildParameters = (param: HotRouteMethodParameter): any =>
+						let getChildParameters = async (param: HotRouteMethodParameter): Promise<any> =>
 							{
 								let createdObj: any = {
 										type: param.type || "string",
@@ -435,12 +435,12 @@ export class HotGenerator
 										if (typeof (param2) === "string")
 											tempParam["type"] = param2;
 										else if (typeof (param2) === "function")
-											tempParam = param2 ();
+											tempParam = await param2 ();
 										else
 											tempParam = param2;
 		
 										if (tempParam.type === "object")
-											createdObj.properties[key3] = getChildParameters (tempParam.parameters);
+											createdObj.properties[key3] = await getChildParameters (tempParam.parameters);
 										else
 										{
 											createdObj.properties[key3] = {
@@ -465,7 +465,7 @@ export class HotGenerator
 										description: method.returns.description || "",
 										content: {
 											"application/json": {
-												schema: getChildParameters (method.returns)
+												schema: await getChildParameters (method.returns)
 											}
 										}
 									};
@@ -511,7 +511,7 @@ export class HotGenerator
 								let param = method.parameters[key3];
 
 								if (param.type === "object")
-									component.properties[key3] = getChildParameters (param);
+									component.properties[key3] = await getChildParameters (param);
 								else
 								{
 									component.properties[key3] = {
@@ -577,15 +577,15 @@ export class HotGenerator
 	/**
 	 * Get the content.
 	 */
-	getAPIContent (type: string, contentPart: string, data: any): string
+	async getAPIContent (type: string, contentPart: string, data: any): Promise<string>
 	{
 		let content = "";
 
 		if (type === "javascript")
-			content = this.getJavaScriptContent (contentPart, data);
+			content = await this.getJavaScriptContent (contentPart, data);
 
 		if (type === "typescript")
-			content = this.getTypeScriptContent (contentPart, data);
+			content = await this.getTypeScriptContent (contentPart, data);
 
 		return (content);
 	}
@@ -593,7 +593,7 @@ export class HotGenerator
 	/**
 	 * Get the Typescript content.
 	 */
-	getTypeScriptContent (contentPart: string, data: any): string
+	async getTypeScriptContent (contentPart: string, data: any): Promise<string>
 	{
 		let content = "";
 
@@ -662,7 +662,7 @@ export class ${data.routeName} extends HotAPI
 	/**
 	 * Get the JavaScript content.
 	 */
-	getJavaScriptContent (contentPart: string, data: any): string
+	async getJavaScriptContent (contentPart: string, data: any): Promise<string>
 	{
 		let content = "";
 
@@ -818,7 +818,7 @@ class ${data.routeName}
 			let paramsDescription: string = "";
 			let jsonParamOutput: string = "";
 			let jsonReturnOutput: string = "";
-			let getChildParameters = (param: HotRouteMethodParameter): any =>
+			let getChildParameters = async (param: HotRouteMethodParameter): Promise<any> =>
 				{
 					let outputParams: string = "";
 
@@ -842,12 +842,12 @@ class ${data.routeName}
 							if (typeof (param2) === "string")
 								tempParam["type"] = param2;
 							else if (typeof (param2) === "function")
-								tempParam = param2 ();
+								tempParam = await param2 ();
 							else
 								tempParam = param2;
 
 							if (tempParam.type === "object")
-								outputParams += getChildParameters (tempParam.parameters);
+								outputParams += await getChildParameters (tempParam.parameters);
 							else
 							{
 								outputParams += `
@@ -872,7 +872,7 @@ class ${data.routeName}
 
 					if (param.type === "object")
 					{
-						paramsToOutput += getChildParameters (param);
+						paramsToOutput += await getChildParameters (param);
 					}
 					else
 					{
@@ -898,7 +898,7 @@ class ${data.routeName}
 				if (method.returns.type === "object")
 				{
 					let returnObjType: string = `${data.routeName}_${data.methodName}_json_return_type`.toUpperCase ();
-					let returnParamsToOutput: string = getChildParameters (method.returns);
+					let returnParamsToOutput: string = await getChildParameters (method.returns);
 
 					paramsDescription += `/**
 	 * The JSON object returned from the server.
