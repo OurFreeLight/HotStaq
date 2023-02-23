@@ -147,6 +147,7 @@ export class HotWebSocketServer
 						}
 						catch (ex)
 						{
+							// This is verbose since it SHOULDN'T be an error, it's just a failed authorization.
 							this.logger.verbose (`Authorization error from ip ${incomingIP}: ${ex.message}`);
 							hasAuthorization = false;
 
@@ -187,7 +188,7 @@ export class HotWebSocketServer
 				}
 				catch (ex)
 				{
-					this.logger.error (`Error while authorizing a websocket connection: ${ex.message}`);
+					this.logger.error (`Error while authorizing a websocket connection: ${ex}`);
 					next (new Error ("Internal Server Error"));
 				}
 			});
@@ -240,14 +241,21 @@ export class HotWebSocketServer
 						
 										let result: any = await method.onServerExecute.call (route, request);
 						
-										this.logger.verbose (() => `WebSocket Event ${eventName}, Response: ${JSON.stringify (result)}`);
+										this.logger.verbose ((result2: any) => {
+											let resultStr: string = "";
+					
+											if (this.logger.showResponses === true)
+												resultStr = `, Response: ${JSON.stringify (result2)}`;
+
+											return (`WebSocket Event ${eventName}${resultStr}`);
+										}, result);
 						
 										if (result !== undefined)
 											socket.emit (`sub/${routeName}/${method.name}`, result);
 									}
 									catch (ex)
 									{
-										this.logger.error (`Execution error: ${ex.message}`);
+										this.logger.error (`Execution error: ${ex}`);
 										socket.emit (`sub/${routeName}/${method.name}`, { error: ex.message });
 									}
 								});
@@ -265,7 +273,7 @@ export class HotWebSocketServer
 							}
 							catch (ex)
 							{
-								this.logger.error (`Error while disconnecting a websocket client: ${ex.message}`);
+								this.logger.error (`Error while disconnecting a websocket client: ${ex}`);
 							}
 						});
 
@@ -276,7 +284,7 @@ export class HotWebSocketServer
 				}
 				catch (ex)
 				{
-					this.logger.error (`Error while connecting a websocket client: ${ex.message}`);
+					this.logger.error (`Error while connecting a websocket client: ${ex}`);
 					socket.emit ("error", "Internal Server Error");
 					socket.disconnect ();
 				}

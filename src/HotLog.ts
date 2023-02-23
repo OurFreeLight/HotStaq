@@ -38,10 +38,15 @@ export class HotLog
 	 * The logging level.
 	 */
 	logLevel: HotLogLevel;
+	/**
+	 * Show the responses to each request.
+	 */
+	showResponses: boolean;
 
 	constructor (logLevel: HotLogLevel = HotLogLevel.All)
 	{
 		this.logLevel = logLevel;
+		this.showResponses = false;
 	}
 
 	/**
@@ -126,14 +131,14 @@ export class HotLog
 	/**
 	 * Log a verbose message.
 	 */
-	verbose (message: string | Function)
+	verbose (message: string | Function, data: any = null)
 	{
 		if (this.logLevel === HotLogLevel.Verbose)
 		{
 			if (typeof (message) === "string")
 				console.info (message);
 			else
-				console.info (message ());
+				console.info (message (data));
 		}
 	}
 

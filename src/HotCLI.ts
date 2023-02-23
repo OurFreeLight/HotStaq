@@ -1928,6 +1928,11 @@ export class HotCLI
 				{
 					this.globalLogLevel = HotLogLevel.Verbose;
 				});
+			command.option ("--show-responses", "If set to true, all responses from each request will be shown.", 
+				(logLevel: string, previous: any) =>
+				{
+					this.processor.logger.showResponses = true;
+				});
 			command.option ("-l, --log-level <level>", "Set the logging level. Can be (info,warning,error,verbose,all,none)", 
 				(logLevel: string, previous: any) =>
 				{

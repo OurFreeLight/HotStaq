@@ -306,7 +306,14 @@ export class HotTesterServer extends HotServer
 
 								let result: any = await method.onServerExecute.call (thisObj, request);
 
-								this.logger.verbose (() => `${req.method} ${methodName}, Response: ${JSON.stringify (result)}`);
+								this.logger.verbose ((result2: any) => {
+									let resultStr: string = "";
+			
+									if (this.logger.showResponses === true)
+										resultStr = `, Response: ${JSON.stringify (result2)}`;
+									
+									return (`${req.method} ${methodName}${resultStr}`);
+								}, result);
 
 								if (result !== undefined)
 									res.json (result);
