@@ -150,6 +150,6 @@ describe ("WebSocket Tests", () =>
 							"ApiSecret": "bad_password"
 						});
 
-				expect (errorMsg).to.eq ("Incorrect API key or secret!");
+				expect (errorMsg).to.eq ("Unauthorized");
 			});
 	});

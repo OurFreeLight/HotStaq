@@ -111,151 +111,175 @@ export class HotWebSocketServer
 
 		this.io.use (async (socket, next) =>
 			{
-				let incomingIP: string = HotWebSocketServer.getIPFromSocket (socket);
-				let authorizationValue: any = null;
-				let hasAuthorization: boolean = true;
-				let executedFailedFunc: boolean = false;
-
-				if (this.onConnection != null)
+				try
 				{
-					const canConnect: boolean = await this.onConnection (socket);
+					let incomingIP: string = HotWebSocketServer.getIPFromSocket (socket);
+					let authorizationValue: any = null;
+					let hasAuthorization: boolean = true;
+					let executedFailedFunc: boolean = false;
 
-					if (canConnect === false)
+					if (this.onConnection != null)
 					{
-						socket.disconnect (true);
+						const canConnect: boolean = await this.onConnection (socket);
+
+						if (canConnect === false)
+						{
+							next (new Error ("Unauthorized"));
+
+							return;
+						}
+					}
+
+					if (this.onServerAuthorize != null)
+					{
+						try
+						{
+							let request = new ServerRequest ({
+								req: null,
+								res: null,
+								authorizedValue: null,
+								jsonObj: socket.handshake.auth,
+								queryObj: null,
+								files: null
+							});
+
+							authorizationValue = await this.onServerAuthorize.call (this, request);
+						}
+						catch (ex)
+						{
+							this.logger.verbose (`Authorization error from ip ${incomingIP}: ${ex.message}`);
+							hasAuthorization = false;
+
+							if (this.onConnectionError != null)
+								await this.onConnectionError (socket, ex.message);
+
+							executedFailedFunc = true;
+						}
+
+						if (authorizationValue === undefined)
+							hasAuthorization = false;
+					}
+
+					if (hasAuthorization === false)
+					{
+						// Ensures we execute the onConnectionError function only once.
+						if (executedFailedFunc === false)
+						{
+							if (this.onConnectionError != null)
+								await this.onConnectionError (socket, "Unauthorized");
+						}
+
+						this.logger.verbose (`Unauthorized connection from ${incomingIP}`);
+						next (new Error ("Unauthorized"));
 
 						return;
 					}
-				}
 
-				if (this.onServerAuthorize != null)
+					this.logger.verbose (`Incoming WebSocket connection from ${incomingIP}, Authorized: true, Authorization Value: ${authorizationValue}`);
+
+					socket.data.authorizationValue = authorizationValue;
+
+					const socketId: string = socket.id;
+					this.clients[socketId] = new HotWebSocketClient (this, socket);
+					this.clients[socketId].authorizedValue = authorizationValue;
+
+					next ();
+				}
+				catch (ex)
 				{
-					try
-					{
-						let request = new ServerRequest ({
-							req: null,
-							res: null,
-							authorizedValue: null,
-							jsonObj: socket.handshake.auth,
-							queryObj: null,
-							files: null
-						});
-
-						authorizationValue = await this.onServerAuthorize.call (this, request);
-					}
-					catch (ex)
-					{
-						this.logger.verbose (`Authorization error from ip ${incomingIP}: ${ex.message}`);
-						hasAuthorization = false;
-
-						if (this.onConnectionError != null)
-							await this.onConnectionError (socket, ex.message);
-
-						executedFailedFunc = true;
-					}
-
-					if (authorizationValue === undefined)
-						hasAuthorization = false;
+					this.logger.error (`Error while authorizing a websocket connection: ${ex.message}`);
+					next (new Error ("Internal Server Error"));
 				}
-
-				if (hasAuthorization === false)
-				{
-					// Ensures we execute the onConnectionError function only once.
-					if (executedFailedFunc === false)
-					{
-						if (this.onConnectionError != null)
-							await this.onConnectionError (socket, "Unauthorized");
-					}
-
-					this.logger.verbose (`Unauthorized connection from ${incomingIP}`);
-					socket.emit ("error", "Unauthorized");
-
-					return;
-				}
-
-				this.logger.verbose (`Incoming WebSocket connection from ${incomingIP}, Authorized: true, Authorization Value: ${authorizationValue}`);
-
-				socket.data.authorizationValue = authorizationValue;
-
-				const socketId: string = socket.id;
-				this.clients[socketId] = new HotWebSocketClient (this, socket);
-				this.clients[socketId].authorizedValue = authorizationValue;
-
-				next ();
 			});
 		this.io.on ("connection", async (socket: Socket) =>
 			{
-				let authorizationValue: any = socket.data.authorizationValue;
-
-				for (let routeName in this.routes)
+				try
 				{
-					let route: HotRoute = this.routes[routeName];
+					let authorizationValue: any = socket.data.authorizationValue;
 
-					if (route.methods.length < 1)
-						throw new Error (`HotRoute ${routeName} does not have any methods! Methods are required to be attached prior to adding a route to a websocket.`);
-
-					for (let iIdx = 0; iIdx < route.methods.length; iIdx++)
+					for (let routeName in this.routes)
 					{
-						let method: HotRouteMethod = route.methods[iIdx];
+						let route: HotRoute = this.routes[routeName];
 
-						if (method.type !== HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
-							continue;
+						if (route.methods.length < 1)
+							throw new Error (`HotRoute ${routeName} does not have any methods! Methods are required to be attached prior to adding a route to a websocket.`);
 
-						let eventName: string = `pub/${routeName}/${method.name}`;
+						for (let iIdx = 0; iIdx < route.methods.length; iIdx++)
+						{
+							let method: HotRouteMethod = route.methods[iIdx];
 
-						// Only 1 argument will be passed to the jsonObj in the new ServerRequest.
-						// Devs can always pass an array or whatever object(s) they need.
-						socket.on (eventName, async (...args: any[]) => 
-							{
-								try
+							if (method.type !== HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+								continue;
+
+							let eventName: string = `pub/${routeName}/${method.name}`;
+
+							// Only 1 argument will be passed to the jsonObj in the new ServerRequest.
+							// Devs can always pass an array or whatever object(s) they need.
+							socket.on (eventName, async (...args: any[]) => 
 								{
-									let jsonObj: any = null;
-
-									if (args != null)
+									try
 									{
-										if (args.length > 0)
-											jsonObj = args[0];
+										let jsonObj: any = null;
+
+										if (args != null)
+										{
+											if (args.length > 0)
+												jsonObj = args[0];
+										}
+
+										const socketId: string = socket.id;
+										let wsSocket: HotWebSocketClient = this.clients[socketId];
+
+										let request: ServerRequest = new ServerRequest ({
+												"authorizedValue": authorizationValue,
+												"jsonObj": jsonObj,
+												"wsSocket": wsSocket
+											});
+
+										socket.data.wsSocket = wsSocket;
+						
+										let result: any = await method.onServerExecute.call (route, request);
+						
+										this.logger.verbose (() => `WebSocket Event ${eventName}, Response: ${JSON.stringify (result)}`);
+						
+										if (result !== undefined)
+											socket.emit (`sub/${routeName}/${method.name}`, result);
 									}
-
-									const socketId: string = socket.id;
-									let wsSocket: HotWebSocketClient = this.clients[socketId];
-
-									let request: ServerRequest = new ServerRequest ({
-											"authorizedValue": authorizationValue,
-											"jsonObj": jsonObj,
-											"wsSocket": wsSocket
-										});
-
-									socket.data.wsSocket = wsSocket;
-					
-									let result: any = await method.onServerExecute.call (route, request);
-					
-									this.logger.verbose (() => `WebSocket Event ${eventName}, Response: ${JSON.stringify (result)}`);
-					
-									if (result !== undefined)
-										socket.emit (`sub/${routeName}/${method.name}`, result);
-								}
-								catch (ex)
-								{
-									this.logger.error (`Execution error: ${ex.message}`);
-									socket.emit (`sub/${routeName}/${method.name}`, { error: ex.message });
-								}
-							});
-						this.logger.verbose (`Adding WebSocket Event: ${eventName}`);
+									catch (ex)
+									{
+										this.logger.error (`Execution error: ${ex.message}`);
+										socket.emit (`sub/${routeName}/${method.name}`, { error: ex.message });
+									}
+								});
+							this.logger.verbose (`Adding WebSocket Event: ${eventName}`);
+						}
 					}
+
+					const socketId: string = socket.id;
+
+					socket.on ("disconnect", () =>
+						{
+							try
+							{
+								this.disconnect (socketId);
+							}
+							catch (ex)
+							{
+								this.logger.error (`Error while disconnecting a websocket client: ${ex.message}`);
+							}
+						});
+
+					this.logger.verbose (`Client successfully connected ${socketId}`);
+
+					if (this.onSuccessfulConnection != null)
+						await this.onSuccessfulConnection (this.clients[socketId]);
 				}
-
-				const socketId: string = socket.id;
-
-				socket.on ("disconnect", () =>
-					{
-						this.disconnect (socketId);
-					});
-
-				this.logger.verbose (`Client successfully connected ${socketId}`);
-
-				if (this.onSuccessfulConnection != null)
-					await this.onSuccessfulConnection (this.clients[socketId]);
+				catch (ex)
+				{
+					this.logger.error (`Error while connecting a websocket client: ${ex.message}`);
+					socket.emit ("error", "Internal Server Error");
+					socket.disconnect ();
+				}
 			});
 	}
 
