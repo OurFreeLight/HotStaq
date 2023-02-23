@@ -151,8 +151,6 @@ export class HotWebSocketServer
 						if (this.onConnectionError != null)
 							await this.onConnectionError (socket, ex.message);
 
-						next (new Error (ex.message));
-
 						executedFailedFunc = true;
 					}
 
@@ -162,13 +160,17 @@ export class HotWebSocketServer
 
 				if (hasAuthorization === false)
 				{
+					// Ensures we execute the onConnectionError function only once.
 					if (executedFailedFunc === false)
 					{
 						if (this.onConnectionError != null)
 							await this.onConnectionError (socket, "Unauthorized");
 					}
 
-					next (new Error ("Unauthorized"));
+					this.logger.verbose (`Unauthorized connection from ${incomingIP}`);
+					socket.emit ("error", "Unauthorized");
+
+					return;
 				}
 
 				this.logger.verbose (`Incoming WebSocket connection from ${incomingIP}, Authorized: true, Authorization Value: ${authorizationValue}`);
@@ -228,7 +230,7 @@ export class HotWebSocketServer
 					
 									let result: any = await method.onServerExecute.call (route, request);
 					
-									this.logger.verbose (`WebSocket Event ${eventName}, Response: ${result}`);
+									this.logger.verbose (() => `WebSocket Event ${eventName}, Response: ${JSON.stringify (result)}`);
 					
 									if (result !== undefined)
 										socket.emit (`sub/${routeName}/${method.name}`, result);
