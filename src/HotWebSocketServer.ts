@@ -118,6 +118,9 @@ export class HotWebSocketServer
 					let hasAuthorization: boolean = true;
 					let executedFailedFunc: boolean = false;
 
+					const socketId: string = socket.id;
+					const newSocket: HotWebSocketClient = new HotWebSocketClient (this, socket);
+
 					if (this.onConnection != null)
 					{
 						const canConnect: boolean = await this.onConnection (socket);
@@ -140,7 +143,8 @@ export class HotWebSocketServer
 								authorizedValue: null,
 								jsonObj: socket.handshake.auth,
 								queryObj: null,
-								files: null
+								files: null,
+								wsSocket: newSocket
 							});
 
 							authorizationValue = await this.onServerAuthorize.call (this, request);
@@ -180,9 +184,8 @@ export class HotWebSocketServer
 
 					socket.data.authorizationValue = authorizationValue;
 
-					const socketId: string = socket.id;
-					this.clients[socketId] = new HotWebSocketClient (this, socket);
-					this.clients[socketId].authorizedValue = authorizationValue;
+					newSocket.authorizedValue = authorizationValue;
+					this.clients[socketId] = newSocket;
 
 					next ();
 				}
