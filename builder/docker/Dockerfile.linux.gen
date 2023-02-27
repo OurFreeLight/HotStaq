@@ -8,6 +8,8 @@ RUN apt update && apt upgrade -y && \
 	npm install -g typescript@4.9.4 hotstaq@${HOTSTAQ_VERSION} && \
 	mkdir -p /tmp/app
 
+COPY ./tsconfig.json /tmp/app/tsconfig.json
+COPY ./HotSite.json /tmp/app/HotSite.json
 COPY ./package.json /tmp/app/package.json
 COPY ./package-lock.json /tmp/app/package-lock.json
 
@@ -15,7 +17,8 @@ RUN cd /tmp/app && \
 	npm install hotstaq@${HOTSTAQ_VERSION} && \
 	npm install
 
-COPY . /tmp/app
+COPY ./src/ /tmp/app/src/
+COPY ./public/ /tmp/app/public/
 
 RUN cd /tmp/app && \
 	npm run build && \

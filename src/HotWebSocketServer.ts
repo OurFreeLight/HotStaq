@@ -1,4 +1,4 @@
-import { Server, Socket } from "socket.io";
+import { Server, ServerOptions, Socket } from "socket.io";
 
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotWebSocketClient } from "./HotWebSocketClient";
@@ -39,6 +39,20 @@ export class HotWebSocketServer
 		}
 	};
 	/**
+	 * The socket.io server options. Default options are:
+	 * ```json
+	 * {
+	 * 	"cors": {
+	 * 		"origin": this.connection.cors.origin,
+	 * 		"allowedHeaders": this.connection.cors.allowedHeaders
+	 * 	}
+	 * }
+	 * ```
+	 * Where this.connection.cors represents the CORS settings set for the 
+	 * HotStaq processor.
+	 */
+	serverOptions: Partial<ServerOptions>;
+	/**
 	 * Executes when authorizing a called method. The value returned from 
 	 * here will be passed to onServerExecute. Undefined returning from here 
 	 * will mean the authorization failed. If any exceptions are thrown from 
@@ -76,6 +90,13 @@ export class HotWebSocketServer
 		this.routes = {};
 		this.clients = {};
 		this.tags = {};
+		this.serverOptions = {
+				"cors": {
+					"origin": this.connection.cors.origin,
+					"allowedHeaders": this.connection.cors.allowedHeaders
+				},
+				maxHttpBufferSize: 1e8
+			};
 
 		this.onServerAuthorize = null;
 		this.onSuccessfulConnection = null;
@@ -90,22 +111,12 @@ export class HotWebSocketServer
 	{
 		if (this.connection.httpsListener != null)
 		{
-			this.io = new Server (this.connection.httpsListener, {
-					"cors": {
-						"origin": this.connection.cors.origin,
-						"allowedHeaders": this.connection.cors.allowedHeaders
-					}
-				});
+			this.io = new Server (this.connection.httpsListener, this.serverOptions);
 			this.logger.info (`Secure WebSocket server listening...`);
 		}
 		else
 		{
-			this.io = new Server (this.connection.httpListener, {
-					"cors": {
-						"origin": this.connection.cors.origin,
-						"allowedHeaders": this.connection.cors.allowedHeaders
-					}
-				});
+			this.io = new Server (this.connection.httpListener, this.serverOptions);
 			this.logger.info (`WebSocket server listening...`);
 		}
 
