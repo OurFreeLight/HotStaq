@@ -692,6 +692,7 @@ export class HotCLI
 				https: number;
 				shutdownAfterTests: boolean;
 				commandDelay: number;
+				deployTester: boolean;
 			} = {
 				tester: "",
 				address: "127.0.0.1",
@@ -703,7 +704,8 @@ export class HotCLI
 				http: 8182,
 				https: 4143,
 				shutdownAfterTests: true,
-				commandDelay: 20
+				commandDelay: 20,
+				deployTester: true
 			};
 		let dbinfo: HotDBConnectionInterface = null;
 		let setupDB = () =>
@@ -748,67 +750,73 @@ export class HotCLI
 
 					if (this.processor.mode === DeveloperMode.Development)
 					{
-						if (baseWebUrl === "")
-							baseWebUrl = `http://127.0.0.1:${webServer.ports.http}`;
-
-						let serverStarter = await HotTesterServer.startServer (
-							`http://${testerSettings.address}:${testerSettings.http}`, testerSettings.http, testerSettings.https, this.processor);
-						testerServer = serverStarter.server;
-			
-						if (this.globalLogLevel != null)
-							testerServer.logger.logLevel = this.globalLogLevel;
-
-						if (runWebTestMap === true)
+						if (testerSettings.deployTester === true)
 						{
-							webServer.type = HotServerType.WebTesting;
-							apiServer.type = HotServerType.WebTesting;
-						}
+							if (baseWebUrl === "")
+								baseWebUrl = `http://127.0.0.1:${webServer.ports.http}`;
 
-						if (runAPITestMap === true)
-						{
-							webServer.type = HotServerType.APITesting;
-							apiServer.type = HotServerType.APITesting;
-						}
+							let serverStarter = await HotTesterServer.startServer (
+								`http://${testerSettings.address}:${testerSettings.http}`, 
+								testerSettings.http, testerSettings.https, this.processor);
+							testerServer = serverStarter.server;
 
-						if (testerSettings.tester === "")
-						{
+							if (this.globalLogLevel != null)
+								testerServer.logger.logLevel = this.globalLogLevel;
+
 							if (runWebTestMap === true)
-								testerSettings.tester = "HotTesterMochaSelenium";
+							{
+								webServer.type = HotServerType.WebTesting;
+								apiServer.type = HotServerType.WebTesting;
+							}
 
 							if (runAPITestMap === true)
-								testerSettings.tester = "HotTesterMocha";
-						}
+							{
+								webServer.type = HotServerType.APITesting;
+								apiServer.type = HotServerType.APITesting;
+							}
 
-						if (testerSettings.tester === "HotTesterMocha")
-						{
-							let mochaTester: HotTesterMocha = new HotTesterMocha (
-								this.processor, "HotTesterMocha", baseWebUrl);
-							tester = mochaTester;
-						}
+							if (testerSettings.tester === "")
+							{
+								if (runWebTestMap === true)
+									testerSettings.tester = "HotTesterMochaSelenium";
 
-						if (testerSettings.tester === "HotTesterMochaSelenium")
-						{
-							let mochaSeleniumTester: HotTesterMochaSelenium = new HotTesterMochaSelenium (
-								this.processor, "HotTesterMochaSelenium", baseWebUrl);
-							mochaSeleniumTester.driver.browser = testerSettings.browser;
-							mochaSeleniumTester.driver.openDevTools = testerSettings.openDevTools;
-							mochaSeleniumTester.driver.headless = testerSettings.headless;
-							mochaSeleniumTester.driver.remoteServer = testerSettings.remoteServer;
-							tester = mochaSeleniumTester;
-						}
+								if (runAPITestMap === true)
+									testerSettings.tester = "HotTesterMocha";
+							}
 
-						if (tester != null)
-						{
-							tester.timeout = testerSettings.timeout;
-							tester.driver.commandDelay = testerSettings.commandDelay;
+							if (testerSettings.tester === "HotTesterMocha")
+							{
+								let mochaTester: HotTesterMocha = new HotTesterMocha (
+									this.processor, "HotTesterMocha", baseWebUrl);
+								tester = mochaTester;
+							}
 
-							testerServer.addTester (tester);
-							this.processor.addTester (tester);
+							if (testerSettings.tester === "HotTesterMochaSelenium")
+							{
+								let mochaSeleniumTester: HotTesterMochaSelenium = new HotTesterMochaSelenium (
+									this.processor, "HotTesterMochaSelenium", baseWebUrl);
+								mochaSeleniumTester.driver.browser = testerSettings.browser;
+								mochaSeleniumTester.driver.openDevTools = testerSettings.openDevTools;
+								mochaSeleniumTester.driver.headless = testerSettings.headless;
+								mochaSeleniumTester.driver.remoteServer = testerSettings.remoteServer;
+								tester = mochaSeleniumTester;
+							}
+
+							if (tester != null)
+							{
+								tester.timeout = testerSettings.timeout;
+								tester.driver.commandDelay = testerSettings.commandDelay;
+
+								testerServer.addTester (tester);
+								this.processor.addTester (tester);
+							}
+							else
+								this.processor.logger.warning ("Warning: No tester set!");
 						}
 						else
-							this.processor.logger.warning ("Warning: No tester set!");
+							this.processor.logger.warning ("No tester being deployed.");
 
-						this.processor.logger.info ("Running in development mode...");
+						this.processor.logger.info ("RUNNING IN DEVELOPMENT MODE. DO NOT RUN THIS MODE IN PRODUCTION.");
 					}
 
 					if (this.hotsitePath !== "")
@@ -1151,6 +1159,12 @@ export class HotCLI
 			(arg: string, previous: any) =>
 			{
 				dontLoadAPIFiles = true;
+			});
+		runCmd.option (`--dont-deploy-tester`, 
+			`If set, this will not deploy a tester. If this is enabled this will cause automated tests to fail.`, 
+			(arg: string, previous: any) =>
+			{
+				testerSettings.deployTester = false;
 			});
 		runCmd.option (`--tester-http-port <port>`, 
 			`Set the tester HTTP port`, 

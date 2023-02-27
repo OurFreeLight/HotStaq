@@ -1282,30 +1282,42 @@ export class HotHTTPServer extends HotServer
 				}
 				catch (ex)
 				{
-					let msg: string = ex.message;
+					let msg: string = "";
 
-					if (ex.stack != null)
-						msg = ex.stack;
+					if (ex != null)
+					{
+						msg = ex.message;
+
+						if (ex.stack != null)
+							msg = ex.stack;
+					}
 
 					this.logger.error (`HotHTTPServer Error: ${msg}`);
-					throw (ex);
+
+					if (ex != null)
+						throw (ex);
 				}
 			})
 			.catch ((reason: any) =>
 				{
 					let msg: string = "";
 
-					if (typeof (reason) === "string")
-						msg = reason;
+					if (reason != null)
+					{
+						if (typeof (reason) === "string")
+							msg = reason;
 
-					if (reason.message != null)
-						msg = reason.message;
+						if (reason.message != null)
+							msg = reason.message;
 
-					if (reason.stack != null)
-						msg = reason.stack;
+						if (reason.stack != null)
+							msg = reason.stack;
+					}
 
 					this.logger.error (`HotHTTPServer Error: ${msg}`);
-					throw reason;
+
+					if (reason != null)
+						throw reason;
 				});
 
 		return (promise);

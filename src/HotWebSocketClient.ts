@@ -42,6 +42,16 @@ export class HotWebSocketClient
 	}
 
 	/**
+	 * Get the client's ip.
+	 */
+	getIP (): string
+	{
+		const incomingIP: string = HotWebSocketServer.getIPFromSocket (this.socket);
+
+		return (incomingIP);
+	}
+
+	/**
 	 * Tag a client. This is useful when trying to send messages to groups of clients.
 	 */
 	tag (tag: string): void
