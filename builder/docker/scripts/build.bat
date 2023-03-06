@@ -1,22 +1,55 @@
 @echo off
 
-if not exist ".\.env" (
-    echo "Missing .env file! Did you copy env-skeleton to .env?"
-
-    Exit /B 1
+if not exist .\.env (
+    echo Missing .env file! Did you copy env-skeleton to .env?
+    exit /b 1
 )
 
-set HOTSTAQ_VERSION="${REAL_HOTSTAQ_VERSION}"
+where jq >nul 2>nul || (
+    echo jq is required to build. You can install it from: https://stedolan.github.io/jq/download/
+    exit /b 1
+)
 
-set NAMESPACE="${NAMESPACE}"
-set HOTSITE_NAME="${HOTSITE_NAME}"
-set VERSION="1.0.0"
+set PROD=%1
+if "%PROD%"=="" set PROD=1
 
-set WEB_IMAGE=%NAMESPACE%/%HOTSITE_NAME%
-set API_IMAGE=%NAMESPACE%/%HOTSITE_NAME%-api
+for /f "usebackq delims=" %%i in (".env") do set %%i
 
-docker build -t %WEB_IMAGE%:%VERSION% --build-arg HOTSTAQ_VERSION=%HOTSTAQ_VERSION% -f ./docker/%HOTSITE_NAME%/Dockerfile .
-docker tag %WEB_IMAGE%:%VERSION% %WEB_IMAGE%:latest
+set /p VERSION=< ./package.json
+for /f "usebackq delims=" %%i in (`echo %VERSION% ^| jq -r .version`) do set VERSION=%%i
 
-docker tag %WEB_IMAGE%:%VERSION% %API_IMAGE%:%VERSION%
-docker tag %API_IMAGE%:%VERSION% %API_IMAGE%:latest
+set DOCKERFILE=dev.dockerfile
+if "%PROD%"=="1" set DOCKERFILE=prod.dockerfile
+
+docker build -t %WEB_IMAGE%:%WEB_IMAGE_VERSION% --build-arg HOTSTAQ_VERSION=%HOTSTAQ_VERSION% -f .\docker\%HOTSITE_NAME%\%DOCKERFILE% .
+
+if "%PROD%"=="1" (
+    where docker-slim >nul 2>nul || (
+        echo This build script will automatically use docker slim. It's recommended to use docker-slim to compress your image and secure it further. You can install docker-slim from: https://github.com/slimtoolkit/slim
+        pause
+    )
+
+    docker-slim build ^
+        --include-path-file /etc/os-release ^
+        --include-path-file /usr/lib/os-release ^
+        --include-path /app/public ^
+        --compose-file .\docker-compose.yaml ^
+        --compose-env-file .\.env ^
+        %WEB_IMAGE%:%WEB_IMAGE_VERSION%
+
+    docker tag %WEB_IMAGE%.slim:latest %WEB_IMAGE%:%WEB_IMAGE_VERSION% >nul 2>nul
+    docker tag %API_IMAGE%.slim:latest %WEB_IMAGE%:%WEB_IMAGE_VERSION% >nul 2>nul
+    docker-compose -f .\docker-compose.yaml down >nul 2>nul
+
+    docker --help | findstr /c:"scan" >nul && (
+        docker scan %WEB_IMAGE%:%WEB_IMAGE_VERSION%
+    ) || (
+        echo This build script will automatically scan the built image using synk found in "docker scan". Its recommended to use docker scan find any additional vulnerabilities and secure it further. On Ubuntu you can install the docker scan plugin from: sudo apt install docker-scan-plugin
+        pause
+    )
+)
+
+docker tag %WEB_IMAGE%:%WEB_IMAGE_VERSION% %WEB_IMAGE%:latest
+
+docker tag %WEB_IMAGE%:%WEB_IMAGE_VERSION% %API_IMAGE%:%API_IMAGE_VERSION%
+docker tag %API_IMAGE%:%API_IMAGE_VERSION% %API_IMAGE%:latest

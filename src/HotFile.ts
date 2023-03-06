@@ -244,7 +244,9 @@ export class HotFile implements IHotFile
 	 * will error out.
 	 * 
 	 * @param content The content to parse.
-	 * @param contentRegex The regex to use to parse the content.
+	 * @param startChars The starting characters to search for.
+	 * @param endChars The ending characters to search for.
+	 * @param triggerChar The found character where parsing will start from.
 	 * @param contentProcessor The content found inside the regex.
 	 * @param offContentProcessor The content found outside of the regex.
 	 * @param numRemoveFromBeginning The number of characters to remove from the 
@@ -333,7 +335,37 @@ export class HotFile implements IHotFile
 	}
 
 	/**
-	 * Parse content.
+	 * Parse a function from a string.
+	 */
+	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, callbackB: (funcBody: string) => string): string
+	{
+		const startIndex = str.indexOf("(");
+		const endIndex = str.indexOf(")", startIndex);
+		const arrowIndex = str.indexOf("=>", endIndex);
+		const braceIndex = str.indexOf("{", arrowIndex);
+		let output: string = "";
+
+		if (startIndex !== -1 && endIndex !== -1 && arrowIndex !== -1 && braceIndex !== -1) {
+			const a = str.slice(startIndex + 1, endIndex).trim().split(",").map(arg => arg.trim());
+			const b = str.slice(braceIndex + 1, str.lastIndexOf("}")).trim();
+			callbackA(a);
+			output = callbackB(b);
+		}
+
+		return (output);
+	}
+
+	/**
+	 * Parse all the content into a single JavaScript file to be executed. async/await is used 
+	 * in the processed JavaScript file, which means the .hott files parsed may use async/await 
+	 * within the code.
+	 * 
+	 * Will parse the following in order:
+	 * * <* JavaScript content to execute and output. Will output using Hot.echo. *>
+	 * * !{ Execute ONLY JavaScript. This will NOT output anything automatically. If you want it to output, use Hot.echo here. }
+	 * * STR{ Execute some JS, and output a string using JSON.stringify. }
+	 * * ${ Execute some JS, and output the result. }
+	 * * ?( Execute some JS, must return a string which will be attached to the HTML DOM object it's used on. )
 	 * 
 	 * @param thisContent The content to parse.
 	 * @param throwAllErrors If set to true, any error that occurs will be thrown as an exception.
@@ -435,14 +467,44 @@ export class HotFile implements IHotFile
 
 						return (out);*/
 					});
+				let tempOutput4: string = HotFile.processNestedContent (
+						tempOutput3, "$(", "}", "{", 
+						(regexFound2: string): string =>
+						{
+							regexFound2 = `(${regexFound2}}`;
+							let funcArgsStr: string = "";
 
-				let tempOutput4: string = "";
+							let out: string = 
+								HotFile.parseFunction (regexFound2, (funcArgs: string[]) =>
+								{
+									funcArgsStr = JSON.stringify (funcArgs);
+								}, 
+								(funcBody: string): string =>
+								{
+									const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
+	
+									let newValue = `*&&%*%@#@!{
+const newFuncName = createFunction (null, ${funcArgsStr}, "${escapedBody}");
+Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`);
+}*&!#%@!@*!`;
+
+									return (newValue);
+								});
+	
+							return (out);
+						}, 
+						(offContent3: string): string =>
+						{
+							return (offContent3);
+						});
+
+				let tempOutput5: string = "";
 
 				// Any ?() will be ignored in production mode.
 				if (Hot.Mode === DeveloperMode.Production)
 				{
-					tempOutput4 = HotFile.processNestedContent (
-						tempOutput3, "?(", ")", "(", 
+					tempOutput5 = HotFile.processNestedContent (
+						tempOutput4, "?(", ")", "(", 
 						(regexFound2: string): string =>
 						{
 							return ("");
@@ -458,8 +520,8 @@ export class HotFile implements IHotFile
 
 				if (Hot.Mode === DeveloperMode.Development)
 				{
-					tempOutput4 = HotFile.processNestedContent (
-						tempOutput3, "?(", ")", "(", 
+					tempOutput5 = HotFile.processNestedContent (
+						tempOutput4, "?(", ")", "(", 
 						(regexFound2: string): string =>
 						{
 							let foundStr: string = "";
@@ -542,8 +604,8 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 						});
 				}
 
-				let tempOutput5: string = HotFile.processNestedContent (
-					tempOutput4, "*&&%*%@#@!", "*&!#%@!@*!", "*&&%*%@#@!", 
+				let tempOutput6: string = HotFile.processNestedContent (
+					tempOutput5, "*&&%*%@#@!", "*&!#%@!@*!", "*&&%*%@#@!", 
 					(regexFound: string): string =>
 					{
 						return (regexFound);
@@ -570,10 +632,10 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 
 				/// @fixme Temporary hack. These delimiters should be removed from tempOutput when 
 				/// executing processNestedContent.
-				tempOutput5 = tempOutput5.replace (/\*\&\&\%\*\%\@\#\@\!/g, "");
-				tempOutput5 = tempOutput5.replace (/\*\&\!\#\%\@\!\@\*\!/g, "");
+				tempOutput6 = tempOutput6.replace (/\*\&\&\%\*\%\@\#\@\!/g, "");
+				tempOutput6 = tempOutput6.replace (/\*\&\!\#\%\@\!\@\*\!/g, "");
 
-				return (tempOutput5);
+				return (tempOutput6);
 			}, 0);
 
 		return (output);
@@ -662,6 +724,11 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 				{
 					Hot.echo ("");
 				}
+			}
+
+			function createFunction (name, args, funcBody)
+			{
+				return (Hot.CurrentPage.addFunction (name, args, funcBody));
 			}
 
 			function createTestElement (foundStr)

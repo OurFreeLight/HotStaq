@@ -100,6 +100,26 @@ describe ("Parsing Tests", () =>
 
 				expect (output).to.equal (correctContent);
 			});
+		it ("should parse off content straight JS, ex: $(args)=>{JS_Content}", async () =>
+			{
+				let correctContent: string = fs.readFileSync (
+					ppath.normalize (`${basePath}/off-content-func/CorrectExecutionOffContentFUNC.hott`)).toString ();
+
+				let processor: HotStaq = new HotStaq ();
+				let file: HotFile = new HotFile ({
+					"localFile": ppath.normalize (`${basePath}/off-content-func/ExecutionOffContentFUNC.hott`)
+				});
+				await file.load ();
+				let page: HotPage = new HotPage ({
+						"processor": processor,
+						"name": "Test Page",
+						"files": [file]
+					});
+				processor.addPage (page);
+				let output: string = await processor.process ("Test Page");
+
+				expect (output).to.equal (correctContent);
+			});
 		it ("should parse off content straight JS, ex: ?(JS_Content)", async () =>
 			{
 				let correctContent: string = fs.readFileSync (

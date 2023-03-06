@@ -28,9 +28,6 @@ module.exports = {
 			new webpack.DefinePlugin ({
 					__VERSION__: `\"${packageVersion}\"`
 				}),
-			new webpack.ProvidePlugin ({
-					Cookies: "js-cookie"
-				}),
 			new webpack.IgnorePlugin ({
 					resourceRegExp: 
 					/HotCLI|HotGenerator|HotDB|HotDBInflux|InfluxSchema|HotDBMySQL|HotDBSchema|HotHTTPServer|HotAgentRoute|HotTesterServer|HotTesterMochaSelenium|HotTestSeleniumDriver|HotIO|HotCreator|HotBuilder|HotTesterMocha|express|mysql|rimraf|graceful-fs|fs-extra/
@@ -61,6 +58,8 @@ module.exports = {
 			"validate-npm-package-name": "{}",
 			"fs-extra": "{}",
 			"HotIO": "{}",
+			"node-fetch": "fetch",
+			"form-data": "FormData",
 			"graceful-fs": "{}",
 			"node:path": "{}",
 			"node:buffer": "{}",

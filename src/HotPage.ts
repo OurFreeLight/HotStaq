@@ -33,6 +33,10 @@ export interface IHotPage
 	 */
 	files?: HotFile[];
 	/**
+	 * The functions to execute later.
+	 */
+	functions?: { [name: string]: Function; };
+	/**
 	 * The associated tester name.
 	 */
 	testerName?: string;
@@ -77,6 +81,10 @@ export class HotPage implements IHotPage
 	 */
 	files: HotFile[];
 	/**
+	 * The functions to execute later.
+	 */
+	functions: { [name: string]: Function; };
+	/**
 	 * The associated tester name.
 	 */
 	testerName: string;
@@ -104,6 +112,7 @@ export class HotPage implements IHotPage
 			this.route = "";
 			this.components = {};
 			this.files = [];
+			this.functions = {};
 			this.testElements = {};
 			this.testPaths = {};
 		}
@@ -116,6 +125,7 @@ export class HotPage implements IHotPage
 			this.route = copy.route || "";
 			this.components = copy.components || {};
 			this.files = copy.files || [];
+			this.functions = copy.functions || {};
 			this.testElements = copy.testElements || {};
 			this.testPaths = copy.testPaths || {};
 		}
@@ -180,6 +190,47 @@ export class HotPage implements IHotPage
 		}
 
 		return (output);
+	}
+
+	/**
+	 * Add a function to execute later.
+	 * 
+	 * @returns The new function's name.
+	 */
+	addFunction (name: string, args: string[], funcBody: string): string
+	{
+		if (name == null)
+			name = "__func" + Object.keys (this.functions).length;
+
+		let argsStr: string = "";
+
+		for (let iIdx = 0; iIdx < args.length; iIdx++)
+		{
+			const arg: string = args[iIdx];
+			let comma: string = ",";
+
+			if (iIdx == args.length - 1)
+				comma = "";
+
+			argsStr += `${arg}${comma}`;
+		}
+
+		this.functions[name] = new Function (`((${argsStr}) => { ${funcBody} })(arguments);`);
+
+		return (name);
+	}
+
+	/**
+	 * Calls a function that's been stored and returns the result.
+	 */
+	callFunction (thisObj: any, name: string, args: any[]): any
+	{
+		let func: Function = this.functions[name];
+
+		if (func == null)
+			throw new Error (`Function ${name} does not exist!`);
+
+		func.call (thisObj, args);
 	}
 
 	/**

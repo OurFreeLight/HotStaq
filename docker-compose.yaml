@@ -1,5 +1,21 @@
 version: "3.7"
 services:
+  # Used just to make sure the database has started before continuing.
+  init-database-mariadb:
+    image: mariadb:10.10
+    depends_on:
+      database-mariadb:
+        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: cdO1KjwiC8ksOqCV1s0
+      MYSQL_DATABASE: hotstaq
+      MYSQL_USER: 5NKVBAt7OrzrumQyQVs
+      MYSQL_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+    command: 
+      - "exit 0"
+    networks:
+      - hotstaq-build-network
+
   database-mariadb:
     image: mariadb:${MARIADB_VERSION}
     healthcheck:
