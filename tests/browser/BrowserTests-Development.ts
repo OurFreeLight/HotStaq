@@ -92,6 +92,16 @@ Execute this code to debug in browser:
 				let value: string = await elm.getAttribute ("innerHTML");
 				expect (value).to.equal ("Clicked", "Button was not clicked!");
 			});
+		it ("should click the function test button", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("funcClickTest")));
+				expect (elm).to.not.equal (null, "Page did not load!");
+				await elm.click ();
+
+				elm = await common.driver.findElement (By.id ("funcClickTest"));
+				let value: string = await elm.getAttribute ("innerHTML");
+				expect (value).to.equal ("ButtonClicked0", "Function test button was not clicked!");
+			});
 		it ("should send a hi to the hello world api", async () =>
 			{
 				let elm = await common.driver.wait (until.elementLocated (By.id ("message")));

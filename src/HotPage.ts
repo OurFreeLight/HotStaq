@@ -215,7 +215,7 @@ export class HotPage implements IHotPage
 			argsStr += `${arg}${comma}`;
 		}
 
-		this.functions[name] = new Function (`((${argsStr}) => { ${funcBody} })(arguments);`);
+		this.functions[name] = new Function (`((${argsStr}) => { ${funcBody} }).apply (this, arguments);`);
 
 		return (name);
 	}
@@ -230,7 +230,7 @@ export class HotPage implements IHotPage
 		if (func == null)
 			throw new Error (`Function ${name} does not exist!`);
 
-		func.call (thisObj, args);
+		func.apply (thisObj, args);
 	}
 
 	/**
