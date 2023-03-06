@@ -64,6 +64,11 @@
 	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
 	*> onclick = "sayHello ();">Send</button>
 	<button id = "${getTestHelloWorldAPI2Id ()}" onclick = "sayHelloDifferently ();">Send2</button>
+	<button id = "funcClickTest" onclick = "$(event) => 
+	{
+		const buttonId = event.button;
+		this.innerHTML = `ButtonClicked${buttonId}`;
+	}">Click Event</button>
 	<button id = "testHelloWorldAPI3" onclick = "sayHelloButAuthorizedBad ();">Auth Send - Bad Auth</button>
 	<button id = "testHelloWorldAPI4" onclick = "sayHelloButAuthorizedGood ();">Auth Send - Good Auth</button>
 <*

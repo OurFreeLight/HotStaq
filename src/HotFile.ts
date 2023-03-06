@@ -365,6 +365,8 @@ export class HotFile implements IHotFile
 	 * * !{ Execute ONLY JavaScript. This will NOT output anything automatically. If you want it to output, use Hot.echo here. }
 	 * * STR{ Execute some JS, and output a string using JSON.stringify. }
 	 * * ${ Execute some JS, and output the result. }
+	 * * $(arguments)=>{ Some JS to execute at a later time. }
+	 * 	* This entire block will be parsed as a function, and will immediately output "Hot.CurrentPage.callFunction" in its place.
 	 * * ?( Execute some JS, must return a string which will be attached to the HTML DOM object it's used on. )
 	 * 
 	 * @param thisContent The content to parse.
@@ -437,7 +439,41 @@ export class HotFile implements IHotFile
 						return (offContent3);
 					}, 4, 1);
 				let tempOutput3: string = HotFile.processNestedContent (
-					tempOutput2, "${", "}", "{", 
+						tempOutput2, "$(", "}", "{", 
+						(regexFound2: string): string =>
+						{
+							regexFound2 = `(${regexFound2}}`;
+							let funcArgsStr: string = "";
+
+							let out: string = 
+								HotFile.parseFunction (regexFound2, (funcArgs: string[]) =>
+								{
+									funcArgsStr = JSON.stringify (funcArgs);
+								}, 
+								(funcBody: string): string =>
+								{
+									const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
+	
+									let newValue = `*&&%*%@#@!{
+const newFuncName = createFunction (null, ${funcArgsStr}, "${escapedBody}");
+Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`);
+}*&!#%@!@*!`;
+
+									return (newValue);
+								});
+
+							// Replace all ${ with !^$%^!$! so that it doesn't get replaced by the next step.
+							out = out.replace(/\$\{/g, "!^$%^!$!");
+	
+							return (out);
+						}, 
+						(offContent3: string): string =>
+						{
+							return (offContent3);
+						});
+
+				let tempOutput4: string = HotFile.processNestedContent (
+					tempOutput3, "${", "}", "{", 
 					(regexFound2: string): string =>
 					{
 						let out: string = "";
@@ -467,36 +503,9 @@ export class HotFile implements IHotFile
 
 						return (out);*/
 					});
-				let tempOutput4: string = HotFile.processNestedContent (
-						tempOutput3, "$(", "}", "{", 
-						(regexFound2: string): string =>
-						{
-							regexFound2 = `(${regexFound2}}`;
-							let funcArgsStr: string = "";
 
-							let out: string = 
-								HotFile.parseFunction (regexFound2, (funcArgs: string[]) =>
-								{
-									funcArgsStr = JSON.stringify (funcArgs);
-								}, 
-								(funcBody: string): string =>
-								{
-									const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
-	
-									let newValue = `*&&%*%@#@!{
-const newFuncName = createFunction (null, ${funcArgsStr}, "${escapedBody}");
-Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`);
-}*&!#%@!@*!`;
-
-									return (newValue);
-								});
-	
-							return (out);
-						}, 
-						(offContent3: string): string =>
-						{
-							return (offContent3);
-						});
+				// Switch all !^$%^!$! back to ${
+				tempOutput4 = tempOutput4.replace(/\!\^\$\%\^\!\$\!/g, "${");
 
 				let tempOutput5: string = "";
 
