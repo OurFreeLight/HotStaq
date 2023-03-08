@@ -116,7 +116,7 @@ describe ("Parsing Tests", () =>
 						"files": [file]
 					});
 				processor.addPage (page);
-				let output: string = await processor.process ("Test Page");
+				let output: string = await processor.process ("Test Page", { "testData": "yep" });
 
 				expect (output).to.equal (correctContent);
 			});

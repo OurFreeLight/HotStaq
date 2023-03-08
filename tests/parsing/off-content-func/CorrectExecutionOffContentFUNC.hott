@@ -7,8 +7,9 @@ Hot.CurrentPage.callFunction (this, '__func4', arguments);
 Hot.CurrentPage.callFunction (this, '__func5', arguments);
 OFFCONTENT6
 Hot.CurrentPage.callFunction (this, '__func6', arguments);;
+Hot.CurrentPage.callFunction (this, '__func7', arguments);
 OFFCONTENT7
-Hot.CurrentPage.callFunction (this, '__func7', arguments); OFFCONTENT8
-OFFCONTENT9Hot.CurrentPage.callFunction (this, '__func8', arguments);
-OFFCONTENT10Hot.CurrentPage.callFunction (this, '__func9', arguments);OFFCONTENT11Hot.CurrentPage.callFunction (this, '__func10', arguments);Hot.CurrentPage.callFunction (this, '__func11', arguments);OFFCONTENT12
+Hot.CurrentPage.callFunction (this, '__func8', arguments); OFFCONTENT8
+OFFCONTENT9Hot.CurrentPage.callFunction (this, '__func9', arguments);
+OFFCONTENT10Hot.CurrentPage.callFunction (this, '__func10', arguments);OFFCONTENT11Hot.CurrentPage.callFunction (this, '__func11', arguments);Hot.CurrentPage.callFunction (this, '__func12', arguments);OFFCONTENT12
 OFFCONTENT13

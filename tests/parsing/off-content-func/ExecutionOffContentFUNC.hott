@@ -1,11 +1,11 @@
-OFFCONTENT0$(test1)=>{return("FOUND0");}
+OFFCONTENT0$(test1)=>{return("FOUND0");}!
 OFFCONTENT1
-$(test1,test2)=>{return("FOUND1");} OFFCONTENT2 $()=>{return("FOUND2");} OFFCONTENT3 $()=>{return("FOUND3");}
+$(test1,test2)=>{return("FOUND1");}! OFFCONTENT2 $()=>{return("FOUND2");}! OFFCONTENT3 $()=>{return("FOUND3");}!
 OFFCONTENT4 OFFCONTENT5
 
 $()=>{
     return ({ FOUND4: "FOUND5", FOUND6: "FOUND7" });
-}
+}!
 $()=>{
     return ({
         FOUND8: "FOUND9",
@@ -16,15 +16,20 @@ $()=>{
             }
         }
     });
-}
+}!
 OFFCONTENT6
 $()=>{
 
-    return (`FOUND16
+    return (`FOUND16 ${FOUND23} 
 
-FOUND17`)};
+FOUND17`)}!;
+$(event) => 
+	{
+		const buttonId = event.button;
+		this.innerHTML = `ButtonClicked${buttonId}-${testData}`;
+	}!
 OFFCONTENT7
-$()=>{return ("FOUND18");} OFFCONTENT8
-OFFCONTENT9$()=>{return("FOUND19");}
-OFFCONTENT10$()=>{return("FOUND20");}OFFCONTENT11$()=>{return("FOUND21");}$()=>{return ("FOUND22");}OFFCONTENT12
+$()=>{return ("FOUND18");}! OFFCONTENT8
+OFFCONTENT9$()=>{return("FOUND19");}!
+OFFCONTENT10$()=>{return("FOUND20");}!OFFCONTENT11$()=>{return("FOUND21");}!$()=>{return ("FOUND22");}!OFFCONTENT12
 OFFCONTENT13

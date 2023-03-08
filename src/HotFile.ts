@@ -255,7 +255,7 @@ export class HotFile implements IHotFile
 	 * the found content.
 	 */
 	static processNestedContent (content: string, startChars: string, endChars: string, 
-		triggerChar: string, contentProcessor: (regexFound: string) => string,
+		triggerChar: string, contentProcessor: (regexFound: string, startPos: number, endPos: number) => string,
 		offContentProcessor: (offContent: string) => string,
 		numRemoveFromBeginning: number = 2,
 		numRemoveFromEnd: number = 1): string
@@ -318,7 +318,7 @@ export class HotFile implements IHotFile
 
 			let foundContent: string = content.substr (
 				pos + numRemoveFromBeginning, (end - (pos + numRemoveFromBeginning)));
-			output += contentProcessor (foundContent);
+			output += contentProcessor (foundContent, pos, end);
 
 			// Get the next content
 			pos = content.indexOf (startChars, end + numRemoveFromEnd);
@@ -339,20 +339,29 @@ export class HotFile implements IHotFile
 	 */
 	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, callbackB: (funcBody: string) => string): string
 	{
-		const startIndex = str.indexOf("(");
-		const endIndex = str.indexOf(")", startIndex);
-		const arrowIndex = str.indexOf("=>", endIndex);
-		const braceIndex = str.indexOf("{", arrowIndex);
-		let output: string = "";
+		let startIndex = str.indexOf("$(");
 
-		if (startIndex !== -1 && endIndex !== -1 && arrowIndex !== -1 && braceIndex !== -1) {
-			const a = str.slice(startIndex + 1, endIndex).trim().split(",").map(arg => arg.trim());
-			const b = str.slice(braceIndex + 1, str.lastIndexOf("}")).trim();
-			callbackA(a);
-			output = callbackB(b);
+		while (startIndex > -1)
+		{
+			const endIndex = str.indexOf(")", startIndex);
+			const arrowIndex = str.indexOf("=>", endIndex);
+			const braceIndex = str.indexOf("{", arrowIndex);
+
+			if (startIndex !== -1 && endIndex !== -1 && arrowIndex !== -1 && braceIndex !== -1) {
+				let endPos = str.indexOf("}!", arrowIndex);
+
+				const a = str.slice(startIndex + 2, endIndex).trim().split(",").map(arg => arg.trim());
+				const b = str.slice(braceIndex + 1, endPos).trim();
+				callbackA(a);
+				let out = callbackB(b);
+
+				str = str.slice(0, startIndex) + out + str.slice(endPos + 2);
+			}
+
+			startIndex = str.indexOf("$(");
 		}
 
-		return (output);
+		return (str);
 	}
 
 	/**
@@ -411,7 +420,7 @@ export class HotFile implements IHotFile
 
 				let tempOutput: string = HotFile.processNestedContent (
 					offContent, "!{", "}", "{", 
-					(regexFound2: string): string =>
+					(regexFound2: string, startPos: number, endPos: number): string =>
 					{
 						let out: string = `*&&%*%@#@!${regexFound2}*&!#%@!@*!`;
 
@@ -423,7 +432,7 @@ export class HotFile implements IHotFile
 					});
 				let tempOutput2: string = HotFile.processNestedContent (
 					tempOutput, "STR{", "}", "{", 
-					(regexFound2: string): string =>
+					(regexFound2: string, startPos: number, endPos: number): string =>
 					{
 						let out: string = "";
 
@@ -438,47 +447,44 @@ export class HotFile implements IHotFile
 					{
 						return (offContent3);
 					}, 4, 1);
-				let tempOutput3: string = HotFile.processNestedContent (
-						tempOutput2, "$(", "}", "{", 
-						(regexFound2: string): string =>
-						{
-							regexFound2 = `(${regexFound2}}`;
-							let funcArgsStr: string = "";
 
-							let out: string = 
-								HotFile.parseFunction (regexFound2, (funcArgs: string[]) =>
-								{
-									funcArgsStr = JSON.stringify (funcArgs);
-								}, 
-								(funcBody: string): string =>
-								{
-									const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
-	
-									let newValue = `*&&%*%@#@!{
-const newFuncName = createFunction (null, ${funcArgsStr}, "${escapedBody}");
+				let funcArgsStr: string = "";
+
+				let tempOutput3 = 
+					HotFile.parseFunction (tempOutput2, (funcArgs: string[]) =>
+					{
+						funcArgsStr = JSON.stringify (funcArgs);
+					}, 
+					(funcBody: string): string =>
+					{
+						//const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
+						const escapedBody: string = funcBody.replace (/\`/g, "\\`");
+
+						let newValue = `*&&%*%@#@!{
+const newFuncName = createFunction (null, ${funcArgsStr}, \`${escapedBody}\`);
 Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`);
 }*&!#%@!@*!`;
+						// Replace any ${ with ${&&!*#!!
+						newValue = newValue.replace (/\$\{/g, "${&&!*#!!");
 
-									return (newValue);
-								});
-
-							// Replace all ${ with !^$%^!$! so that it doesn't get replaced by the next step.
-							out = out.replace(/\$\{/g, "!^$%^!$!");
-	
-							return (out);
-						}, 
-						(offContent3: string): string =>
-						{
-							return (offContent3);
-						});
+						return (newValue);
+					});
 
 				let tempOutput4: string = HotFile.processNestedContent (
 					tempOutput3, "${", "}", "{", 
-					(regexFound2: string): string =>
+					(regexFound2: string, startPos: number, endPos: number): string =>
 					{
 						let out: string = "";
+						let outputCmds: boolean = parserOptions.outputCommands;
 
-						if (parserOptions.outputCommands === true)
+						if (regexFound2.indexOf ("&&!*#!!") > -1)
+						{
+							const tempStr: string = regexFound2.replace (/&&\!\*\#\!\!/g, "");
+
+							return (`\${(typeof (${tempStr}) !== "undefined") ? ${tempStr} : "\${${tempStr}}"}`);
+						}
+
+						if (outputCmds === true)
 						{
 							let escapeOutput = (content: string): string =>
 								{
@@ -504,9 +510,6 @@ Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`
 						return (out);*/
 					});
 
-				// Switch all !^$%^!$! back to ${
-				tempOutput4 = tempOutput4.replace(/\!\^\$\%\^\!\$\!/g, "${");
-
 				let tempOutput5: string = "";
 
 				// Any ?() will be ignored in production mode.
@@ -514,7 +517,7 @@ Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`
 				{
 					tempOutput5 = HotFile.processNestedContent (
 						tempOutput4, "?(", ")", "(", 
-						(regexFound2: string): string =>
+						(regexFound2: string, startPos: number, endPos: number): string =>
 						{
 							return ("");
 						}, 
@@ -531,7 +534,7 @@ Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`
 				{
 					tempOutput5 = HotFile.processNestedContent (
 						tempOutput4, "?(", ")", "(", 
-						(regexFound2: string): string =>
+						(regexFound2: string, startPos: number, endPos: number): string =>
 						{
 							let foundStr: string = "";
 
@@ -615,7 +618,7 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 
 				let tempOutput6: string = HotFile.processNestedContent (
 					tempOutput5, "*&&%*%@#@!", "*&!#%@!@*!", "*&&%*%@#@!", 
-					(regexFound: string): string =>
+					(regexFound: string, startPos: number, endPos: number): string =>
 					{
 						return (regexFound);
 					}, 
@@ -713,6 +716,9 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 				contentName = this.url;
 
 			executionContent += `
+			/**
+			 * Helper function to output content.
+			 */
 			function echoOutput (content, throwErrors)
 			{
 				if (throwErrors == null)
@@ -735,11 +741,38 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 				}
 			}
 
+			/**
+			 * Outputs a \${JS Content} value.
+			 */
+			function outputStr (value, possibleValue)
+			{
+				let result = \`\\\${\${value}}\`;
+
+				try
+				{
+					if (possibleValue != null)
+						result = possibleValue;
+					else
+						result = eval (value);
+				}
+				catch (ex)
+				{
+				}
+
+				return (result);
+			}
+
+			/**
+			 * Create a function for later execution on this page.
+			 */
 			function createFunction (name, args, funcBody)
 			{
 				return (Hot.CurrentPage.addFunction (name, args, funcBody));
 			}
 
+			/**
+			 * Create a test element.
+			 */
 			function createTestElement (foundStr)
 			{
 				let testElm = null;
