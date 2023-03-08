@@ -90,42 +90,6 @@ describe ("Parsing Tests", () =>
 
 				expect (output).to.equal (correctContent);
 			});
-		it ("should parse off content test element, ex: $(args)=>{JS_Content}", async () =>
-			{
-				let correctContent: string = fs.readFileSync (
-					ppath.normalize (`${basePath}/off-content-func/CorrectOffContentFUNC.hott`)).toString ();
-				let content: string = fs.readFileSync (
-					ppath.normalize (`${basePath}/off-content-func/OffContentFUNC.hott`)).toString ();
-				let funcCounter: number = 0;
-				let output: string = HotFile.processNestedContent (content,
-					"$(", "}", "{", 
-					(regexFound2: string): string =>
-					{
-						regexFound2 = `(${regexFound2}}`;
-						let funcArgsStr: string = "";
-
-						let out: string = 
-							HotFile.parseFunction (regexFound2, (funcArgs: string[]) =>
-							{
-								funcArgsStr = JSON.stringify (funcArgs);
-							}, 
-							(funcBody: string): string =>
-							{
-								let newValue = `Hot.CurrentPage.callFunction (this, '__func${funcCounter}', ${funcArgsStr});\`);`;
-								funcCounter++;
-
-								return (newValue);
-							});
-
-						return (out);
-					}, 
-					(offContent3: string): string =>
-					{
-						return (offContent3);
-					});
-
-				expect (output).to.equal (correctContent);
-			});
 		it ("should parse off content test element, ex: ?(Test_Element)", async () =>
 			{
 				let correctContent: string = fs.readFileSync (

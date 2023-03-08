@@ -100,7 +100,8 @@ Execute this code to debug in browser:
 
 				elm = await common.driver.findElement (By.id ("funcClickTest"));
 				let value: string = await elm.getAttribute ("innerHTML");
-				expect (value).to.equal ("ButtonClicked0", "Function test button was not clicked!");
+
+				expect (value).to.equal ("ButtonClicked0-TESTING", "Function test button was not clicked!");
 			});
 		it ("should send a hi to the hello world api", async () =>
 			{

@@ -67,8 +67,8 @@
 	<button id = "funcClickTest" onclick = "$(event) => 
 	{
 		const buttonId = event.button;
-		this.innerHTML = `ButtonClicked${buttonId}`;
-	}">Click Event</button>
+		this.innerHTML = `ButtonClicked${buttonId}-${testData}`;
+	}!">Click Event</button>
 	<button id = "testHelloWorldAPI3" onclick = "sayHelloButAuthorizedBad ();">Auth Send - Bad Auth</button>
 	<button id = "testHelloWorldAPI4" onclick = "sayHelloButAuthorizedGood ();">Auth Send - Good Auth</button>
 <*
