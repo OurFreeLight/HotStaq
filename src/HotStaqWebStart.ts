@@ -8,6 +8,14 @@ import { HotStaq, HotStartOptions } from "./HotStaq";
  */
 export function hotStaqWebStart ()
 {
+    // @ts-ignore
+    if (typeof (window.hotstaqStartingApp) !== "undefined")
+    {
+        // @ts-ignore
+        if (window.hotstaqStartingApp === true)
+            return;
+    }
+
     let hotstaqElms = document.getElementsByTagName ("hotstaq");
 
     // Set this to true, just in case...

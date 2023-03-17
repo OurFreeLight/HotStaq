@@ -42,11 +42,21 @@ export class HotLog
 	 * Show the responses to each request.
 	 */
 	showResponses: boolean;
+	/**
+	 * Show the HTTP events.
+	 */
+	showHTTPEvents: boolean;
+	/**
+	 * Show the WebSocket events.
+	 */
+	showWebSocketEvents: boolean;
 
 	constructor (logLevel: HotLogLevel = HotLogLevel.All)
 	{
 		this.logLevel = logLevel;
 		this.showResponses = false;
+		this.showHTTPEvents = false;
+		this.showWebSocketEvents = false;
 	}
 
 	/**

@@ -45,8 +45,14 @@
 			document.getElementById ('testHelloWorldAPI4').innerHTML = JSON.stringify (result);
 		}
 
+		function $(str)
+		{
+			// Do nothing, this is to test that jQuery calls that use $() do not cause issues.
+		}
+
 		(() =>
 		{
+			$("blap");
 			Hot.Cookies.set ("test", "23");
 			document.getElementById ('iifeTest').innerHTML = "IIFE Worked";
 		})();
@@ -64,11 +70,11 @@
 	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
 	*> onclick = "sayHello ();">Send</button>
 	<button id = "${getTestHelloWorldAPI2Id ()}" onclick = "sayHelloDifferently ();">Send2</button>
-	<button id = "funcClickTest" onclick = "$(event) => 
+	<button id = "funcClickTest" onclick = "<(event) => 
 	{
 		const buttonId = event.button;
 		this.innerHTML = `ButtonClicked${buttonId}-${testData}`;
-	}!">Click Event</button>
+	}>">Click Event</button>
 	<button id = "testHelloWorldAPI3" onclick = "sayHelloButAuthorizedBad ();">Auth Send - Bad Auth</button>
 	<button id = "testHelloWorldAPI4" onclick = "sayHelloButAuthorizedGood ();">Auth Send - Good Auth</button>
 <*

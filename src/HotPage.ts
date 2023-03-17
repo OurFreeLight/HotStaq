@@ -234,6 +234,19 @@ export class HotPage implements IHotPage
 	}
 
 	/**
+	 * Calls an async function that's been stored and returns the result.
+	 */
+	async callAsyncFunction (thisObj: any, name: string, args: any[]): Promise<any>
+	{
+		let func: Function = this.functions[name];
+
+		if (func == null)
+			throw new Error (`Function ${name} does not exist!`);
+
+		return (func.apply (thisObj, args));
+	}
+
+	/**
 	 * Add a test element.
 	 */
 	addTestElement (elm: HotTestElement): void

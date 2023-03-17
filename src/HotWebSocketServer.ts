@@ -255,14 +255,17 @@ export class HotWebSocketServer
 						
 										let result: any = await method.onServerExecute.call (route, request);
 						
-										this.logger.verbose ((result2: any) => {
-											let resultStr: string = "";
-					
-											if (this.logger.showResponses === true)
-												resultStr = `, Response: ${JSON.stringify (result2)}`;
+										if (this.logger.showWebSocketEvents === true)
+										{
+											this.logger.verbose ((result2: any) => {
+												let resultStr: string = "";
+						
+												if (this.logger.showResponses === true)
+													resultStr = `, Response: ${JSON.stringify (result2)}`;
 
-											return (`WebSocket Event ${eventName}${resultStr}`);
-										}, result);
+												return (`WebSocket Event ${eventName}${resultStr}`);
+											}, result);
+										}
 						
 										if (result !== undefined)
 											socket.emit (`sub/${routeName}/${method.name}`, result);

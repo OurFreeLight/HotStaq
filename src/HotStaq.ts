@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.36";
+	static version: string = "0.8.37";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -253,6 +253,8 @@ export class HotStaq implements IHotStaq
 
 	<script type = "text/javascript" src = "%hotstaq_js_src%"></script>
 	<script type = "text/javascript">
+		window.hotstaqStartingApp = true;
+
 		for (let key in HotStaqWeb)
 			window[key] = HotStaqWeb[key];
 	</script>

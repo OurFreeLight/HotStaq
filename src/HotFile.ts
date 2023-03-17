@@ -335,30 +335,49 @@ export class HotFile implements IHotFile
 	}
 
 	/**
-	 * Parse a function from a string.
+	 * Parse a function from a string. Ex: <(a, b, c)=>{return (a + b + c);}>
 	 */
-	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, callbackB: (funcBody: string) => string): string
+	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, 
+		callbackB: (funcBody: string, endType: string) => string): string
 	{
-		let startIndex = str.indexOf("$(");
+		let startIndex = str.indexOf("<(");
 
 		while (startIndex > -1)
 		{
 			const endIndex = str.indexOf(")", startIndex);
 			const arrowIndex = str.indexOf("=>", endIndex);
 			const braceIndex = str.indexOf("{", arrowIndex);
+			let nextPos: number = endIndex;
 
-			if (startIndex !== -1 && endIndex !== -1 && arrowIndex !== -1 && braceIndex !== -1) {
-				let endPos = str.indexOf("}!", arrowIndex);
+			if ((startIndex !== -1) && 
+				(endIndex !== -1) && (arrowIndex !== -1) && 
+				(braceIndex !== -1))
+			{
+				let possibleEnds: string[] = ["}>", "}A>", "}R>", "}RA>"];
+				let endPos = -1;
 
-				const a = str.slice(startIndex + 2, endIndex).trim().split(",").map(arg => arg.trim());
-				const b = str.slice(braceIndex + 1, endPos).trim();
-				callbackA(a);
-				let out = callbackB(b);
+				for (let i = 0; i < possibleEnds.length; i++)
+				{
+					let possibleEnd: string = possibleEnds[i];
+					endPos = str.indexOf(possibleEnd, arrowIndex);
 
-				str = str.slice(0, startIndex) + out + str.slice(endPos + 2);
+					if (endPos > -1)
+					{
+						const a = str.slice(startIndex + 2, endIndex).trim().split(",").map(arg => arg.trim());
+						const b = str.slice(braceIndex + 1, endPos).trim();
+						callbackA(a);
+						let out = callbackB(b, possibleEnd);
+
+						str = str.slice(0, startIndex) + out + str.slice(endPos + 2);
+
+						break;
+					}
+				}
+
+				nextPos = endPos;
 			}
 
-			startIndex = str.indexOf("$(");
+			startIndex = str.indexOf("<(", nextPos);
 		}
 
 		return (str);
@@ -455,14 +474,24 @@ export class HotFile implements IHotFile
 					{
 						funcArgsStr = JSON.stringify (funcArgs);
 					}, 
-					(funcBody: string): string =>
+					(funcBody: string, endType: string): string =>
 					{
 						//const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
 						const escapedBody: string = funcBody.replace (/\`/g, "\\`");
+						let functionCall: string = "Hot.CurrentPage.callFunction";
+
+						if (endType === "}A>")
+							functionCall = "await Hot.CurrentPage.callAsyncFunction";
+
+						if (endType === "}R>")
+							functionCall = "return Hot.CurrentPage.callFunction";
+
+						if (endType === "}RA>")
+							functionCall = "return await Hot.CurrentPage.callAsyncFunction";
 
 						let newValue = `*&&%*%@#@!{
 const newFuncName = createFunction (null, ${funcArgsStr}, \`${escapedBody}\`);
-Hot.echo (\`Hot.CurrentPage.callFunction (this, '\${newFuncName}', arguments);\`);
+Hot.echo (\`${functionCall} (this, '\${newFuncName}', arguments);\`);
 }*&!#%@!@*!`;
 						// Replace any ${ with ${&&!*#!!
 						newValue = newValue.replace (/\$\{/g, "${&&!*#!!");

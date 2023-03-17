@@ -5,7 +5,7 @@ OFFCONTENT4 OFFCONTENT5
 
 Hot.CurrentPage.callFunction (this, '__func4', arguments);
 Hot.CurrentPage.callFunction (this, '__func5', arguments);
-OFFCONTENT6
+OFFCONTENT6$("ignore jquery stuff")
 Hot.CurrentPage.callFunction (this, '__func6', arguments);;
 Hot.CurrentPage.callFunction (this, '__func7', arguments);
 OFFCONTENT7

@@ -100,16 +100,16 @@ export class HotCreator
 		this.createCommands = {
 				init: "npm install",
 				transpileTS: "npm run build",
-				generateAPI: "hotstaq generate --copy-to ./public/js/"
+				generateAPI: "node ./build/cli.js generate --copy-to ./public/js/"
 			};
 		this.npmCommands = {
 				start: "",
 				dev: "",
-				test: "hotstaq --dev --env-file .env run --server-type api --api-test && hotstaq --dev --env-file .env run --server-type web --web-test",
+				test: "node ./build/cli.js --dev --env-file .env run --server-type api --api-test && node ./build/cli.js --dev --env-file .env run --server-type web --web-test",
 				build: "",
-				buildWebAPI: "hotstaq generate --copy-to ./public/js/",
-				buildWebAPIDebug: "hotstaq generate --copy-to ./public/js/",
-				buildDoc: "hotstaq generate --generate-type openapi-3.0.0-yaml"
+				buildWebAPI: "node ./build/cli.js generate --copy-to ./public/js/",
+				buildWebAPIDebug: "node ./build/cli.js generate --copy-to ./public/js/",
+				buildDoc: "node ./build/cli.js generate --generate-type openapi-3.0.0-yaml"
 			};
 	}
 
@@ -207,13 +207,13 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			packageJSON.devDependencies["ts-loader"] = "^7.0.5";
 
 		if (this.npmCommands.start === "")
-			this.npmCommands.start = `hotstaq --hotsite ./HotSite.json run --server-type ${this.type}`;
+			this.npmCommands.start = `node ./build/cli.js --hotsite ./HotSite.json run --server-type ${this.type}`;
 
 		if (this.npmCommands.start !== "")
 			packageJSON.scripts["start"] = this.npmCommands.start;
 
 		if (this.npmCommands.dev === "")
-			this.npmCommands.dev = `hotstaq --hotsite ./HotSite.json --development-mode run --server-type ${this.type} --web-http-port 8080`;
+			this.npmCommands.dev = `node ./build/cli.js --hotsite ./HotSite.json --development-mode run --server-type ${this.type} --web-http-port 8080`;
 
 		if (this.npmCommands.dev !== "")
 			packageJSON.scripts["dev"] = this.npmCommands.dev;
