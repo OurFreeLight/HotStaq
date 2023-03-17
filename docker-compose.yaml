@@ -61,5 +61,17 @@ services:
       SE_NODE_MAX_SESSIONS: 5
     network_mode: "host"
 
+  # Disabled for now...
+  # testing-selenium-firefox:
+  #   image: selenium/standalone-firefox:${SELENIUM_VERSION}
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:4444/"]
+  #     retries: 10
+  #     timeout: 10s
+  #   shm_size: "2g"
+  #   environment:
+  #     SE_NODE_MAX_SESSIONS: 5
+  #   network_mode: "host"
+
 networks:
   hotstaq-build-network:

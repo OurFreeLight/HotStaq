@@ -175,14 +175,17 @@ export async function processRequest (server: HotHTTPServer,
 
 				let result: any = await method.onServerExecute.call (thisObj, request);
 
-				logger.verbose ((result2: any) => {
-						let resultStr: string = "";
+				if (logger.showHTTPEvents === true)
+				{
+					logger.verbose ((result2: any) => {
+							let resultStr: string = "";
 
-						if (logger.showResponses === true)
-							resultStr = `, Response: ${JSON.stringify (result2)}`;
+							if (logger.showResponses === true)
+								resultStr = `, Response: ${JSON.stringify (result2)}`;
 
-						return (`${req.method} ${methodName}${resultStr}`);
-					}, result);
+							return (`${req.method} ${methodName}${resultStr}`);
+						}, result);
+				}
 
 				if (result !== undefined)
 					return (result);
