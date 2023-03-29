@@ -25,6 +25,7 @@ import { HotTesterMocha } from "./HotTesterMocha";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod } from "./HotRouteMethod";
 import { HotServerType } from "./HotServer";
+import { HotDeployer } from "./HotDeployer";
 
 HotStaq.isWeb = false;
 
@@ -101,6 +102,10 @@ export class HotCLI
 	 * The generate action to execute.
 	 */
 	onGenerateAction: () => Promise<void>;
+	/**
+	 * The deploy action to execute.
+	 */
+	onDeployAction: () => Promise<void>;
 	/**
 	 * The build action to execute.
 	 */
@@ -1805,6 +1810,32 @@ export class HotCLI
 	}
 
 	/**
+	 * Handle any deployment commands.
+	 */
+	async handleDeployCommands (): Promise<commander.Command>
+	{
+		const deployCmd: commander.Command = new commander.Command ("deploy");
+
+		deployCmd.description (`Deploy your application.`);
+		deployCmd.action (() =>
+			{
+				this.onDeployAction = async () =>
+					{
+						if (this.hotsitePath === "")
+							throw new Error (`When building, you must specify a HotSite.json!`);
+
+						await this.processor.loadHotSite (this.hotsitePath);
+						await this.processor.processHotSite ();
+
+						let deployer: HotDeployer = new HotDeployer (this.processor.logger);
+						await deployer.deploy ();
+					};
+			});
+
+		return (deployCmd);
+	}
+
+	/**
 	 * Setup the CLI app.
 	 */
 	async setup (): Promise<{
@@ -2005,6 +2036,9 @@ export class HotCLI
 
 			let generateCmd: commander.Command = await this.handleGenerateCommands ();
 			command.addCommand (generateCmd);
+
+			//let deployCmd: commander.Command = await this.handleDeployCommands ();
+			//command.addCommand (deployCmd);
 
 			let agentCmd: commander.Command = await this.handleAgentCommands ();
 			command.addCommand (agentCmd);

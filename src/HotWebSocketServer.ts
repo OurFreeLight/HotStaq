@@ -153,7 +153,7 @@ export class HotWebSocketServer
 								res: null,
 								authorizedValue: null,
 								jsonObj: socket.handshake.auth,
-								queryObj: null,
+								queryObj: socket.handshake.query,
 								files: null,
 								wsSocket: newSocket
 							});

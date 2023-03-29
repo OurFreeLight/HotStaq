@@ -393,7 +393,7 @@ export class HotFile implements IHotFile
 	 * * !{ Execute ONLY JavaScript. This will NOT output anything automatically. If you want it to output, use Hot.echo here. }
 	 * * STR{ Execute some JS, and output a string using JSON.stringify. }
 	 * * ${ Execute some JS, and output the result. }
-	 * * $(arguments)=>{ Some JS to execute at a later time. }
+	 * * <(arguments)=>{ Some JS to execute at a later time. }>
 	 * 	* This entire block will be parsed as a function, and will immediately output "Hot.CurrentPage.callFunction" in its place.
 	 * * ?( Execute some JS, must return a string which will be attached to the HTML DOM object it's used on. )
 	 * 
