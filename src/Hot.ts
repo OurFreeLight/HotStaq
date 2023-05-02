@@ -3,12 +3,12 @@ import { HotPage } from "./HotPage";
 import { HotStaq } from "./HotStaq";
 import { HotAPI } from "./HotAPI";
 import { HotTestElement } from "./HotTestElement";
+import { HotEventMethod } from "./HotRouteMethod";
+import { HotModule } from "./HotModule";
 
 import Cookies from "js-cookie";
 import fetch from "node-fetch";
-import { HotEventMethod } from "./HotRouteMethod";
-import { HotComponent, IHotComponent } from "./HotComponent";
-import { HotModule } from "./HotModule";
+import FormData from "form-data";
 
 /**
  * The available developer modes.
