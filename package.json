@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.8.38",
+  "version": "0.8.39",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@influxdata/influxdb-client": "^1.20.0",
+    "archiver": "^5.3.1",
     "chai": "^4.3.4",
     "commander": "^6.2.1",
     "dotenv": "^16.0.2",
@@ -51,6 +52,7 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
+    "@types/archiver": "^5.3.2",
     "@types/chai": "^4.2.21",
     "@types/express": "^4.17.13",
     "@types/formidable": "^1.2.4",

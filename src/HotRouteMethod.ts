@@ -108,8 +108,43 @@ export class ServerRequest implements IServerRequest
 	 */
 	jsonObj: any;
 	/**
-	 * Any query variables received from the client. Will be null if this request was 
-	 * received from a websocket connection.
+	 * Any query variables received from the client. The object will be in key/value pair.
+	 * 
+	 * **HTTP Example**
+	 * 
+	 * In the web browser, the client sends the following query:
+	 * ```js
+	 * fetch ("http://localhost:3000?name=John&age=30");
+	 * ```
+	 * 
+	 * In the server, the query will be received as:
+	 * ```json
+	 * {
+	 * 		"name": "John",
+	 * 		"age": 30
+	 * }
+	 * ```
+	 * 
+	 * **WebSocket Example**
+	 * 
+	 * In the web browser, the client initiates a socket.io connection and 
+	 * sends the following query:
+	 * ```js
+	 * let client = io ("http://localhost:3000", {
+	 * 			query: {
+	 * 				name: "John",
+	 * 				age: 30
+	 * 			}
+	 * 		});
+	 * ```
+	 * 
+	 * In the server, the query will be received as:
+	 * ```json
+	 * {
+	 * 		"name": "John",
+	 * 		"age": 30
+	 * }
+	 * ```
 	 */
 	queryObj: any;
 	/**

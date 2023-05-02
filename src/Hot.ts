@@ -336,17 +336,79 @@ export class Hot
 
 	/**
 	 * Make a HTTP request. This is basically just a wrapper for fetch.
-	 * 
-	 * @param {string} url The full url to make the HTTP call.
-	 * @param {RequestInit} requestInit The request parameters to send.
-	 * 
-	 * @returns The HTTP response.
 	 */
-	static async httpRequest (url: string, requestInit: any = undefined): Promise<any>
+	static async httpRequest (url: string, data: any, httpMethod: HotEventMethod = HotEventMethod.POST, 
+		files: { [name: string]: any } = {}): Promise<any>
 	{
-		let res = await fetch (url, requestInit);
+		const numFiles: number = Object.keys (files).length;
+		const httpMethodLower: string = httpMethod.toLowerCase ();
 
-		return (res);
+		if (numFiles > 0)
+		{
+			if (httpMethodLower !== "post")
+				throw new Error (`To upload files, you must set the httpMethod to POST.`);
+
+			const formData: FormData = new FormData ();
+
+			for (let key in files)
+				formData.append (key, files[key]);
+
+			let res = await fetch (url, {
+					method: "POST",
+					// @ts-ignore
+					body: formData
+				});
+			let jsonRes: any = await res.json ();
+
+			if (data["hotstaq"] == null)
+				data["hotstaq"] = {};
+
+			if (data["hotstaq"]["uploads"] == null)
+				data["hotstaq"]["uploads"] = {};
+
+			data["hotstaq"]["uploads"]["uploadId"] = 
+					jsonRes["hotstaq"]["uploads"]["uploadId"];
+
+			// After the upload, make the actual JSON call. Do not pass files again.
+			const result: any = await Hot.httpRequest (url, data, httpMethod);
+
+			return (result);
+		}
+
+		let fetchObj: any = {
+				method: httpMethod,
+				headers: {
+						"Accept": "application/json",
+						"Content-Type": "application/json"
+					}
+			};
+
+		if ((httpMethodLower !== "get") && 
+			(httpMethodLower !== "head"))
+		{
+			fetchObj["body"] = JSON.stringify (data);
+		}
+
+		let promise = new Promise ((resolve, reject) => 
+			{
+				fetch (url, fetchObj).then (async (res) =>
+					{
+						res.json ().then ((jsonObj: any) =>
+							{
+								resolve (jsonObj);
+							})
+							.catch ((reason: any) =>
+							{
+								throw new Error (`${url}: ${reason.message}`);
+							});
+					})
+					.catch ((reason: any) =>
+					{
+						throw new Error (`${url}: ${reason.message}`);
+					});
+			});
+
+		return (promise);
 	}
 
 	/**

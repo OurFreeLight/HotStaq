@@ -10,6 +10,7 @@ import { HotDB } from "./HotDB";
 import { HotDBSchema } from "./schemas/HotDBSchema";
 import { HotWebSocketServer } from "./HotWebSocketServer";
 import { HotHTTPServer } from "./HotHTTPServer";
+import { Hot } from "./Hot";
 
 /**
  * The API to load.
@@ -391,73 +392,6 @@ export abstract class HotAPI
 
 		url += route;
 
-		const numFiles: number = Object.keys (files).length;
-
-		if (numFiles > 0)
-		{
-			if (httpMethodStr !== "POST")
-				throw new Error (`To upload files, you must set the httpMethod to POST.`);
-
-			const formData: FormData = new FormData ();
-
-			for (let key in files)
-				formData.append (key, files[key]);
-
-			let res = await fetch (url, {
-					method: "POST",
-					// @ts-ignore
-					body: formData
-				});
-			let jsonRes: any = await res.json ();
-
-			if (data["hotstaq"] == null)
-				data["hotstaq"] = {};
-
-			if (data["hotstaq"]["uploads"] == null)
-				data["hotstaq"]["uploads"] = {};
-
-			data["hotstaq"]["uploads"]["uploadId"] = 
-					jsonRes["hotstaq"]["uploads"]["uploadId"];
-
-			// After the upload, make the actual JSON call. Do not pass files again.
-			const result: any = await this.makeCall (route, data, httpMethod);
-
-			return (result);
-		}
-
-		let fetchObj: any = {
-				method: httpMethod,
-				headers: {
-						"Accept": "application/json",
-						"Content-Type": "application/json"
-					}
-			};
-
-		if ((httpMethodStr !== "GET") && 
-			(httpMethodStr !== "HEAD"))
-		{
-			fetchObj["body"] = JSON.stringify (data);
-		}
-
-		let promise = new Promise ((resolve, reject) => 
-			{
-				fetch (url, fetchObj).then (async (res) =>
-					{
-						res.json ().then ((jsonObj: any) =>
-							{
-								resolve (jsonObj);
-							})
-							.catch ((reason: any) =>
-							{
-								throw new Error (`${url}: ${reason.message}`);
-							});
-					})
-					.catch ((reason: any) =>
-					{
-						throw new Error (`${url}: ${reason.message}`);
-					});
-			});
-
-		return (promise);
+		return (Hot.httpRequest (url, data, httpMethod, files));
 	}
 }
