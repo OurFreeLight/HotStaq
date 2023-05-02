@@ -25,15 +25,9 @@
 		{
 			document.getElementById ('message').value = "";
 
-			let result = await Hot.httpRequest ('/v1/hello_world/hello', {
-					"method": "POST",
-					"headers": {
-							"Accept": "application/json",
-							"Content-Type": "application/json"
-						},
-					"body": JSON.stringify ({ message: 'hi' })
-				});
-			document.getElementById ('message').value = await result.json ();
+			let result = await Hot.httpRequest ('/v1/hello_world/hello', { message: 'hi' }, HotEventMethod.POST);
+
+			document.getElementById ('message').value = result;
 		}
 	</script>
 </head>

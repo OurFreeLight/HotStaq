@@ -191,8 +191,23 @@ export class HotBuilder
 
 		await processor.saveHotSite (hotsitePath);
 
-		let moduleHotsite: string = options.moduleHotsite;
+		let moduleHotsite: string = options.moduleHotsite.toLowerCase ();
+
+		if (moduleHotsite.indexOf (".json") < 0)
+			moduleHotsite += ".json";
+
 		moduleHotsite = ppath.resolve (moduleHotsite);
+
+		if (await HotIO.exists (moduleHotsite) === false)
+		{
+			moduleHotsite = options.moduleHotsite.toLowerCase ();
+
+			if (moduleHotsite.indexOf (".yaml") < 0)
+				moduleHotsite += ".yaml";
+
+			moduleHotsite = ppath.resolve (moduleHotsite);
+		}
+
 		let moduleHotsiteStr: string = await HotIO.readTextFile (moduleHotsite);
 		let moduleHotsiteJSON: HotSite = JSON.parse (moduleHotsiteStr);
 		let deps = moduleHotsiteJSON.dependencies;
@@ -247,8 +262,23 @@ export class HotBuilder
 		}
 
 		let modulePath: string = options.modulePath;
-		let moduleHotsite: string = options.moduleHotsite;
+		let moduleHotsite: string = options.moduleHotsite.toLowerCase ();
+
+		if (moduleHotsite.indexOf (".json") < 0)
+			moduleHotsite += ".json";
+
 		moduleHotsite = ppath.resolve (moduleHotsite);
+
+		if (await HotIO.exists (moduleHotsite) === false)
+		{
+			moduleHotsite = options.moduleHotsite.toLowerCase ();
+
+			if (moduleHotsite.indexOf (".yaml") < 0)
+				moduleHotsite += ".yaml";
+
+			moduleHotsite = ppath.resolve (moduleHotsite);
+		}
+
 		let moduleHotsiteStr: string = await HotIO.readTextFile (moduleHotsite);
 		let moduleHotsiteJSON: HotSite = JSON.parse (moduleHotsiteStr);
 		let deps = moduleHotsiteJSON.dependencies;

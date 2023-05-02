@@ -533,7 +533,7 @@ export class HotCLI
 									hotsite: hotsite,
 									hotsitePath: this.hotsitePath,
 									modulePath: `${cwd}/node_modules/${realName}/`,
-									moduleHotsite: `${cwd}/node_modules/${realName}/HotSite.json`,
+									moduleHotsite: `${cwd}/node_modules/${realName}/HotSite`,
 									outDir: outDir,
 									baseUrl: baseUrl,
 									cwd: cwd
@@ -613,7 +613,7 @@ export class HotCLI
 								hotsite: hotsite,
 								hotsitePath: this.hotsitePath, 
 								modulePath: cwd,
-								moduleHotsite: `${cwd}/HotSite.json`,
+								moduleHotsite: `${cwd}/HotSite`,
 								outDir: outDir,
 								baseUrl: baseUrl,
 								cwd: cwd

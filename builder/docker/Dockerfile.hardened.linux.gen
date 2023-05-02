@@ -17,7 +17,7 @@ COPY ./package-lock.json /tmp/app/package-lock.json
 
 RUN cd /tmp/app && \
 	npm install hotstaq@${HOTSTAQ_VERSION} && \
-	npm install
+	npm ci
 
 COPY ./src/ /tmp/app/src/
 COPY ./public/ /tmp/app/public/
