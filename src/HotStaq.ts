@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.41";
+	static version: string = "0.8.42";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -914,6 +914,10 @@ export class HotStaq implements IHotStaq
 			this.logger.verbose (`Accessing HotSite ${path}`);
 
 			let HotIO = eval ("require")("./HotIO").HotIO; // Hack to get around Webpack.
+
+			if (await HotIO.exists (path) === false)
+				throw new Error (`HotSite ${path} does not exist!`);
+
 			jsonStr = await HotIO.readTextFile (path);
 			this.logger.verbose (`Accessed site ${path}`);
 		}

@@ -196,7 +196,7 @@ export class HotBuilder
 		if (moduleHotsite.toLowerCase ().indexOf (".json") < 0)
 			moduleHotsite += ".json";
 
-		moduleHotsite = ppath.resolve (moduleHotsite);
+		moduleHotsite = ppath.normalize (moduleHotsite);
 
 		if (await HotIO.exists (moduleHotsite) === false)
 		{
@@ -205,7 +205,7 @@ export class HotBuilder
 			if (moduleHotsite.toLowerCase ().indexOf (".yaml") < 0)
 				moduleHotsite += ".yaml";
 
-			moduleHotsite = ppath.resolve (moduleHotsite);
+			moduleHotsite = ppath.normalize (moduleHotsite);
 		}
 
 		let tempProcessor: HotStaq = new HotStaq ();
@@ -265,21 +265,21 @@ export class HotBuilder
 		}
 
 		let modulePath: string = options.modulePath;
-		let moduleHotsite: string = options.moduleHotsite.toLowerCase ();
+		let moduleHotsite: string = options.moduleHotsite;
 
-		if (moduleHotsite.indexOf (".json") < 0)
+		if (moduleHotsite.toLowerCase ().indexOf (".json") < 0)
 			moduleHotsite += ".json";
 
-		moduleHotsite = ppath.resolve (moduleHotsite);
+		moduleHotsite = ppath.normalize (moduleHotsite);
 
 		if (await HotIO.exists (moduleHotsite) === false)
 		{
-			moduleHotsite = options.moduleHotsite.toLowerCase ();
+			moduleHotsite = options.moduleHotsite;
 
-			if (moduleHotsite.indexOf (".yaml") < 0)
+			if (moduleHotsite.toLowerCase ().indexOf (".yaml") < 0)
 				moduleHotsite += ".yaml";
 
-			moduleHotsite = ppath.resolve (moduleHotsite);
+			moduleHotsite = ppath.normalize (moduleHotsite);
 		}
 
 		let tempProcessor: HotStaq = new HotStaq ();
