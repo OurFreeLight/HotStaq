@@ -208,8 +208,11 @@ export class HotBuilder
 			moduleHotsite = ppath.resolve (moduleHotsite);
 		}
 
-		let moduleHotsiteStr: string = await HotIO.readTextFile (moduleHotsite);
-		let moduleHotsiteJSON: HotSite = JSON.parse (moduleHotsiteStr);
+		let tempProcessor: HotStaq = new HotStaq ();
+		await tempProcessor.loadHotSite (moduleHotsite);
+		await tempProcessor.processHotSite ();
+
+		let moduleHotsiteJSON: HotSite = tempProcessor.hotSite;
 		let deps = moduleHotsiteJSON.dependencies;
 
 		if (deps != null)
@@ -279,8 +282,11 @@ export class HotBuilder
 			moduleHotsite = ppath.resolve (moduleHotsite);
 		}
 
-		let moduleHotsiteStr: string = await HotIO.readTextFile (moduleHotsite);
-		let moduleHotsiteJSON: HotSite = JSON.parse (moduleHotsiteStr);
+		let tempProcessor: HotStaq = new HotStaq ();
+		await tempProcessor.loadHotSite (moduleHotsite);
+		await tempProcessor.processHotSite ();
+
+		let moduleHotsiteJSON: HotSite = tempProcessor.hotSite;
 		let deps = moduleHotsiteJSON.dependencies;
 
 		if (outDir === "")
