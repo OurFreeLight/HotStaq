@@ -468,7 +468,7 @@ export class HotHTTPServer extends HotServer
 							}
 						}
 
-						this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+						this.logger.verbose (() => `Found file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
 					}
 				}
 			}));
@@ -723,251 +723,264 @@ export class HotHTTPServer extends HotServer
 				{
 					(async () =>
 					{
-						let bodyObj: any = req.body;
-						let queryObj: any = req.query;
-
-						this.logger.verbose (() => `Method: ${req.method} Requested URL: ${req.originalUrl} Body: ${JSON.stringify (bodyObj)}, Query: ${JSON.stringify (queryObj)}`);
-
-						let requestedUrl: string = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
-						let foundUrl: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "url"]);
-
-						if (foundUrl != null)
+						try
 						{
-							if (foundUrl[(foundUrl.length - 1)] === "/")
-								foundUrl = foundUrl.substr (0, (foundUrl.length - 1));
+							let bodyObj: any = req.body;
+							let queryObj: any = req.query;
 
-							let addSlash: string = "/";
+							this.logger.verbose (() => `Method: ${req.method} Requested URL: ${req.originalUrl} Body: ${JSON.stringify (bodyObj)}, Query: ${JSON.stringify (queryObj)}`);
 
-							if (req.originalUrl[0] === "/")
-								addSlash = "";
+							let requestedUrl: string = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+							let foundUrl: string = HotStaq.getValueFromHotSiteObj (this.processor.hotSite, ["server", "url"]);
 
-							requestedUrl = `${foundUrl}${addSlash}${req.originalUrl}`;
-						}
-
-						let url: URL = new URL (requestedUrl);
-						const urlFilepath: string = url.pathname;
-						const filepath: string = ppath.basename (urlFilepath);
-						const extname: string = ppath.extname (filepath).toLowerCase ();
-						let skipSecretFiles: boolean = true;
-
-						// Skip any files that could contain secrets.
-						if (this.processor.hotSite != null)
-						{
-							if (this.processor.hotSite.server != null)
+							if (foundUrl != null)
 							{
-								if (this.processor.hotSite.server.serveSecretFiles === false)
-									skipSecretFiles = false;
+								if (foundUrl[(foundUrl.length - 1)] === "/")
+									foundUrl = foundUrl.substr (0, (foundUrl.length - 1));
+
+								let addSlash: string = "/";
+
+								if (req.originalUrl[0] === "/")
+									addSlash = "";
+
+								requestedUrl = `${foundUrl}${addSlash}${req.originalUrl}`;
 							}
-						}
 
-						if (skipSecretFiles === true)
-						{
-							let skipCurrentFile: boolean = false;
-							const lowerFilePath: string = filepath.toLowerCase ();
+							let url: URL = new URL (requestedUrl);
+							const urlFilepath: string = url.pathname;
+							const filepath: string = ppath.basename (urlFilepath);
+							const extname: string = ppath.extname (filepath).toLowerCase ();
+							let skipSecretFiles: boolean = true;
 
-							if (lowerFilePath === ".env")
-								skipCurrentFile = true;
-
-							if ((lowerFilePath === ".npmrc") || (lowerFilePath === ".yarnrc"))
-								skipCurrentFile = true;
-
-							if (lowerFilePath === "hotsite.json")
-								skipCurrentFile = true;
-
-							if (extname === ".pem")
-								skipCurrentFile = true;
-
-							if (skipCurrentFile === true)
+							// Skip any files that could contain secrets.
+							if (this.processor.hotSite != null)
 							{
-								const errMsg: string = `Refused to serve file ${filepath}. Could contain secrets.`;
-
-								this.handleOther (new Error (errMsg), req, res, next);
-
-								return;
+								if (this.processor.hotSite.server != null)
+								{
+									if (this.processor.hotSite.server.serveSecretFiles === false)
+										skipSecretFiles = false;
+								}
 							}
-						}
 
-						// This if statement ensures the requested file is not on the ignore list.
-						if (this.ignoreHottFiles[filepath] != null)
-						{
-							// Ignore the file.
-						}
-						else
-						{
-							let sendHottContent = async (fullUrl: URL, route: string): Promise<void> =>
+							if (skipSecretFiles === true)
+							{
+								let skipCurrentFile: boolean = false;
+								const lowerFilePath: string = filepath.toLowerCase ();
+
+								if (lowerFilePath === ".env")
+									skipCurrentFile = true;
+
+								if ((lowerFilePath === ".npmrc") || (lowerFilePath === ".yarnrc"))
+									skipCurrentFile = true;
+
+								if (lowerFilePath === "hotsite.json")
+									skipCurrentFile = true;
+
+								if (extname === ".pem")
+									skipCurrentFile = true;
+
+								if (skipCurrentFile === true)
 								{
-									// Appending hstqserve ensures that the content will not be resent.
-									fullUrl.searchParams.append ("hstqserve", "nahfam");
+									const errMsg: string = `Refused to serve file ${filepath}. Could contain secrets.`;
 
-									const content: string = await this.processor.generateContent (route, 
-										this.hottFilesAssociatedInfo.name,
-										fullUrl.toString (),
-										this.hottFilesAssociatedInfo.jsSrcPath);
-									// The content will be generated and sent to the client. The client 
-									// will then request the real page that contains the file.
+									this.handleOther (new Error (errMsg), req, res, next);
 
-									res.setHeader ("Content-Type", "text/html");
-									this.logger.verbose (() => `Sending generated hott content with headers ${JSON.stringify (res.getHeaders ())}`);
-									res.status (200).send (content);
-								};
-							let sendFileContent = (path: string, fileExt: string, iServableFile: ServableFileExtension): void =>
-								{
-									if (iServableFile != null)
+									return;
+								}
+							}
+
+							// This if statement ensures the requested file is not on the ignore list.
+							if (this.ignoreHottFiles[filepath] != null)
+							{
+								// Ignore the file.
+							}
+							else
+							{
+								let sendHottContent = async (fullUrl: URL, route: string): Promise<void> =>
 									{
-										if (iServableFile.fileExtension != null)
+										// Appending hstqserve ensures that the content will not be resent.
+										fullUrl.searchParams.append ("hstqserve", "nahfam");
+
+										const content: string = await this.processor.generateContent (route, 
+											this.hottFilesAssociatedInfo.name,
+											fullUrl.toString (),
+											this.hottFilesAssociatedInfo.jsSrcPath);
+										// The content will be generated and sent to the client. The client 
+										// will then request the real page that contains the file.
+
+										res.setHeader ("Content-Type", "text/html");
+										this.logger.verbose (() => `Sending generated hott content with headers ${JSON.stringify (res.getHeaders ())}`);
+										res.status (200).send (content);
+									};
+								let sendFileContent = (path: string, fileExt: string, iServableFile: ServableFileExtension): void =>
+									{
+										if (iServableFile != null)
 										{
-											if (path.indexOf (iServableFile.fileExtension) > -1)
+											if (iServableFile.fileExtension != null)
 											{
-												if (iServableFile.headers != null)
+												if (path.indexOf (iServableFile.fileExtension) > -1)
 												{
-													if (iServableFile.headers.length > 0)
+													if (iServableFile.headers != null)
 													{
-														for (let iIdx = 0; iIdx < iServableFile.headers.length; iIdx++)
+														if (iServableFile.headers.length > 0)
 														{
-															let httpHeader: HTTPHeader = iServableFile.headers[iIdx];
+															for (let iIdx = 0; iIdx < iServableFile.headers.length; iIdx++)
+															{
+																let httpHeader: HTTPHeader = iServableFile.headers[iIdx];
 
-															if (httpHeader.type == null)
-																throw new Error (`Missing HTTP header type on file extension ${fileExt}`);
+																if (httpHeader.type == null)
+																	throw new Error (`Missing HTTP header type on file extension ${fileExt}`);
 
-															if (httpHeader.value == null)
-																throw new Error (`Missing HTTP header value on file extension ${fileExt}`);
+																if (httpHeader.value == null)
+																	throw new Error (`Missing HTTP header value on file extension ${fileExt}`);
 
-															res = res.header (httpHeader.type, httpHeader.value);
+																res = res.header (httpHeader.type, httpHeader.value);
+															}
+
+															if (ppath.isAbsolute (path) === false)
+																path = ppath.normalize (`${process.cwd ()}/${path}`);
+
+															this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+															res = res.status (200);
+															res.sendFile (path);
+
+															return;
 														}
-
-														this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
-														res = res.status (200);
-														res.sendFile (path);
-
-														return;
 													}
 												}
 											}
 										}
-									}
 
-									if (fileExt === ".hott")
-										res.setHeader ("Content-Type", "text/html");
-									else
-									{
-										let mimeType = mimeTypes.lookup (fileExt);
+										if (fileExt === ".hott")
+											res.setHeader ("Content-Type", "text/html");
+										else
+										{
+											let mimeType = mimeTypes.lookup (fileExt);
 
-										if (typeof (mimeType) === "string")
-											res.setHeader ("Content-Type", mimeType);
-									}
+											if (typeof (mimeType) === "string")
+												res.setHeader ("Content-Type", mimeType);
+										}
 
-									this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
-									res.status (200).sendFile (path);
-								};
+										if (ppath.isAbsolute (path) === false)
+											path = ppath.normalize (`${process.cwd ()}/${path}`);
 
-							let result: string = "";
-							let hstqserve = url.searchParams.get ("hstqserve");
+										this.logger.verbose (() => `Sending file ${path} with headers ${JSON.stringify (res.getHeaders ())}`);
+										res.status (200).sendFile (path);
+									};
 
-							if (hstqserve != null)
-								result = hstqserve;
+								let result: string = "";
+								let hstqserve = url.searchParams.get ("hstqserve");
 
-							// Make sure we're not accidentally resending the content.
-							if (result !== "nahfam")
-							{
-								for (let iIdx = 0; iIdx < this.staticRoutes.length; iIdx++)
+								if (hstqserve != null)
+									result = hstqserve;
+
+								// Make sure we're not accidentally resending the content.
+								if (result !== "nahfam")
 								{
-									let staticRoute: StaticRoute = this.staticRoutes[iIdx];
-									let checkDir: string = staticRoute.localPath;
-									const route: string = urlFilepath;
-									let tempFilepath: string = urlFilepath;
-									let sendContentFlag: boolean = false;
-									let generateContent: boolean = false;
-									let foundServableFile: ServableFileExtension = null;
-
-									if (checkDir === "")
-										checkDir = process.cwd ();
-
-									if ((checkDir === ".") || (checkDir === "./"))
-										checkDir = process.cwd ();
-
-									for (let iJdx = 0; iJdx < this.serveFileExtensions.length; iJdx++)
+									for (let iIdx = 0; iIdx < this.staticRoutes.length; iIdx++)
 									{
-										let servableFile: (string | ServableFileExtension) = this.serveFileExtensions[iJdx];
-										let serveFileExt: string = "";
+										let staticRoute: StaticRoute = this.staticRoutes[iIdx];
+										let checkDir: string = staticRoute.localPath;
+										const route: string = urlFilepath;
+										let tempFilepath: string = urlFilepath;
+										let sendContentFlag: boolean = false;
+										let generateContent: boolean = false;
+										let foundServableFile: ServableFileExtension = null;
 
-										if (typeof (servableFile) === "string")
-											serveFileExt = servableFile;
-										else
+										if (checkDir === "")
+											checkDir = process.cwd ();
+
+										if ((checkDir === ".") || (checkDir === "./"))
+											checkDir = process.cwd ();
+
+										for (let iJdx = 0; iJdx < this.serveFileExtensions.length; iJdx++)
 										{
-											serveFileExt = servableFile.fileExtension;
+											let servableFile: (string | ServableFileExtension) = this.serveFileExtensions[iJdx];
+											let serveFileExt: string = "";
 
-											if (servableFile.generateContent != null)
-												generateContent = servableFile.generateContent;
-										}
-
-										if (tempFilepath.indexOf (serveFileExt) > -1)
-										{
-											if (await HotHTTPServer.checkIfFileExists (
-												ppath.normalize (`${checkDir}/${tempFilepath}`)) === true)
+											if (typeof (servableFile) === "string")
+												serveFileExt = servableFile;
+											else
 											{
-												sendContentFlag = true;
+												serveFileExt = servableFile.fileExtension;
 
-												if (typeof (servableFile) !== "string")
-													foundServableFile = servableFile;
+												if (servableFile.generateContent != null)
+													generateContent = servableFile.generateContent;
+											}
 
-												break;
+											if (tempFilepath.indexOf (serveFileExt) > -1)
+											{
+												if (await HotHTTPServer.checkIfFileExists (
+													ppath.normalize (`${checkDir}/${tempFilepath}`)) === true)
+												{
+													sendContentFlag = true;
+
+													if (typeof (servableFile) !== "string")
+														foundServableFile = servableFile;
+
+													break;
+												}
+											}
+
+											if (sendContentFlag === false)
+											{
+												if (await HotHTTPServer.checkIfFileExists (
+													ppath.normalize (`${checkDir}/${tempFilepath}${serveFileExt}`)) === true)
+												{
+													sendContentFlag = true;
+
+													if (typeof (servableFile) !== "string")
+														foundServableFile = servableFile;
+
+													url.pathname += serveFileExt;
+
+													break;
+												}
+											}
+
+											if (sendContentFlag === false)
+											{
+												if (await HotHTTPServer.checkIfFileExists (
+													ppath.normalize (`${checkDir}/${tempFilepath}index${serveFileExt}`)) === true)
+												{
+													// If no content has been found, send the index.
+													tempFilepath += `index${serveFileExt}`;
+													sendContentFlag = true;
+
+													if (typeof (servableFile) !== "string")
+														foundServableFile = servableFile;
+
+													break;
+												}
 											}
 										}
 
-										if (sendContentFlag === false)
+										if (tempFilepath !== urlFilepath)
+											url.pathname = tempFilepath;
+
+										if (sendContentFlag === true)
 										{
-											if (await HotHTTPServer.checkIfFileExists (
-												ppath.normalize (`${checkDir}/${tempFilepath}${serveFileExt}`)) === true)
+											if (generateContent === true)
+												await sendHottContent (url, route);
+											else
 											{
-												sendContentFlag = true;
-
-												if (typeof (servableFile) !== "string")
-													foundServableFile = servableFile;
-
-												url.pathname += serveFileExt;
-
-												break;
+												sendFileContent (
+													ppath.normalize (`${checkDir}/${tempFilepath}`),
+													extname,
+													foundServableFile);
 											}
+
+											return;
 										}
-
-										if (sendContentFlag === false)
-										{
-											if (await HotHTTPServer.checkIfFileExists (
-												ppath.normalize (`${checkDir}/${tempFilepath}index${serveFileExt}`)) === true)
-											{
-												// If no content has been found, send the index.
-												tempFilepath += `index${serveFileExt}`;
-												sendContentFlag = true;
-
-												if (typeof (servableFile) !== "string")
-													foundServableFile = servableFile;
-
-												break;
-											}
-										}
-									}
-
-									if (tempFilepath !== urlFilepath)
-										url.pathname = tempFilepath;
-
-									if (sendContentFlag === true)
-									{
-										if (generateContent === true)
-											await sendHottContent (url, route);
-										else
-										{
-											sendFileContent (
-												ppath.normalize (`${checkDir}/${tempFilepath}`),
-												extname,
-												foundServableFile);
-										}
-
-										return;
 									}
 								}
+								else
+									this.logger.verbose (`Received nahfam, content has already been sent.`);
 							}
-							else
-								this.logger.verbose (`Received nahfam, content has already been sent.`);
+						}
+						catch (ex)
+						{
+							this.logger.error (`Middleware error: ${ex.message}`);
 						}
 
 						next ();
