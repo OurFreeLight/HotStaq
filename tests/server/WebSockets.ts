@@ -8,6 +8,8 @@ import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HelloWorldAPI } from "./HelloWorldAPI";
 import { DeveloperMode } from "../../src/Hot";
 import { HotWebSocketServer } from "../../src/HotWebSocketServer";
+import { HotWebSocketServerClient } from "../../src/HotWebSocketServerClient";
+import { HotWebSocketClient } from "../../src/HotWebSocketClient";
 
 describe ("WebSocket Tests", () =>
 	{
@@ -85,6 +87,9 @@ describe ("WebSocket Tests", () =>
 					{
 						common.socket.on ("sub/hello_world/ws_test_response", (data: any) =>
 							{
+								if (data.uuid != null)
+									data = data.data;
+
 								result = data;
 								futureResult = data;
 								resolve ();
@@ -124,6 +129,13 @@ describe ("WebSocket Tests", () =>
 				let testClients = webSocketServer.getTaggedClients ("test");
 				const numClients: number = Object.keys (testClients).length;
 				expect (numClients).to.eq (1);
+			});
+		it ("should have the client send a message to the server and wait for a response", async () =>
+			{
+				let testClient: HotWebSocketClient = new HotWebSocketClient (common.getWSUrl (), common.socket);
+				let result = await testClient.sendOnce ("hello_world/ws_test_response", { "message": "YAY!" });
+
+				expect (result).to.equal ("received");
 			});
 		it ("should send a message to the tagged client that has subscribed to sub/hello_world/ws_test_response", async () =>
 			{

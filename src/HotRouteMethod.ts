@@ -4,7 +4,7 @@ import { HotRoute } from "./HotRoute";
 import { HotServer, HotServerType } from "./HotServer";
 
 import express from "express";
-import { HotWebSocketClient } from "./HotWebSocketClient";
+import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
 
 /**
  * The available event methods.
@@ -48,7 +48,7 @@ export interface IServerRequest
 	 * The client websocket that was used to send the message. Will be set to null if using worker 
 	 * threads or if this request was received from a HTTP connection.
 	 */
-	wsSocket?: HotWebSocketClient;
+	wsSocket?: HotWebSocketServerClient;
 	/**
 	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
@@ -97,7 +97,7 @@ export class ServerRequest implements IServerRequest
 	 * The client websocket that was used to send the message. Will be set to null if using worker 
 	 * threads or if this request was received from a HTTP connection.
 	 */
-	wsSocket: HotWebSocketClient;
+	wsSocket: HotWebSocketServerClient;
 	/**
 	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
