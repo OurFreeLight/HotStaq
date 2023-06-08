@@ -51,3 +51,6 @@ docker tag $WEB_IMAGE:$WEB_IMAGE_VERSION $WEB_IMAGE:latest
 
 docker tag $WEB_IMAGE:$WEB_IMAGE_VERSION $API_IMAGE:$API_IMAGE_VERSION
 docker tag $API_IMAGE:$API_IMAGE_VERSION $API_IMAGE:latest
+
+echo "Finished building web image $WEB_IMAGE:$WEB_IMAGE_VERSION"
+echo "Finished building api image $API_IMAGE:$API_IMAGE_VERSION"

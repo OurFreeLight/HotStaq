@@ -17,6 +17,10 @@ import { HotServer, HotServerType } from "./HotServer";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotClient } from "./HotClient";
 
+// Server Websocket stuff
+import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
+import { HotWebSocketServer } from "./HotWebSocketServer";
+
 // Testing stuff
 import { HotTestDriver } from "./HotTestDriver";
 import { IHotTestElement, HotTestElement, HotTestElementOptions, IHotTestElementOptions } from "./HotTestElement";
@@ -47,8 +51,6 @@ import { MySQLSchemaTable } from "./schemas/mysql/MySQLSchemaTable";
 // Influx specific stuff
 import { HotDBInflux } from "./schemas/HotDBInflux";
 import { InfluxSchema } from "./schemas/influx/InfluxSchema";
-import { HotWebSocketClient } from "./HotWebSocketClient";
-import { HotWebSocketServer } from "./HotWebSocketServer";
 
 HotStaq.isWeb = false;
 
@@ -85,7 +87,7 @@ export {
 		HotServer,
 		HotServerType,
 		HotHTTPServer,
-		HotWebSocketClient,
+		HotWebSocketServerClient,
 		HotWebSocketServer,
 		HotClient,
 		HotTesterServer,

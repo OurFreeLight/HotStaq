@@ -1,7 +1,7 @@
 import { Server, ServerOptions, Socket } from "socket.io";
 
 import { HotHTTPServer } from "./HotHTTPServer";
-import { HotWebSocketClient } from "./HotWebSocketClient";
+import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
 import { HotLog } from "./HotLog";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HotEventMethod, ServerRequest, ServerAuthorizationFunction } from "./HotRouteMethod";
@@ -30,12 +30,12 @@ export class HotWebSocketServer
 	/**
 	 * The connected clients.
 	 */
-	clients: { [socketId: string]: HotWebSocketClient };
+	clients: { [socketId: string]: HotWebSocketServerClient };
 	/**
 	 * The tags and their associated clients.
 	 */
 	tags: { [tag: string]: {
-			[socketId: string]: HotWebSocketClient;
+			[socketId: string]: HotWebSocketServerClient;
 		}
 	};
 	/**
@@ -66,7 +66,7 @@ export class HotWebSocketServer
 	/**
 	 * Executes after a successful connection.
 	 */
-	onSuccessfulConnection: (client: HotWebSocketClient) => Promise<void>;
+	onSuccessfulConnection: (client: HotWebSocketServerClient) => Promise<void>;
 	/**
 	 * Executes right when a user connects before onServerAuthorize is called.
 	 * If this function returns false, the connection will be closed. Be sure 
@@ -80,7 +80,7 @@ export class HotWebSocketServer
 	/**
 	 * Executes right after a user disconnects.
 	 */
-	onDisconnect: (socket: HotWebSocketClient) => void;
+	onDisconnect: (socket: HotWebSocketServerClient) => void;
 
 	constructor (server: HotHTTPServer)
 	{
@@ -130,7 +130,7 @@ export class HotWebSocketServer
 					let executedFailedFunc: boolean = false;
 
 					const socketId: string = socket.id;
-					const newSocket: HotWebSocketClient = new HotWebSocketClient (this, socket);
+					const newSocket: HotWebSocketServerClient = new HotWebSocketServerClient (this, socket);
 
 					if (this.onConnection != null)
 					{
@@ -242,12 +242,21 @@ export class HotWebSocketServer
 												jsonObj = args[0];
 										}
 
+										let uuid: string = null;
+										let data: any = jsonObj;
+
+										if (jsonObj.uuid != null)
+										{
+											uuid = jsonObj.uuid;
+											data = jsonObj.data;
+										}
+
 										const socketId: string = socket.id;
-										let wsSocket: HotWebSocketClient = this.clients[socketId];
+										let wsSocket: HotWebSocketServerClient = this.clients[socketId];
 
 										let request: ServerRequest = new ServerRequest ({
 												"authorizedValue": authorizationValue,
-												"jsonObj": jsonObj,
+												"jsonObj": data,
 												"wsSocket": wsSocket
 											});
 
@@ -266,9 +275,16 @@ export class HotWebSocketServer
 												return (`WebSocket Event ${eventName}${resultStr}`);
 											}, result);
 										}
-						
+
 										if (result !== undefined)
-											socket.emit (`sub/${routeName}/${method.name}`, result);
+										{
+											let resultObj: any = result;
+
+											if (uuid != null)
+												resultObj = { uuid: uuid, data: result };
+
+											socket.emit (`sub/${routeName}/${method.name}`, resultObj);
+										}
 									}
 									catch (ex)
 									{
@@ -319,7 +335,7 @@ export class HotWebSocketServer
 	/**
 	 * Tag a client. This is useful when trying to send messages to groups of clients.
 	 */
-	tagClient (client: HotWebSocketClient, tag: string): void
+	tagClient (client: HotWebSocketServerClient, tag: string): void
 	{
 		if (client == null)
 			throw new Error (`No client given when tagging with "${tag}"`);
@@ -333,7 +349,7 @@ export class HotWebSocketServer
 	/**
 	 * Get a list of clients with the same tag.
 	 */
-	getTaggedClients (tag: string): { [tag: string]: HotWebSocketClient; }
+	getTaggedClients (tag: string): { [tag: string]: HotWebSocketServerClient; }
 	{
 		return (this.tags[tag]);
 	}
@@ -367,7 +383,7 @@ export class HotWebSocketServer
 
 		for (let key in this.tags[tag])
 		{
-			let client: HotWebSocketClient = this.tags[tag][key];
+			let client: HotWebSocketServerClient = this.tags[tag][key];
 
 			client.send (event, data);
 		}
@@ -380,7 +396,7 @@ export class HotWebSocketServer
 	{
 		for (let key in this.clients)
 		{
-			let client: HotWebSocketClient = this.clients[key];
+			let client: HotWebSocketServerClient = this.clients[key];
 
 			client.send (event, data);
 		}
@@ -391,7 +407,7 @@ export class HotWebSocketServer
 	 */
 	send (clientId: string, event: string, data: any): void
 	{
-		let client: HotWebSocketClient = this.clients[clientId];
+		let client: HotWebSocketServerClient = this.clients[clientId];
 
 		if (client == null)
 			throw new Error (`Unable to find client with id ${clientId}`);
@@ -411,7 +427,7 @@ export class HotWebSocketServer
 
 		for (let key in this.tags[tag])
 		{
-			let client: HotWebSocketClient = this.tags[tag][key];
+			let client: HotWebSocketServerClient = this.tags[tag][key];
 
 			if (closeConnection === true)
 				client.disconnect (false);
@@ -428,7 +444,7 @@ export class HotWebSocketServer
 
 		for (let key in this.clients)
 		{
-			let client: HotWebSocketClient = this.clients[key];
+			let client: HotWebSocketServerClient = this.clients[key];
 
 			if (closeConnection === true)
 				client.disconnect (false);
@@ -440,7 +456,7 @@ export class HotWebSocketServer
 	 */
 	disconnect (clientId: string, closeConnection: boolean = true): void
 	{
-		let client: HotWebSocketClient = this.clients[clientId];
+		let client: HotWebSocketServerClient = this.clients[clientId];
 
 		if (client == null)
 			throw new Error (`Unable to find client with id ${clientId}`);
@@ -451,7 +467,7 @@ export class HotWebSocketServer
 		{
 			for (let clientId2 in this.tags[tag])
 			{
-				let client2: HotWebSocketClient = this.tags[tag][clientId2];
+				let client2: HotWebSocketServerClient = this.tags[tag][clientId2];
 
 				if (client2 != null)
 					delete this.tags[tag][clientId2];
