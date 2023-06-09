@@ -24,10 +24,19 @@ export class HotWebSocketClient
 	 */
 	authorizedValue: any;
 	/**
+	 * The callback to call when the client connected.
+	 */
+	onConnect: () => void;
+	/**
 	 * The callback to call when the client has an error while connecting. This will 
 	 * prevent an exception from being thrown.
 	 */
 	onConnectError: (err: any) => void;
+	/**
+	 * The callback to call when the client has an error. This will 
+	 * prevent an exception from being thrown.
+	 */
+	onError: (err: any) => void;
 	/**
 	 * The callback to call when the client disconnects.
 	 */
@@ -40,6 +49,7 @@ export class HotWebSocketClient
 		this.persistentData = {};
 		this.authorizedValue = null;
 		this.onConnectError = null;
+		this.onError = null;
 		this.onDisconnect = null;
 	}
 
@@ -75,6 +85,9 @@ export class HotWebSocketClient
 			{
 				this.socket.on ("connect", () =>
 					{
+						if (this.onConnect != null)
+							this.onConnect ();
+
 						resolve ();
 					});
 				this.socket.on ("connect_error", (err: any) =>
@@ -82,6 +95,17 @@ export class HotWebSocketClient
 						if (this.onConnectError != null)
 						{
 							this.onConnectError (err);
+
+							return;
+						}
+
+						throw new Error (err);
+					});
+				this.socket.on ("error", (err: any) =>
+					{
+						if (this.onError != null)
+						{
+							this.onError (err);
 
 							return;
 						}
@@ -118,6 +142,28 @@ export class HotWebSocketClient
 	once (event: string, callback: (...args: any[]) => void): void
 	{
 		this.socket.once (event, callback);
+	}
+
+	/**
+	 * Get the socket's id.
+	 */
+	getId (): string
+	{
+		return (this.socket.id);
+	}
+
+	/**
+	 * Is the socket connected?
+	 */
+	isConnected (): boolean
+	{
+		if (this.socket == null)
+			return (false);
+
+		if (this.socket.connected === false)
+			return (false);
+
+		return (true);
 	}
 
 	/**
