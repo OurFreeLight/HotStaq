@@ -19,6 +19,7 @@ import { HotClient } from "./HotClient";
 
 // Server Websocket stuff
 import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
+import { HotWebSocketClient } from "./HotWebSocketClient";
 import { HotWebSocketServer } from "./HotWebSocketServer";
 
 // Testing stuff
@@ -88,6 +89,7 @@ export {
 		HotServerType,
 		HotHTTPServer,
 		HotWebSocketServerClient,
+		HotWebSocketClient,
 		HotWebSocketServer,
 		HotClient,
 		HotTesterServer,
