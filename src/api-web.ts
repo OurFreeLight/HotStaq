@@ -15,6 +15,8 @@ import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod"
 import { HotServer, HotServerType } from "./HotServer";
 import { HotClient } from "./HotClient";
 
+import { HotWebSocketClient } from "./HotWebSocketClient";
+
 // Testing stuff
 import { HotTestDriver } from "./HotTestDriver";
 import { IHotTestElement, HotTestElement, HotTestElementOptions, IHotTestElementOptions } from "./HotTestElement";
@@ -52,6 +54,7 @@ export {
     HotServer,
     HotServerType,
     HotClient,
+    HotWebSocketClient,
     HotTester,
     HotTesterAPI,
     HotTestMap,
