@@ -123,9 +123,23 @@ export class HotWebSocketClient
 	/**
 	 * Listen for a client event.
 	 */
-	on (event: string, callback: (...args: any[]) => void): void
+	on (event: string, callback: (...args: any[]) => void, uuid: string = null): void
 	{
-		this.socket.on (event, callback);
+		this.socket.on (event, function (uuid2: string, data: any)
+		{
+			if (data.uuid != null)
+			{
+				if (uuid2 != null)
+				{
+					if (data.uuid === uuid2)
+						callback (data.data);
+				}
+				else
+					callback (data.data);
+			}
+			else
+				callback (data);
+		}.bind (this, uuid));
 	}
 
 	/**
@@ -139,9 +153,23 @@ export class HotWebSocketClient
 	/**
 	 * Listen for a client event once.
 	 */
-	once (event: string, callback: (...args: any[]) => void): void
+	once (event: string, callback: (...args: any[]) => void, uuid: string = null): void
 	{
-		this.socket.once (event, callback);
+		this.socket.once (event, function (uuid2: string, data: any)
+		{
+			if (data.uuid != null)
+			{
+				if (uuid2 != null)
+				{
+					if (data.uuid === uuid2)
+						callback (data.data);
+				}
+				else
+					callback (data.data);
+			}
+			else
+				callback (data);
+		}.bind (this, uuid));
 	}
 
 	/**
@@ -199,11 +227,8 @@ export class HotWebSocketClient
 
 				this.on (`sub/${event}`, (data: any) =>
 					{
-						if (data.uuid === uuid)
-						{
-							callback (data.data);
-							resolve (data.data);
-						}
+						callback (data);
+						resolve (data);
 					});
 				uuid = this.send (`pub/${event}`, data);
 			});
@@ -224,8 +249,7 @@ export class HotWebSocketClient
 
 				this.once (`sub/${event}`, (data: any) =>
 					{
-						if (data.uuid === uuid)
-							resolve (data.data);
+						resolve (data);
 					});
 				uuid = this.send (`pub/${event}`, data);
 			});

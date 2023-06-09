@@ -130,10 +130,38 @@ describe ("WebSocket Tests", () =>
 				const numClients: number = Object.keys (testClients).length;
 				expect (numClients).to.eq (1);
 			});
-		it ("should have the client send a message to the server and wait for a response", async () =>
+		it ("should have the client send a message to the server and wait for a response in different ways", async () =>
 			{
 				let testClient: HotWebSocketClient = new HotWebSocketClient (common.getWSUrl (), common.socket);
-				let result = await testClient.sendOnce ("hello_world/ws_test_response", { "message": "YAY!" });
+				let result = null;
+
+				await new Promise<void> ((resolve, reject) =>
+					{
+						testClient.on ("sub/hello_world/ws_test_response", (data: any) =>
+							{
+								result = data;
+								resolve ();
+							});
+						testClient.send ("pub/hello_world/ws_test_response", { "message": "YAY!" });
+					});
+
+				testClient.off ("sub/hello_world/ws_test_response");
+				expect (result).to.equal ("received");
+
+				await new Promise<void> ((resolve, reject) =>
+					{
+						const uuid: string = testClient.send ("pub/hello_world/ws_test_response", { "message": "YAY!" });
+						testClient.on ("sub/hello_world/ws_test_response", (data: any) =>
+							{
+								result = data;
+								resolve ();
+							}, uuid);
+					});
+
+				testClient.off ("sub/hello_world/ws_test_response");
+				expect (result).to.equal ("received");
+
+				result = await testClient.sendOnce ("hello_world/ws_test_response", { "message": "YAY!" });
 
 				expect (result).to.equal ("received");
 			});
