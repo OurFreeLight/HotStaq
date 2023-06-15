@@ -167,7 +167,7 @@ export class HotWebSocketServerClient
 						callback (data.data, uuid2);
 						resolve (data.data);
 					}.bind (this, uuid), uuid);
-				this.send (event, data);
+				this.send (event, data, uuid);
 			});
 
 		return (result);
@@ -189,7 +189,7 @@ export class HotWebSocketServerClient
 					{
 						resolve (data.data);
 					}.bind (this, uuid), uuid);
-				this.send (event, data);
+				this.send (event, data, uuid);
 			});
 
 		return (result);
