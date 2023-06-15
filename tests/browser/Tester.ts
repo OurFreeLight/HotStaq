@@ -156,7 +156,7 @@ export class Tester extends HotTester
 
 	async onTestEnd (destination: HotDestination): Promise<void>
 	{
-		return (await new Promise ((resolve, reject) =>
+		return (new Promise ((resolve, reject) =>
 			{
 				this.suite.afterAll (async () =>
 					{

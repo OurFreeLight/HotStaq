@@ -65,7 +65,7 @@ export class HotTestDriver
 	 */
 	async wait (numMilliseconds: number): Promise<void>
 	{
-		return (await new Promise ((resolve, reject) =>
+		return (new Promise ((resolve, reject) =>
 			{
 				setTimeout (() =>
 					{

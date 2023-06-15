@@ -8,7 +8,7 @@ import { Builder, WebDriver, Session } from "selenium-webdriver";
 import Chrome from "selenium-webdriver/chrome";
 import { HotTesterServer } from "../../src/HotTesterServer";
 import { ServableFileExtension } from "../../src/HotHTTPServer";
-import { io, Socket } from "socket.io-client";
+import { HotWebSocketClient } from "../../src/HotWebSocketClient";
 
 /**
  * Common testing features
@@ -42,7 +42,7 @@ export class Common
 	/**
 	 * The client websocket.
 	 */
-	socket: Socket;
+	socket: HotWebSocketClient;
 
 	constructor (processor: HotStaq = new HotStaq ())
 	{
@@ -176,28 +176,14 @@ export class Common
 	/**
 	 * Have a client connect to a websocket server.
 	 */
-	async clientConnectToWebSocket (auth: any): Promise<string>
+	async clientConnectToWebSocket (auth: any): Promise<void>
 	{
 		const url: string = this.getWSUrl ();
-		this.socket = io (url, {
-				"auth": auth
-			});
+		this.socket = new HotWebSocketClient (url);
 
-		return (await new Promise<string> ((resolve, reject) =>
-			{
-				this.socket.on ("connect", () =>
-					{
-						resolve ("connected");
-					});
-				this.socket.on ("connect_error", (data: any) =>
-					{
-						resolve (data.message);
-					});
-				this.socket.on ("error", (data: any) =>
-					{
-						resolve (data.error);
-					});
-			}));
+		await this.socket.connect (auth, null, {
+				"reconnection": true
+			});
 	}
 
 	/**
@@ -205,6 +191,6 @@ export class Common
 	 */
 	disconnectFromWebSocket (): void
 	{
-		this.socket.close ();
+		this.socket.disconnect ();
 	}
 }
