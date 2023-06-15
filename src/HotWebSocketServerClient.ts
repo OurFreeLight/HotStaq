@@ -72,10 +72,10 @@ export class HotWebSocketServerClient
 				if (uuid2 != null)
 				{
 					if (data.uuid === uuid2)
-						callback (data.data, uuid2);
+						callback (data.data, data.uuid);
 				}
 				else
-					callback (data.data, uuid2);
+					callback (data.data, data.uuid);
 			}
 			else
 				callback (data, uuid2);
@@ -111,10 +111,10 @@ export class HotWebSocketServerClient
 				if (uuid2 != null)
 				{
 					if (data.uuid === uuid2)
-						callback (data.data, uuid2);
+						callback (data.data, data.uuid);
 				}
 				else
-					callback (data.data, uuid2);
+					callback (data.data, data.uuid);
 			}
 			else
 				callback (data, uuid2);
