@@ -465,13 +465,10 @@ export class HotWebSocketServer
 
 		for (let tag in this.tags)
 		{
-			for (let clientId2 in this.tags[tag])
-			{
-				let client2: HotWebSocketServerClient = this.tags[tag][clientId2];
+			let client2: HotWebSocketServerClient = this.tags[tag][clientId];
 
-				if (client2 != null)
-					delete this.tags[tag][clientId2];
-			}
+			if (client2 != null)
+				delete this.tags[tag][clientId];
 		}
 
 		if (this.onDisconnect != null)

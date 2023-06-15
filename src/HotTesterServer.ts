@@ -346,7 +346,7 @@ export class HotTesterServer extends HotServer
 	 */
 	static async checkIfFileExists (filepath: string): Promise<boolean>
 	{
-		return (await new Promise<boolean> ((resolve, reject) =>
+		return (new Promise<boolean> ((resolve, reject) =>
 			{
 				fs.access (filepath, F_OK, (err: NodeJS.ErrnoException) =>
 					{

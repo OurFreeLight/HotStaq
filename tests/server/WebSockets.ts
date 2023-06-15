@@ -68,13 +68,13 @@ describe ("WebSocket Tests", () =>
 
 				await new Promise<void> ((resolve, reject) =>
 					{
-						common.socket.on ("sub/hello_world/ws_hello_event", (data: any) =>
+						common.socket.on ("hello_world/ws_hello_event", (data: any) =>
 							{
 								result = data;
 								resolve ();
 							});
 
-						common.socket.emit ("pub/hello_world/ws_hello_event", { "message": "hi" });
+						common.socket.send ("hello_world/ws_hello_event", { "message": "hi" });
 					});
 
 				expect (result).to.equal ("Hello!");
@@ -85,7 +85,7 @@ describe ("WebSocket Tests", () =>
 
 				await new Promise<void> ((resolve, reject) =>
 					{
-						common.socket.on ("sub/hello_world/ws_test_response", (data: any) =>
+						common.socket.on ("hello_world/ws_test_response", (data: any) =>
 							{
 								if (data.uuid != null)
 									data = data.data;
@@ -95,7 +95,7 @@ describe ("WebSocket Tests", () =>
 								resolve ();
 							});
 
-						common.socket.emit ("pub/hello_world/ws_test_response", { "message": "YAY!" });
+						common.socket.send ("hello_world/ws_test_response", { "message": "YAY!" });
 					});
 
 				expect (result).to.equal ("received");
@@ -106,13 +106,13 @@ describe ("WebSocket Tests", () =>
 
 				await new Promise<void> ((resolve, reject) =>
 					{
-						common.socket.on ("sub/hello_world/ws_test_response", (data: any) =>
+						common.socket.on ("hello_world/ws_test_response", (data: any) =>
 							{
 								result = data;
 								resolve ();
 							});
 
-						common.socket.emit ("pub/hello_world/ws_test_response", { "message": "FAIL BOAT" });
+						common.socket.send ("hello_world/ws_test_response", { "message": "FAIL BOAT" });
 					});
 
 				expect (result.error).to.equal ("You did not yay me bro.");
@@ -132,42 +132,48 @@ describe ("WebSocket Tests", () =>
 			});
 		it ("should have the client send a message to the server and wait for a response in different ways", async () =>
 			{
-				let testClient: HotWebSocketClient = new HotWebSocketClient (common.getWSUrl (), common.socket);
+				let testClient: HotWebSocketClient = new HotWebSocketClient (common.getWSUrl ());
 				let result = null;
+
+				await testClient.connect ({
+						"ApiKey": "kjs1he4w57h",
+						"ApiSecret": "3u4j5n978sd"
+					});
 
 				await new Promise<void> ((resolve, reject) =>
 					{
-						testClient.on ("sub/hello_world/ws_test_response", (data: any) =>
+						testClient.on ("hello_world/ws_test_response", (data: any) =>
 							{
 								result = data;
 								resolve ();
 							});
-						testClient.send ("pub/hello_world/ws_test_response", { "message": "YAY!" });
+						testClient.send ("hello_world/ws_test_response", { "message": "YAY!" });
 					});
 
-				testClient.off ("sub/hello_world/ws_test_response");
+				testClient.off ("hello_world/ws_test_response");
 				expect (result).to.equal ("received");
 
 				await new Promise<void> ((resolve, reject) =>
 					{
-						const uuid: string = testClient.send ("pub/hello_world/ws_test_response", { "message": "YAY!" });
-						testClient.on ("sub/hello_world/ws_test_response", (data: any) =>
+						const uuid: string = testClient.send ("hello_world/ws_test_response", { "message": "YAY!" });
+						testClient.on ("hello_world/ws_test_response", (data: any) =>
 							{
 								result = data;
 								resolve ();
 							}, uuid);
 					});
 
-				testClient.off ("sub/hello_world/ws_test_response");
+				testClient.off ("hello_world/ws_test_response");
 				expect (result).to.equal ("received");
 
 				result = await testClient.sendOnce ("hello_world/ws_test_response", { "message": "YAY!" });
-
 				expect (result).to.equal ("received");
+
+				testClient.disconnect ();
 			});
-		it ("should send a message to the tagged client that has subscribed to sub/hello_world/ws_test_response", async () =>
+		it ("should send a message to the tagged client that has subscribed to hello_world/ws_test_response", async () =>
 			{
-				webSocketServer.sendToTaggedClients ("test", "sub/hello_world/ws_test_response", 
+				webSocketServer.sendToTaggedClients ("test", "hello_world/ws_test_response", 
 					{ "message": "This bypasses the HotRoute for the connected HotAPI entirely. This is just a direct message." });
 
 				await HotStaq.wait (50);
@@ -185,10 +191,19 @@ describe ("WebSocket Tests", () =>
 			});
 		it ("should attempt to connect to the HelloWorldAPI via WebSocket with the wrong password", async () =>
 			{
-				let errorMsg: string = await common.clientConnectToWebSocket ({
-							"ApiKey": "kjs1he4w57h",
-							"ApiSecret": "bad_password"
-						});
+				let errorMsg: string = "";
+
+				try
+				{
+					await common.clientConnectToWebSocket ({
+								"ApiKey": "kjs1he4w57h",
+								"ApiSecret": "bad_password"
+							});
+				}
+				catch (ex)
+				{
+					errorMsg = ex.message;
+				}
 
 				expect (errorMsg).to.eq ("Unauthorized");
 			});

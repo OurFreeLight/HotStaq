@@ -20,7 +20,7 @@ export class HotIO
 	 */
 	static async readTextFile (path: string): Promise<string>
 	{
-		return (await new Promise (
+		return (new Promise (
 			(resolve: any, reject: any): void =>
 			{
 				fs.readFile (path, (err: NodeJS.ErrnoException, data: Buffer): void =>
@@ -102,7 +102,7 @@ export class HotIO
 	 */
 	static async writeTextFile (path: string, content: string): Promise<string>
 	{
-		return (await new Promise (
+		return (new Promise (
 			(resolve: any, reject: any): void =>
 			{
 				fs.writeFile (path, content, (err: NodeJS.ErrnoException): void =>
@@ -121,7 +121,7 @@ export class HotIO
 	static async mkdir (path: string, 
 		options: fs.MakeDirectoryOptions = { "recursive": true }): Promise<void>
 	{
-		return (await new Promise (
+		return (new Promise (
 			(resolve: any, reject: any): void =>
 			{
 				fs.mkdir (path, options, 
@@ -141,7 +141,7 @@ export class HotIO
 	static async rm (path: string, options: fs.RmOptions = 
 		{ "force": false, maxRetries: 0, recursive: false, retryDelay: 100 }): Promise<void>
 	{
-		return (await new Promise (
+		return (new Promise (
 			(resolve: any, reject: any): void =>
 			{
 				fs.rm (path, options, 

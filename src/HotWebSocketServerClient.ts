@@ -61,25 +61,71 @@ export class HotWebSocketServerClient
 	}
 
 	/**
-	 * Listen for a client event.
+	 * Listen for a client event. The event should not include the "sub/" prefix.
 	 */
-	on (event: string, callback: (...args: any[]) => void): void
+	on (event: string, callback: (data: any, uuid?: string) => void, uuid: string = null): void
+	{
+		this.socket.on (`sub/${event}`, function (uuid2: string, data: any)
+		{
+			if (data.uuid != null)
+			{
+				if (uuid2 != null)
+				{
+					if (data.uuid === uuid2)
+						callback (data.data, uuid2);
+				}
+				else
+					callback (data.data, uuid2);
+			}
+			else
+				callback (data, uuid2);
+		}.bind (this, uuid));
+	}
+
+	/**
+	 * Listen for a client event without any intervention. The event will not have any 
+	 * sub/ prepended, and will not include an event uuid.
+	 */
+	onRaw (event: string, callback: (data: any) => void): void
 	{
 		this.socket.on (event, callback);
 	}
 
 	/**
-	 * Stop listening for a client event.
+	 * Stop listening for a client event. The event should not include the "sub/" prefix.
 	 */
 	off (event: string): void
 	{
-		this.socket.off (event, null);
+		this.socket.off (`sub/${event}`, null);
 	}
 
 	/**
-	 * Listen for a client event once.
+	 * Listen for a client event once. The event should not include the "sub/" prefix.
 	 */
-	once (event: string, callback: (...args: any[]) => void): void
+	once (event: string, callback: (data: any, uuid?: string) => void, uuid: string = null): void
+	{
+		this.socket.once (`sub/${event}`, function (uuid2: string, data: any)
+		{
+			if (data.uuid != null)
+			{
+				if (uuid2 != null)
+				{
+					if (data.uuid === uuid2)
+						callback (data.data, uuid2);
+				}
+				else
+					callback (data.data, uuid2);
+			}
+			else
+				callback (data, uuid2);
+		}.bind (this, uuid));
+	}
+
+	/**
+	 * Listen for a client event once without any intervention. The event will not have any 
+	 * sub/ prepended, and will not include an event uuid.
+	 */
+	onceRaw (event: string, callback: (data: any) => void): void
 	{
 		this.socket.once (event, callback);
 	}
@@ -87,7 +133,7 @@ export class HotWebSocketServerClient
 	/**
 	 * Send an event to the client. You can optionally receive a response from the client.
 	 */
-	send (event: string, data: any): string
+	send (event: string, data: any, uuid: string = null): string
 	{
 		if (this.socket == null)
 			throw new Error (`Client socket is null. Unable to send event ${event}`);
@@ -95,8 +141,10 @@ export class HotWebSocketServerClient
 		if (this.socket.connected === false)
 			throw new Error (`Client socket is not connected. Unable to send event ${event}`);
 
-		const uuid: string = uuidv4 ();
-		this.socket.emit (event, { uuid: uuid, data: data });
+		if (uuid == null)
+			uuid = uuidv4 ();
+
+		this.socket.emit (`sub/${event}`, { uuid: uuid, data: data });
 
 		return (uuid);
 	}
@@ -107,21 +155,19 @@ export class HotWebSocketServerClient
 	 * 
 	 * @param event The event to send. SHOULD NOT include pub/ or sub/ prefixes as those are added automatically.
 	 */
-	async sendOn (event: string, data: any, callback: (data: any) => void): Promise<any>
+	async sendOn (event: string, data: any, callback: (data: any, uuid?: string) => void, uuid: string = null): Promise<any>
 	{
 		let result = await new Promise<any> ((resolve, reject) =>
 			{
-				let uuid: string = "";
+				if (uuid == null)
+					uuid = uuidv4 ();
 
-				this.on (`sub/${event}`, (data: any) =>
+				this.on (event, function (uuid2: string, data: any)
 					{
-						if (data.uuid === uuid)
-						{
-							callback (data.data);
-							resolve (data.data);
-						}
-					});
-				uuid = this.send (`pub/${event}`, data);
+						callback (data.data, uuid2);
+						resolve (data.data);
+					}.bind (this, uuid), uuid);
+				this.send (event, data);
 			});
 
 		return (result);
@@ -132,18 +178,18 @@ export class HotWebSocketServerClient
 	 * 
 	 * @param event The event to send. SHOULD NOT include pub/ or sub/ prefixes as those are added automatically.
 	 */
-	async sendOnce (event: string, data: any): Promise<any>
+	async sendOnce (event: string, data: any, uuid: string = null): Promise<any>
 	{
 		let result = await new Promise<any> ((resolve, reject) =>
 			{
-				let uuid: string = "";
+				if (uuid == null)
+					uuid = uuidv4 ();
 
-				this.once (`sub/${event}`, (data: any) =>
+				this.once (event, function (uuid2: string, data: any)
 					{
-						if (data.uuid === uuid)
-							resolve (data.data);
-					});
-				uuid = this.send (`pub/${event}`, data);
+						resolve (data.data);
+					}.bind (this, uuid), uuid);
+				this.send (event, data);
 			});
 
 		return (result);
