@@ -61,11 +61,11 @@ export class HotWebSocketServerClient
 	}
 
 	/**
-	 * Listen for a client event. The event should not include the "sub/" prefix.
+	 * Listen for a client event.
 	 */
 	on (event: string, callback: (data: any, uuid?: string) => void, uuid: string = null): void
 	{
-		this.socket.on (`sub/${event}`, function (uuid2: string, data: any)
+		this.socket.on (event, function (uuid2: string, data: any)
 		{
 			if (data.uuid != null)
 			{
@@ -83,8 +83,7 @@ export class HotWebSocketServerClient
 	}
 
 	/**
-	 * Listen for a client event without any intervention. The event will not have any 
-	 * sub/ prepended, and will not include an event uuid.
+	 * Listen for a client event without any intervention.
 	 */
 	onRaw (event: string, callback: (data: any) => void): void
 	{
@@ -92,19 +91,19 @@ export class HotWebSocketServerClient
 	}
 
 	/**
-	 * Stop listening for a client event. The event should not include the "sub/" prefix.
+	 * Stop listening for a client event.
 	 */
 	off (event: string): void
 	{
-		this.socket.off (`sub/${event}`, null);
+		this.socket.off (event, null);
 	}
 
 	/**
-	 * Listen for a client event once. The event should not include the "sub/" prefix.
+	 * Listen for a client event once.
 	 */
 	once (event: string, callback: (data: any, uuid?: string) => void, uuid: string = null): void
 	{
-		this.socket.once (`sub/${event}`, function (uuid2: string, data: any)
+		this.socket.once (event, function (uuid2: string, data: any)
 		{
 			if (data.uuid != null)
 			{
@@ -122,8 +121,7 @@ export class HotWebSocketServerClient
 	}
 
 	/**
-	 * Listen for a client event once without any intervention. The event will not have any 
-	 * sub/ prepended, and will not include an event uuid.
+	 * Listen for a client event once without any intervention.
 	 */
 	onceRaw (event: string, callback: (data: any) => void): void
 	{
@@ -144,7 +142,7 @@ export class HotWebSocketServerClient
 		if (uuid == null)
 			uuid = uuidv4 ();
 
-		this.socket.emit (`sub/${event}`, { uuid: uuid, data: data });
+		this.socket.emit (event, { uuid: uuid, data: data });
 
 		return (uuid);
 	}
@@ -152,8 +150,6 @@ export class HotWebSocketServerClient
 	/**
 	 * Send an event to the client, and wait for a response. Every time 
 	 * data is received from this event, the callback will be called.
-	 * 
-	 * @param event The event to send. SHOULD NOT include pub/ or sub/ prefixes as those are added automatically.
 	 */
 	async sendOn (event: string, data: any, callback: (data: any, uuid?: string) => void, uuid: string = null): Promise<any>
 	{
@@ -175,8 +171,6 @@ export class HotWebSocketServerClient
 
 	/**
 	 * Send an event to the client, and wait for a response once.
-	 * 
-	 * @param event The event to send. SHOULD NOT include pub/ or sub/ prefixes as those are added automatically.
 	 */
 	async sendOnce (event: string, data: any, uuid: string = null): Promise<any>
 	{
