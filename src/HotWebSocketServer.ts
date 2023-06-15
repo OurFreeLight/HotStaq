@@ -226,7 +226,7 @@ export class HotWebSocketServer
 							if (method.type !== HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
 								continue;
 
-							let eventName: string = `pub/${routeName}/${method.name}`;
+							let eventName: string = `${routeName}/${method.name}`;
 
 							// Only 1 argument will be passed to the jsonObj in the new ServerRequest.
 							// Devs can always pass an array or whatever object(s) they need.
@@ -283,13 +283,13 @@ export class HotWebSocketServer
 											if (uuid != null)
 												resultObj = { uuid: uuid, data: result };
 
-											socket.emit (`sub/${routeName}/${method.name}`, resultObj);
+											socket.emit (`${routeName}/${method.name}`, resultObj);
 										}
 									}
 									catch (ex)
 									{
 										this.logger.error (`Execution error: ${ex}`);
-										socket.emit (`sub/${routeName}/${method.name}`, { error: ex.message });
+										socket.emit (`${routeName}/${method.name}`, { error: ex.message });
 									}
 								});
 							this.logger.verbose (`Adding WebSocket Event: ${eventName}`);
