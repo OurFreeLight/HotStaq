@@ -160,8 +160,8 @@ export class HotWebSocketServerClient
 
 				this.on (event, function (uuid2: string, data: any)
 					{
-						callback (data.data, uuid2);
-						resolve (data.data);
+						callback (data, uuid2);
+						resolve (data);
 					}.bind (this, uuid), uuid);
 				this.send (event, data, uuid);
 			});
@@ -181,7 +181,7 @@ export class HotWebSocketServerClient
 
 				this.once (event, function (uuid2: string, data: any)
 					{
-						resolve (data.data);
+						resolve (data);
 					}.bind (this, uuid), uuid);
 				this.send (event, data, uuid);
 			});
