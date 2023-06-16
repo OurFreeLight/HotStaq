@@ -368,7 +368,7 @@ export class HotFile implements IHotFile
 						callbackA(a);
 						let out = callbackB(b, possibleEnd);
 
-						str = str.slice(0, startIndex) + out + str.slice(endPos + 2);
+						str = str.slice(0, startIndex) + out + str.slice(endPos + possibleEnd.length);
 
 						break;
 					}
