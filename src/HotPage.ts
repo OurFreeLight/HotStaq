@@ -230,7 +230,7 @@ export class HotPage implements IHotPage
 		if (func == null)
 			throw new Error (`Function ${name} does not exist!`);
 
-		func.apply (thisObj, args);
+		return (func.apply (thisObj, args));
 	}
 
 	/**
