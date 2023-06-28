@@ -98,6 +98,8 @@ Execute this code to debug in browser:
 				expect (elm).to.not.equal (null, "Page did not load!");
 				await elm.click ();
 
+				await HotStaq.wait (50);
+
 				elm = await common.driver.findElement (By.id ("funcClickTest"));
 				let value: string = await elm.getAttribute ("innerHTML");
 

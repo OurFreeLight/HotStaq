@@ -28,6 +28,7 @@ export class HotGenerator
 	 * * javascript
 	 * * openapi-3.0.0-json
 	 * * openapi-3.0.0-yaml
+	 * * asyncapi-2.6.0-yaml
 	 */
 	generateType: string;
 	/**
@@ -209,7 +210,8 @@ export class HotGenerator
 	async generateAPI (processor: HotStaq, apis: { [name: string]: APItoLoad; }): Promise<void>
 	{
 		if ((this.generateType === "openapi-3.0.0-json") || 
-			(this.generateType === "openapi-3.0.0-yaml"))
+			(this.generateType === "openapi-3.0.0-yaml") || 
+			(this.generateType === "asyncapi-2.6.0-yaml"))
 		{
 			await this.generateAPIDocumentation (processor, apis);
 
@@ -349,7 +351,8 @@ export class HotGenerator
 	async generateAPIDocumentation (processor: HotStaq, apis: { [name: string]: APItoLoad; }): Promise<void>
 	{
 		if (! ((this.generateType === "openapi-3.0.0-json") || 
-			(this.generateType === "openapi-3.0.0-yaml")))
+			(this.generateType === "openapi-3.0.0-yaml") || 
+			(this.generateType === "asyncapi-2.6.0-yaml")))
 		{
 			throw new Error (`Unknown API documentation --generate-type ${JSON.stringify (this.generateType)}`);
 		}
@@ -371,13 +374,21 @@ export class HotGenerator
 				if (this.generateType.indexOf ("openapi-3.0.0") > -1)
 					jsonObj.openapi = "3.0.0";
 
+				if (this.generateType.indexOf ("asyncapi-2.6.0-yaml") > -1)
+					jsonObj.asyncapi = "2.6.0";
+
 				let filename: string = `${libraryName}_${apiName}_${this.generateType}`;
 				jsonObj.info = {};
 				jsonObj.info.title = hotsite.name;
 				jsonObj.info.version = hotsite.name;
 				jsonObj.info.description = hotsiteDescription;
 				jsonObj.servers = servers;
-				jsonObj.paths = {};
+
+				if (jsonObj.openapi != null)
+					jsonObj.paths = {};
+
+				if (jsonObj.asyncapi != null)
+					jsonObj.channels = {};
 
 				for (let key2 in serverResult.api.routes)
 				{
@@ -396,6 +407,18 @@ export class HotGenerator
 					for (let iJdx = 0; iJdx < route.methods.length; iJdx++)
 					{
 						let method: HotRouteMethod = route.methods[iJdx];
+
+						if (jsonObj.openapi != null)
+						{
+							if (! ((method.type === HotEventMethod.GET) || 
+								(method.type === HotEventMethod.POST)))
+							{
+								this.logger.verbose (`Skipping method ${method.name} because it is not a GET or POST method.`);
+
+								continue;
+							}
+						}
+
 						let methodName: string = method.name;
 						let path: string = `/${route.version}/${routeName}/${methodName}`;
 						let methodDescription: string = "";
