@@ -72,9 +72,16 @@
 	<button id = "${getTestHelloWorldAPI2Id ()}" onclick = "sayHelloDifferently ();">Send2</button>
 	<button id = "funcClickTest" onclick = "<(event) => 
 	{
-		const buttonId = event.button;
-		this.innerHTML = `ButtonClicked${buttonId}-${testData}`;
-	}>">Click Event</button>
+		await new Promise ((resolve, reject) =>
+		{
+			setTimeout (() =>
+			{
+				const buttonId = event.button;
+				this.innerHTML = `ButtonClicked${buttonId}-${testData}`;
+				resolve ();
+			}, 20);
+		});
+	}a>">Click Event</button>
 	<button id = "testHelloWorldAPI3" onclick = "sayHelloButAuthorizedBad ();">Auth Send - Bad Auth</button>
 	<button id = "testHelloWorldAPI4" onclick = "sayHelloButAuthorizedGood ();">Auth Send - Good Auth</button>
 <*

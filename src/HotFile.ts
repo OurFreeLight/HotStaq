@@ -353,7 +353,7 @@ export class HotFile implements IHotFile
 				(endIndex !== -1) && (arrowIndex !== -1) && 
 				(braceIndex !== -1))
 			{
-				let possibleEnds: string[] = ["}>", "}A>", "}R>", "}RA>"];
+				let possibleEnds: string[] = ["}>", "}A>", "}a>", "}R>", "}RA>", "}Ra>"];
 				let endPos = -1;
 
 				for (let i = 0; i < possibleEnds.length; i++)
@@ -479,18 +479,37 @@ export class HotFile implements IHotFile
 						//const escapedBody: string = funcBody.replace(/[\\'"\n\r\t]/g, '\\$&');
 						const escapedBody: string = funcBody.replace (/\`/g, "\\`");
 						let functionCall: string = "Hot.CurrentPage.callFunction";
+						let isAsync: string = "false";
 
 						if (endType === "}A>")
+						{
 							functionCall = "await Hot.CurrentPage.callAsyncFunction";
+							isAsync = "true";
+						}
+
+						if (endType === "}a>")
+						{
+							functionCall = "Hot.CurrentPage.callAsyncFunction";
+							isAsync = "true";
+						}
 
 						if (endType === "}R>")
 							functionCall = "return Hot.CurrentPage.callFunction";
 
 						if (endType === "}RA>")
+						{
 							functionCall = "return await Hot.CurrentPage.callAsyncFunction";
+							isAsync = "true";
+						}
+
+						if (endType === "}Ra>")
+						{
+							functionCall = "return Hot.CurrentPage.callAsyncFunction";
+							isAsync = "true";
+						}
 
 						let newValue = `*&&%*%@#@!{
-const newFuncName = createFunction (null, ${funcArgsStr}, \`${escapedBody}\`);
+const newFuncName = createFunction (null, ${funcArgsStr}, \`${escapedBody}\`, ${isAsync});
 Hot.echo (\`${functionCall} (this, '\${newFuncName}', arguments);\`);
 }*&!#%@!@*!`;
 						// Replace any ${ with ${&&!*#!!
@@ -794,9 +813,9 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 			/**
 			 * Create a function for later execution on this page.
 			 */
-			function createFunction (name, args, funcBody)
+			function createFunction (name, args, funcBody, isAsync)
 			{
-				return (Hot.CurrentPage.addFunction (name, args, funcBody));
+				return (Hot.CurrentPage.addFunction (name, args, funcBody, isAsync));
 			}
 
 			/**

@@ -197,12 +197,16 @@ export class HotPage implements IHotPage
 	 * 
 	 * @returns The new function's name.
 	 */
-	addFunction (name: string, args: string[], funcBody: string): string
+	addFunction (name: string, args: string[], funcBody: string, isAsync: boolean = false): string
 	{
 		if (name == null)
 			name = "__func" + Object.keys (this.functions).length;
 
 		let argsStr: string = "";
+		let asyncStr: string = "";
+
+		if (isAsync === true)
+			asyncStr = "async ";
 
 		for (let iIdx = 0; iIdx < args.length; iIdx++)
 		{
@@ -215,7 +219,7 @@ export class HotPage implements IHotPage
 			argsStr += `${arg}${comma}`;
 		}
 
-		this.functions[name] = new Function (`return ((${argsStr}) => { ${funcBody} }).apply (this, arguments);`);
+		this.functions[name] = new Function (`return (${asyncStr}(${argsStr}) => { ${funcBody} }).apply (this, arguments);`);
 
 		return (name);
 	}
