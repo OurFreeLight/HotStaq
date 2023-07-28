@@ -65,6 +65,24 @@ Execute this code to debug in browser:
 				let value: string = await elm.getAttribute ("innerHTML");
 				expect (value).to.equal ("Test Button from Page: TESTING", "Variables not passing properly to components!");
 			});
+		it ("should have executed the IIFE on the page", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("iifeTest")));
+				let value: string = await elm.getAttribute ("innerHTML");
+				expect (value).to.equal ("IIFE Worked");
+			});
+		it ("should have tested onload", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("onload")));
+				let value: string = await elm.getAttribute ("innerHTML");
+				expect (value).to.equal ("onload Worked");
+			});
+		it ("should have tested DOMContentLoaded", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("DOMContentLoaded")));
+				let value: string = await elm.getAttribute ("innerHTML");
+				expect (value).to.equal ("DOMContentLoaded Worked");
+			});
 		it ("should click the Hello World button", async () =>
 			{
 				let elm = await common.driver.wait (until.elementLocated (By.id ("helloWorld")));

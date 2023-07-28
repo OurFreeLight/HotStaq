@@ -693,7 +693,7 @@ export class ${data.routeName} extends HotAPI
 		{
 			content = 
 `if (typeof (${data.libraryName}) === "undefined")
-	${data.libraryName} = {};
+	var ${data.libraryName} = {};
 
 var HotAPIGlobal = undefined;
 

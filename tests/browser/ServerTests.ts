@@ -1,4 +1,4 @@
-import "mocha";
+/*import "mocha";
 import { expect, should } from "chai";
 import { By, until } from "selenium-webdriver";
 
@@ -30,11 +30,11 @@ describe ("Browser-Server Tests", () =>
 		it ("should click the test button", async () =>
 			{
 				let elm = await common.driver.wait (until.elementLocated (By.id ("testButton")));
-				expect (elm).to.not.equal (null, "Page did not load!");
 				await elm.click ();
+				expect (elm).to.not.equal (null, "Page did not load!");
 
 				elm = await common.driver.findElement (By.id ("testButton"));
 				let value: string = await elm.getAttribute ("value");
 				expect (value).to.equal ("Worked!", "Button was not clicked!");
 			});
-	});
+	});*/

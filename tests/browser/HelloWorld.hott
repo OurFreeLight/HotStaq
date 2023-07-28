@@ -56,6 +56,15 @@
 			Hot.Cookies.set ("test", "23");
 			document.getElementById ('iifeTest').innerHTML = "IIFE Worked";
 		})();
+
+		window.onload = () =>
+			{
+				document.getElementById ('onload').innerHTML = "onload Worked";
+			};
+		document.addEventListener ('DOMContentLoaded', () =>
+			{
+				document.getElementById ('DOMContentLoaded').innerHTML = "DOMContentLoaded Worked";
+			});
 	</script>
 </head>
 
@@ -70,14 +79,16 @@
 	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
 	*> onclick = "sayHello ();">Send</button>
 	<button id = "${getTestHelloWorldAPI2Id ()}" onclick = "sayHelloDifferently ();">Send2</button>
-	<button id = "funcClickTest" onclick = "<(event) => 
+	<button id = "funcClickTest" data-button-uuid = "3" onclick = "<(event) => 
 	{
 		await new Promise ((resolve, reject) =>
 		{
+			const uuid = this.getAttribute ('data-button-uuid');
+
 			setTimeout (() =>
 			{
 				const buttonId = event.button;
-				this.innerHTML = `ButtonClicked${buttonId}-${testData}`;
+				this.innerHTML = `ButtonClicked${buttonId}-${testData}-$\{uuid}`;
 				resolve ();
 			}, 20);
 		});
@@ -94,6 +105,8 @@
 	<*
 		Hot.echo (`<div id = "iifeTest"></div>`);
 	*>
+	<span id = "onload"></span><br />
+	<span id = "DOMContentLoaded"></span>
 </body>
 
 </html>
