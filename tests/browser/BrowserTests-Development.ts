@@ -82,6 +82,18 @@ Execute this code to debug in browser:
 				let value: string = await elm.getAttribute ("innerHTML");
 				expect (value).to.equal ("IIFE Worked");
 			});
+		it ("should have tested onload", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("onload")));
+				let value: string = await elm.getAttribute ("innerHTML");
+				expect (value).to.equal ("onload Worked");
+			});
+		it ("should have tested DOMContentLoaded", async () =>
+			{
+				let elm = await common.driver.wait (until.elementLocated (By.id ("DOMContentLoaded")));
+				let value: string = await elm.getAttribute ("innerHTML");
+				expect (value).to.equal ("DOMContentLoaded Worked");
+			});
 		it ("should click the Hello World button", async () =>
 			{
 				let elm = await common.driver.wait (until.elementLocated (By.id ("helloWorld")));
@@ -103,7 +115,7 @@ Execute this code to debug in browser:
 				elm = await common.driver.findElement (By.id ("funcClickTest"));
 				let value: string = await elm.getAttribute ("innerHTML");
 
-				expect (value).to.equal ("ButtonClicked0-TESTING", "Function test button was not clicked!");
+				expect (value).to.equal ("ButtonClicked0-TESTING-3", "Function test button was not clicked!");
 			});
 		it ("should send a hi to the hello world api", async () =>
 			{

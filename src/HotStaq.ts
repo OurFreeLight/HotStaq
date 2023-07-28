@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.56";
+	static version: string = "0.8.61";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -145,6 +145,10 @@ export class HotStaq implements IHotStaq
 	 * Executes this event when this page is ready for testing.
 	 */
 	static onReadyForTesting: () => Promise<void> = null;
+	/**
+	 * Executes this event when this page is ready for testing.
+	 */
+	protected static onReadyEvent: () => void = null;
 	/**
 	 * Errors to execute when something goes wrong.
 	 */
@@ -1597,10 +1601,7 @@ export class HotStaq implements IHotStaq
 	 */
 	static onReady (readyFunc: () => void): void
 	{
-		if ((document.readyState === "complete") || (document.readyState === "interactive"))
-			readyFunc ();
-		else
-			window.addEventListener ("load", readyFunc);
+		HotStaq.onReadyEvent = readyFunc;
 	}
 
 	/**
@@ -1667,6 +1668,9 @@ export class HotStaq implements IHotStaq
 					});
 			}
 		}
+
+		document.dispatchEvent (new Event ("DOMContentLoaded"));
+		window.dispatchEvent (new Event("load"));
 	}
 
 	/**
@@ -1776,6 +1780,18 @@ hotstaq_isDocumentReady ();
 	}
 
 	/**
+	 * When the window has finished loading, execute the function. This 
+	 * is meant to start executing HotStaq.
+	 */
+	static onInitalLoad (readyFunc: () => void): void
+	{
+		if ((document.readyState === "complete") || (document.readyState === "interactive"))
+			readyFunc ();
+		else
+			window.addEventListener ("load", readyFunc);
+	}
+
+	/**
 	 * Process and replace the current HTML page with the hott script from the given url.
 	 * This is meant for web browser use only.
 	 */
@@ -1784,7 +1800,7 @@ hotstaq_isDocumentReady ();
 	{
 		return (new Promise<HotStaq> ((resolve, reject) =>
 			{
-				HotStaq.onReady (async () =>
+				HotStaq.onInitalLoad (async () =>
 					{
 						let options: HotStartOptions = {
 								"url": ""
@@ -1866,7 +1882,7 @@ hotstaq_isDocumentReady ();
 	{
 		return (new Promise<HotStaq> ((resolve, reject) =>
 			{
-				HotStaq.onReady (async () =>
+				HotStaq.onInitalLoad (async () =>
 					{
 						let options: HotStartOptions = {
 								"content": ""

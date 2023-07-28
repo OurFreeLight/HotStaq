@@ -204,7 +204,10 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 			};
 
 		if (this.language === "ts")
+		{
 			packageJSON.devDependencies["ts-loader"] = "^7.0.5";
+			packageJSON.devDependencies["tslib"] = "^2.6.0";
+		}
 
 		if (this.npmCommands.start === "")
 			this.npmCommands.start = `node ./build/cli.js --hotsite ./HotSite.json run --server-type ${this.type}`;

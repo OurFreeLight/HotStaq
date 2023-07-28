@@ -336,6 +336,26 @@ export class HotFile implements IHotFile
 
 	/**
 	 * Parse a function from a string. Ex: <(a, b, c)=>{return (a + b + c);}>
+	 * 
+	 * @fixme Has an issue where it will fail finding the following properly:
+	 * ```html
+	 * <admin-table id = "projectsList" hot-onlist = "<() =>
+			{
+				let projects = await Hot.jsonRequest (`${config.baseUrl}/v1/projects/list`, {
+						jwtToken: '${jwtToken}'
+					});
+
+				return (projects);
+			}Ra>" 
+			hot-checkbox = "false" 
+			hot-onselectedrow = "<(rowIndex, item) =>
+			{
+				window.location.href = `./project?id=$\{item.id}`;
+
+				return (false);
+			}>">
+		</admin-table>
+	 * ```
 	 */
 	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, 
 		callbackB: (funcBody: string, endType: string) => string): string
@@ -720,6 +740,8 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 				throw new Error (`In ${this.name}, the passed arguments received cannot be an array!`);
 		}
 
+		let tempArgs = Hot.Arguments;
+
 		Hot.Mode = this.page.processor.mode;
 		Hot.Arguments = args;
 		Hot.CurrentPage = this.page;
@@ -892,6 +914,7 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 		Hot.Data = returnedOutput.hot.Data;
 		let finalOutput: string = returnedOutput.output;
 		Hot.Output = "";
+		Hot.Arguments = tempArgs;
 
 		return (finalOutput);
 	}
