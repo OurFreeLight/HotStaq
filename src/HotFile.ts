@@ -336,26 +336,6 @@ export class HotFile implements IHotFile
 
 	/**
 	 * Parse a function from a string. Ex: <(a, b, c)=>{return (a + b + c);}>
-	 * 
-	 * @fixme Has an issue where it will fail finding the following properly:
-	 * ```html
-	 * <admin-table id = "projectsList" hot-onlist = "<() =>
-			{
-				let projects = await Hot.jsonRequest (`${config.baseUrl}/v1/projects/list`, {
-						jwtToken: '${jwtToken}'
-					});
-
-				return (projects);
-			}Ra>" 
-			hot-checkbox = "false" 
-			hot-onselectedrow = "<(rowIndex, item) =>
-			{
-				window.location.href = `./project?id=$\{item.id}`;
-
-				return (false);
-			}>">
-		</admin-table>
-	 * ```
 	 */
 	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, 
 		callbackB: (funcBody: string, endType: string) => string): string
@@ -375,26 +355,31 @@ export class HotFile implements IHotFile
 			{
 				let possibleEnds: string[] = ["}>", "}A>", "}a>", "}R>", "}RA>", "}Ra>"];
 				let endPos = -1;
+				let foundEnd: string = null;
 
+				// Find the nearest end tag
 				for (let i = 0; i < possibleEnds.length; i++)
 				{
 					let possibleEnd: string = possibleEnds[i];
-					endPos = str.indexOf(possibleEnd, arrowIndex);
+					let possibleEndPos = str.indexOf(possibleEnd, arrowIndex);
 
-					if (endPos > -1)
-					{
-						const a = str.slice(startIndex + 2, endIndex).trim().split(",").map(arg => arg.trim());
-						const b = str.slice(braceIndex + 1, endPos).trim();
-						callbackA(a);
-						let out = callbackB(b, possibleEnd);
-
-						str = str.slice(0, startIndex) + out + str.slice(endPos + possibleEnd.length);
-
-						break;
+					if (possibleEndPos > -1 && (endPos == -1 || possibleEndPos < endPos)) {
+						endPos = possibleEndPos;
+						foundEnd = possibleEnd;
 					}
 				}
 
-				nextPos = endPos;
+				if (endPos > -1)
+				{
+					const a = str.slice(startIndex + 2, endIndex).trim().split(",").map(arg => arg.trim());
+					const b = str.slice(braceIndex + 1, endPos).trim();
+					callbackA(a);
+					let out = callbackB(b, foundEnd);
+
+					str = str.slice(0, startIndex) + out + str.slice(endPos + foundEnd.length);
+
+					nextPos = endPos;
+				}
 			}
 
 			startIndex = str.indexOf("<(", nextPos);
