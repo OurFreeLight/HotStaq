@@ -77,7 +77,10 @@
 *>
 	<input id = "message" data-test = "${testData}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
 	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
-	*> onclick = "sayHello ();">Send</button>
+	*> onclick = "<(event) =>
+		{
+			sayHello ();
+		}Ra>">Send</button>
 	<button id = "${getTestHelloWorldAPI2Id ()}" onclick = "sayHelloDifferently ();">Send2</button>
 	<button id = "funcClickTest" data-button-uuid = "3" onclick = "<(event) => 
 	{
