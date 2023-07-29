@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.62";
+	static version: string = "0.8.63";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1788,7 +1788,7 @@ hotstaq_isDocumentReady ();
 		if ((document.readyState === "complete") || (document.readyState === "interactive"))
 			readyFunc ();
 		else
-			window.addEventListener ("load", readyFunc);
+			window.addEventListener ("load", readyFunc, { "once": true });
 	}
 
 	/**
