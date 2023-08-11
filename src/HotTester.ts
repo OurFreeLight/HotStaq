@@ -7,6 +7,7 @@ import { HotTestDestination } from "./HotTestDestination";
 import { HotTestPage } from "./HotTestPage";
 import { HotDestination } from "./HotDestination";
 import { HotTestStop } from "./HotTestStop";
+import { HotTestSeleniumDriver } from "./HotTestSeleniumDriver";
 
 /**
  * Executes tests.
@@ -49,6 +50,10 @@ export abstract class HotTester
 	 * Has this tester finished setting up?
 	 */
 	hasBeenDestroyed: boolean;
+	/**
+	 * Has this tester finished setting up?
+	 */
+	currentPage: HotTestPage;
 
 	constructor (processor: HotStaq, name: string, baseUrl: string, 
 		driver: HotTestDriver, testMaps: { [name: string]: HotTestMap; } = {})
@@ -65,6 +70,7 @@ export abstract class HotTester
 		this.finishedLoading = false;
 		this.hasBeenSetup = false;
 		this.hasBeenDestroyed = false;
+		this.currentPage = null;
 	}
 
 	/**
@@ -102,7 +108,7 @@ export abstract class HotTester
 	 * Executed when page tests are started. If this returns false, the testPath will not be 
 	 * immediately executed afterwards.
 	 */
-	async onTestPagePathStart? (destination: HotDestination, page: HotTestPage, 
+	async onTestPagePathStart? (destination: HotDestination, 
 		stop: HotTestStop, continueWhenTestIsComplete?: boolean): Promise<boolean>;
 	/**
 	 * Executed when a page test has ended.
@@ -112,7 +118,7 @@ export abstract class HotTester
 	/**
 	 * Executed when a command is executed.
 	 */
-	async onCommand? (destination: HotDestination, page: HotTestPage, stop: HotTestStop, 
+	async onCommand? (destination: HotDestination, stop: HotTestStop, 
 		cmd: string, args: string[], cmdFunc: ((cmdArgs: string[]) => Promise<void>)): Promise<void>;
 	/**
 	 * Executed when tests are finished.
@@ -125,8 +131,15 @@ export abstract class HotTester
 	async onExecute? (): Promise<void>;
 	/**
 	 * Executed when this tester has finished loading all data from the API.
+	 * If this returns true, the newPage will be added as the tester's current 
+	 * page that is executing. If it returns false, newPage will not be set as the 
+	 * current page.
 	 */
-	async onFinishedLoading? (): Promise<void>;
+	async onFinishedLoading? (newPage: HotTestPage): Promise<boolean>;
+	/**
+	 * Executed when this tester has finished unloading.
+	 */
+	async onFinishedUnloading? (): Promise<void>;
 
 	/**
 	 * Waits for the API to finish loading all data.
@@ -138,26 +151,6 @@ export abstract class HotTester
 	}
 
 	/**
-	 * Get a test page.
-	 */
-	getTestPage (destination: HotDestination): HotTestPage
-	{
-		let page = this.testMaps[destination.mapName].pages[destination.page];
-
-		return (page);
-	}
-
-	/**
-	 * Get a test path.
-	 */
-	getTestPath (destination: HotDestination, pathName: string): HotTestPath
-	{
-		let page = this.testMaps[destination.mapName].pages[destination.page];
-
-		return (page.testPaths[pathName]);
-	}
-
-	/**
 	 * Get a destination JSON object to use.
 	 */
 	static interpretDestination (mapName: string, testDest: HotTestDestination): HotDestination
@@ -165,7 +158,7 @@ export abstract class HotTester
 		let destination: string = testDest.destination;
 		let newDestination: HotDestination = {
 				mapName: mapName,
-				page: "",
+				url: "",
 				api: "",
 				paths: []
 			};
@@ -193,7 +186,7 @@ export abstract class HotTester
 				return (typeValue);
 			};
 
-		newDestination.page = getType (type, "page:");
+		newDestination.url = getType (type, "url:");
 		newDestination.api = getType (type, "api:");
 
 		for (let iIdx = 1; iIdx < strs.length; iIdx++)
@@ -305,6 +298,8 @@ export abstract class HotTester
 	async executeTestPagePath (destination: HotDestination, stop: HotTestStop, 
 		skipEventCalls: boolean = false, continueWhenTestIsComplete: boolean = false): Promise<any>
 	{
+		await this.waitForData ();
+
 		let runTestPath: boolean = true;
 		let testMap: HotTestMap = this.testMaps[destination.mapName];
 
@@ -312,10 +307,10 @@ export abstract class HotTester
 		if (testMap == null)
 			throw new Error (`HotTester: Web Map ${destination.mapName} does not exist!`);
 
-		let page: HotTestPage = testMap.pages[destination.page];
+		let page: HotTestPage = this.currentPage;
 
 		if (page == null)
-			throw new Error (`HotTester: Page ${destination.page} does not exist!`);
+			throw new Error (`HotTester: A current page was not set!`);
 
 		this.driver.page = page;
 
@@ -326,7 +321,7 @@ export abstract class HotTester
 		if (skipEventCalls === false)
 		{
 			if (this.onTestPagePathStart != null)
-				runTestPath = await this.onTestPagePathStart (destination, page, stop, continueWhenTestIsComplete);
+				runTestPath = await this.onTestPagePathStart (destination, stop, continueWhenTestIsComplete);
 		}
 
 		let result: any = null;
@@ -345,13 +340,17 @@ export abstract class HotTester
 				await this.onTestPagePathEnd (destination, testPath, result, continueWhenTestIsComplete);
 		}
 
+		if (runTestPath === true)
+			await HotStaq.wait (this.driver.pageTestDelay);
+
 		return (result);
 	}
 
 	/**
-	 * Execute a command.
+	 * Execute a command. Example:
+	 * page:Dashboard -> cmd:click(button)
 	 */
-	async executeCommand (destination: HotDestination, page: HotTestPage, stop: HotTestStop, cmd: string): Promise<void>
+	async executeCommand (destination: HotDestination, stop: HotTestStop, cmd: string): Promise<void>
 	{
 		/**
 		 * Check if the input command matches.
@@ -378,70 +377,57 @@ export abstract class HotTester
 				return (result);
 			};
 		/**
-		 * Get the arguments in a command. This will only return a 
-		 * single argument for now.
-		 * 
-		 * @fixme Add support for multiple arguments.
+		 * Get the arguments in a command.
 		 */
 		let getCmdArgs: (input: string) => string[] = 
 			(input: string): string[] =>
 			{
 				let results: string[] = [];
-				let matches = input.match (/(?=\()(.*?)(?=\))/g);
+				const match = input.match(/\(([^)]+)\)/);
+    
+				if (!match)
+					return ([]);
 
-				if (matches != null)
-				{
-					let tempMatch = matches[0];
-
-					// A little hack, since I suck at Regex :(
-					tempMatch = tempMatch.substr (2, tempMatch.length);
-
-					results.push (tempMatch);
-				}
-
-				if (results.length < 1)
-					throw new Error (`HotTester: Command ${input} requires arguments, but none were supplied.`);
+				results = match[1].split(',').map(arg => arg.trim());
 
 				return (results);
 			};
 
-		let seleniumTester: any = null;
 		let cmdFunc: ((cmdArgs: string[]) => Promise<void>) = null;
 		let args: string[] = [];
 
-		// @ts-ignore
-		if (typeof (HotTesterMochaSelenium) != "undefined")
-		{// @ts-ignore
-			// @ts-ignore - Hack to prevent recursive importing.
-			if (this instanceof HotTesterMochaSelenium)
-				seleniumTester = this;
+		if (hasCmd (stop.cmd, "url", true) === true)
+		{
+			args = getCmdArgs (stop.cmd);
+
+			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+				{
+					let input: string = cmdArgs[0];
+
+					// @ts-ignore
+					if (this.driver["waitForTestElement"] == null)
+						throw new Error (`HotTester: Driver ${this.driver.constructor.name} does not support waitForTestElement!`);
+
+					// @ts-ignore
+					await this.driver.navigateToUrl (input);
+				};
 		}
 
-		if (seleniumTester != null)
+		if (hasCmd (stop.cmd, "waitForTestObject", true) === true)
 		{
-			if (hasCmd (stop.cmd, "url", true) === true)
-			{
-				args = getCmdArgs (stop.cmd);
+			args = getCmdArgs (stop.cmd);
 
-				cmdFunc = async (cmdArgs: string[]): Promise<void> =>
-					{
-						let input: string = cmdArgs[0];
+			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+				{
+					let testObject: string = cmdArgs[0];
 
-						await seleniumTester.driver.navigateToUrl (input);
-					};
-			}
+					// @ts-ignore
+					if (this.driver["waitForTestElement"] == null)
+						throw new Error (`HotTester: Driver ${this.driver.constructor.name} does not support waitForTestElement!`);
 
-			if (hasCmd (stop.cmd, "waitForTestObject", true) === true)
-			{
-				args = getCmdArgs (stop.cmd);
-	
-				cmdFunc = async (cmdArgs: string[]): Promise<void> =>
-					{
-						let testObject: string = JSON.parse (cmdArgs[0]);
-	
-						await seleniumTester.driver.waitForTestElement (testObject);
-					};
-			}
+					// @ts-ignore
+					await this.driver.waitForTestElement (testObject);
+				};
 		}
 
 		if (hasCmd (stop.cmd, "waitForTesterAPIData", false) === true)
@@ -489,10 +475,75 @@ export abstract class HotTester
 				};
 		}
 
+		if (hasCmd (stop.cmd, "click", true) === true)
+		{
+			args = getCmdArgs (stop.cmd);
+
+			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+				{
+					let elmName: string = cmdArgs[0];
+
+					// @ts-ignore
+					if (this.driver["waitForTestElement"] == null)
+						throw new Error (`HotTester: Driver ${this.driver.constructor.name} does not support waitForTestElement!`);
+
+					// @ts-ignore
+					const elm = await this.driver.waitForTestElement (elmName);
+					await elm.click ();
+				};
+		}
+
+		if (hasCmd (stop.cmd, "sendKeys", true) === true)
+		{
+			args = getCmdArgs (stop.cmd);
+
+			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+				{
+					let elmName: string = cmdArgs[0];
+					let input: string = cmdArgs[1];
+
+					// @ts-ignore
+					if (this.driver["waitForTestElement"] == null)
+						throw new Error (`HotTester: Driver ${this.driver.constructor.name} does not support waitForTestElement!`);
+
+					// @ts-ignore
+					const elm = await this.driver.waitForTestElement (elmName);
+					await elm.sendKeys (input);
+				};
+		}
+
+		if (hasCmd (stop.cmd, "clear", true) === true)
+		{
+			args = getCmdArgs (stop.cmd);
+
+			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+				{
+					let elmName: string = cmdArgs[0];
+
+					// @ts-ignore
+					if (this.driver["waitForTestElement"] == null)
+						throw new Error (`HotTester: Driver ${this.driver.constructor.name} does not support waitForTestElement!`);
+
+					// @ts-ignore
+					const elm = await this.driver.waitForTestElement (elmName);
+					await elm.clear ();
+				};
+		}
+
+		if (hasCmd (stop.cmd, "debugger", true) === true)
+		{
+			args = getCmdArgs (stop.cmd);
+
+			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
+				{
+					debugger;
+				};
+		}
+
 		if (cmdFunc == null)
 			throw new Error (`HotTester: Command ${stop.cmd} does not exist!`);
 
-		await this.onCommand (destination, page, stop, cmd, args, cmdFunc);
+		await this.onCommand (destination, stop, cmd, args, cmdFunc);
 	}
 
 	/**
@@ -512,10 +563,6 @@ export abstract class HotTester
 		{
 			let stop: HotTestStop = destination.paths[iIdx];
 			let result: any = null;
-			let page: HotTestPage = testMap.pages[destination.page];
-	
-			if (page == null)
-				throw new Error (`HotTester: Page ${destination.page} does not exist!`);
 
 			if (stop.dest !== "")
 			{
@@ -531,7 +578,7 @@ export abstract class HotTester
 			}
 
 			if (stop.cmd !== "")
-				await this.executeCommand (destination, page, stop, stop.cmd);
+				await this.executeCommand (destination, stop, stop.cmd);
 
 			if (stop.path !== "")
 				result = await this.executeTestPagePath (destination, stop, false, continueWhenTestIsComplete);
@@ -556,15 +603,6 @@ export abstract class HotTester
 
 		// Process routes testing first.
 		let routeKey: string = this.processor.getRouteKeyFromName (mapName);
-		let url: string = "";
-
-		if (this.baseUrl === "")
-		{
-			
-		}
-
-		if (routeKey !== "")
-			url = `${this.baseUrl}${routeKey}`;
 
 		let executeDestination: (testDest: HotTestDestination, destinationKey?: string) => Promise<void> = 
 			async (testDest: HotTestDestination, destinationKey: string = "") =>
@@ -578,9 +616,13 @@ export abstract class HotTester
 					let destination: HotDestination = HotTester.interpretDestination (mapName, testDest);
 					let isWebRoute: boolean = false;
 					let runTestPaths: boolean = true;
+					let url: string = this.baseUrl;
 
-					if (destination.page !== "")
+					if (destination.url !== "")
+					{
 						isWebRoute = true;
+						url += destination.url;
+					}
 
 					if (this.setup != null)
 					{
@@ -597,7 +639,7 @@ export abstract class HotTester
 		
 					if (runTestPaths === true)
 					{
-						if (destination.page !== "")
+						if (destination.url !== "")
 							await this.executeTestPagePaths (destination);
 		
 						if (destination.api !== "")

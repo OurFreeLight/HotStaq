@@ -17,8 +17,14 @@ export class HotTestDriver
 	page: HotTestPage;
 	/**
 	 * The delay in milliseconds between each executed command.
+	 * @default 20
 	 */
 	commandDelay: number;
+	/**
+	 * The delay in milliseconds between each completed page test.
+	 * @default 500
+	 */
+	pageTestDelay: number;
 	/**
 	 * Any data that needs to be saved between the different testing runs.
 	 */
@@ -29,6 +35,7 @@ export class HotTestDriver
 		this.processor = processor;
 		this.page = page;
 		this.commandDelay = 20;
+		this.pageTestDelay = 700;
 		this.persistentData = {};
 	}
 
@@ -49,12 +56,14 @@ export class HotTestDriver
 		}
 
 		let selector: string = `[data-test-object-name${wildcard}='${name}']`;
-		pos = name.indexOf (">");
 
-		if (pos > -1)
+		if (name.length > 0)
 		{
-			name = name.replace (/\>/, "");
-			selector = name;
+			if (name[0] === ">")
+			{
+				name = name.substring (1);
+				selector = name;
+			}
 		}
 
 		return (selector);

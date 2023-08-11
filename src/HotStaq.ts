@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.63";
+	static version: string = "0.8.64";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -464,7 +464,7 @@ export class HotStaq implements IHotStaq
 	 */
 	static async wait (numMilliseconds: number): Promise<void>
 	{
-		return (await new Promise ((resolve, reject) =>
+		return (new Promise ((resolve, reject) =>
 			{
 				setTimeout (() =>
 					{
@@ -820,6 +820,40 @@ export class HotStaq implements IHotStaq
 				}
 
 				this.addPage (page);
+			}
+		}
+
+		if (this.hotSite.web != null)
+		{
+			for (let key in this.hotSite.web)
+			{
+				const web = this.hotSite.web[key];
+
+				if (web.map == null)
+					continue;
+
+				if (HotStaq.isWeb === false)
+				{
+					if (this.mode === DeveloperMode.Development)
+					{
+						let mapName: string = key;
+						let testMap: HotTestMap = new HotTestMap ();
+
+						testMap.destinations = [];
+
+						for (let iIdx = 0; iIdx < web.map.length; iIdx++)
+						{
+							let map: string = web.map[iIdx];
+
+							testMap.destinations.push (new HotTestDestination (map));
+						}
+
+						if (tester != null)
+							tester.testMaps[mapName] = testMap;
+						else
+							this.logger.warning ("A tester was not created first! You must specify one in the CLI.");
+					}
+				}
 			}
 		}
 
@@ -1441,6 +1475,21 @@ export class HotStaq implements IHotStaq
 					}
 				}
 			}
+
+			if (this.hotSite.web != null)
+			{
+				for (let key in this.hotSite.web)
+				{
+					let web = this.hotSite.web[key];
+
+					if (web != null)
+					{
+						foundKey = key;
+
+						break;
+					}
+				}
+			}
 		}
 
 		return (foundKey);
@@ -1732,6 +1781,23 @@ let func = function ()
 	{
 		if (Hot.TesterAPI != null)
 		{
+			window.addEventListener ("beforeunload",
+				(event) =>
+				{
+					HotStaqWeb.HotStaq.isReadyForTesting = false;
+
+					Hot.TesterAPI.tester.pageUnloaded ({
+							testerName: Hot.CurrentPage.testerName
+						}).then (function (resp)
+							{
+								if (resp.error != null)
+								{
+									if (resp.error !== "")
+										throw new Error (resp.error);
+								}
+							});
+				});
+
 			let testPaths = {};
 			let testElements = JSON.stringify (Hot.CurrentPage.testElements);
 			let testMaps = JSON.stringify (Hot.CurrentPage.testMaps);
@@ -1747,8 +1813,6 @@ let func = function ()
 
 			Hot.TesterAPI.tester.pageLoaded ({
 					testerName: Hot.CurrentPage.testerName,
-					testerMap: Hot.CurrentPage.testerMap,
-					pageName: Hot.CurrentPage.name,
 					testElements: testElements,
 					testPaths: testPathsStr
 				}).then (function (resp)

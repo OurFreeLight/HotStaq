@@ -74,16 +74,12 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 		await testDriver.loadSeleniumDriver ();
 		let driver: WebDriver = testDriver.driver;
 		let loadDriverUrl: boolean = true;
-		let tempUrl: string = this.baseUrl;
-
-		if (url !== "")
-			tempUrl = url;
 
 		if (this.onSetup != null)
 		{
 			await new Promise<void> ((resolve, reject) =>
 				{
-					this.onSetup (driver, tempUrl).then ((result: boolean) =>
+					this.onSetup (driver, url).then ((result: boolean) =>
 						{
 							loadDriverUrl = result;
 							resolve ();
@@ -103,19 +99,19 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 
 		if (loadDriverUrl === true)
 		{
-			this.processor.logger.verbose (`HotTesterMochaSelenium: Retreiving url ${tempUrl} and waiting for data...`);
+			this.processor.logger.verbose (`HotTesterMochaSelenium: Retreiving url ${url} and waiting for data...`);
 
 			try
 			{
-				let url: URL = new URL (tempUrl);
+				let testUrl: URL = new URL (url);
 			}
 			catch (ex)
 			{
-				throw new Error (`HotTesterMochaSelenium: Cannot start tests. Invalid URL: ${tempUrl}`);
+				throw new Error (`HotTesterMochaSelenium: Cannot start tests. Invalid URL: ${url}`);
 			}
-
+ 
 			this.finishedLoading = false;
-			await driver.get (tempUrl);
+			await driver.get (url);
 			await this.waitForData ();
 
 			this.processor.logger.verbose (`HotTesterMochaSelenium: Received data...`);
@@ -145,7 +141,7 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 
 		this.processor.logger.verbose (`HotTesterMochaSelenium: Setting up Mocha and creating test suite...`);
 		this.mocha = new Mocha ();
-		this.suite = Mocha.Suite.create (this.mocha.suite, `${destination.page}${destinationName} Tests`);
+		this.suite = Mocha.Suite.create (this.mocha.suite, `${url} ${destinationName} Tests`);
 		this.suite.timeout (this.timeout);
 
         if (this.beforeAll != null)
@@ -154,7 +150,7 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 		return (true);
 	}
 
-	async onTestPagePathStart (destination: HotDestination, page: HotTestPage, 
+	async onTestPagePathStart (destination: HotDestination, 
 		stop: HotTestStop, continueWhenTestIsComplete: boolean = false): Promise<boolean>
 	{
 		let testPathName: string = stop.path;
@@ -189,7 +185,7 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 		return (false);
 	}
 
-	async onCommand (destination: HotDestination, page: HotTestPage, stop: HotTestStop, 
+	async onCommand (destination: HotDestination, stop: HotTestStop, 
 		cmd: string, args: string[], cmdFunc: ((cmdArgs: string[]) => Promise<void>)): Promise<void>
 	{
 		this.suite.addTest (new Test (cmd, async () =>
