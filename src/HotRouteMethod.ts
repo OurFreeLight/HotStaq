@@ -26,7 +26,11 @@ export enum HotEventMethod
 	/**
 	 * A websocket event.
 	 */
-	WEBSOCKET_CLIENT_PUB_EVENT = "websocket_client_pub_event"
+	WEBSOCKET_CLIENT_PUB_EVENT = "websocket_client_pub_event",
+	/**
+	 * Handles both a HTTP POST websocket event requests.
+	 */
+	POST_AND_WEBSOCKET_CLIENT_PUB_EVENT = "post_and_websocket_client_pub_event"
 }
 
 /**
