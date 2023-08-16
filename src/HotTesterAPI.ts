@@ -6,6 +6,8 @@ import { HotTestDriver } from "./HotTestDriver";
 import { HotTester } from "./HotTester";
 import { HotTestMap, HotTestPath } from "./HotTestMap";
 import { HotEventMethod, ServerRequest } from "./HotRouteMethod";
+import { HotTestPage } from "./HotTestPage";
+import { HotStaq } from "./HotStaq";
 
 export class HotTesterAPI extends HotAPI
 {
@@ -49,6 +51,18 @@ export class HotTesterAPI extends HotAPI
 				"returns": "Returns true as an acknowledgement."
 			});
 		route.addMethod ({
+				"name": "pageUnloaded", 
+				"onServerExecute": this.pageUnloaded,
+				"parameters": {
+						"testerName": {
+							"required": true,
+							"type": "string",
+							"description": "The name of the tester executing the test."
+						}
+					},
+				"returns": "Returns true as an acknowledgement."
+			});
+		route.addMethod ({
 				"name": "executeTests",
 				"onServerExecute": this.executeTests,
 				"parameters": {
@@ -81,14 +95,10 @@ export class HotTesterAPI extends HotAPI
 	{
 		let testerObj: {
 				testerName: string;
-				testerMap: string;
-				pageName: string;
 				testElements: any;
 				testPathsStrs: any;
 			} = {
 				testerName: request.jsonObj["testerName"],
-				testerMap: request.jsonObj["testerMap"],
-				pageName: request.jsonObj["pageName"],
 				testElements: request.jsonObj["testElements"],
 				testPathsStrs: request.jsonObj["testPaths"]
 			};
@@ -103,7 +113,6 @@ export class HotTesterAPI extends HotAPI
 				throwError = true;
 
 			if ((testerObj.testerName == "") || 
-				(testerObj.testerMap === "") || 
 				(testerObj.testElements === "") || 
 				(testerObj.testPathsStrs === ""))
 			{
@@ -132,22 +141,41 @@ export class HotTesterAPI extends HotAPI
 		if (tester == null)
 			throw new Error (`TesterAPI: Tester ${testerObj.testerName} does not exist!`);
 
-		let testMap: HotTestMap = tester.testMaps[testerObj.testerMap];
-
-		if (testMap == null)
-			throw new Error (`TesterAPI: Tester map ${testerObj.testerMap} does not exist!`);
-
-		testMap.pages[testerObj.pageName] = {
-				"testElements": {},
-				"testPaths": {}
+		let newPage: HotTestPage = {
+				"testElements": testerObj.testElements,
+				"testPaths": testPaths
 			};
-		testMap.pages[testerObj.pageName].testElements = testerObj.testElements;
-		testMap.pages[testerObj.pageName].testPaths = testPaths;
 
 		tester.finishedLoading = true;
 
+		let setAsCurrent: boolean = true;
+
 		if (tester.onFinishedLoading != null)
-			await tester.onFinishedLoading ();
+			setAsCurrent = await tester.onFinishedLoading (newPage);
+
+		if (setAsCurrent === true)
+			tester.currentPage = newPage;
+
+		return (true);
+	}
+
+	/**
+	 * This is called when the page has finished unloading in development mode.
+	 */
+	async pageUnloaded (request: ServerRequest): Promise<any>
+	{
+		const testerName: string = HotStaq.getParam ("testerName", request.jsonObj);
+
+		let tester: HotTester = this.connection.processor.testers[testerName];
+
+		if (tester == null)
+			throw new Error (`TesterAPI: Tester ${testerName} does not exist!`);
+
+		tester.finishedLoading = false;
+		tester.currentPage = null;
+
+		if (tester.onFinishedUnloading != null)
+			await tester.onFinishedUnloading ();
 
 		return (true);
 	}

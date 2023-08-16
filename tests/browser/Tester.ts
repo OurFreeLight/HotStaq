@@ -130,7 +130,7 @@ export class Tester extends HotTester
 			destinationName = ` - ${destinationKey}`;
 
 		this.mocha = new Mocha ();
-		this.suite = Mocha.Suite.create (this.mocha.suite, `${destination.page}${destinationName} Tests`);
+		this.suite = Mocha.Suite.create (this.mocha.suite, `${url} ${destinationName} Tests`);
 		this.suite.timeout (10000);
 
 		this.suite.beforeAll (async () =>
@@ -140,7 +140,7 @@ export class Tester extends HotTester
 		return (true);
 	}
 
-	async onTestPagePathStart (destination: HotDestination, page: HotTestPage, 
+	async onTestPagePathStart (destination: HotDestination, 
 		stop: HotTestStop, continueWhenTestIsComplete: boolean = false): Promise<boolean>
 	{
 		let testPathName: string = stop.path;

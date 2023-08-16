@@ -210,10 +210,18 @@ export interface HotSite
 			}
 		};
 	/**
-	 * The routes to load.
+	 * The routes to load. This MAY be deprecated in the future.
 	 */
 	routes?: {
 			[routeName: string]: HotSiteRoute;
+		};
+	web?: {
+			[name: string]: {
+				/**
+				 * The maps to test in order.
+				 */
+				map?: string[];
+			};
 		};
 	/**
 	 * The available APIs on the server. The server must already have these 

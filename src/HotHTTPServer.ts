@@ -370,6 +370,9 @@ export class HotHTTPServer extends HotServer
 		if (methodType === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
 			expressMethod = "ws_client_pub_event";
 
+		if (methodType === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)
+			expressMethod = "post_and_websocket_client_pub_event";
+
 		return (expressMethod);
 	}
 
@@ -528,15 +531,20 @@ export class HotHTTPServer extends HotServer
 						continue;
 				}
 
-				if (method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+				if (
+						(method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT) || 
+						(method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+					)
 				{
 					if (this.useWebsocketServer === true)
-					{
 						this.websocketServer.addRoute (route, method);
-						method.isRegistered = true;
-					}
 
-					continue;
+					if (method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+					{
+						method.isRegistered = true;
+
+						continue;
+					}
 				}
 
 				let methodName: string = method.getRouteUrl ();

@@ -10,9 +10,9 @@ export interface HotDestination
 	 */
 	mapName: string;
 	/**
-	 * The page to start at.
+	 * The relative url from the base url to start at.
 	 */
-	page: string;
+	url: string;
 	/**
 	 * The API route to start using.
 	 */

@@ -81,7 +81,7 @@ export class HotTesterMocha extends HotTester
 
 		this.processor.logger.verbose (`HotTesterMocha: Setting up Mocha and creating test suite...`);
 		this.mocha = new Mocha ();
-		this.suite = Mocha.Suite.create (this.mocha.suite, `${destination.page}${destinationName} Tests`);
+		this.suite = Mocha.Suite.create (this.mocha.suite, `${url} ${destinationName} Tests`);
 		this.suite.timeout (this.timeout);
 
         if (this.beforeAll != null)
@@ -90,7 +90,7 @@ export class HotTesterMocha extends HotTester
 		return (true);
 	}
 
-	async onTestPagePathStart (destination: HotDestination, page: HotTestPage, 
+	async onTestPagePathStart (destination: HotDestination, 
 		stop: HotTestStop, continueWhenTestIsComplete: boolean = false): Promise<boolean>
 	{
 		let testPathName: string = stop.path;
@@ -162,7 +162,7 @@ export class HotTesterMocha extends HotTester
 		return (false);
 	}
 
-	async onCommand (destination: HotDestination, page: HotTestPage, stop: HotTestStop, 
+	async onCommand (destination: HotDestination, stop: HotTestStop, 
 		cmd: string, args: string[], cmdFunc: ((cmdArgs: string[]) => Promise<void>)): Promise<void>
 	{
 		this.suite.addTest (new Test (cmd, async () =>
