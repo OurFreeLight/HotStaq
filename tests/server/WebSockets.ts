@@ -10,6 +10,7 @@ import { DeveloperMode } from "../../src/Hot";
 import { HotWebSocketServer } from "../../src/HotWebSocketServer";
 import { HotWebSocketServerClient } from "../../src/HotWebSocketServerClient";
 import { HotWebSocketClient } from "../../src/HotWebSocketClient";
+import { Hot } from "../../src/Hot";
 
 describe ("WebSocket Tests", () =>
 	{
@@ -151,6 +152,22 @@ describe ("WebSocket Tests", () =>
 					});
 
 				testClient.off ("hello_world/ws_test_response");
+				expect (result).to.equal ("received");
+
+				result = await Hot.jsonRequest (`${common.getUrl ()}/v1/hello_world/ws_test_response_both`, { "message": "YAY!" });
+				expect (result).to.equal ("received");
+
+				await new Promise<void> ((resolve, reject) =>
+					{
+						testClient.on ("hello_world/ws_test_response_both", (data: any) =>
+							{
+								result = data;
+								resolve ();
+							});
+						testClient.send ("hello_world/ws_test_response_both", { "message": "YAY!" });
+					});
+
+				testClient.off ("hello_world/ws_test_response_both");
 				expect (result).to.equal ("received");
 
 				await new Promise<void> ((resolve, reject) =>

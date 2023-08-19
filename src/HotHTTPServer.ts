@@ -371,7 +371,7 @@ export class HotHTTPServer extends HotServer
 			expressMethod = "ws_client_pub_event";
 
 		if (methodType === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)
-			expressMethod = "post_and_websocket_client_pub_event";
+			expressMethod = "post";
 
 		return (expressMethod);
 	}

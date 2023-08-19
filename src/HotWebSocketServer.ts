@@ -223,8 +223,11 @@ export class HotWebSocketServer
 						{
 							let method: HotRouteMethod = route.methods[iIdx];
 
-							if (method.type !== HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
+							if (! ((method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT) || 
+								(method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)))
+							{
 								continue;
+							}
 
 							let eventName: string = `${routeName}/${method.name}`;
 

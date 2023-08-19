@@ -73,6 +73,7 @@ export class HelloWorldAPI extends HotAPI
 
 				return ({ error: "You didn't say hi." });
 			}, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
+		route.addMethod ("ws_test_response_both", this.testResponse, HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT);
 		route.addMethod ("ws_test_response", this.testResponse, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
 		route.addMethod ("test_response", this.testResponse, HotEventMethod.POST, [
 						"TestAPIResponse",
