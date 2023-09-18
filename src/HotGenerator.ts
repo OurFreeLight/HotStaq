@@ -134,6 +134,23 @@ export class HotGenerator
 		if (server.api.onPreRegister != null)
 			await server.api.onPreRegister ();
 
+		// Process pre registration for the routes and methods.
+		for (let key in server.api.routes)
+		{
+			let route: HotRoute = server.api.routes[key];
+
+			if (route.onPreRegister != null)
+				await route.onPreRegister ();
+
+			for (let iIdx = 0; iIdx < route.methods.length; iIdx++)
+			{
+				let method: HotRouteMethod = route.methods[iIdx];
+
+				if (method.onPreRegister != null)
+					await method.onPreRegister ();
+			}
+		}
+
 		//server.serverType = "API Server";
 		//await server.listen ();
 
@@ -340,6 +357,7 @@ export class HotGenerator
 				}
 
 				this.logger.info (`Finished generating Web API "${key}" from HotSite "${hotsite.name}"...`);
+				process.exit (0);
 			});
 	}
 
@@ -594,6 +612,7 @@ export class HotGenerator
 				await HotIO.writeTextFile (`${outputFile}${outputFileExtension}`, fileContent);
 
 				this.logger.info (`Finished generating API Documentation "${key}" from HotSite "${hotsite.name}"...`);
+				process.exit (0);
 			});
 	}
 

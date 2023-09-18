@@ -254,7 +254,12 @@ export class Hot
 	}
 
 	/**
-	 * Make an api call.
+	 * Make an api call. This must include the route version.
+	 * 
+	 * @example
+	 * ```ts
+	 * await Hot.apiCall ('/v1/hello_world/echo', { message: "Hello!" });
+	 * ```
 	 */
 	static async apiCall (route: string, data: any = null, 
 		httpMethod: HotEventMethod = HotEventMethod.POST, 
@@ -281,7 +286,12 @@ export class Hot
 	}
 
 	/**
-	 * Get a HTTP JSON file or request.
+	 * Get a HTTP JSON file or request using HTTP GET.
+	 * 
+	 * @example
+	 * ```ts
+	 * await Hot.getJSON (`http://example.com/example.json`);
+	 * ```
 	 * 
 	 * @param url The full url to make the HTTP call.
 	 * 
@@ -294,6 +304,11 @@ export class Hot
 
 	/**
 	 * Make a HTTP JSON request.
+	 * 
+	 * @example
+	 * ```ts
+	 * await Hot.jsonRequest ('/v1/hello_world/echo', { message: "Hello!" });
+	 * ```
 	 * 
 	 * @param url The full url to make the HTTP call.
 	 * @param data The data to JSON.stringify and send.
@@ -335,7 +350,26 @@ export class Hot
 	}
 
 	/**
-	 * Make a HTTP request. This is basically just a wrapper for fetch.
+	 * Make a HTTP request. This is basically just a wrapper for fetch that can also upload files.
+	 * 
+	 * @example
+	 * HTTP JSON POST
+	 * ```ts
+	 * await Hot.httpRequest ('http://other-hotstaq-api.com/v1/hello_world/echo', { message: "Hello!" });
+	 * ```
+	 * 
+	 * @example
+	 * Upload file using HTTP POST
+	 * ```ts
+	 * let input = document.getElementById ("fileInput");
+	 * let file = input.files[0];
+	 * 
+	 * await Hot.httpRequest ('http://other-hotstaq-api.com/v1/hello_world/echo', 
+	 * 		{ message: "Hello!" }, HotEventMethod.POST, 
+	 * 		{
+	 * 			"indexFileKey": file
+	 * 		});
+	 * ```
 	 */
 	static async httpRequest (url: string, data: any, httpMethod: HotEventMethod = HotEventMethod.POST, 
 		files: { [name: string]: any } = {}): Promise<any>
