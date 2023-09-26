@@ -1733,7 +1733,7 @@ export class HotStaq implements IHotStaq
 			}
 		}
 
-		if (HotStaq.dispatchReadyEvents === false)
+		if (HotStaq.dispatchReadyEvents === true)
 		{
 			document.dispatchEvent (new Event ("DOMContentLoaded"));
 			window.dispatchEvent (new Event("load"));
