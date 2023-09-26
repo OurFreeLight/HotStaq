@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.67";
+	static version: string = "0.8.68";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -146,9 +146,21 @@ export class HotStaq implements IHotStaq
 	 */
 	static onReadyForTesting: () => Promise<void> = null;
 	/**
-	 * Executes this event when this page is ready for testing.
+	 * Executes this event when this page has received output for processing.
+	 * 
+	 * @param output The output that is about to be used to generate the current page.
 	 */
-	protected static onReadyEvent: () => void = null;
+	static onOutputReceived: (output: string) => void = null;
+	/**
+	 * Executes this event when this page is ready for testing.
+	 * 
+	 * @param output The output that was used to generate the current page.
+	 */
+	protected static onReadyEvent: (output: string) => void = null;
+	/**
+	 * If set to false, the page will not emit DOMContentLoaded or window.load.
+	 */
+	static dispatchReadyEvents: boolean = true;
 	/**
 	 * Errors to execute when something goes wrong.
 	 */
@@ -1648,7 +1660,7 @@ export class HotStaq implements IHotStaq
 	 * When the window has finished loading, execute the function.
 	 * This is meant for web browser use only.
 	 */
-	static onReady (readyFunc: () => void): void
+	static onReady (readyFunc: (output: string) => void): void
 	{
 		HotStaq.onReadyEvent = readyFunc;
 	}
@@ -1659,6 +1671,9 @@ export class HotStaq implements IHotStaq
 	 */
 	static async useOutput (output: string): Promise<void>
 	{
+		if (HotStaq.onOutputReceived != null)
+			HotStaq.onOutputReceived (output);
+
 		let parser = new DOMParser ();
 		let child = parser.parseFromString (output, "text/html");
 		let htmlObj: HTMLHtmlElement = document.getElementsByTagName('html')[0];
@@ -1718,8 +1733,14 @@ export class HotStaq implements IHotStaq
 			}
 		}
 
-		document.dispatchEvent (new Event ("DOMContentLoaded"));
-		window.dispatchEvent (new Event("load"));
+		if (HotStaq.dispatchReadyEvents === true)
+		{
+			document.dispatchEvent (new Event ("DOMContentLoaded"));
+			window.dispatchEvent (new Event("load"));
+		}
+
+		if (HotStaq.onReadyEvent != null)
+			HotStaq.onReadyEvent (output);
 	}
 
 	/**
