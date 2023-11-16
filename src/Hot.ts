@@ -256,9 +256,23 @@ export class Hot
 	/**
 	 * Make an api call. This must include the route version.
 	 * 
+	 * Simple apiCall:
 	 * @example
 	 * ```ts
 	 * await Hot.apiCall ('/v1/hello_world/echo', { message: "Hello!" });
+	 * ```
+	 * 
+	 * Make an API call and upload a file:
+	 * @example
+	 * ```ts
+	 * let input = document.getElementById ("fileInput");
+	 * let file = input.files[0];
+	 * 
+	 * await Hot.apiCall ('/v1/hello_world/echo',
+	 * 		{ message: "Hello!" }, HotEventMethod.POST,
+	 * 		{
+	 * 			"indexFileKey": file
+	 * 		});
 	 * ```
 	 */
 	static async apiCall (route: string, data: any = null, 
