@@ -1787,7 +1787,7 @@ export class HotCLI
 				createHotGenerator ();
 				generator.optimizeJS = true;
 			});
-		generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: javascript,openapi-3.0.0-json,openapi-3.0.0-yaml", 
+		generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: javascript,openapi-3.0.0-json,openapi-3.0.0-yaml,asyncapi-2.6.0-json,asyncapi-2.6.0-yaml,", 
 			(arg: string, previous: any) =>
 			{
 				createHotGenerator ();

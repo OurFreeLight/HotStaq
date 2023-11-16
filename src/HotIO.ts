@@ -36,6 +36,17 @@ export class HotIO
 	}
 
 	/**
+	 * Write a file stream.
+	 */
+	static writeFileStream (path: string, stream: fs.ReadStream): fs.WriteStream
+	{
+		let writeStream: fs.WriteStream = fs.createWriteStream (path);
+		stream.pipe (writeStream);
+
+		return (writeStream);
+	}
+
+	/**
 	 * Read a file and create a stream from it.
 	 */
 	static readFileStream (path: string): fs.ReadStream

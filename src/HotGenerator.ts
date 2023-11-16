@@ -28,6 +28,7 @@ export class HotGenerator
 	 * * javascript
 	 * * openapi-3.0.0-json
 	 * * openapi-3.0.0-yaml
+	 * * asyncapi-2.6.0-json
 	 * * asyncapi-2.6.0-yaml
 	 */
 	generateType: string;
@@ -55,6 +56,10 @@ export class HotGenerator
 	 * The directory to copy all built files to.
 	 */
 	copyTo: string;
+	/**
+	 * Exit on complete.
+	 */
+	exitOnComplete: boolean;
 
 	constructor (logger: HotLog)
 	{
@@ -66,6 +71,7 @@ export class HotGenerator
 		this.logger = logger;
 		this.outputDir = ppath.normalize (`${process.cwd ()}/build-web/`);
 		this.copyTo = "";
+		this.exitOnComplete = true;
 	}
 
 	/**
@@ -228,6 +234,7 @@ export class HotGenerator
 	{
 		if ((this.generateType === "openapi-3.0.0-json") || 
 			(this.generateType === "openapi-3.0.0-yaml") || 
+			(this.generateType === "asyncapi-2.6.0-json") || 
 			(this.generateType === "asyncapi-2.6.0-yaml"))
 		{
 			await this.generateAPIDocumentation (processor, apis);
@@ -357,7 +364,9 @@ export class HotGenerator
 				}
 
 				this.logger.info (`Finished generating Web API "${key}" from HotSite "${hotsite.name}"...`);
-				process.exit (0);
+
+				if (this.exitOnComplete === true)
+					process.exit (0);
 			});
 	}
 
@@ -370,6 +379,7 @@ export class HotGenerator
 	{
 		if (! ((this.generateType === "openapi-3.0.0-json") || 
 			(this.generateType === "openapi-3.0.0-yaml") || 
+			(this.generateType === "asyncapi-2.6.0-json") || 
 			(this.generateType === "asyncapi-2.6.0-yaml")))
 		{
 			throw new Error (`Unknown API documentation --generate-type ${JSON.stringify (this.generateType)}`);
@@ -384,16 +394,27 @@ export class HotGenerator
 				let jsonObj: any = {};
 				let components: any = {};
 				let hotsiteDescription: string = "";
-				let servers: any[] = [{ url: serverResult.baseAPIUrl }];
+				let servers: any = null;
 
 				if (hotsite.description != null)
 					hotsiteDescription = hotsite.description;
 
 				if (this.generateType.indexOf ("openapi-3.0.0") > -1)
+				{
 					jsonObj.openapi = "3.0.0";
+					servers = [{ url: serverResult.baseAPIUrl }];
+				}
 
 				if (this.generateType.indexOf ("asyncapi-2.6.0-yaml") > -1)
+				{
 					jsonObj.asyncapi = "2.6.0";
+					servers = {
+							server: {
+								url: serverResult.baseAPIUrl,
+								protocol: "WebSocket"
+					 		}
+						};
+				}
 
 				let filename: string = `${libraryName}_${apiName}_${this.generateType}`;
 				jsonObj.info = {};
@@ -432,6 +453,17 @@ export class HotGenerator
 								(method.type === HotEventMethod.POST)))
 							{
 								this.logger.verbose (`Skipping method ${method.name} because it is not a GET or POST method.`);
+
+								continue;
+							}
+						}
+
+						if (jsonObj.asyncapi != null)
+						{
+							if (! ((method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT) || 
+								(method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)))
+							{
+								this.logger.verbose (`Skipping method ${method.name} because it is not a POST_AND_WEBSOCKET_CLIENT_PUB_EVENT or WEBSOCKET_CLIENT_PUB_EVENT method.`);
 
 								continue;
 							}
@@ -527,13 +559,28 @@ export class HotGenerator
 							}
 						}
 
-						jsonObj.paths[path] = {};
-						jsonObj.paths[path][method.type.toLowerCase ()] = {
-								"summary": methodDescription,
-								responses: {
-									"200": returnsDescription
-								}
-							};
+						if (jsonObj.openapi != null)
+						{
+							jsonObj.paths[path] = {};
+							jsonObj.paths[path][method.type.toLowerCase ()] = {
+									"summary": methodDescription,
+									responses: {
+										"200": returnsDescription
+									}
+								};
+						}
+
+						if (jsonObj.asyncapi != null)
+						{
+							jsonObj.channels[path] = {
+									publish: {
+										summary: methodDescription,
+										message: {
+											"payload": returnsDescription
+										}
+									}
+								};
+						}
 
 						if (method.parameters != null)
 						{
@@ -573,16 +620,27 @@ export class HotGenerator
 
 						if (component != null)
 						{
-							jsonObj.paths[path][method.type.toLowerCase ()]["requestBody"] = {
-									required: true,
-									content: {
-										"application/json": {
-											schema: {
-												"$ref": `#/components/schemas/${componentName}`
+							if (jsonObj.openapi != null)
+							{
+								jsonObj.paths[path][method.type.toLowerCase ()]["requestBody"] = {
+										required: true,
+										content: {
+											"application/json": {
+												schema: {
+													"$ref": `#/components/schemas/${componentName}`
+												}
 											}
 										}
-									}
-								};
+									};
+							}
+
+							if (jsonObj.asyncapi != null)
+							{
+								jsonObj.channels[path].publish = { message: { payload: {} } };
+								jsonObj.channels[path].publish.message.payload = {
+										"$ref": `#/components/schemas/${componentName}`
+									};
+							}
 						}
 					}
 				}
@@ -595,10 +653,14 @@ export class HotGenerator
 				let outputFileExtension: string = ".json";
 				let fileContent: string = "";
 
-				if (this.generateType === "openapi-3.0.0-json")
+				if ((this.generateType === "openapi-3.0.0-json") || 
+					(this.generateType === "asyncapi-2.6.0-json"))
+				{
 					fileContent = JSON.stringify (jsonObj, null, 2);
+				}
 
-				if (this.generateType === "openapi-3.0.0-yaml")
+				if ((this.generateType === "openapi-3.0.0-yaml") || 
+					(this.generateType === "asyncapi-2.6.0-yaml"))
 				{
 					outputFileExtension = ".yaml";
 
@@ -612,7 +674,9 @@ export class HotGenerator
 				await HotIO.writeTextFile (`${outputFile}${outputFileExtension}`, fileContent);
 
 				this.logger.info (`Finished generating API Documentation "${key}" from HotSite "${hotsite.name}"...`);
-				process.exit (0);
+
+				if (this.exitOnComplete === true)
+					process.exit (0);
 			});
 	}
 
