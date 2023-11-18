@@ -24,24 +24,25 @@ describe ("API Generator Tests", () =>
 			{
 			});
 
-		it ("should load the HotSite", async () =>
+		it ("should load the HotSite and the generator", async () =>
 			{
 				await processor.loadHotSite (`./tests/hotsite/HotSite.json`);
 				await processor.processHotSite ();
 				apis = Common.loadAPIs (processor);
-			});
-		it ("should generate the API", async () =>
-			{
+
 				generator = new HotGenerator (processor.logger);
 				generator.hotsites = [processor.hotSite];
 				generator.exitOnComplete = false;
+			});
+		it ("should generate the API", async () =>
+			{
 				await generator.generateAPI (processor, apis);
 			});
 		it ("should check the generated API", async () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI.js`);
 
-				expect (hash).to.equal ("22117b0047e6b5670c4fd713de76043a27995c77e6c8d8801cf5f118d1f4edfd", 
+				expect (hash).to.equal ("ab450f646cecffb05b71632bbf1ad42f55fea19d2678454d6adb3ead89500c0e", 
 					`The generated API file has changed. Please update the hash in the test.`);
 			});
 		it ("should generate the API documentation", async () =>
@@ -54,7 +55,7 @@ describe ("API Generator Tests", () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI_openapi-3.0.0-yaml.yaml`);
 
-				expect (hash).to.equal ("0685f7b411e61bc401c805d54f155779331195ecff646f70a1e290988688017f", 
+				expect (hash).to.equal ("f5309c6015e117f4317ad209d884e5092ac657d3ad48515a407079ef78c5d39f", 
 					`The generated API documentation file has changed. Please update the hash in the test.`);
 			});
 		it ("should generate the Async API documentation", async () =>
@@ -67,7 +68,7 @@ describe ("API Generator Tests", () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI_asyncapi-2.6.0-yaml.yaml`);
 
-				expect (hash).to.equal ("d795de68ff49e48a807121ca059eb91ff7ad5cc00c2b126a2f574b9d6b4727ea", 
+				expect (hash).to.equal ("2e8f20c672d4ea649ceb3fcf3b0081b487ca15a2ba90865d37064e2d76aaf6d7", 
 					`The generated API documentation file has changed. Please update the hash in the test.`);
 			});
 	});
