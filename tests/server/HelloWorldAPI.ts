@@ -42,13 +42,40 @@ export class HelloWorldAPI extends HotAPI
 				return (true);
 			};
 
+		this.description = "This is the hello world API.";
+
 		let route: HotRoute = new HotRoute (connection, "hello_world");
 		// @ts-ignore
 		route.wsReturnMessage = "Hello!";
+		route.description = "This is the hello world route.";
 		route.addMethod ({
 				name: "hello",
 				description: "Say hello to the server and it will respond.",
 				onServerExecute: this.helloCalled,
+				parameters: {
+					message: "The message to send to the server. Can be: hi, hello"
+				},
+				"testCases": {},
+				returns: "The server says Hello World!"
+			});
+		route.addMethod ("is_up", async (req: ServerRequest): Promise<any> =>
+			{
+				return (true);
+			}, HotEventMethod.GET);
+		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
+		route.addMethod ({
+				name: "ws_hello_event",
+				type: HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT,
+				description: "Say hello to the server and it will respond.",
+				onServerExecute: function async (req: ServerRequest)
+				{
+					const message: string = (<string>req.jsonObj.message).toLowerCase ();
+
+					if ((message === "hi") || (message === "hello"))
+						return (this.wsReturnMessage); // In this case, "this" should be the route.
+
+					return ({ error: "You didn't say hi." });
+				},
 				parameters: {
 					message: {
 						type: "string",
@@ -59,21 +86,20 @@ export class HelloWorldAPI extends HotAPI
 				"testCases": {},
 				returns: "The server says Hello World!"
 			});
-		route.addMethod ("is_up", async (req: ServerRequest): Promise<any> =>
-			{
-				return (true);
-			}, HotEventMethod.GET);
-		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
-		route.addMethod ("ws_hello_event", function async (req: ServerRequest)
-			{
-				const message: string = (<string>req.jsonObj.message).toLowerCase ();
-
-				if ((message === "hi") || (message === "hello"))
-					return (this.wsReturnMessage); // In this case, "this" should be the route.
-
-				return ({ error: "You didn't say hi." });
-			}, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
-		route.addMethod ("ws_test_response_both", this.testResponse, HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT);
+		route.addMethod ({
+				name: "ws_test_response_both",
+				type: HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT,
+				description: "Say hello to the server and it will respond.",
+				onServerExecute: this.testResponse,
+				parameters: {
+					message: "The message to send to the server. It must be: YAY!"
+				},
+				"testCases": {},
+				returns: {
+					type: "string",
+					description: "The server says received."
+				}
+			});
 		route.addMethod ("ws_test_response", this.testResponse, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
 		route.addMethod ("test_response", this.testResponse, HotEventMethod.POST, [
 						"TestAPIResponse",

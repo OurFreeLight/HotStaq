@@ -505,9 +505,9 @@ export class HotRouteMethod implements IHotRouteMethod
 					if (typeof (param) === "string")
 					{
 						newMethod.parameters[key] = {
-								"type": param,
+								"type": "string",
 								"required": false,
-								"description": ""
+								"description": param
 							};
 					}
 					else if (typeof (param) === "function")

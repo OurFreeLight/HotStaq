@@ -396,8 +396,8 @@ export class HotGenerator
 				let hotsiteDescription: string = "";
 				let servers: any = null;
 
-				if (hotsite.description != null)
-					hotsiteDescription = hotsite.description;
+				if (serverResult.api.description != null)
+					hotsiteDescription = serverResult.api.description;
 
 				if (this.generateType.indexOf ("openapi-3.0.0") > -1)
 				{
