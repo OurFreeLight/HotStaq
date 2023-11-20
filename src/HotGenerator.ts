@@ -45,6 +45,10 @@ export class HotGenerator
 	 */
 	optimizeJS: boolean;
 	/**
+	 * The routes to skip when generating.
+	 */
+	skipRoutes: string[];
+	/**
 	 * The logger.
 	 */
 	logger: HotLog;
@@ -68,6 +72,7 @@ export class HotGenerator
 		this.compileTS = true;
 		this.tsconfigPath = ppath.normalize(`${__dirname}/../../tsconfig-generator.json`);
 		this.optimizeJS = false;
+		this.skipRoutes = [];
 		this.logger = logger;
 		this.outputDir = ppath.normalize (`${process.cwd ()}/build-web/`);
 		this.copyTo = "";
@@ -265,9 +270,25 @@ export class HotGenerator
 				{
 					let route: HotRoute = serverResult.api.routes[key2];
 					let routeName: string = route.route;
+					let skipThisRoute: boolean = false;
 
 					if (typeof (routeName) !== "string")
 						throw new Error (`Provided route name is not a string: ${JSON.stringify (route)}`);
+
+					for (let iIdx = 0; iIdx < this.skipRoutes.length; iIdx++)
+					{
+						const skipRoute: string = this.skipRoutes[iIdx];
+
+						if (routeName === skipRoute)
+						{
+							skipThisRoute = true;
+
+							break;
+						}
+					}
+
+					if (skipThisRoute === true)
+						continue;
 
 					apiFileContent += await this.getAPIContent (this.generateType, "class_header", 
 						{ routeName: routeName, baseAPIUrl: serverResult.baseAPIUrl, 
@@ -283,6 +304,9 @@ export class HotGenerator
 							methodType = "get";
 			
 						if (method.type === HotEventMethod.POST)
+							methodType = "post";
+			
+						if (method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)
 							methodType = "post";
 			
 						if (method.type === HotEventMethod.FILE_UPLOAD)
@@ -409,9 +433,9 @@ export class HotGenerator
 				{
 					jsonObj.asyncapi = "2.6.0";
 					servers = {
-							server: {
+							production: {
 								url: serverResult.baseAPIUrl,
-								protocol: "WebSocket"
+								protocol: "ws"
 					 		}
 						};
 				}
@@ -434,9 +458,25 @@ export class HotGenerator
 					let route: HotRoute = serverResult.api.routes[key2];
 					let routeName: string = route.route;
 					let routeDescription: string = "";
+					let skipThisRoute: boolean = false;
 
 					if (typeof (routeName) !== "string")
 						throw new Error (`Provided route name is not a string: ${JSON.stringify (route)}`);
+
+					for (let iIdx = 0; iIdx < this.skipRoutes.length; iIdx++)
+					{
+						const skipRoute: string = this.skipRoutes[iIdx];
+
+						if (routeName === skipRoute)
+						{
+							skipThisRoute = true;
+
+							break;
+						}
+					}
+
+					if (skipThisRoute === true)
+						continue;
 
 					if (route.description != null)
 						routeDescription = route.description;
@@ -450,7 +490,8 @@ export class HotGenerator
 						if (jsonObj.openapi != null)
 						{
 							if (! ((method.type === HotEventMethod.GET) || 
-								(method.type === HotEventMethod.POST)))
+								(method.type === HotEventMethod.POST) || 
+								(method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)))
 							{
 								this.logger.verbose (`Skipping method ${method.name} because it is not a GET or POST method.`);
 
