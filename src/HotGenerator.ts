@@ -486,6 +486,10 @@ export class HotGenerator
 					for (let iJdx = 0; iJdx < route.methods.length; iJdx++)
 					{
 						let method: HotRouteMethod = route.methods[iJdx];
+						let methodType: string = method.type.toLowerCase ();
+
+						if (method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)
+							methodType = "post";
 
 						if (jsonObj.openapi != null)
 						{
@@ -603,7 +607,7 @@ export class HotGenerator
 						if (jsonObj.openapi != null)
 						{
 							jsonObj.paths[path] = {};
-							jsonObj.paths[path][method.type.toLowerCase ()] = {
+							jsonObj.paths[path][methodType] = {
 									"summary": methodDescription,
 									responses: {
 										"200": returnsDescription
@@ -663,7 +667,7 @@ export class HotGenerator
 						{
 							if (jsonObj.openapi != null)
 							{
-								jsonObj.paths[path][method.type.toLowerCase ()]["requestBody"] = {
+								jsonObj.paths[path][methodType]["requestBody"] = {
 										required: true,
 										content: {
 											"application/json": {
