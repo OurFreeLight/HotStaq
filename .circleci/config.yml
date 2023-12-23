@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  browser-tools: circleci/browser-tools@1.4.3
+  browser-tools: circleci/browser-tools@1.4.6
 
 jobs:
   test:
@@ -16,7 +16,25 @@ jobs:
             sudo npm install -g typescript typedoc mocha
             npm install
             
-            cat > "./.env" \<<EOF
+            cat > "./.env.chrome" \<<EOF
+            HTTP_PORT=3123
+            DATABASE_SERVER=localhost
+            DATABASE_PORT=3310
+            DATABASE_USERNAME=5NKVBAt7OrzrumQyQVs
+            DATABASE_PASSWORD=1BBrZbKYRUM7oiMA5oY
+            DATABASE_SCHEMA=hotstaq
+            INFLUX_DATABASE_SERVER=http://localhost:8091
+            INFLUX_DATABASE_USERNAME=5NKVBAt7OrzrumQyQVs
+            INFLUX_DATABASE_PASSWORD=1BBrZbKYRUM7oiMA5oY
+            INFLUX_DATABASE_ORG=freelight
+            INFLUX_DATABASE_TOKEN=Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e
+            INFLUX_DATABASE_SCHEMA=hotstaq
+            LOGGING_LEVEL=verbose
+            TESTING_DEVTOOLS=0
+            TESTING_RUN_HEADLESS=1
+            EOF
+            
+            cat > "./.env.firefox" \<<EOF
             HTTP_PORT=3123
             DATABASE_SERVER=localhost
             DATABASE_PORT=3310
@@ -53,13 +71,15 @@ jobs:
             ls ./build-web/HotStaq.min.js
             ls ./build-web/HotStaqTests_HelloWorldAPI.js
             ls ./build-web/HotStaqTests.js
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
+      - browser-tools/install-browser-tools
       - run:
           name: Check Chrome Installation
           command: |
             google-chrome --version
             chromedriver --version
+            firefox --version
+            geckodriver --version
+            java -jar /usr/local/bin/selenium.jar --version
       # Will attempt to get this to work again later. Will be great for testing on multiple different browsers.
       # - run:
       #     name: "Prepare for Testing"
@@ -68,51 +88,100 @@ jobs:
       #       sleep 2
       #       java -Dwebdriver.chrome.driver="/usr/local/bin/chromedriver" -jar /usr/local/bin/selenium.jar -role node &
       # Will attempt to get this to work again later
+
+      # Execute Chrome Tests
       - run:
-          name: "Test: Browsers"
+          name: "Chrome Test: Browsers"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
       - run:
-          name: "Test: Components"
+          name: "Chrome Test: Components"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/components/**/*.js
       - run:
-          name: "Test: Create"
+          name: "Chrome Test: Create"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/create/**/*.js
       - run:
-          name: "Test: Generator"
+          name: "Chrome Test: Generator"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
       - run:
-          name: "Test: Hotsite"
+          name: "Chrome Test: Hotsite"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
       - run:
-          name: "Test: Local"
+          name: "Chrome Test: Local"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/local/**/*.js
       - run:
-          name: "Test: Parsing"
+          name: "Chrome Test: Parsing"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
       - run:
-          name: "Test: Server"
+          name: "Chrome Test: Server"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/server/**/*.js
       - run:
-          name: "Test: Creator"
+          name: "Chrome Test: Creator"
           command: |
-            export $(cat .env | xargs)
+            export $(cat .env.chrome | xargs)
             mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+
+      # Execute Firefox Tests -- Someday...
+      # - run:
+      #     name: "Firefox Test: Browsers"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
+      # - run:
+      #     name: "Firefox Test: Components"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/components/**/*.js
+      # - run:
+      #     name: "Firefox Test: Create"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+      # - run:
+      #     name: "Firefox Test: Generator"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
+      # - run:
+      #     name: "Firefox Test: Hotsite"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
+      # - run:
+      #     name: "Firefox Test: Local"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/local/**/*.js
+      # - run:
+      #     name: "Firefox Test: Parsing"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
+      # - run:
+      #     name: "Firefox Test: Server"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/server/**/*.js
+      # - run:
+      #     name: "Firefox Test: Creator"
+      #     command: |
+      #       export $(cat .env.firefox | xargs)
+      #       mocha --timeout 5000 --colors ./build/tests/create/**/*.js
   publish:
     docker:
       - image: cimg/node:lts
@@ -181,7 +250,7 @@ workflows:
             branches:
               only: 
                 - dev
-                - master
+                #- master # Disabled for now...
       - publish:
           requires:
             - test
