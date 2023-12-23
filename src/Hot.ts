@@ -154,7 +154,7 @@ export class Hot
 	 */
 	static async includeJS (file: HotFile | string, args: any[] = null, parentObject: any = null): Promise<any>
 	{
-		const output: string = await Hot.getFile (file, args);
+		const output: string = await Hot.getFile (file);
 
 		if (HotStaq.isWeb === true)
 		{
@@ -167,7 +167,9 @@ export class Hot
 				parentObject = global;
 		}
 
-		return (eval.apply (parentObject, [output]));
+		let func = new Function (output);
+
+		return (func.apply (parentObject, args));
 	}
 
 	/**
