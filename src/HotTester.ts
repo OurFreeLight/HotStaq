@@ -47,13 +47,17 @@ export abstract class HotTester
 	 */
 	hasBeenSetup: boolean;
 	/**
-	 * Has this tester finished setting up?
+	 * Has this tester been destroyed?
 	 */
 	hasBeenDestroyed: boolean;
 	/**
-	 * Has this tester finished setting up?
+	 * The current page currently executing.
 	 */
 	currentPage: HotTestPage;
+	/**
+	 * The number of tests that have failed.
+	 */
+	numFailures: number;
 
 	constructor (processor: HotStaq, name: string, baseUrl: string, 
 		driver: HotTestDriver, testMaps: { [name: string]: HotTestMap; } = {})
@@ -71,6 +75,7 @@ export abstract class HotTester
 		this.hasBeenSetup = false;
 		this.hasBeenDestroyed = false;
 		this.currentPage = null;
+		this.numFailures = 0;
 	}
 
 	/**

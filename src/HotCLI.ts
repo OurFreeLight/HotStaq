@@ -1135,7 +1135,7 @@ export class HotCLI
 							}
 
 							/// @todo Remove this once the shutdown process is fixed.
-							process.exit (0);
+							process.exit (tester.numFailures);
 						}
 					}
 				};

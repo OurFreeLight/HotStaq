@@ -207,6 +207,7 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 
 				this.mocha.run ((failures: number) =>
 					{
+						this.numFailures = failures;
 						this.processor.logger.verbose (`HotTesterMochaSelenium: Tests complete!`);
 						resolve ();
 					});

@@ -163,6 +163,7 @@ export class Tester extends HotTester
 					});
 				this.mocha.run ((failures: number) =>
 					{
+						this.numFailures = failures;
 						resolve ();
 					});
 			}));
