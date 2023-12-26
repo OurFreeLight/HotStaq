@@ -237,114 +237,120 @@ export abstract class HotAPI
 
 		this.routes[routeName].connection = this.connection;
 
-		// Create the route functions for the server/client.
+		// Create the route functions for the server/client. This must also be done after the route's onPreRegister has been called.
 		if (this.createFunctions === true)
+			this.createAPIRouteMethods (routeName);
+	}
+
+	/**
+	 * Create the API route methods for use in api.my_route.my_method ().
+	 */
+	createAPIRouteMethods (routeName: string): void
+	{
+		// @ts-ignore
+		let newRoute: { [name: string]: Function } = this[routeName];
+
+		if (newRoute == null)
+			newRoute = {};
+
+		for (let iIdx = 0; iIdx < this.routes[routeName].methods.length; iIdx++)
 		{
-			// @ts-ignore
-			let newRoute: { [name: string]: Function } = this[routeName];
+			let currentRoute: HotRoute = this.routes[routeName];
+			let newRouteMethod: HotRouteMethod = this.routes[routeName].methods[iIdx];
 
-			if (newRoute == null)
-				newRoute = {};
-
-			for (let iIdx = 0; iIdx < this.routes[routeName].methods.length; iIdx++)
+			/*
+			/// @fixme Is this really necessary? A HTTP call is much more preferable, 
+			/// especially for accruate testing.
+			if (this.connection instanceof HotServer)
 			{
-				let currentRoute: HotRoute = this.routes[routeName];
-				let newRouteMethod: HotRouteMethod = this.routes[routeName].methods[iIdx];
-
+				if (newRouteMethod.onServerExecute != null)
+					newRoute[newRouteMethod.name] = newRouteMethod.onServerExecute;
+			}
+			else*/
+			{
 				/*
-				/// @fixme Is this really necessary? A HTTP call is much more preferable, 
-				/// especially for accruate testing.
-				if (this.connection instanceof HotServer)
-				{
-					if (newRouteMethod.onServerExecute != null)
-						newRoute[newRouteMethod.name] = newRouteMethod.onServerExecute;
-				}
-				else*/
-				{
-					/*
-					/// @fixme Is onClientExecute necessary? I'm thinking the dev can just simply create 
-					/// their own function to call.
-					if (newRouteMethod.onClientExecute != null)
-						newRoute[newRouteMethod.name] = newRouteMethod.onClientExecute;
-					else
-					{*/
-						newRoute[newRouteMethod.name] = (data: any, files: any): any =>
+				/// @fixme Is onClientExecute necessary? I'm thinking the dev can just simply create 
+				/// their own function to call.
+				if (newRouteMethod.onClientExecute != null)
+					newRoute[newRouteMethod.name] = newRouteMethod.onClientExecute;
+				else
+				{*/
+					newRoute[newRouteMethod.name] = (data: any, files: any): any =>
+						{
+							let httpMethod: string = newRouteMethod.type;
+							// Construct the url here. Base + route + route method
+							let routeStr: string = newRouteMethod.getRouteUrl ();
+							let authCredentials: any = null;
+
+							// Getting the authorization credentials from the API is the lowest 
+							// priority for getting credentials. The priorities are in this order: 
+							// 1. HotRouteMethod
+							// 2. HotRoute
+							// 3. HotAPI
+							if (this.authCredentials != null)
+								authCredentials = this.authCredentials;
+
+							// Find the authorization credentials. Prioritize them when they're 
+							// in the method. Only add the ones from the route if the ones from 
+							// the method are missing.
+							if (newRouteMethod.authCredentials != null)
+								authCredentials = newRouteMethod.authCredentials;
+							else
 							{
-								let httpMethod: string = newRouteMethod.type;
-								// Construct the url here. Base + route + route method
-								let routeStr: string = newRouteMethod.getRouteUrl ();
-								let authCredentials: any = null;
+								if (newRouteMethod.route.authCredentials != null)
+									authCredentials = newRouteMethod.route.authCredentials;
+							}
 
-								// Getting the authorization credentials from the API is the lowest 
-								// priority for getting credentials. The priorities are in this order: 
-								// 1. HotRouteMethod
-								// 2. HotRoute
-								// 3. HotAPI
-								if (this.authCredentials != null)
-									authCredentials = this.authCredentials;
-
-								// Find the authorization credentials. Prioritize them when they're 
-								// in the method. Only add the ones from the route if the ones from 
-								// the method are missing.
-								if (newRouteMethod.authCredentials != null)
-									authCredentials = newRouteMethod.authCredentials;
-								else
-								{
-									if (newRouteMethod.route.authCredentials != null)
-										authCredentials = newRouteMethod.route.authCredentials;
-								}
-
-								if (authCredentials == null)
+							if (authCredentials == null)
+							{
+								// @ts-ignore
+								if (typeof (Hot) !== "undefined")
 								{
 									// @ts-ignore
-									if (typeof (Hot) !== "undefined")
+									if (Hot != null)
 									{
 										// @ts-ignore
-										if (Hot != null)
+										if (Hot.API != null)
 										{
 											// @ts-ignore
-											if (Hot.API != null)
+											if (Hot.API[currentRoute.route] != null)
 											{
 												// @ts-ignore
-												if (Hot.API[currentRoute.route] != null)
+												if (Hot.API[currentRoute.route].authCredentials != null)
 												{
 													// @ts-ignore
-													if (Hot.API[currentRoute.route].authCredentials != null)
-													{
-														// @ts-ignore
-														authCredentials = Hot.API[currentRoute.route].authCredentials;
-													}
+													authCredentials = Hot.API[currentRoute.route].authCredentials;
 												}
 											}
 										}
 									}
 								}
+							}
 
-								if (authCredentials != null)
+							if (authCredentials != null)
+							{
+								// Add the authorization credentials to the data being sent.
+								for (let key in authCredentials)
 								{
-									// Add the authorization credentials to the data being sent.
-									for (let key in authCredentials)
-									{
-										let authCredential: any = authCredentials[key];
+									let authCredential: any = authCredentials[key];
 
-										// Do not overwrite any existing keys in the data about 
-										// to be sent.
-										if (data[key] == null)
-											data[key] = authCredential;
-									}
+									// Do not overwrite any existing keys in the data about 
+									// to be sent.
+									if (data[key] == null)
+										data[key] = authCredential;
 								}
+							}
 
-								let args: any[] = [routeStr, data, httpMethod, files];
+							let args: any[] = [routeStr, data, httpMethod, files];
 
-								return (this.makeCall.apply (this, args));
-							};
-					//}
-				}
+							return (this.makeCall.apply (this, args));
+						};
+				//}
 			}
-
-			// @ts-ignore
-			this[routeName] = newRoute;
 		}
+
+		// @ts-ignore
+		this[routeName] = newRoute;
 	}
 
 	/**

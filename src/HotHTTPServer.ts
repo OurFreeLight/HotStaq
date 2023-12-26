@@ -1234,6 +1234,8 @@ export class HotHTTPServer extends HotServer
 								if (method.onPreRegister != null)
 									await method.onPreRegister ();
 							}
+
+							this.api.createAPIRouteMethods (route.route);
 						}
 
 						// Register all the routes.
