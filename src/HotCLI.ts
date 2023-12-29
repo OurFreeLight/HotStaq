@@ -692,6 +692,7 @@ export class HotCLI
 				browser: string;
 				openDevTools: boolean;
 				disableGPUAndSandbox: boolean;
+				disableDevShmUsage: boolean;
 				headless: boolean;
 				remoteServer: string;
 				windowWidth: number;
@@ -708,6 +709,7 @@ export class HotCLI
 				browser: "chrome",
 				openDevTools: false,
 				disableGPUAndSandbox: false,
+				disableDevShmUsage: false,
 				headless: false,
 				remoteServer: "",
 				windowWidth: null,
@@ -809,6 +811,7 @@ export class HotCLI
 								mochaSeleniumTester.driver.browser = testerSettings.browser;
 								mochaSeleniumTester.driver.openDevTools = testerSettings.openDevTools;
 								mochaSeleniumTester.driver.disableGPUAndSandbox = testerSettings.disableGPUAndSandbox;
+								mochaSeleniumTester.driver.disableDevShmUsage = testerSettings.disableDevShmUsage;
 								mochaSeleniumTester.driver.headless = testerSettings.headless;
 								mochaSeleniumTester.driver.remoteServer = testerSettings.remoteServer;
 
@@ -1282,6 +1285,12 @@ export class HotCLI
 			(value: string, previous: any) =>
 			{
 				testerSettings.disableGPUAndSandbox = true;
+			}, "false");
+		runCmd.option (`--tester-disable-dev-shm-usage`, 
+			`Disable shared memory usage in the launched browser. Useful for executing in headless environments. Can only be used with tester type: HotTesterMochaSelenium`, 
+			(value: string, previous: any) =>
+			{
+				testerSettings.disableDevShmUsage = true;
 			}, "false");
 		runCmd.option (`--tester-window-width`, 
 			`Set the width of the brower's window. Can only be used with tester type: HotTesterMochaSelenium`, 
