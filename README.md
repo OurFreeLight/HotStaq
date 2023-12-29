@@ -116,12 +116,15 @@ You can configure how HotStaq starts by using the following environment variable
 		* verbose
 		* all
 		* none
+
+## HotStaq Development Specific Environment Variables
+The following environment variables are only used during development and testing of HotStaq. These are not meant to be used for HotStaq applications:
 * SELENIUM_REMOTE_SERVER
 	* Type: string
 	* Description: The remote selenium server to do web browser tests with. This will also ensure that the server is being used headless.
+	* Example: http://localhost:4444
 	* Accepted values:
 		* Any valid url.
-		* http://localhost:
 * SELENIUM_WINDOW_WIDTH
 	* Type: number
 	* Description: The width of the new browser window.
