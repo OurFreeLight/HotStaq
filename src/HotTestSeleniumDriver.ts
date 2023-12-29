@@ -37,6 +37,11 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	 */
 	openDevTools: boolean;
 	/**
+	 * Disables shared memory usage. Mostly for usage within Docker. This works on Chrome, 
+	 * may not work on Firefox as it has not been tested on Firefox.
+	 */
+	disableDevShmUsage: boolean;
+	/**
 	 * Set the remote server to use for testing.
 	 */
 	remoteServer: string;
@@ -64,6 +69,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		this.headless = false;
 		this.disableGPUAndSandbox = false;
 		this.openDevTools = false;
+		this.disableDevShmUsage = false;
 		this.remoteServer = "";
 		this.windowSize = null;
 	}
@@ -137,6 +143,12 @@ export class HotTestSeleniumDriver extends HotTestDriver
 				this.processor.logger.verbose (`  * headless`);
 			}
 
+			if (this.disableDevShmUsage === true)
+			{
+				options = options.addArguments ("---disable-dev-shm-usage");
+				this.processor.logger.verbose (`  * Disable Shared Memory`);
+			}
+
 			if (this.windowSize != null)
 			{
 				options = options.windowSize (this.windowSize);
@@ -177,6 +189,12 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			{
 				options = options.addArguments ("--auto-open-devtools-for-tabs");
 				this.processor.logger.verbose (`  * Auto open devtools`);
+			}
+
+			if (this.disableDevShmUsage === true)
+			{
+				options = options.addArguments ("---disable-dev-shm-usage");
+				this.processor.logger.verbose (`  * Disable Shared Memory`);
 			}
 
 			if (this.headless === true)
