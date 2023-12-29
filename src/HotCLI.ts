@@ -691,8 +691,11 @@ export class HotCLI
 				timeout: number;
 				browser: string;
 				openDevTools: boolean;
+				disableGPUAndSandbox: boolean;
 				headless: boolean;
 				remoteServer: string;
+				windowWidth: number;
+				windowHeight: number;
 				http: number;
 				https: number;
 				shutdownAfterTests: boolean;
@@ -704,8 +707,11 @@ export class HotCLI
 				timeout: 10000,
 				browser: "chrome",
 				openDevTools: false,
+				disableGPUAndSandbox: false,
 				headless: false,
 				remoteServer: "",
+				windowWidth: null,
+				windowHeight: null,
 				http: 8182,
 				https: 4143,
 				shutdownAfterTests: true,
@@ -802,8 +808,16 @@ export class HotCLI
 									this.processor, "HotTesterMochaSelenium", baseWebUrl);
 								mochaSeleniumTester.driver.browser = testerSettings.browser;
 								mochaSeleniumTester.driver.openDevTools = testerSettings.openDevTools;
+								mochaSeleniumTester.driver.disableGPUAndSandbox = testerSettings.disableGPUAndSandbox;
 								mochaSeleniumTester.driver.headless = testerSettings.headless;
 								mochaSeleniumTester.driver.remoteServer = testerSettings.remoteServer;
+
+								if (testerSettings.windowWidth != null)
+									mochaSeleniumTester.driver.windowSize.width = testerSettings.windowWidth;
+
+								if (testerSettings.windowHeight != null)
+									mochaSeleniumTester.driver.windowSize.height = testerSettings.windowHeight;
+
 								tester = mochaSeleniumTester;
 							}
 
@@ -1263,6 +1277,42 @@ export class HotCLI
 			{
 				testerSettings.openDevTools = true;
 			}, "false");
+		runCmd.option (`--tester-disable-gpu-sandbox`, 
+			`Disable GPU and Sandbox. Useful for executing in headless environments. Can only be used with tester type: HotTesterMochaSelenium`, 
+			(value: string, previous: any) =>
+			{
+				testerSettings.disableGPUAndSandbox = true;
+			}, "false");
+		runCmd.option (`--tester-window-width`, 
+			`Set the width of the brower's window. Can only be used with tester type: HotTesterMochaSelenium`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					const tempValue: number = parseInt (value);
+
+					testerSettings.windowWidth = tempValue;
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse window width ${value}`);
+				}
+			}, "");
+		runCmd.option (`--tester-window-height`, 
+			`Set the height of the brower's window. Can only be used with tester type: HotTesterMochaSelenium`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					const tempValue: number = parseInt (value);
+
+					testerSettings.windowHeight = tempValue;
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse window height ${value}`);
+				}
+			}, "");
 		runCmd.option (`--tester-headless`, 
 			`Make the browser headless. Can only be used with tester type: HotTesterMochaSelenium`, 
 			(value: string, previous: any) =>
@@ -1270,7 +1320,7 @@ export class HotCLI
 				testerSettings.headless = true;
 			}, "false");
 		runCmd.option (`--tester-remote-server <remote_server>`, 
-			`Set the remote Selenium server to use for testing. Can only be used with tester type: HotTesterMochaSelenium`, 
+			`Set the remote Selenium server to use for testing. Example: "http://localhost:4444" Can only be used with tester type: HotTesterMochaSelenium`, 
 			(remoteServer: string, previous: any) =>
 			{
 				testerSettings.remoteServer = remoteServer;
