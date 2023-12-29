@@ -34,7 +34,7 @@ describe ("Create App Tests", function ()
 
 				creator = new HotCreator (processor.logger, "app");
 				creator.outputDir = baseDir;
-				creator.hotstaqVersion = `0.8.72`; // Be sure to set the previous version for testing
+				creator.hotstaqVersion = `0.8.74`; // Be sure to set the previous version for testing
 				await creator.create ();
 			});
 		it ("should check that the node_modules folder exists", async () =>
