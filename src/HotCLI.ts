@@ -815,6 +815,17 @@ export class HotCLI
 								mochaSeleniumTester.driver.headless = testerSettings.headless;
 								mochaSeleniumTester.driver.remoteServer = testerSettings.remoteServer;
 
+								if ((testerSettings.windowWidth != null) || (testerSettings.windowHeight != null))
+								{
+									if (mochaSeleniumTester.driver.windowSize == null)
+									{
+										mochaSeleniumTester.driver.windowSize = {
+												width: 1920,
+												height: 1080
+											};
+									}
+								}
+
 								if (testerSettings.windowWidth != null)
 									mochaSeleniumTester.driver.windowSize.width = testerSettings.windowWidth;
 
