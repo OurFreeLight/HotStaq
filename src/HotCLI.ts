@@ -1303,7 +1303,7 @@ export class HotCLI
 			{
 				testerSettings.disableDevShmUsage = true;
 			}, "false");
-		runCmd.option (`--tester-window-width`, 
+		runCmd.option (`--tester-window-width <number>`, 
 			`Set the width of the brower's window. Can only be used with tester type: HotTesterMochaSelenium`, 
 			(value: string, previous: any) =>
 			{
@@ -1318,7 +1318,7 @@ export class HotCLI
 					this.processor.logger.error (`Unable to parse window width ${value}`);
 				}
 			}, "");
-		runCmd.option (`--tester-window-height`, 
+		runCmd.option (`--tester-window-height <number>`, 
 			`Set the height of the brower's window. Can only be used with tester type: HotTesterMochaSelenium`, 
 			(value: string, previous: any) =>
 			{
