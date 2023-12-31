@@ -184,7 +184,7 @@ export class HotTesterMocha extends HotTester
 
 				this.mocha.run ((failures: number) =>
 					{
-						this.numFailures = failures;
+						this.numFailures += failures;
 						this.processor.logger.verbose (`HotTesterMocha: Tests complete!`);
 						resolve ();
 					});
