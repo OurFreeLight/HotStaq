@@ -30,6 +30,8 @@ describe ("API Generator Tests", () =>
 				await processor.processHotSite ();
 				apis = Common.loadAPIs (processor);
 
+				processor.hotSite.version = "100.2.3";
+
 				generator = new HotGenerator (processor.logger);
 				generator.hotsites = [processor.hotSite];
 				generator.exitOnComplete = false;
@@ -55,7 +57,7 @@ describe ("API Generator Tests", () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI_openapi-3.0.0-yaml.yaml`);
 
-				expect (hash).to.equal ("f221842ac3b015d449f1a5ca7325959c55116d9d7e039f6de81b0889db2f91fa", 
+				expect (hash).to.equal ("2aa987e7dd37cb28eb79c3b341424fc41883ae0be0ce23db5bc02daf0f7e609f", 
 					`The generated API documentation file has changed. Please update the hash in the test.`);
 			});
 		it ("should generate the Async API documentation", async () =>
@@ -68,7 +70,7 @@ describe ("API Generator Tests", () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI_asyncapi-2.6.0-yaml.yaml`);
 
-				expect (hash).to.equal ("629087973c4678d3c135acac1c849ff9cdd717ee318b91ad8918d9879a8c741a", 
+				expect (hash).to.equal ("089764c290b93d220dc36dde03e69227687f6c8449ee0ebdcf620e95cc6ab434", 
 					`The generated API documentation file has changed. Please update the hash in the test.`);
 			});
 	});
