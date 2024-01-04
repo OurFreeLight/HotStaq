@@ -443,7 +443,21 @@ export class HotGenerator
 				let filename: string = `${libraryName}_${apiName}_${this.generateType}`;
 				jsonObj.info = {};
 				jsonObj.info.title = hotsite.name;
-				jsonObj.info.version = hotsite.name;
+
+				let version: string = hotsite.version;
+
+				if (version == null)
+				{
+					let packagePath: string = ppath.normalize (`${__dirname}/../../package.json`);
+
+					if (await HotIO.exists (packagePath) === false)
+						packagePath = ppath.normalize (`${process.cwd ()}/package.json`);
+
+					let packageJSON: any = HotIO.readJSONFile (packagePath);
+					version = packageJSON.version;
+				}
+
+				jsonObj.info.version = version;
 				jsonObj.info.description = hotsiteDescription;
 				jsonObj.servers = servers;
 
