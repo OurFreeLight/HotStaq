@@ -453,7 +453,7 @@ export class HotGenerator
 					if (await HotIO.exists (packagePath) === false)
 						packagePath = ppath.normalize (`${process.cwd ()}/package.json`);
 
-					let packageJSON: any = HotIO.readJSONFile (packagePath);
+					let packageJSON: any = await HotIO.readJSONFile (packagePath);
 					version = packageJSON.version;
 				}
 
