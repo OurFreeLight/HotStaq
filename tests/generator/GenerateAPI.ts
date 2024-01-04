@@ -55,7 +55,7 @@ describe ("API Generator Tests", () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI_openapi-3.0.0-yaml.yaml`);
 
-				expect (hash).to.equal ("75d131d10b87f7ac08c54cb4c90bfbca0d7fa2573da3b28eab2eec2b97f249ea", 
+				expect (hash).to.equal ("1b662c54f56694f370200ef654ca9403e4066f3b441905b2e289e0d469612d44", 
 					`The generated API documentation file has changed. Please update the hash in the test.`);
 			});
 		it ("should generate the Async API documentation", async () =>
@@ -68,7 +68,7 @@ describe ("API Generator Tests", () =>
 			{
 				const hash: string = await HotIO.sha256File (`./build-web/HotStaqTests_HelloWorldAPI_asyncapi-2.6.0-yaml.yaml`);
 
-				expect (hash).to.equal ("78938f044d717e15daf716ec88530ea9b38fd58d8691b3ab2710e1bef36ba45b", 
+				expect (hash).to.equal ("fc9150219733456f16ea66d74caa9255c1d18067546671e22b29b3cf59327b22", 
 					`The generated API documentation file has changed. Please update the hash in the test.`);
 			});
 	});
