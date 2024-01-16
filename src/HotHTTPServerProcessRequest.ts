@@ -173,7 +173,49 @@ export async function processRequest (server: HotHTTPServer,
 						files: files
 					});
 
-				let result: any = await method.onServerExecute.call (thisObj, request);
+				let result: any = null;
+
+				if (method.onServerPreExecute != null)
+				{
+					result = await method.onServerPreExecute.call (thisObj, request);
+
+					if (logger.showHTTPEvents === true)
+					{
+						logger.verbose ((result2: any) => {
+								let resultStr: string = "";
+
+								if (logger.showResponses === true)
+									resultStr = JSON.stringify (result2);
+
+								return (`${req.method} ${methodName}, PreExecute: ${resultStr}`);
+							}, result);
+					}
+
+					if (result !== undefined)
+						return (result);
+				}
+
+				result = await method.onServerExecute.call (thisObj, request);
+
+				if (method.onServerPostExecute != null)
+				{
+					result = await method.onServerPostExecute.call (thisObj, request);
+
+					if (logger.showHTTPEvents === true)
+					{
+						logger.verbose ((result2: any) => {
+								let resultStr: string = "";
+
+								if (logger.showResponses === true)
+									resultStr = JSON.stringify (result2);
+
+								return (`${req.method} ${methodName}, PostExecute: ${resultStr}`);
+							}, result);
+					}
+
+					if (result !== undefined)
+						return (result);
+				}
 
 				if (logger.showHTTPEvents === true)
 				{

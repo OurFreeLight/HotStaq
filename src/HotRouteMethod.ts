@@ -410,6 +410,12 @@ export class HotRouteMethod implements IHotRouteMethod
 	onServerAuthorize?: ServerAuthorizationFunction;
 
 	/**
+	 * Executes before executing onServerExecute. If this returns undefined,
+	 * onServerExecute will be executed. Anything other than undefined will 
+	 * in turn be sent to the client instead.
+	 */
+	onServerPreExecute?: ServerExecutionFunction;
+	/**
 	 * Executes when executing a called method from the server side. 
 	 * This will stringify any JSON object and send it as a JSON response. 
 	 * If undefined is returned no response will be sent to the server. 
@@ -419,6 +425,11 @@ export class HotRouteMethod implements IHotRouteMethod
 	 * message as the error.
 	 */
 	onServerExecute?: ServerExecutionFunction;
+	/**
+	 * Executes after executing onServerExecute. If this returns anything 
+	 * other than undefined, the response will be sent to the client.
+	 */
+	onServerPostExecute?: ServerExecutionFunction;
 	/**
 	 * Executes when executing a called method from the client side.
 	 * @fixme Is this necessary?

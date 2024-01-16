@@ -13,7 +13,6 @@
 
 		async function sayHelloDifferently ()
 		{
-			debugger;
 			let api = Hot.CurrentPage.getAPI ();
 			let result = await api.hello_world.hello ({ message: 'hi' });
 			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
