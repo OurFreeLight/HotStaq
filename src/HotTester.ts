@@ -541,6 +541,7 @@ export abstract class HotTester
 
 			cmdFunc = async (cmdArgs: string[]): Promise<void> =>
 				{
+					// Keep this. This is correct.
 					debugger;
 				};
 		}
