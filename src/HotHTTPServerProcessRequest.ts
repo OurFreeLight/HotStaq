@@ -191,14 +191,21 @@ export async function processRequest (server: HotHTTPServer,
 							}, result);
 					}
 
-					if (result !== undefined)
-						return (result);
+					request.passObject = result;
+
+					if (request.passObject.returnToClient === true)
+						return (request.passObject.jsonObj);
 				}
 
 				result = await method.onServerExecute.call (thisObj, request);
 
 				if (method.onServerPostExecute != null)
 				{
+					request.passObject = result;
+
+					if (request.passObject.returnToClient === true)
+						return (request.passObject.jsonObj);
+
 					result = await method.onServerPostExecute.call (thisObj, request);
 
 					if (logger.showHTTPEvents === true)

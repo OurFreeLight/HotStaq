@@ -108,6 +108,14 @@ export class ServerRequest implements IServerRequest
 	 */
 	authorizedValue: any;
 	/**
+	 * The JSON object received from either onServerPreExecute or onServerExecute. If 
+	 * returnToClient is set to true, onServerExecute will not be called and the data 
+	 * returned from onServerPreExecute will be sent to the client instead. If returnToClient 
+	 * is set to either false or undefined, onServerExecute will be called and the data 
+	 * will be passed to onServerExecute in passObject.jsonObj.
+	 */
+	passObject: { returnToClient: boolean, jsonObj: any; };
+	/**
 	 * The JSON received from the client.
 	 */
 	jsonObj: any;
@@ -410,9 +418,10 @@ export class HotRouteMethod implements IHotRouteMethod
 	onServerAuthorize?: ServerAuthorizationFunction;
 
 	/**
-	 * Executes before executing onServerExecute. If this returns undefined,
-	 * onServerExecute will be executed. Anything other than undefined will 
-	 * in turn be sent to the client instead.
+	 * Executes before executing onServerExecute. Anything that returns 
+	 * from this will be passed onto onServerExecute via request.previousJsonObj.
+	 * Any exceptions thrown from this function will be sent to the client in 
+	 * the form of an error message object.
 	 */
 	onServerPreExecute?: ServerExecutionFunction;
 	/**
