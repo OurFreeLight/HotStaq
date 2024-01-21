@@ -82,6 +82,13 @@ export interface IServerRequest
 	};
 }
 
+export enum PassType
+{
+	ReturnToClient,
+	Update,
+	Ignore
+}
+
 /**
  * The request that came from a client.
  */
@@ -114,7 +121,7 @@ export class ServerRequest implements IServerRequest
 	 * is set to either false or undefined, onServerExecute will be called and the data 
 	 * will be passed to onServerExecute in passObject.jsonObj.
 	 */
-	passObject: { returnToClient: boolean, jsonObj: any; };
+	passObject: { passType: PassType; jsonObj: any; };
 	/**
 	 * The JSON received from the client.
 	 */
