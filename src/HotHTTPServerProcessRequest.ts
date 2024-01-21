@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as ppath from "path";
 
 import { HotLog } from "./HotLog";
-import { HotRouteMethod, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethod, PassType, ServerRequest } from "./HotRouteMethod";
 import { HotRoute } from "./HotRoute";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
@@ -175,6 +175,8 @@ export async function processRequest (server: HotHTTPServer,
 
 				let result: any = null;
 
+				request.passObject = { passType: PassType.Ignore, jsonObj: null };
+
 				if (method.onServerPreExecute != null)
 				{
 					result = await method.onServerPreExecute.call (thisObj, request);
@@ -191,15 +193,13 @@ export async function processRequest (server: HotHTTPServer,
 							}, result);
 					}
 
-					request.passObject = result;
-
-					if (request.passObject != null)
+					if (request.passObject.passType != null)
 					{
-						if (request.passObject.returnToClient != null)
-						{
-							if (request.passObject.returnToClient === true)
-								return (request.passObject.jsonObj);
-						}
+						if (request.passObject.passType === PassType.Update)
+							request.passObject.jsonObj = result;
+
+						if (request.passObject.passType === PassType.ReturnToClient)
+							return (request.passObject.jsonObj);
 					}
 				}
 
@@ -207,15 +207,13 @@ export async function processRequest (server: HotHTTPServer,
 
 				if (method.onServerPostExecute != null)
 				{
-					request.passObject = result;
-
-					if (request.passObject != null)
+					if (request.passObject.passType != null)
 					{
-						if (request.passObject.returnToClient != null)
-						{
-							if (request.passObject.returnToClient === true)
-								return (request.passObject.jsonObj);
-						}
+						if (request.passObject.passType === PassType.Update)
+							request.passObject.jsonObj = result;
+
+						if (request.passObject.passType === PassType.ReturnToClient)
+							return (request.passObject.jsonObj);
 					}
 
 					result = await method.onServerPostExecute.call (thisObj, request);
