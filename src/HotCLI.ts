@@ -1863,6 +1863,12 @@ export class HotCLI
 				createHotGenerator ();
 				generator.skipRoutes.push (arg);
 			});
+		generateCmd.option ("--route-extends <data-type>", "The data type the generated route will extend. Default: HotStaqWeb.HotRoute", 
+			(arg: string, previous: any) =>
+			{
+				createHotGenerator ();
+				generator.routeExtends = arg;
+			});
 		generateCmd.option ("--generate-type <type>", "The type of output to generate. Can be: javascript,openapi-3.0.0-json,openapi-3.0.0-yaml,asyncapi-2.6.0-json,asyncapi-2.6.0-yaml", 
 			(arg: string, previous: any) =>
 			{

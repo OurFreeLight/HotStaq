@@ -11,7 +11,7 @@ import { HotPage } from "./HotPage";
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest, PassType, HotRouteMethodParameter } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { HotClient } from "./HotClient";
 
@@ -39,10 +39,12 @@ export {
     Hot,
     HotModule,
     HotAsset,
-    DeveloperMode,
-    HotComponent,
+    HotTestStop, HotDestination, HotTestPage,
+    DeveloperMode, HotStartOptions, IHotStaq,
+    HotSite, HotSiteRoute, HotSiteMapPath,
+    HotComponent, HotComponentOutput, IHotComponent,
     HotAPI,
-    EventExecutionType,
+    EventExecutionType, APItoLoad,
     HotFile,
     HotLog,
     HotLogLevel,
@@ -51,6 +53,8 @@ export {
     HotRouteMethod,
     HotEventMethod,
     ServerRequest,
+    PassType,
+    HotRouteMethodParameter,
     HotServer,
     HotServerType,
     HotClient,
@@ -59,7 +63,7 @@ export {
     HotTesterAPI,
     HotTestMap,
     HotTestDestination,
-    HotTestElement,
-    HotTestElementOptions,
+    IHotTestElement, HotTestElement,
+    HotTestElementOptions, IHotTestElementOptions,
     HotTestDriver
 };

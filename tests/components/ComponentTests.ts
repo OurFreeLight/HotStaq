@@ -36,7 +36,7 @@ describe ("Detailed Component Tests", () =>
 {
 	var HotStaq = HotStaqWeb.HotStaq;
 	var HotClient = HotStaqWeb.HotClient;
-	var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+	var HelloWorldAPI = hello_world;
 	var processor = new HotStaq ();
 	var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}");
 	helloWorldAPI.connection = new HotClient (processor);
@@ -49,12 +49,13 @@ describe ("Detailed Component Tests", () =>
 				var done = arguments[0];
 				var HotStaq = HotStaqWeb.HotStaq;
 				var HotClient = HotStaqWeb.HotClient;
-				var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
 				var processor = new HotStaq ();
 				var client = new HotClient (processor);
-				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
+				var helloWorldAPI = new HotAPI ("${common.getUrl ()}", client);
+				helloWorldAPI.addRoute (new hello_world ("${common.getUrl ()}", client));
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
+				Hot.API = helloWorldAPI;
 				processor.addComponent (HotStaqTests.MainComponent);
 				processor.addComponent (HotStaqTests.TableComponent);
 				processor.addComponent (HotStaqTests.TableHeader);

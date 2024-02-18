@@ -47,7 +47,7 @@ Execute this code to debug in browser:
 				var done = arguments[0];
 				window.HotStaq = HotStaqWeb.HotStaq;
 				var HotClient = HotStaqWeb.HotClient;
-				var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+				var HelloWorldAPI = hello_world;
 				var processor = new HotStaq ();
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);

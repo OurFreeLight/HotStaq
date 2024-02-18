@@ -1,14 +1,11 @@
-import { HotStaq } from "../../src/HotStaq";
-import { HotComponent, IHotComponent } from "../../src/HotComponent";
-
-import { HelloWorldAPI } from "../server/HelloWorldAPI";
+import { HotStaq, HotComponent, IHotComponent, Hot } from "../../src/api-web";
 
 export class HelloWorld extends HotComponent
 {
-	api: HelloWorldAPI;
+	api: any;
 	storedTestValue: string;
 
-	constructor (copy: IHotComponent | HotStaq, api: HelloWorldAPI)
+	constructor (copy: IHotComponent | HotStaq, api: any)
 	{
 		if (api == null)
 			throw new Error ("HelloWorldComponent: API cannot be null!");
@@ -28,7 +25,9 @@ export class HelloWorld extends HotComponent
 		else
 		{
 			let message: string = (<HTMLInputElement>document.getElementById ("message")).value;
-			let result: string = await this.api.sayHello (message);
+			let result: string = await this.api.makeCall ('/v1/hello_world_second/hello_again', {
+					message: message
+				});
 	
 			document.getElementById ("buttonClicked").innerHTML = JSON.stringify (result);
 		}
