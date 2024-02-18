@@ -13,12 +13,15 @@ describe ("Parsing Tests", () =>
 
 		it ("should execute HotStaq.convertInterfaceToRouteParameters correctly", async () =>
 			{
-				const obj: any = await HotStaq.convertInterfaceToRouteParameters ("./tests/parsing/TestInterface.ts", "TestInterface");
+				if (HotStaq.isWeb === false)
+				{
+					const obj: any = await HotStaq.convertInterfaceToRouteParameters ("./tests/parsing/TestInterface.ts", "TestInterface");
 
-				expect (obj["testString"]).to.not.equal (null);
-				expect (obj["testString"].type).to.equal ("string");
-				expect (obj["testString"].required).to.equal (true);
-				expect (obj["testString"].description.replace (/\s/g, "")).to.equal (`Ateststring.Withanotherlinetoo.`);
+					expect (obj["testString"]).to.not.equal (null);
+					expect (obj["testString"].type).to.equal ("string");
+					expect (obj["testString"].required).to.equal (true);
+					expect (obj["testString"].description.replace (/\s/g, "")).to.equal (`Ateststring.Withanotherlinetoo.`);
+				}
 			});
 		it ("should parse a Hott file correctly", async () =>
 			{
