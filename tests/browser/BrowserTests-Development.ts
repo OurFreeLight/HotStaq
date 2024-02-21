@@ -37,7 +37,7 @@ Execute this code to debug in browser:
 {
 	window.HotStaq = HotStaqWeb.HotStaq;
 	var HotClient = HotStaqWeb.HotClient;
-	var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+	var HelloWorldAPI = hello_world;
 	var processor = new HotStaq ();
 	processor.mode = HotStaqWeb.DeveloperMode.Development;
 	window.Hot = HotStaqWeb.Hot;
@@ -54,12 +54,12 @@ Execute this code to debug in browser:
 				var done = arguments[0];
 				window.HotStaq = HotStaqWeb.HotStaq;
 				var HotClient = HotStaqWeb.HotClient;
-				var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
 				var processor = new HotStaq ();
 				processor.mode = HotStaqWeb.DeveloperMode.Development;
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);
-				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
+				var helloWorldAPI = new HotAPI ("${common.getUrl ()}", client);
+				helloWorldAPI.addRoute (new hello_world ("${common.getUrl ()}", client));
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl (

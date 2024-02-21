@@ -8,7 +8,7 @@ const packageJSON = JSON.parse (packageStr);
 let packageVersion = packageJSON.version.toString ();
 
 module.exports = {
-		entry: "./tests/components/Components.ts",
+	entry: "./tests/components/Components.ts",
 		devtool: "inline-source-map",
 		target: "web",
 		module: {
@@ -27,9 +27,6 @@ module.exports = {
 		plugins: [
 			new webpack.DefinePlugin ({
 					__VERSION__: `\"${packageVersion}\"`
-				}),
-			new webpack.IgnorePlugin ({
-				resourceRegExp: /HotHTTPServer|HotTesterMochaSelenium|HotTestSeleniumDriver|HotTesterMocha|express|mysql/
 				})
 		],
 		resolve: {
@@ -55,6 +52,12 @@ module.exports = {
 		},
 		externals: {
 			"validate-npm-package-name": "{}",
+			"dotenv": "{}",
+			"fs-extra": "{}",
+			"HotIO": "{}",
+			"bootstrap": "bootstrap",
+			"hotstaq": "HotStaqWeb",
+			"graceful-fs": "{}",
 			"node:path": "{}",
 			"node:buffer": "{}",
 			"node:fs": "{}",
@@ -74,6 +77,6 @@ module.exports = {
 			filename: "HotStaqTests.js",
 			path: ppath.resolve (process.cwd (), "build-web"),
 			library: "HotStaqTests",
-			libraryTarget: "umd"
+			libraryTarget: "var"
 		}
 	};

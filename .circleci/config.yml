@@ -70,7 +70,6 @@ jobs:
             ls ./build-web/HotStaq.js
             ls ./build-web/HotStaq.min.js
             ls ./build-web/HotStaqTests_HelloWorldAPI.js
-            ls ./build-web/HotStaqTests.js
       - browser-tools/install-browser-tools
       - run:
           name: Check Chrome Installation

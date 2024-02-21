@@ -37,7 +37,7 @@ Execute this code to debug in browser:
 {
 	var HotStaq = HotStaqWeb.HotStaq;
 	var HotClient = HotStaqWeb.HotClient;
-	var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+	var HelloWorldAPI = hello_world;
 	var processor = new HotStaq ();
 	var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}");
 	helloWorldAPI.connection = new HotClient (processor);
@@ -50,7 +50,7 @@ Execute this code to debug in browser:
 				var done = arguments[0];
 				var HotStaq = HotStaqWeb.HotStaq;
 				var HotClient = HotStaqWeb.HotClient;
-				var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+				var HelloWorldAPI = hello_world;
 				var processor = new HotStaq ();
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
@@ -85,6 +85,7 @@ Execute this code to debug in browser:
 				var done = arguments[0];
 				var HotStaq = HotStaqWeb.HotStaq;
 				document.getElementById ("buttonClicked").innerHTML = "";
+				Hot.BearerToken = "kjs1he4w57h:3u4j5n978sd";
 				HotStaq.addHtml ("body", "<hello-world id = \\"dynamicHelloWorld\\" value = \\"Send\\"></hello-world>");
 				done ();`);
 			});
@@ -100,6 +101,7 @@ Execute this code to debug in browser:
 
 				elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");
-				expect (value).to.equal (`"Hello!"`);
+				let parsedValue: any = JSON.parse (value);
+				expect (parsedValue.message.value).to.equal (`Hello!`);
 			});
 	});

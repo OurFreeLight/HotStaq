@@ -54,6 +54,10 @@ export interface IServerRequest
 	 */
 	wsSocket?: HotWebSocketServerClient;
 	/**
+	 * The bearer token being presented from the client requesting access.
+	 */
+	bearerToken?: string;
+	/**
 	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
 	 * DO NOT STORE SENSITIVE INFORMATION HERE SUCH AS PASSWORDS.
@@ -110,8 +114,13 @@ export class ServerRequest implements IServerRequest
 	 */
 	wsSocket: HotWebSocketServerClient;
 	/**
-	 * The response received from authorizing a client. Can be a JWT token, api key, etc.
+	 * The bearer token being presented from the client requesting access.
+	 */
+	bearerToken: string;
+	/**
+	 * The response received from sucessfully authorizing a client. Can be a JWT token, api key, etc.
 	 * Will be null if this request was received from a websocket connection.
+	 * DO NOT STORE SENSITIVE INFORMATION HERE SUCH AS PASSWORDS.
 	 */
 	authorizedValue: any;
 	/**
@@ -187,6 +196,7 @@ export class ServerRequest implements IServerRequest
 		this.req = obj.req || null;
 		this.res = obj.res || null;
 		this.wsSocket = obj.wsSocket || null;
+		this.bearerToken = obj.bearerToken || "";
 		this.authorizedValue = obj.authorizedValue || null;
 		this.jsonObj = obj.jsonObj || null;
 		this.queryObj = obj.queryObj || null;
@@ -295,11 +305,6 @@ export interface IHotRouteMethod
 	 */
 	type?: HotEventMethod;
 	/**
-	 * The authorization credentials to be used by the client 
-	 * when connecting to the server.
-	 */
-	authCredentials?: any;
-	/**
 	 * The test case objects to execute during tests.
 	 */
 	testCases?: {
@@ -389,11 +394,6 @@ export class HotRouteMethod implements IHotRouteMethod
 	 */
 	executeSetup: boolean;
 	/**
-	 * The authorization credentials to be used by the client 
-	 * when connecting to the server.
-	 */
-	authCredentials: any;
-	/**
 	 * The test case objects to execute during tests.
 	 */
 	testCases: {
@@ -462,7 +462,6 @@ export class HotRouteMethod implements IHotRouteMethod
 		this.type = HotEventMethod.POST;
 		this.isRegistered = false;
 		this.executeSetup = true;
-		this.authCredentials = null;
 		this.testCases = {};
 		this.onPreRegister = null;
 		this.onRegister = null;
@@ -479,7 +478,7 @@ export class HotRouteMethod implements IHotRouteMethod
 	static create (route: HotRoute | IHotRouteMethod, name: string = "", 
 			onExecute: ServerExecutionFunction | ClientExecutionFunction = null, 
 			type: HotEventMethod = HotEventMethod.POST, onServerAuthorize: ServerAuthorizationFunction = null, 
-			onRegister: ServerRegistrationFunction = null, authCredentials: any = null, 
+			onRegister: ServerRegistrationFunction = null, 
 			testCases: { [name: string]: TestCaseObject; } | (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null
 		): HotRouteMethod
 	{
@@ -558,9 +557,6 @@ export class HotRouteMethod implements IHotRouteMethod
 				}
 			}
 
-			if (route.authCredentials != null)
-				authCredentials = route.authCredentials;
-
 			if (route.onServerExecute != null)
 				onExecute = route.onServerExecute;
 
@@ -591,7 +587,6 @@ export class HotRouteMethod implements IHotRouteMethod
 		newMethod.type = type;
 		newMethod.isRegistered = false;
 		newMethod.executeSetup = false;
-		newMethod.authCredentials = authCredentials;
 		newMethod.onServerAuthorize = onServerAuthorize;
 		newMethod.onRegister = onRegister;
 		newMethod.testCases = {};

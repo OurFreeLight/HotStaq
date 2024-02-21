@@ -1,13 +1,10 @@
-import { HotStaq } from "../../src/HotStaq";
-import { HotComponent, IHotComponent } from "../../src/HotComponent";
-
-import { HelloWorldAPI } from "../server/HelloWorldAPI";
+import { HotStaq, HotComponent, IHotComponent } from "../../src/api-web";
 
 export class TableComponent extends HotComponent
 {
-	api: HelloWorldAPI;
+	api: any;
 
-	constructor (copy: IHotComponent | HotStaq, api: HelloWorldAPI)
+	constructor (copy: IHotComponent | HotStaq, api: any)
 	{
 		if (api == null)
 			throw new Error ("TableComponent: API cannot be null!");

@@ -66,24 +66,6 @@ export abstract class HotAPI
 	 */
 	db: HotDB;
 	/**
-	 * The authorization credentials the client uses throughout the application. If using 
-	 * basic authentication for HTTP requests, be sure to override the 
-	 * `toAuthorizationHeaderString` in this object.
-	 * 
-	 * Example of this object:
-	 * ```ts
-	 * this.authCredentials = {
-	 * 		user: "username",
-	 * 		password: "password",
-	 * 		toAuthorizationHeaderString: function ()
-	 * 			{
-	 * 				return (btoa (this.user + ":" + this.password));
-	 * 			}
-	 * 	};
-	 * ```
-	 */
-	authCredentials: any;
-	/**
 	 * The function used for user authentication.
 	 */
 	userAuth: ServerAuthorizationFunction;
@@ -113,7 +95,6 @@ export abstract class HotAPI
 		this.createFunctions = true;
 		this.executeEventsUsing = EventExecutionType.HotRoute;
 		this.db = db;
-		this.authCredentials = null;
 		this.userAuth = null;
 		this.routes = {};
 		this.onPreRegister = null;
@@ -275,73 +256,13 @@ export abstract class HotAPI
 					newRoute[newRouteMethod.name] = newRouteMethod.onClientExecute;
 				else
 				{*/
-					newRoute[newRouteMethod.name] = (data: any, files: any): any =>
+					newRoute[newRouteMethod.name] = (data: any, files: any, auth: string): any =>
 						{
 							let httpMethod: string = newRouteMethod.type;
 							// Construct the url here. Base + route + route method
 							let routeStr: string = newRouteMethod.getRouteUrl ();
-							let authCredentials: any = null;
 
-							// Getting the authorization credentials from the API is the lowest 
-							// priority for getting credentials. The priorities are in this order: 
-							// 1. HotRouteMethod
-							// 2. HotRoute
-							// 3. HotAPI
-							if (this.authCredentials != null)
-								authCredentials = this.authCredentials;
-
-							// Find the authorization credentials. Prioritize them when they're 
-							// in the method. Only add the ones from the route if the ones from 
-							// the method are missing.
-							if (newRouteMethod.authCredentials != null)
-								authCredentials = newRouteMethod.authCredentials;
-							else
-							{
-								if (newRouteMethod.route.authCredentials != null)
-									authCredentials = newRouteMethod.route.authCredentials;
-							}
-
-							if (authCredentials == null)
-							{
-								// @ts-ignore
-								if (typeof (Hot) !== "undefined")
-								{
-									// @ts-ignore
-									if (Hot != null)
-									{
-										// @ts-ignore
-										if (Hot.API != null)
-										{
-											// @ts-ignore
-											if (Hot.API[currentRoute.route] != null)
-											{
-												// @ts-ignore
-												if (Hot.API[currentRoute.route].authCredentials != null)
-												{
-													// @ts-ignore
-													authCredentials = Hot.API[currentRoute.route].authCredentials;
-												}
-											}
-										}
-									}
-								}
-							}
-
-							if (authCredentials != null)
-							{
-								// Add the authorization credentials to the data being sent.
-								for (let key in authCredentials)
-								{
-									let authCredential: any = authCredentials[key];
-
-									// Do not overwrite any existing keys in the data about 
-									// to be sent.
-									if (data[key] == null)
-										data[key] = authCredential;
-								}
-							}
-
-							let args: any[] = [routeStr, data, httpMethod, files];
+							let args: any[] = [routeStr, data, httpMethod, files, auth];
 
 							return (this.makeCall.apply (this, args));
 						};
@@ -379,11 +300,9 @@ export abstract class HotAPI
 	 * Make a call to the API.
 	 */
 	async makeCall (route: string, data: any, httpMethod: HotEventMethod = HotEventMethod.POST, 
-		files: { [name: string]: any } = {}): Promise<any>
+		files: { [name: string]: any } = {}, bearer: string = ""): Promise<any>
 	{
 		let url: string = this.baseUrl;
-
-		const httpMethodStr: string = httpMethod.toUpperCase ();
 
 		if (url[(url.length - 1)] === "/")
 			url = url.substr (0, (url.length - 1));
@@ -393,6 +312,12 @@ export abstract class HotAPI
 
 		url += route;
 
-		return (Hot.httpRequest (url, data, httpMethod, files));
+		if (bearer === "")
+		{
+			if (Hot.BearerToken != null)
+				bearer = Hot.BearerToken;
+		}
+
+		return (Hot.httpRequest (url, data, httpMethod, files, bearer));
 	}
 }

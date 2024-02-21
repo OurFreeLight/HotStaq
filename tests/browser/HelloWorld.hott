@@ -30,18 +30,19 @@
 
 		async function sayHelloButAuthorizedBad ()
 		{
-			let result = await Hot.API.hello_world_second.hello_again ({ message: 'hi' });
+			let result = await Hot.apiCall ('/v1/hello_world_second/hello_again', {
+					message: 'hi'
+				});
 			document.getElementById ('testHelloWorldAPI3').innerHTML = JSON.stringify (result);
 		}
 
 		async function sayHelloButAuthorizedGood ()
 		{
-			Hot.API.authCredentials = {
-					ApiKey: "kjs1he4w57h",
-					ApiSecret: "3u4j5n978sd"
-				};
+			Hot.BearerToken = "kjs1he4w57h:3u4j5n978sd";
 
-			let result = await Hot.API.hello_world_second.hello_again ({ message: 'hi' });
+			let result = await Hot.apiCall ('/v1/hello_world_second/hello_again', {
+					message: 'hi'
+				});
 			document.getElementById ('testHelloWorldAPI4').innerHTML = JSON.stringify (result);
 		}
 

@@ -5,6 +5,7 @@
 	<title>Component Tests</title>
 
 	<script type = "text/javascript" src="/build-web/HotStaqTests.js"></script>
+	<script type = "text/javascript" src="/build-web/HotStaqTests_HelloWorldAPI.js"></script>
 
 	<script type = "text/javascript">
 		var HelloWorld = HotStaqTests.HelloWorld;

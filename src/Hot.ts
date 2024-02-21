@@ -61,6 +61,10 @@ export class Hot
 	 */
 	static DeveloperMode = DeveloperMode;
 	/**
+	 * The bearer token to present for each request made.
+	 */
+	static BearerToken: any = null;
+	/**
 	 * The mode in which this application is running. If it's set to development mode, all testing
 	 * related data will be collected, parsed, and executed if necessary.
 	 */
@@ -279,24 +283,12 @@ export class Hot
 	 */
 	static async apiCall (route: string, data: any = null, 
 		httpMethod: HotEventMethod = HotEventMethod.POST, 
-		files: { [name: string]: any } = {}): Promise<any>
+		files: { [name: string]: any } = {}, bearer: string = ""): Promise<any>
 	{
-		let result: any = null;
+		if (Hot.API == null)
+			throw new Error (`There is no API attached to call!`);
 
-		if (Hot.CurrentPage == null)
-			throw new Error ("Current page is null!");
-
-		if (Hot.CurrentPage.processor == null)
-			throw new Error ("Current page's processor is null!");
-
-		if (Hot.CurrentPage.processor.api == null)
-			throw new Error ("Current page's processor api is null! Did you forget to set the API name or URL?");
-
-		if (Hot.CurrentPage.processor.api != null)
-		{
-			result = await Hot.CurrentPage.processor.api.makeCall (route, 
-							data, httpMethod, files);
-		}
+		let result = await Hot.API.makeCall (route, data, httpMethod, files, bearer);
 
 		return (result);
 	}
@@ -332,7 +324,8 @@ export class Hot
 	 * 
 	 * @returns The parsed JSON object.
 	 */
-	static async jsonRequest (url: string, data: any = null, httpMethod: HotEventMethod = HotEventMethod.POST): Promise<any>
+	static async jsonRequest (url: string, data: any = null, 
+		httpMethod: HotEventMethod = HotEventMethod.POST, bearerToken: string = ""): Promise<any>
 	{
 		try
 		{
@@ -348,6 +341,18 @@ export class Hot
 			{
 				/// @ts-ignore
 				fetchObj["body"] = JSON.stringify (data);
+			}
+
+			if (bearerToken === "")
+			{
+				if (Hot.BearerToken != null)
+					bearerToken = Hot.BearerToken;
+			}
+
+			if (bearerToken != "")
+			{
+				// @ts-ignore
+				fetchObj.headers["Authorization"] = `Bearer ${bearerToken}`;
 			}
 
 			let res = await fetch (url, fetchObj);
@@ -388,10 +393,13 @@ export class Hot
 	 * ```
 	 */
 	static async httpRequest (url: string, data: any, httpMethod: HotEventMethod = HotEventMethod.POST, 
-		files: { [name: string]: any } = {}): Promise<any>
+		files: { [name: string]: any } = {}, bearerToken: string = ""): Promise<any>
 	{
 		const numFiles: number = Object.keys (files).length;
-		const httpMethodLower: string = httpMethod.toLowerCase ();
+		let httpMethodLower: string = httpMethod.toLowerCase ();
+
+		if (httpMethod === HotEventMethod.FILE_UPLOAD)
+			httpMethodLower = "post";
 
 		if (numFiles > 0)
 		{
@@ -403,11 +411,27 @@ export class Hot
 			for (let key in files)
 				formData.append (key, files[key]);
 
-			let res = await fetch (url, {
+			let requestInit: RequestInit = {
 					method: "POST",
 					// @ts-ignore
 					body: formData
-				});
+				};
+
+			if (bearerToken === "")
+			{
+				if (Hot.BearerToken != null)
+					bearerToken = Hot.BearerToken;
+			}
+
+			if (bearerToken != "")
+			{
+				requestInit.headers = {
+					"Authorization": `Bearer ${bearerToken}`
+				};
+			}
+
+			// @ts-ignore
+			let res = await fetch (url, requestInit);
 			let jsonRes: any = await res.json ();
 
 			if (data["hotstaq"] == null)
@@ -432,6 +456,15 @@ export class Hot
 						"Content-Type": "application/json"
 					}
 			};
+
+		if (bearerToken === "")
+		{
+			if (Hot.BearerToken != null)
+				bearerToken = Hot.BearerToken;
+		}
+
+		if (bearerToken != "")
+			fetchObj.headers["Authorization"] = `Bearer ${bearerToken}`;
 
 		if ((httpMethodLower !== "get") && 
 			(httpMethodLower !== "head"))

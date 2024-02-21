@@ -22,10 +22,9 @@ export class HelloWorldAPI extends HotAPI
 
 		this.userAuth = async (req: ServerRequest): Promise<any> =>
 			{
-				const apiKey: string = req.jsonObj["ApiKey"];
-				const apiSecret: string = req.jsonObj["ApiSecret"];
+				const token: string = req.bearerToken;
 
-				if ((apiKey === "kjs1he4w57h") && (apiSecret === "3u4j5n978sd"))
+				if (token === "kjs1he4w57h:3u4j5n978sd")
 				{
 					return ({ userId: "test-user" });
 				}
@@ -37,7 +36,23 @@ export class HelloWorldAPI extends HotAPI
 		this.onPreRegister = async (): Promise<boolean> =>
 			{
 				if ((<HotHTTPServer>connection).useWebsocketServer === true)
-					(<HotHTTPServer>connection).websocketServer.onServerAuthorize = this.userAuth;
+				{
+					(<HotHTTPServer>connection).websocketServer.onServerAuthorize = 
+						async (req: ServerRequest): Promise<any> =>
+						{
+							const apiKey: string = req.jsonObj["ApiKey"];
+							const apiSecret: string = req.jsonObj["ApiSecret"];
+			
+							if ((apiKey === "kjs1he4w57h") && (apiSecret === "3u4j5n978sd"))
+							{
+								return ({ userId: "test-user" });
+							}
+							else
+								throw new Error ("Incorrect API key or secret!");
+
+							return (undefined);
+						};
+				}
 
 				return (true);
 			};
@@ -63,6 +78,32 @@ export class HelloWorldAPI extends HotAPI
 				return (true);
 			}, HotEventMethod.GET);
 		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
+		route.addMethod ({
+				name: "auth_say_hello",
+				type: HotEventMethod.POST,
+				description: "Authorize and say hello to the server and it will respond.",
+				onServerExecute: function async (req: ServerRequest)
+				{
+					if (req.bearerToken !== "4sartgw3453s45")
+						throw new Error (`Unable to authorize user.`);
+
+					const message: string = (<string>req.jsonObj.message).toLowerCase ();
+
+					if ((message === "hi") || (message === "hello"))
+						return (this.wsReturnMessage); // In this case, "this" should be the route.
+
+					return ({ error: "You didn't say hi." });
+				},
+				parameters: {
+					message: {
+						type: "string",
+						required: true,
+						description: "The message to send to the server. Can be: hi, hello"
+					}
+				},
+				"testCases": {},
+				returns: "The server says Hello World!"
+			});
 		route.addMethod ({
 				name: "ws_hello_event",
 				type: HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT,

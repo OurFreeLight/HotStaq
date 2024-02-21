@@ -256,11 +256,18 @@ export class HotTesterServer extends HotServer
 							let request = new ServerRequest ({
 									req: req,
 									res: res,
+									bearerToken: "",
 									authorizedValue: null,
 									jsonObj: jsonObj,
 									queryObj: queryObj,
 									files: null
 								});
+
+							if (req.headers.authorization != null)
+							{
+								request.bearerToken = req.headers.authorization;
+								request.bearerToken = request.bearerToken.substring (7);
+							}
 
 							authorizationValue = await method.onServerAuthorize.call (thisObj, request);
 						}
@@ -280,7 +287,23 @@ export class HotTesterServer extends HotServer
 					{
 						if (route.onAuthorizeUser != null)
 						{
-							authorizationValue = await route.onAuthorizeUser (new ServerRequest ({ req: req, res: res }));
+							let request = new ServerRequest ({
+									req: req,
+									res: res,
+									bearerToken: "",
+									authorizedValue: null,
+									jsonObj: jsonObj,
+									queryObj: queryObj,
+									files: null
+								});
+
+							if (req.headers.authorization != null)
+							{
+								request.bearerToken = req.headers.authorization;
+								request.bearerToken = request.bearerToken.substring (7);
+							}
+
+							authorizationValue = await route.onAuthorizeUser (request);
 
 							if (authorizationValue === undefined)
 								hasAuthorization = false;
@@ -296,13 +319,20 @@ export class HotTesterServer extends HotServer
 							try
 							{
 								let request = new ServerRequest ({
-									req: req,
-									res: res,
-									authorizedValue: null,
-									jsonObj: jsonObj,
-									queryObj: queryObj,
-									files: null
-								});
+										req: req,
+										res: res,
+										bearerToken: "",
+										authorizedValue: null,
+										jsonObj: jsonObj,
+										queryObj: queryObj,
+										files: null
+									});
+	
+								if (req.headers.authorization != null)
+								{
+									request.bearerToken = req.headers.authorization;
+									request.bearerToken = request.bearerToken.substring (7);
+								}
 
 								let result: any = await method.onServerExecute.call (thisObj, request);
 

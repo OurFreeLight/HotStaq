@@ -42,7 +42,7 @@ describe ("Browser Testing From Web Tests - Mocha Selenium - Development Mode", 
 							var done = arguments[0];
 							window.HotStaq = HotStaqWeb.HotStaq;
 							var HotClient = HotStaqWeb.HotClient;
-							var HelloWorldAPI = HotStaqTests.HelloWorldAPI;
+							var HelloWorldAPI = hello_world;
 							var processor = new HotStaq ();
 							processor.mode = HotStaqWeb.DeveloperMode.Development;
 							window.Hot = HotStaqWeb.Hot;
