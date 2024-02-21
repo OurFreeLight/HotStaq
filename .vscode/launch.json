@@ -168,7 +168,7 @@
 			"args": [
 				"--timeout", "6000", 
 				"--colors", 
-				"./build/tests/server/**/*.js"
+				"./build/tests/**/*.js"
 			],
 			"cwd": "${workspaceFolder}",
 			"envFile": "${workspaceFolder}/.env"
