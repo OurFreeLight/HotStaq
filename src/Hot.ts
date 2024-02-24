@@ -313,9 +313,9 @@ export class Hot
 	 * 
 	 * @returns The parsed JSON object.
 	 */
-	static async getJSON (url: string): Promise<any>
+	static async getJSON (url: string, bearerToken: string = ""): Promise<any>
 	{
-		return (Hot.jsonRequest (url, null, HotEventMethod.GET));
+		return (Hot.jsonRequest (url, null, bearerToken, HotEventMethod.GET));
 	}
 
 	/**
@@ -332,11 +332,12 @@ export class Hot
 	 * 
 	 * @returns The parsed JSON object.
 	 */
-	static async jsonRequest (url: string, data: any = null, httpMethod: HotEventMethod = HotEventMethod.POST): Promise<any>
+	static async jsonRequest (url: string, data: any = null, bearerToken: string = "", 
+		httpMethod: HotEventMethod = HotEventMethod.POST): Promise<any>
 	{
 		try
 		{
-			let fetchObj = {
+			let fetchObj: any = {
 				"method": httpMethod,
 				"headers": {
 						"Accept": "application/json",
@@ -344,11 +345,11 @@ export class Hot
 					}
 			}
 
-			if (httpMethod === HotEventMethod.POST)
-			{
-				/// @ts-ignore
+			if (httpMethod !== HotEventMethod.GET)
 				fetchObj["body"] = JSON.stringify (data);
-			}
+
+			if (bearerToken != "")
+				fetchObj.headers["Authorization"] = `Bearer ${bearerToken}`;
 
 			let res = await fetch (url, fetchObj);
 
