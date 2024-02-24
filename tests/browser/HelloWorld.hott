@@ -36,10 +36,7 @@
 
 		async function sayHelloButAuthorizedGood ()
 		{
-			Hot.API.authCredentials = {
-					ApiKey: "kjs1he4w57h",
-					ApiSecret: "3u4j5n978sd"
-				};
+			Hot.API.bearerToken = "kjs1he4w57h:3u4j5n978sd";
 
 			let result = await Hot.API.hello_world_second.hello_again ({ message: 'hi' });
 			document.getElementById ('testHelloWorldAPI4').innerHTML = JSON.stringify (result);

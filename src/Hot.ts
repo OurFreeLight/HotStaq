@@ -279,7 +279,7 @@ export class Hot
 	 */
 	static async apiCall (route: string, data: any = null, 
 		httpMethod: HotEventMethod = HotEventMethod.POST, 
-		files: { [name: string]: any } = {}): Promise<any>
+		files: { [name: string]: any } = {}, bearerToken: string = ""): Promise<any>
 	{
 		let result: any = null;
 
@@ -295,7 +295,7 @@ export class Hot
 		if (Hot.CurrentPage.processor.api != null)
 		{
 			result = await Hot.CurrentPage.processor.api.makeCall (route, 
-							data, httpMethod, files);
+							data, httpMethod, files, bearerToken);
 		}
 
 		return (result);
@@ -388,10 +388,13 @@ export class Hot
 	 * ```
 	 */
 	static async httpRequest (url: string, data: any, httpMethod: HotEventMethod = HotEventMethod.POST, 
-		files: { [name: string]: any } = {}): Promise<any>
+		files: { [name: string]: any } = {}, bearerToken: string = ""): Promise<any>
 	{
 		const numFiles: number = Object.keys (files).length;
-		const httpMethodLower: string = httpMethod.toLowerCase ();
+		let httpMethodLower: string = httpMethod.toLowerCase ();
+
+		if (httpMethod === HotEventMethod.FILE_UPLOAD)
+			httpMethodLower = "post";
 
 		if (numFiles > 0)
 		{
@@ -403,11 +406,21 @@ export class Hot
 			for (let key in files)
 				formData.append (key, files[key]);
 
-			let res = await fetch (url, {
+			let requestInit: RequestInit = {
 					method: "POST",
 					// @ts-ignore
 					body: formData
-				});
+				};
+
+			if (bearerToken != "")
+			{
+				requestInit.headers = {
+					"Authorization": `Bearer ${bearerToken}`
+				};
+			}
+
+			// @ts-ignore
+			let res = await fetch (url, requestInit);
 			let jsonRes: any = await res.json ();
 
 			if (data["hotstaq"] == null)
@@ -432,6 +445,9 @@ export class Hot
 						"Content-Type": "application/json"
 					}
 			};
+
+		if (bearerToken != "")
+			fetchObj.headers["Authorization"] = `Bearer ${bearerToken}`;
 
 		if ((httpMethodLower !== "get") && 
 			(httpMethodLower !== "head"))

@@ -151,6 +151,7 @@ export class HotWebSocketServer
 							let request = new ServerRequest ({
 								req: null,
 								res: null,
+								bearerToken: "",
 								authorizedValue: null,
 								jsonObj: socket.handshake.auth,
 								queryObj: socket.handshake.query,
@@ -258,6 +259,7 @@ export class HotWebSocketServer
 										let wsSocket: HotWebSocketServerClient = this.clients[socketId];
 
 										let request: ServerRequest = new ServerRequest ({
+												"bearerToken": "",
 												"authorizedValue": authorizationValue,
 												"jsonObj": data,
 												"wsSocket": wsSocket

@@ -64,6 +64,11 @@ export class HotGenerator
 	 * Exit on complete.
 	 */
 	exitOnComplete: boolean;
+	/**
+	 * What the generated route extends.
+	 * @default "HotStaqWeb.HotRoute"
+	 */
+	routeExtends: string;
 
 	constructor (logger: HotLog)
 	{
@@ -77,6 +82,7 @@ export class HotGenerator
 		this.outputDir = ppath.normalize (`${process.cwd ()}/build-web/`);
 		this.copyTo = "";
 		this.exitOnComplete = true;
+		this.routeExtends = "";
 	}
 
 	/**
@@ -291,7 +297,7 @@ export class HotGenerator
 						continue;
 
 					apiFileContent += await this.getAPIContent (this.generateType, "class_header", 
-						{ routeName: routeName, baseAPIUrl: serverResult.baseAPIUrl, 
+						{ routeName: routeName, baseAPIUrl: serverResult.baseAPIUrl, extends: this.routeExtends, 
 							libraryName: libraryName, apiName: apiName });
 
 					for (let iJdx = 0; iJdx < route.methods.length; iJdx++)
@@ -849,59 +855,10 @@ if (typeof (window) !== "undefined")
 }
 
 /**
- * Get the authorization header string.
- */
-function HotStaqGetAuthorizationHeaderString ()
-{
-	const auth = null;
-
-	if (this.authorization != null)
-	{
-		if (this.authorization.toAuthorizationHeaderString != null)
-			auth = this.authorization.toAuthorizationHeaderString ();
-	}
-
-	if (auth == null)
-	{
-		if (Hot != null)
-		{
-			if (Hot.API != null)
-			{
-				if (Hot.API.authCredentials != null)
-				{
-					if (Hot.API.authCredentials.toAuthorizationHeaderString != null)
-						auth = Hot.API.authCredentials.toAuthorizationHeaderString ();
-				}
-			}
-		}
-	}
-
-	return (auth);
-}
-
-/**
  * Process a JSON object, and get it ready to make a request.
  */
 function HotStaqProcessJSONObject (jsonObj)
 {
-	if (jsonObj != null)
-	{
-		if (Hot != null)
-		{
-			if (Hot.API != null)
-			{
-				if (Hot.API.authCredentials != null)
-				{
-					for (let key in Hot.API.authCredentials)
-					{
-						if (jsonObj[key] == null)
-							jsonObj[key] = Hot.API.authCredentials[key];
-					}
-				}
-			}
-		}
-	}
-
 	return (jsonObj);
 }
 
@@ -916,7 +873,7 @@ function HotStaqPostJSONObject (methodType, url, jsonObj, auth)
 		};
 
 	if (auth != null)
-		headers["Authorization"] = auth;
+		headers["Authorization"] = "Bearer " + auth;
 
 	let promise = fetch (url, {
 			"method": methodType,
@@ -931,14 +888,25 @@ function HotStaqPostJSONObject (methodType, url, jsonObj, auth)
 
 		if (contentPart === "class_header")
 		{
+			let routeExtends: string = data.extends;
+			let routeSuper: string = "";
+
+			if (routeExtends !== "")
+			{
+				routeExtends = ` extends ${routeExtends}`;
+				routeSuper = `super (connection, "${data.routeName}", []);`;
+			}
+
 			content = `
 /**
  * The ${data.routeName} API route.
  */
-class ${data.routeName}
+class ${data.routeName}${routeExtends}
 {
 	constructor (baseUrl, connection, db)
 	{
+		${routeSuper}
+
 		if (baseUrl == null)
 			baseUrl = "${data.baseAPIUrl}";
 
@@ -957,22 +925,46 @@ class ${data.routeName}
 		 */
 		this.connection = connection;
 		/**
-		 * The authorization used to connect to the server.
+		 * The bearer token used to connect to the server.
 		 */
-		this.authorization = null;
+		this.bearerToken = null;
 		/**
 		 * The database connection, if any.
 		 */
 		this.db = db;
+	}
 
-		if (connection != null)
-		{
-			if (connection.api != null)
+	/**
+	 * Make a call to the API. THIS CANNOT upload files yet.
+	 */
+	makeCall (route, data, httpMethod = "post", files = {}, bearer = "")
+	{
+		var promise = new Promise ((resolve, reject) => 
 			{
-				if (connection.api.authCredentials != null)
-					this.authorization = connection.api.authCredentials;
-			}
-		}
+				let url = this.baseUrl;
+
+				if (url[(url.length - 1)] === "/")
+					url = url.substr (0, (url.length - 1));
+
+				if (route[0] !== "/")
+					url += "/";
+
+				url += route;
+
+				if (bearer === "")
+				{
+					if (Hot.BearerToken != null)
+						bearer = Hot.BearerToken;
+				}
+
+				HotStaqPostJSONObject (httpMethod, url, data, bearer).then (
+					function (response)
+					{
+						var result = response.json ();
+						resolve (result);
+					});
+			});
+		return (promise);
 	}
 `;
 		}

@@ -34,11 +34,6 @@ export class HotRoute
 	 */
 	prefix: string;
 	/**
-	 * The authorization credentials to be used by the client 
-	 * when connecting to the server.
-	 */
-	authCredentials: any;
-	/**
 	 * The calls that can be made.
 	 */
 	methods: HotRouteMethod[];
@@ -64,7 +59,6 @@ export class HotRoute
 		this.description = "";
 		this.version = "v1";
 		this.prefix = "";
-		this.authCredentials = null;
 		this.methods = methods;
 		this.errors = {
 				"not_authorized": HotRoute.createError ("Not authorized."),
@@ -94,7 +88,7 @@ export class HotRoute
 		): void
 	{
 		if (typeof (method) === "string")
-			method = HotRouteMethod.create (this, method, executeFunction, type, null, null, null, testCases);
+			method = HotRouteMethod.create (this, method, executeFunction, type, null, null, testCases);
 
 		if (method instanceof HotRouteMethod)
 			this.methods.push (method);

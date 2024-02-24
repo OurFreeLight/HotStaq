@@ -37,11 +37,18 @@ export async function processRequest (server: HotHTTPServer,
 			let request = new ServerRequest ({
 				req: req,
 				res: res,
+				bearerToken: "",
 				authorizedValue: authorizationValue,
 				jsonObj: jsonObj,
 				queryObj: queryObj,
 				files: null
 			});
+
+			if (req.headers.authorization != null)
+			{
+				request.bearerToken = req.headers.authorization;
+				request.bearerToken = request.bearerToken.substring (7);
+			}
 
 			authorizationValue = await method.onServerAuthorize.call (thisObj, request);
 		}
@@ -63,9 +70,17 @@ export async function processRequest (server: HotHTTPServer,
 			try
 			{
 				let request = new ServerRequest ({
-					req: req,
-					res: res
-				});
+						req: req,
+						res: res,
+						bearerToken: "",
+						authorizedValue: null,
+						jsonObj: jsonObj,
+						queryObj: queryObj,
+						files: null
+					});
+
+				if (req.headers.authorization != null)
+					request.bearerToken = req.headers.authorization;
 
 				authorizationValue = await route.onAuthorizeUser (request);
 			}
@@ -167,11 +182,18 @@ export async function processRequest (server: HotHTTPServer,
 				let request = new ServerRequest ({
 						req: req,
 						res: res,
+						bearerToken: "",
 						authorizedValue: authorizationValue,
 						jsonObj: jsonObj,
 						queryObj: queryObj,
 						files: files
 					});
+
+				if (req.headers.authorization != null)
+				{
+					request.bearerToken = req.headers.authorization;
+					request.bearerToken = request.bearerToken.substring (7);
+				}
 
 				let result: any = null;
 

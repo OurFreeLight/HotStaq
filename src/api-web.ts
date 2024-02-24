@@ -11,7 +11,7 @@ import { HotPage } from "./HotPage";
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest, PassType, HotRouteMethodParameter } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { HotClient } from "./HotClient";
 
@@ -35,14 +35,15 @@ HotStaq.isWeb = true;
 // Can't export interfaces from here :(
 
 export {
-    HotStaq,
+    HotStaq, HotStartOptions, IHotStaq, 
+    HotSite, HotSiteRoute, HotSiteMapPath, 
     Hot,
     HotModule,
     HotAsset,
     DeveloperMode,
-    HotComponent,
+    HotComponent, HotComponentOutput, IHotComponent, 
     HotAPI,
-    EventExecutionType,
+    EventExecutionType, APItoLoad, 
     HotFile,
     HotLog,
     HotLogLevel,
@@ -50,16 +51,16 @@ export {
     HotRoute,
     HotRouteMethod,
     HotEventMethod,
-    ServerRequest,
+    ServerRequest, PassType, HotRouteMethodParameter, 
     HotServer,
     HotServerType,
     HotClient,
     HotWebSocketClient,
-    HotTester,
+    HotTester, HotTestStop, HotDestination, 
     HotTesterAPI,
-    HotTestMap,
-    HotTestDestination,
+    HotTestMap, HotTestPath, 
+    HotTestDestination, HotTestPage, 
     HotTestElement,
-    HotTestElementOptions,
+    IHotTestElement, HotTestElementOptions, IHotTestElementOptions, 
     HotTestDriver
 };
