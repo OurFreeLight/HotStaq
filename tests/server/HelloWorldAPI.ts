@@ -22,10 +22,9 @@ export class HelloWorldAPI extends HotAPI
 
 		this.userAuth = async (req: ServerRequest): Promise<any> =>
 			{
-				const apiKey: string = req.jsonObj["ApiKey"];
-				const apiSecret: string = req.jsonObj["ApiSecret"];
+				const token: string = req.bearerToken;
 
-				if ((apiKey === "kjs1he4w57h") && (apiSecret === "3u4j5n978sd"))
+				if (token === "kjs1he4w57h:3u4j5n978sd")
 				{
 					return ({ userId: "test-user" });
 				}
@@ -37,7 +36,23 @@ export class HelloWorldAPI extends HotAPI
 		this.onPreRegister = async (): Promise<boolean> =>
 			{
 				if ((<HotHTTPServer>connection).useWebsocketServer === true)
-					(<HotHTTPServer>connection).websocketServer.onServerAuthorize = this.userAuth;
+				{
+					(<HotHTTPServer>connection).websocketServer.onServerAuthorize = 
+						async (req: ServerRequest): Promise<any> =>
+						{
+							const apiKey: string = req.jsonObj["ApiKey"];
+							const apiSecret: string = req.jsonObj["ApiSecret"];
+
+							if ((apiKey === "kjs1he4w57h") && (apiSecret === "3u4j5n978sd"))
+							{
+								return ({ userId: "test-user" });
+							}
+							else
+								throw new Error ("Incorrect API key or secret!");
+
+							return (undefined);
+						};
+				}
 
 				return (true);
 			};

@@ -29,7 +29,7 @@ describe ("Builder Tests", function ()
 			{
 			});
 
-		it ("should create the app", async () =>
+		it ("should create the app for the builder", async () =>
 			{
 				if (await HotIO.exists (baseDir) === true)
 					await HotIO.rm (baseDir, { recursive: true });

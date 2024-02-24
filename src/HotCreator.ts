@@ -195,7 +195,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 					"@types/fs-extra": "^9.0.12",
 					"@types/js-cookie": "^2.2.7",
 					"@types/mocha": "^10.0.1",
-					"@types/node": "^14.17.32",
+					"@types/node": "^20.11.19",
 					"@types/node-fetch": "^2.6.1",
 					"@types/selenium-webdriver": "^4.1.5",
 					"@types/uuid": "^8.3.4",
