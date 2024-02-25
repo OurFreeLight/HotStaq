@@ -82,7 +82,8 @@ describe ("Server Tests", () =>
 			{
 				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
 
-				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload", {}, HotEventMethod.POST, {
+				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload", {}, 
+					HotEventMethod.FILE_UPLOAD, {
 						"indexFileKey": HotIO.readFileStream (filepath)
 					});
 
@@ -93,12 +94,26 @@ describe ("Server Tests", () =>
 			{
 				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
 
-				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload_auth", {}, HotEventMethod.POST, {
-						"indexFileKey": HotIO.readFileStream (filepath)
-					}, "kjs1he4w57h:3u4j5n978sd");
+				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload_auth", {
+						uploadDetails: {
+							name: "testName"
+						}
+					}, HotEventMethod.FILE_UPLOAD, {
+							"indexFileKey": HotIO.readFileStream (filepath)
+						}, "kjs1he4w57h:3u4j5n978sd");
 
 				expect (fs.existsSync (jsonRes.path)).to.equal (true, "File was not uploaded properly!");
 				fs.unlinkSync (jsonRes.path);
+			});
+		it ("should NOT upload a file to HelloWorldAPI with authentication, but still pass data", async () =>
+			{
+				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload_auth", {
+						uploadDetails: {
+							name: "testName"
+						}
+					}, HotEventMethod.FILE_UPLOAD, {}, "kjs1he4w57h:3u4j5n978sd");
+
+				expect (jsonRes.error).to.equal ("No file uploaded!", "File data was not transferred properly!");
 			});
 		it ("should add a file extension to serve with a header set", async () =>
 			{

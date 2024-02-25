@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as ppath from "path";
 
 import { HotLog } from "./HotLog";
-import { HotRouteMethod, PassType, ServerRequest } from "./HotRouteMethod";
+import { HotEventMethod, HotRouteMethod, PassType, ServerRequest } from "./HotRouteMethod";
 import { HotRoute } from "./HotRoute";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
@@ -105,6 +105,9 @@ export async function processRequest (server: HotHTTPServer,
 
 		if (Object.keys (uploadedFiles).length > 0)
 		{
+			if (method.type !== HotEventMethod.FILE_UPLOAD)
+				throw new Error (`Cannot upload files to a non-file upload method. When registering the route be sure to use HotEventMethod.FILE_UPLOAD.`);
+
 			const hotstaqUploadId: string = uuidv4 ();
 
 			server.uploads[hotstaqUploadId] = {};
@@ -136,15 +139,13 @@ export async function processRequest (server: HotHTTPServer,
 
 			logger.verbose (() => `${req.method} ${methodName}, Upload ID: ${hotstaqUploadId}, Received uploads: ${JSON.stringify (server.uploads[hotstaqUploadId])}`);
 
-			res.json ({
-					hotstaq: {
-						uploads: {
-							uploadId: hotstaqUploadId
-						}
+			return ({
+				hotstaq: {
+					uploads: {
+						uploadId: hotstaqUploadId
 					}
-				});
-
-			return;
+				}
+			});
 		}
 
 		if (method.onServerExecute != null)

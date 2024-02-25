@@ -80,7 +80,7 @@ export class HelloWorldAPI extends HotAPI
 		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
 		route.addMethod ({
 				name: "file_upload_auth",
-				onServerExecute: this.fileUpload, 
+				onServerExecute: this.fileUploadAuth, 
 				type: HotEventMethod.FILE_UPLOAD,
 				onServerAuthorize: this.userAuth
 			});
@@ -177,6 +177,34 @@ export class HelloWorldAPI extends HotAPI
 	 */
 	async fileUpload (req: ServerRequest): Promise<any>
 	{
+		let filename: string = "";
+		let filepath: string = "";
+
+		for (let key in req.files)
+		{
+			let file = req.files[key];
+			filename = file.name;
+			filepath = file.path;
+
+			break;
+		}
+
+		return ({ msg: `File ${filename} uploaded to ${filepath}!`, path: filepath });
+	}
+
+	/**
+	 * This accepts a file upload requiring authentication.
+	 */
+	async fileUploadAuth (req: ServerRequest): Promise<any>
+	{
+		const uploadDetails = HotStaq.getParam ("uploadDetails", req.jsonObj);
+
+		if (uploadDetails.name !== "testName")
+			throw new Error ("Incorrect upload name!");
+
+		if (req.files == null)
+			throw new Error ("No file uploaded!");
+
 		let filename: string = "";
 		let filepath: string = "";
 

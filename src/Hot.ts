@@ -409,6 +409,9 @@ export class Hot
 
 			let requestInit: RequestInit = {
 					method: "POST",
+					headers: {
+						"HotStaqUpload": "true"
+					},
 					// @ts-ignore
 					body: formData
 				};
@@ -434,13 +437,13 @@ export class Hot
 					jsonRes["hotstaq"]["uploads"]["uploadId"];
 
 			// After the upload, make the actual JSON call. Do not pass files again.
-			const result: any = await Hot.httpRequest (url, data, httpMethod, {}, bearerToken);
+			const result: any = await Hot.httpRequest (url, data, HotEventMethod.POST, {}, bearerToken);
 
 			return (result);
 		}
 
 		let fetchObj: any = {
-				method: httpMethod,
+				method: httpMethodLower,
 				headers: {
 						"Accept": "application/json",
 						"Content-Type": "application/json"
