@@ -89,6 +89,17 @@ describe ("Server Tests", () =>
 				expect (fs.existsSync (jsonRes.path)).to.equal (true, "File was not uploaded properly!");
 				fs.unlinkSync (jsonRes.path);
 			});
+		it ("should upload a file to HelloWorldAPI with authentication and delete it", async () =>
+			{
+				const filepath: string = ppath.normalize (`${process.cwd ()}/tests/browser/index.htm`);
+
+				let jsonRes: any = await api.makeCall ("/v1/hello_world/file_upload_auth", {}, HotEventMethod.POST, {
+						"indexFileKey": HotIO.readFileStream (filepath)
+					}, "kjs1he4w57h:3u4j5n978sd");
+
+				expect (fs.existsSync (jsonRes.path)).to.equal (true, "File was not uploaded properly!");
+				fs.unlinkSync (jsonRes.path);
+			});
 		it ("should add a file extension to serve with a header set", async () =>
 			{
 				server.serveFileExtensions.push ({

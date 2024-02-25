@@ -79,6 +79,12 @@ export class HelloWorldAPI extends HotAPI
 			}, HotEventMethod.GET);
 		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
 		route.addMethod ({
+				name: "file_upload_auth",
+				onServerExecute: this.fileUpload, 
+				type: HotEventMethod.FILE_UPLOAD,
+				onServerAuthorize: this.userAuth
+			});
+		route.addMethod ({
 				name: "ws_hello_event",
 				type: HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT,
 				description: "Say hello to the server and it will respond.",

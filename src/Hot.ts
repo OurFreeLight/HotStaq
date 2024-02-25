@@ -434,7 +434,7 @@ export class Hot
 					jsonRes["hotstaq"]["uploads"]["uploadId"];
 
 			// After the upload, make the actual JSON call. Do not pass files again.
-			const result: any = await Hot.httpRequest (url, data, httpMethod);
+			const result: any = await Hot.httpRequest (url, data, httpMethod, {}, bearerToken);
 
 			return (result);
 		}
