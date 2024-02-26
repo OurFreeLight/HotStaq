@@ -111,7 +111,9 @@ describe ("Server Tests", () =>
 						uploadDetails: {
 							name: "testName"
 						}
-					}, HotEventMethod.FILE_UPLOAD, {}, "kjs1he4w57h:3u4j5n978sd");
+					}, HotEventMethod.FILE_UPLOAD, {
+						"indexFileKey": null
+					}, "kjs1he4w57h:3u4j5n978sd");
 
 				expect (jsonRes.error).to.equal ("No file uploaded!", "File data was not transferred properly!");
 			});

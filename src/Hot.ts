@@ -397,16 +397,28 @@ export class Hot
 		if (httpMethod === HotEventMethod.FILE_UPLOAD)
 			httpMethodLower = "post";
 
+		let uploadFile: boolean = false;
+		const formData: FormData = new FormData ();
+
 		if (numFiles > 0)
 		{
 			if (httpMethodLower !== "post")
 				throw new Error (`To upload files, you must set the httpMethod to POST.`);
 
-			const formData: FormData = new FormData ();
-
 			for (let key in files)
-				formData.append (key, files[key]);
+			{
+				const file = files[key];
 
+				if (file != null)
+				{
+					formData.append (key, file);
+					uploadFile = true;
+				}
+			}
+		}
+
+		if (uploadFile === true)
+		{
 			let requestInit: RequestInit = {
 					method: "POST",
 					headers: {
