@@ -249,7 +249,7 @@ export class HotHTTPServer extends HotServer
 				headers: [
 					{ type: "Access-Control-Allow-Origin", value: "*" },
 					{ type: "Access-Control-Allow-Methods", value: "GET,HEAD,PUT,PATCH,POST,DELETE" },
-					{ type: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept" }
+					{ type: "Access-Control-Allow-Headers", value: "Origin, X-Requested-With, Content-Type, Accept, Authorization" }
 				]
 			};
 		this.cors = {
