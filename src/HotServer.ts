@@ -34,13 +34,22 @@ export interface IHotServer
 	api: HotAPI;
 	/**
 	 * The network address to listen on.
+	 * @default 0.0.0.0
 	 */
 	listenAddress: string;
 	/**
 	 * The ports to use.
 	 */
 	ports: {
+			/**
+			 * The HTTP port to use.
+			 * @default 5000
+			 */
 			http: number;
+			/**
+			 * The HTTPS port to use.
+			 * @default 443
+			 */
 			https: number;
 		};
 	/**
@@ -97,13 +106,22 @@ export class HotServer implements IHotServer
 	api: HotAPI;
 	/**
 	 * The network address to listen on.
+	 * @default 0.0.0.0
 	 */
 	listenAddress: string;
 	/**
 	 * The ports to use.
 	 */
 	ports: {
+			/**
+			 * The HTTP port to use.
+			 * @default 5000
+			 */
 			http: number;
+			/**
+			 * The HTTPS port to use.
+			 * @default 443
+			 */
 			https: number;
 		};
 	/**

@@ -166,9 +166,9 @@
 				"--trace-warnings"
 			],
 			"args": [
-				"--timeout", "6000", 
+				"--timeout", "600000000", 
 				"--colors", 
-				"./build/tests/**/*.js"
+				"./build/tests/server/**/*.js"
 			],
 			"cwd": "${workspaceFolder}",
 			"envFile": "${workspaceFolder}/.env"

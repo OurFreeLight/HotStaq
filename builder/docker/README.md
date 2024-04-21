@@ -16,7 +16,15 @@ To stop the container enter:
 ./stop.sh
 ```
 
-## Docker Environment Variables
+## Container Environment Variables
+* HOTSTAQ_VERSION
+    * Description: The global version of HotStaq to install.
+    * Type: string
+    * Default:
+* HOTSITE_NAME
+    * Description: The name of the hotsite to use.
+    * Type: string
+    * Default:
 * WEB_IMAGE
     * Description: The image name of the docker image to be built.
     * Type: string
@@ -41,22 +49,37 @@ To stop the container enter:
     * Description: The start arguments to pass to HotStaq when starting the app.
     * Type: string
     * Default:
-* SERVER_TYPE
-    * Description: The type of server to start. Can be:
-        * web
-        * api
-        * web-api
+* LOG_LEVEL
+    * Description: Set the logging level. Can be:
+        * info
+        * warning
+        * error
+        * verbose
+        * all
+        * none
     * Type: string
-    * Default: web-api
+    * Default: all
 * BASE_URL
     * Description: The base url to use for the web server.
     * Type: string
     * Default:
+* BASE_API_URL
+    * Description: The base url to use for the api server.
+    * Type: string
+    * Default:
 * HTTP_PORT
-    * Description: The http port to listen on.
+    * Description: The web http port to listen on.
     * Type: number
     * Default: 5000
 * HTTPS_PORT
-    * Description: The https port to listen on.
+    * Description: The web https port to listen on.
     * Type: number
     * Default: 443
+* API_HTTP_PORT
+    * Description: The api http port to listen on.
+    * Type: number
+    * Default: 
+* API_HTTPS_PORT
+    * Description: The api https port to listen on.
+    * Type: number
+    * Default: 

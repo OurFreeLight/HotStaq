@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.91";
+	static version: string = "0.8.92";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -426,6 +426,25 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
+	 * number returned is within a certain range.
+	 * 
+	 * The value retrieved must be a number.
+	 */
+	static getParamRange (name: string, objWithParam: any, min: number, max: number, required: boolean = true, throwException: boolean = true): any
+	{
+		const value = HotStaq.getParam (name, objWithParam, required, throwException);
+
+		if (value < min)
+			throw new Error (`Parameter ${name} must be greater than or equal to ${min}.`);
+
+		if (value > max)
+			throw new Error (`Parameter ${name} must be less than or equal to ${max}.`);
+
+		return (value);
+	}
+
+	/**
 	 * Check if a required parameter exists inside an object. If it exists, return the value.
 	 * If it does not exist, return a default value instead.
 	 */
@@ -441,6 +460,25 @@ export class HotStaq implements IHotStaq
 			if (value === "")
 				return (defaultValue);
 		}
+
+		return (value);
+	}
+
+	/**
+	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
+	 * number returned is within a certain range. If it does not exist, return a default value instead.
+	 * 
+	 * The value retrieved must be a number.
+	 */
+	static getParamDefaultRange (name: string, objWithParam: any, defaultValue: any, min: number, max: number): any
+	{
+		const value = HotStaq.getParamDefault (name, objWithParam, defaultValue);
+
+		if (value < min)
+			throw new Error (`Parameter ${name} must be greater than or equal to ${min}.`);
+
+		if (value > max)
+			throw new Error (`Parameter ${name} must be less than or equal to ${max}.`);
 
 		return (value);
 	}
