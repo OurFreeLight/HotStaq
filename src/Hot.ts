@@ -159,7 +159,7 @@ export class Hot
 	 * @returns Returns the URL parameter, only if it passes validation. If the parameter is not found,
 	 * null will be returned.
 	 */
-	static async getUrlParam (param: string, validation: string | ((param: any) => any)): Promise<any>
+	static getUrlParam (param: string, validation: string | ((param: any) => any)): any
 	{
 		const urlParams = new URLSearchParams (window.location.search);
 		const value = urlParams.get (param);
