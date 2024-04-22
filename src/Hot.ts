@@ -126,6 +126,100 @@ export class Hot
 	static jsScriptsStr: string = `<script type = "text/javascript">%JS_CODE%</script>`;
 
 	/**
+	 * Get a validated URL parameter.
+	 * 
+	 * @example
+	 * ```ts
+	 * <*
+	 * 	const id = Hot.getUrlParam ('id', 'int');
+	 * *>
+	 * 
+	 * <div>The id is: ${id}</div>
+	 * ```
+	 * 
+	 * @param validation This parameter is for validating and sanitizing a URL parameter.
+	 * If it's a string, the available options are:
+	 * * int
+	 *   * This will only allow integers. parseInt will be called and will return an integer.
+	 * * float
+	 *   * This will only allow floating point numbers. parseFloat will be called and will return a float.
+	 * * email
+	 *   * Will verify that the string is in the form of an email address.
+	 * * phone
+	 *   * Will verify that the string is in the form of an email address.
+	 * * uuid
+	 *   * This will verify that the string is in the form of a UUID. It does not check if the UUID is valid.
+	 * * string(number_of_chars)
+	 *   * This will only allow a string of the specified number of characters.
+	 * 
+	 * If this is a function, this will call the supplied function to validate. Validation checks must happen 
+	 * in the function and return the sanitized value. It is simply a passthrough, be wise with this. Throw 
+	 * an error if the value is not valid.
+	 * 
+	 * @returns Returns the URL parameter, only if it passes validation. If the parameter is not found,
+	 * null will be returned.
+	 */
+	static getUrlParam (param: string, validation: string | ((param: any) => any)): any
+	{
+		const urlParams = new URLSearchParams (window.location.search);
+		const value = urlParams.get (param);
+
+		if (value == null)
+			return (null);
+
+		if (typeof (validation) === "string")
+		{
+			switch (validation)
+			{
+				case "int":
+					return (parseInt (value));
+				case "float":
+					return (parseFloat (value));
+				case "email":
+				{
+					const emailRegex = new RegExp ("^\\S+@\\S+\\.\\S+$");
+
+					if (emailRegex.test (value) === true)
+						return (value);
+
+					break;
+				}
+				case "phone":
+				{
+					const phoneRegex = new RegExp ("^\\+?([0-9 ]?){6,14}[0-9]$");
+
+					if (phoneRegex.test (value) === true)
+						return (value);
+
+					break;
+				}
+				case "uuid":
+				{
+					const uuidRegex = new RegExp ("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+
+					if (uuidRegex.test (value) === true)
+						return (value);
+
+					break;
+				}
+				default:
+					if (validation.indexOf ("string") > -1)
+					{
+						const numChars = parseInt (validation.split ("(")[1].split (")")[0]);
+
+						if (value.length === numChars)
+							return (value);
+					}
+					break;
+			}
+
+			throw new Error (`getUrlParam retreiving parameter "${param}" using validation type "${validation}" failed.`);
+		}
+
+		return (validation (value));
+	}
+
+	/**
 	 * Retrieve a file and echo out it's contents.
 	 */
 	static async include (file: HotFile | string, args: any[] = null): Promise<void>

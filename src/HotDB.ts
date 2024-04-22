@@ -30,6 +30,7 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
 	connectionStatus: ConnectionStatus;
 	/**
 	 * The max number of database connections to maintain.
+	 * @default 10
 	 */
 	connectionLimit: number;
 	/**

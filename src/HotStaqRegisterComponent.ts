@@ -99,9 +99,14 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 					let output = componentOutputs[iKdx];
 					let htmlStr: string = output.html;
 					let addFunctionsTo: string = "";
+					// @ts-ignore
+					let placeHere: string = this.component["place-here"];
 		
 					if (output.addFunctionsTo != null)
 						addFunctionsTo = output.addFunctionsTo;
+
+					if (placeHere != null)
+						output.documentSelector = `hot-place-here[name="${placeHere}"]`;
 		
 					let str: string = HotFile.parseContent (htmlStr, true, { "outputCommands": false });
 		
