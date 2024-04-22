@@ -1035,7 +1035,16 @@ export class HotStaq implements IHotStaq
 		if (HotStaq.isWeb === true)
 			throw new Error (`Cannot save a HotSite on the web!`);
 
-		const hotsiteStr: string = JSON.stringify (this.hotSite, null, 2);
+		const ext: string = ppath.extname (path).toLowerCase ();
+		let hotsiteStr: string = "";
+
+		if ((ext === ".yaml") || (ext === ".yml"))
+		{
+			let yaml = eval ("require")("yaml"); // Hack to get around Webpack.
+			hotsiteStr = yaml.stringify (this.hotSite);
+		}
+		else
+			hotsiteStr = JSON.stringify (this.hotSite, null, 2);
 
 		let HotIO = eval ("require")("./HotIO").HotIO; // Hack to get around Webpack.
 		await HotIO.writeTextFile (path, hotsiteStr);
