@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.8.92",
+  "version": "0.8.93",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -42,7 +42,7 @@
     "js-cookie": "^3.0.1",
     "mime-types": "^2.1.35",
     "mocha": "^10.2.0",
-    "mysql2": "^2.3.3",
+    "mysql2": "^3.9.9",
     "node-fetch": "^2.6.7",
     "selenium-webdriver": "^4.16.0",
     "socket.io": "^4.6.2",

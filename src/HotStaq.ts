@@ -132,7 +132,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.92";
+	static version: string = "0.8.93";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -462,6 +462,19 @@ export class HotStaq implements IHotStaq
 		}
 
 		return (value);
+	}
+
+	/**
+	 * Check if a value is null or empty.
+	 * 
+	 * @returns Returns true if the value is an empty string, null, undefined, 0, etc.
+	 */
+	static checkIfEmpty (value: any): boolean
+	{
+		if (!value)
+			return (true);
+
+		return (false);
 	}
 
 	/**

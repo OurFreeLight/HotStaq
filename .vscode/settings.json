@@ -1,3 +1,6 @@
 {
-    "circleci.filters.branchFilter": "allBranches"
+    "circleci.filters.branchFilter": "allBranches",
+    "circleci.persistedProjectSelection": [
+        "gh/OurFreeLight/HotStaq"
+    ]
 }
