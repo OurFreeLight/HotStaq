@@ -465,6 +465,19 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Check if a value is null or empty.
+	 * 
+	 * @returns Returns true if the value is an empty string, null, undefined, 0, etc.
+	 */
+	static checkIfEmpty (value: any): boolean
+	{
+		if (!value)
+			return (true);
+
+		return (false);
+	}
+
+	/**
 	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
 	 * number returned is within a certain range. If it does not exist, return a default value instead.
 	 * 
