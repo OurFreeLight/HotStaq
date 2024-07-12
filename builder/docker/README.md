@@ -17,6 +17,8 @@ To stop the container enter:
 ```
 
 ## Container Environment Variables
+These environment variables are specific to running containers.
+
 * HOTSTAQ_VERSION
     * Description: The global version of HotStaq to install.
     * Type: string
