@@ -1,6 +1,6 @@
 import * as ppath from "path";
 
-import glob from "glob";
+import { glob } from "glob";
 
 import { HotIO } from "./HotIO";
 
@@ -423,32 +423,23 @@ export class HotBuilder
 
 							assetPath = ppath.normalize (`${modulePath}${assetPath}`);
 
-							await new Promise<void> ((resolve, reject) =>
-								{
-									processor.logger.verbose (`Copying files at ${assetPath}`);
+							processor.logger.verbose (`Copying files at ${assetPath}`);
 
-									glob (assetPath, async (err: Error, files: string[]) =>
-										{
-											if (err != null)
-												throw err;
+							const files = await glob (assetPath);
 
-											for (let iJdx = 0; iJdx < files.length; iJdx++)
-											{
-												let file: string = files[iJdx];
-												let filename: string = ppath.basename (files[iJdx]);
-												let src: string = file;
-												let dest: string = ppath.normalize (`${finalOutDir}/${filename}`);
-							
-												processor.logger.verbose (`Copying file ${src} ${dest}`);
-												await HotIO.copyFile (src, dest);
+							for (let iJdx = 0; iJdx < files.length; iJdx++)
+							{
+								let file: string = files[iJdx];
+								let filename: string = ppath.basename (files[iJdx]);
+								let src: string = file;
+								let dest: string = ppath.normalize (`${finalOutDir}/${filename}`);
+			
+								processor.logger.verbose (`Copying file ${src} ${dest}`);
+								await HotIO.copyFile (src, dest);
 
-												let webDest: string = ppath.normalize (`${finalBaseUrl}/${filename}`);
-												outFiles.push (webDest);
-											}
-
-											resolve ();
-										});
-								});
+								let webDest: string = ppath.normalize (`${finalBaseUrl}/${filename}`);
+								outFiles.push (webDest);
+							}
 						}
 					};
 
@@ -580,33 +571,25 @@ return (newModule);
 					let fileExt: string = fileExts[iJdx];
 					let foundPreferredExt: boolean = false;
 
-					await new Promise<void> ((resolve, reject) =>
+					const files = await glob (`${path}/*${fileExt}`);
+
+					for (let iIdx = 0; iIdx < files.length; iIdx++)
 					{
-						glob (`${path}/*${fileExt}`, async (err: Error, files: string[]) =>
-							{
-								if (err != null)
-									throw err;
+						let file: string = files[iIdx].toLowerCase ();
+						let filename: string = ppath.basename (files[iIdx]);
+						let findFileExt: string = ppath.extname (file);
 
-								for (let iIdx = 0; iIdx < files.length; iIdx++)
-								{
-									let file: string = files[iIdx].toLowerCase ();
-									let filename: string = ppath.basename (files[iIdx]);
-									let findFileExt: string = ppath.extname (file);
+						if (findFileExt === "")
+							continue;
 
-									if (findFileExt === "")
-										continue;
+						let src: string = ppath.normalize (`${path}/${filename}`);
+						let dest: string = ppath.normalize (`${outDir}/${filename}`);
+						let webdest: string = ppath.normalize (`${baseUrl}/${filename}`);
 
-									let src: string = ppath.normalize (`${path}/${filename}`);
-									let dest: string = ppath.normalize (`${outDir}/${filename}`);
-									let webdest: string = ppath.normalize (`${baseUrl}/${filename}`);
+						await copyFile (src, dest, webdest);
+					}
 
-									await copyFile (src, dest, webdest);
-								}
-
-								foundPreferredExt = true;
-								resolve ();
-							});
-					});
+					foundPreferredExt = true;
 
 					/// @ts-ignore
 					if (foundPreferredExt === true)

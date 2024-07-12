@@ -86,10 +86,24 @@ export interface IServerRequest
 	};
 }
 
+/**
+ * How data should be passed through the server execute process.
+ */
 export enum PassType
 {
+	/**
+	 * Any data set in jsonObj will immediately be passed to the client when 
+	 * this function returns.
+	 */
 	ReturnToClient,
+	/**
+	 * Any data being set in jsonObj will be passed to the next step after 
+	 * this function returns.
+	 */
 	Update,
+	/**
+	 * Ignore any data set in jsonObj.
+	 */
 	Ignore
 }
 
