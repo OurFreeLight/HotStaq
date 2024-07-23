@@ -116,6 +116,25 @@ You can configure how HotStaq starts by using the following environment variable
 		* verbose
 		* all
 		* none
+* RATE_LIMITER_REDIS_HOST
+	* Type: string
+	* Description: The Redis host to use for the rate limiter.
+	* Accepted values:
+* RATE_LIMITER_REDIS_PORT
+	* Type: string
+	* Description: The Redis port to use for the rate limiter.
+	* Accepted values:
+		* Any string.
+* RATE_LIMITER_REDIS_USERNAME
+	* Type: string
+	* Description: The Redis username to use for the rate limiter.
+	* Accepted values:
+		* Any string.
+* RATE_LIMITER_REDIS_PASSWORD
+	* Type: string
+	* Description: The Redis password to use for the rate limiter.
+	* Accepted values:
+		* Any string.
 
 ## HotStaq Development Specific Environment Variables
 The following environment variables are only used during development and testing of HotStaq. These are not meant to be used for HotStaq applications:
