@@ -8,6 +8,10 @@ import express from "express";
 import mimeTypes from "mime-types";
 import { Fields, Files, IncomingForm, Options } from "formidable";
 
+import { rateLimit, Options as RateLimitOptions } from "express-rate-limit";
+import { RedisStore, Options as RedisRateLimitOptions } from "rate-limit-redis";
+import RedisClient, { RedisOptions } from "ioredis";
+
 import { HotServer, HotServerType } from "./HotServer";
 import { HotStaq } from "./HotStaq";
 import { HotRoute } from "./HotRoute";
@@ -210,6 +214,54 @@ export class HotHTTPServer extends HotServer
 			allowedHeaders: string[];
 		};
 	/**
+	 * The rate limiter settings. This is a fairly simple rate limiter, for more 
+	 * complex scenarios you may have to customize the rate limiter by attaching it to 
+	 * this.expressApp directly. This uses express-rate-limit.
+	 */
+	rateLimiter: {
+			/**
+			 * If set to true, the rate limiter will be enabled. By default it will be 
+			 * true only if there's an API attached. Otherwise false.
+			 * 
+			 * @default false
+			 */
+			enabled: boolean;
+			/**
+			 * The number of milliseconds to remember requests for.
+			 * 
+			 * @default 60000
+			 */
+			windowLength: number;
+			/**
+			 * The number of requests allowed per window.
+			 * 
+			 * @default 500
+			 */
+			limit: number;
+			/**
+			 * The store to use for the rate limiter. For now, this requires Redis.
+			 */
+			store: {
+					/**
+					 * The Redis client to use. You can use a custom client here 
+					 * or use the default client provided by ioredis by setting 
+					 * the redisConfig below.
+					 */
+					redisClient: RedisClient;
+					/**
+					 * The Redis config. By default this is null, if a host is 
+					 * entered, the default port will be 6379 if left empty.
+					 * The username and password will not be used by default.
+					 */
+					redisConfig: {
+							host?: string;
+							port?: number;
+							username?: string;
+							password?: string;
+						};
+				};
+		};
+	/**
 	 * The function to execute when handling 404 errors.
 	 */
 	handle404: (req: express.Request, res: express.Response, next: any) => void;
@@ -257,6 +309,12 @@ export class HotHTTPServer extends HotServer
 			origin: "*",
 			allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept"]
 		};
+		this.rateLimiter = {
+				enabled: false,
+				windowLength: 60000,
+				limit: 500,
+				store: null
+			};
 		this.handle404 = null;
 		this.handleOther = null;
 
@@ -349,6 +407,66 @@ export class HotHTTPServer extends HotServer
 			});
 		this.expressApp.use (express.urlencoded ({ "extended": true }));
 		this.expressApp.use (express.json ({ "limit": JSONLimit }));
+
+		this.logger.info (`Access-Control-Allow-Origin: ${this.cors.origin}`);
+		this.logger.info (`Access-Control-Allow-Headers: ${this.cors.allowedHeaders}`);
+		this.logger.info (`JSON limit: ${JSONLimit}`);
+
+		if (this.api != null)
+		{
+			if (this.rateLimiter.enabled === true)
+			{
+				const limiterObj = {
+						windowMs: this.rateLimiter.windowLength,
+						limit: this.rateLimiter.limit,
+						standardHeaders: "draft-7"
+					} as Partial<RateLimitOptions>;
+
+				if (this.rateLimiter.store != null)
+				{
+					let client = this.rateLimiter.store.redisClient;
+
+					if ((process.env["RATE_LIMITER_REDIS_HOST"] != null) || 
+						(process.env["RATE_LIMITER_REDIS_PORT"] != null))
+					{
+						if (this.rateLimiter.store.redisConfig == null)
+							this.rateLimiter.store.redisConfig = {};
+					}
+
+					this.rateLimiter.store.redisConfig.host = process.env["RATE_LIMITER_REDIS_HOST"];
+					this.rateLimiter.store.redisConfig.port = parseInt (process.env["RATE_LIMITER_REDIS_PORT"]);
+					this.rateLimiter.store.redisConfig.username = process.env["RATE_LIMITER_REDIS_USERNAME"];
+					this.rateLimiter.store.redisConfig.password = process.env["RATE_LIMITER_REDIS_PASSWORD"];
+
+					if (this.rateLimiter.store.redisConfig != null)
+					{
+						let redisOptions = {
+								"host": this.rateLimiter.store.redisConfig.host ?? "localhost",
+								"port": this.rateLimiter.store.redisConfig.port ?? 6379
+							} as RedisOptions;
+
+						if (this.rateLimiter.store.redisConfig.username != null)
+							redisOptions.username = this.rateLimiter.store.redisConfig.username;
+
+						if (this.rateLimiter.store.redisConfig.password != null)
+							redisOptions.password = this.rateLimiter.store.redisConfig.password;
+
+						client = new RedisClient (redisOptions);
+					}
+
+					limiterObj.store = new RedisStore ({
+						// @ts-ignore
+						sendCommand: (...args: string[]) => client.call (...args)
+					});
+				}
+
+				const limiter = rateLimit (limiterObj);
+				this.expressApp.use (limiter);
+				this.logger.info (`Rate limiter enabled with window length ${this.rateLimiter.windowLength} and limit ${this.rateLimiter.limit}`);
+			}
+			else
+				this.logger.info (`No rate limiter set!`);
+		}
 	}
 
 	/**

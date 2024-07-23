@@ -685,6 +685,23 @@ export class HotCLI
 		let disableFileLoading: boolean = false;
 		let skipSecretFiles: boolean = true;
 		let dontLoadAPIFiles: boolean = false;
+		let cors: { origin: string; allowedHeaders: string[] } = {
+				origin: "*",
+				allowedHeaders: []
+			};
+		let rateLimiter: { enabled: boolean; windowLength: number; limit: number; 
+				store: {
+						host?: string;
+						port?: number;
+						username?: string;
+						password?: string;
+					}
+			} = {
+				enabled: null,
+				windowLength: 60000,
+				limit: 500,
+				store: null
+			};
 		let testerSettings: {
 				tester: string;
 				address: string;
@@ -986,8 +1003,42 @@ export class HotCLI
 					if (globalApi !== "")
 						this.processor.hotSite.server.globalApi = globalApi;
 
+					if (serverType === "api")
+					{
+						if (rateLimiter.enabled != null)
+							rateLimiter.enabled = true;
+					}
+
 					if ((serverType === "api") || (serverType === "web-api"))
+					{
 						runAPIServer = true;
+
+						if (cors.allowedHeaders.length === 0)
+							cors.allowedHeaders = ["Origin", "X-Requested-With", "Content-Type", "Accept"];
+
+						apiServer.cors.origin = cors.origin;
+						apiServer.cors.allowedHeaders = cors.allowedHeaders;
+
+						apiServer.rateLimiter.enabled = rateLimiter.enabled;
+						apiServer.rateLimiter.windowLength = rateLimiter.windowLength;
+						apiServer.rateLimiter.limit = rateLimiter.limit;
+
+						if (rateLimiter.store != null)
+						{
+							apiServer.rateLimiter.store.redisConfig = {
+									host: rateLimiter.store.host
+								};
+
+							if (rateLimiter.store.port != null)
+								apiServer.rateLimiter.store.redisConfig.port = rateLimiter.store.port;
+
+							if (rateLimiter.store.username != null)
+								apiServer.rateLimiter.store.redisConfig.username = rateLimiter.store.username;
+
+							if (rateLimiter.store.password != null)
+								apiServer.rateLimiter.store.redisConfig.password = rateLimiter.store.password;
+						}
+					}
 
 					if (dbinfo != null)
 						this.processor.logger.verbose (`Connecting to ${dbinfo.type} database at ${dbinfo.server}:${dbinfo.port} using schema ${dbinfo.database}`);
@@ -1387,6 +1438,7 @@ export class HotCLI
 						{
 							const tempPort: number = parseInt (port);
 		
+							// @ts-ignore
 							if (currentServerType === "web")
 								webServer.ports.http = tempPort;
 							else
@@ -1573,6 +1625,86 @@ export class HotCLI
 			{
 				serverType = type;
 			}, "web");
+		runCmd.option (`--rate-limiter <enabled>`, 
+			`Enable or disable the rate limiter. If the server-type is set to API, this will be enabled by default. Can be (true, false)`, 
+			(type: string, previous: any) =>
+			{
+				rateLimiter.enabled = false;
+
+				if (type === "true")
+					rateLimiter.enabled = true;
+			}, "true");
+		runCmd.option (`--rate-limiter-window <length>`, 
+			`The number of milliseconds to remember requests for. Default: 60000`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					rateLimiter.windowLength = parseInt (value);
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse rate-limiter-window ${value}`);
+				}
+			}, "60000");
+		runCmd.option (`--rate-limiter-limit <length>`, 
+			`The number of requests allowed per window. Default: 500`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					rateLimiter.limit = parseInt (value);
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse rate-limiter-limit ${value}`);
+				}
+			}, "500");
+		runCmd.option (`--rate-limiter-redis-host <host>`, 
+			`Use Redis to store rate limiter data, this will set the redis host to connect to. This must be set if a rate limiter store is being used.`, 
+			(value: string, previous: any) =>
+			{
+				rateLimiter.store = {
+						host: value
+					};
+			}, "localhost");
+		runCmd.option (`--rate-limiter-redis-port <port>`, 
+			`Will set the Redis port to use for the rate limiter store.`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					rateLimiter.store.port = parseInt (value);
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse rate-limiter-redis-port ${value}`);
+				}
+			}, "6379");
+		runCmd.option (`--rate-limiter-redis-username <username>`, 
+			`Will set the Redis username to use for the rate limiter store.`, 
+			(value: string, previous: any) =>
+			{
+				rateLimiter.store.username = value;
+			});
+		runCmd.option (`--rate-limiter-redis-password <password>`, 
+			`Will set the Redis password to use for the rate limiter store.`, 
+			(value: string, previous: any) =>
+			{
+				rateLimiter.store.password = value;
+			});
+		runCmd.option (`--cors-origin <value>`, 
+			`The cors origin(s) to set comma separated if necessary. Default: *`, 
+			(value: string, previous: any) =>
+			{
+				cors.origin = value;
+			}, "*");
+		runCmd.option (`--cors-allowed-header <value>`, 
+			`The cors allowed header to set, this can be set multiple times. Default: ["Origin", "X-Requested-With", "Content-Type", "Accept"]`, 
+			(value: string, previous: any) =>
+			{
+				cors.allowedHeaders.push (value);
+			});
 		runCmd.option (`--global-api <api_name>`, 
 			`Set the global api to be used across all pages.`, 
 			(api_name: string, previous: any) =>
