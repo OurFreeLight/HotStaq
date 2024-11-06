@@ -408,10 +408,6 @@ export class HotHTTPServer extends HotServer
 		this.expressApp.use (express.urlencoded ({ "extended": true }));
 		this.expressApp.use (express.json ({ "limit": JSONLimit }));
 
-		this.logger.info (`Access-Control-Allow-Origin: ${this.cors.origin}`);
-		this.logger.info (`Access-Control-Allow-Headers: ${this.cors.allowedHeaders}`);
-		this.logger.info (`JSON limit: ${JSONLimit}`);
-
 		if (this.api != null)
 		{
 			if (this.rateLimiter.enabled === true)
@@ -1253,6 +1249,18 @@ export class HotHTTPServer extends HotServer
 			{
 				try
 				{
+					let JSONLimit: string = "1mb";
+
+					if (process.env.JSON_LIMIT != null)
+					{
+						if (process.env.JSON_LIMIT !== "")
+							JSONLimit = process.env.JSON_LIMIT;
+					}
+
+					this.logger.info (`Access-Control-Allow-Origin: ${this.cors.origin}`);
+					this.logger.info (`Access-Control-Allow-Headers: ${this.cors.allowedHeaders}`);
+					this.logger.info (`JSON limit: ${JSONLimit}`);
+
 					if (this.useWorkerThreads === true)
 						Worker = require ("node:worker_threads").Worker;
 
