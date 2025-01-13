@@ -13,6 +13,18 @@ export enum ConnectionStatus
 }
 
 /**
+ * The database type.
+ */
+export enum HotDBType
+{
+	None = "none",
+	MySQL = "mysql",
+	MariaDB = "mariadb",
+	Influx = "influx",
+	Postgres = "postgres"
+}
+
+/**
  * The server-side database connection. This may be deprecated and removed in a future version soon.
  */
 export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSchema>
@@ -20,7 +32,7 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
 	/**
 	 * The database type.
 	 */
-	type: string;
+	type: HotDBType;
 	/**
 	 * The connection to the database (or the driver).
 	 */
@@ -40,7 +52,7 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
 	 */
 	schema: DBSchema;
 
-	constructor (db: DBType = null, type: string = "", schema: DBSchema = null)
+	constructor (db: DBType = null, type: HotDBType = HotDBType.None, schema: DBSchema = null)
 	{
 		this.type = type;
 		this.db = db;

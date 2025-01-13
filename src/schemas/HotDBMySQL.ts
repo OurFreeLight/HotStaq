@@ -1,6 +1,6 @@
 import * as mysql from "mysql2";
 
-import { ConnectionStatus, HotDB } from "../HotDB";
+import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { MySQLSchema } from "./mysql/MySQLSchema";
 
@@ -19,7 +19,7 @@ export interface MySQLResults
  */
 export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
 {
-	constructor (db: mysql.Pool = null, type: string = "mysql", schema: MySQLSchema = null)
+	constructor (db: mysql.Pool = null, type: HotDBType = HotDBType.MySQL, schema: MySQLSchema = null)
 	{
 		super (db, type, schema);
 	}

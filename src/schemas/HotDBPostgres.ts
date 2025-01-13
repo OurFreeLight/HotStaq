@@ -1,6 +1,6 @@
 import * as pg from "pg";
 
-import { ConnectionStatus, HotDB } from "../HotDB";
+import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { PostgresSchema } from "./postgres/PostgresSchema";
 
@@ -19,7 +19,7 @@ export interface PostgresResults
  */
 export class HotDBPostgres extends HotDB<pg.Pool, PostgresResults, PostgresSchema>
 {
-	constructor (db: pg.Pool = null, type: string = "mysql", schema: PostgresSchema = null)
+	constructor (db: pg.Pool = null, type: HotDBType = HotDBType.Postgres, schema: PostgresSchema = null)
 	{
 		super (db, type, schema);
 	}
