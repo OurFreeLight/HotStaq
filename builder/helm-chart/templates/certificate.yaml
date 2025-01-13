@@ -1,0 +1,45 @@
+{{- if .Values.ingress.certManager.enabled }}
+{{- $fullName := include "app.fullname" . -}}
+{{- if .Values.app_web.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $fullName }}-frontend-certificate
+spec:
+  secretName: {{ $fullName }}-frontend-tls
+  issuerRef:
+    name: {{ $fullName }}-frontend-issuer
+  dnsNames:
+  {{- range .Values.app_web.ingress.hosts }}
+    - {{ .host | quote }}
+  {{- end }}
+---
+{{- end -}}
+{{- if .Values.app_api.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $fullName }}-certificate
+spec:
+  secretName: {{ $fullName }}-tls
+  issuerRef:
+    name: {{ $fullName }}-issuer
+  dnsNames:
+  {{- range .Values.ingress.hosts }}
+    - {{ .host | quote }}
+  {{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $fullName }}-dicebear-certificate
+spec:
+  secretName: {{ $fullName }}-dicebear-tls
+  issuerRef:
+    name: {{ $fullName }}-dicebear-issuer
+  dnsNames:
+  {{- range .Values.dicebear.ingress.hosts }}
+    - {{ .host | quote }}
+  {{- end }}
+{{- end }}
+{{- end -}}

@@ -42,14 +42,18 @@ export interface HotDBConnectionInterface
      * If set to true, multiple statements will be enabled. WARNING: This can cause 
      * security issues. Additionally this currently only support HotDBMySQL which uses 
      * mysql2.
+     * 
+     * This may be removed in the future.
      */
     multipleStatements?: boolean;
     /**
-     * The connection object to pass to the .
+     * The connection object to pass to the pool options to customize any pool options.
      * 
      * For example, when using HotDBMySQL, if you place the object for mysql.PoolOptions 
      * that object will be used instead. If using HotDBInflux, you place the object for 
      * ClientOptions here, that will be used instead.
+     * 
+     * For HotDBPostgres, you can place the object for pg.PoolConfig here.
      */
     connectionObjectOverride?: any;
 }

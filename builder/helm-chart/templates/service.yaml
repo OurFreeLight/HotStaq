@@ -1,0 +1,70 @@
+{{- if .Values.database.deploy -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.fullname" . }}-db-service
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: database
+      protocol: TCP
+      name: database
+  selector:
+    {{- include "app.selectorLabels" . | nindent 4 }}
+---
+{{- end -}}
+{{- if .Values.app_web.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.fullname" . }}-frontend-service
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: frontend-http
+      protocol: TCP
+      name: frontend-http
+  selector:
+    {{- include "app.selectorLabels" . | nindent 4 }}
+---
+{{- end -}}
+{{- if .Values.app_api.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.fullname" . }}
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: api
+      protocol: TCP
+      name: api
+  selector:
+    {{- include "app.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app.fullname" . }}-dicebear-service
+  labels:
+    {{- include "app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: dicebear-api
+      protocol: TCP
+      name: dicebear-api
+  selector:
+    {{- include "app.selectorLabels" . | nindent 4 }}
+{{- end -}}
+

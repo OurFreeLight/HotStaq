@@ -39,7 +39,7 @@ if "%PROD%"=="1" (
 
     docker tag %WEB_IMAGE%.slim:latest %WEB_IMAGE%:%WEB_IMAGE_VERSION% >nul 2>nul
     docker tag %API_IMAGE%.slim:latest %WEB_IMAGE%:%WEB_IMAGE_VERSION% >nul 2>nul
-    docker-compose -f .\docker-compose.yaml down >nul 2>nul
+    docker compose -f .\docker-compose.yaml down >nul 2>nul
 
     docker --help | findstr /c:"scan" >nul && (
         docker scan %WEB_IMAGE%:%WEB_IMAGE_VERSION%

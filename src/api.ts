@@ -55,6 +55,10 @@ import { MySQLSchemaTable } from "./schemas/mysql/MySQLSchemaTable";
 import { HotDBInflux } from "./schemas/HotDBInflux";
 import { InfluxSchema } from "./schemas/influx/InfluxSchema";
 
+// Postgres specific stuff
+import { HotDBPostgres, PostgresResults } from "./schemas/HotDBPostgres";
+import { PostgresSchema } from "./schemas/postgres/PostgresSchema";
+
 HotStaq.isWeb = false;
 
 export {
@@ -122,5 +126,8 @@ export {
 		MySQLSchemaField,
 		MySQLSchemaTable,
 		HotDBInflux,
-		InfluxSchema
+		InfluxSchema,
+		HotDBPostgres, 
+		PostgresResults, 
+		PostgresSchema
 	};

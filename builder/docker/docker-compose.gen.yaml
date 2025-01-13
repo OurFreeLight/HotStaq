@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   ${HOTSITE_NAME}:
     image: ${WEB_IMAGE}:${WEB_IMAGE_VERSION}
@@ -44,7 +43,7 @@ services:
       DATABASE_SCHEMA: "${DATABASE_SCHEMA}"
 
   ${HOTSITE_NAME}-database:
-    image: mariadb:10.10
+    image: mariadb:11.6
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:

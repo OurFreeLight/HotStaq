@@ -8,4 +8,4 @@ fi
 
 source ./.env
 
-docker-compose --env-file ./.env down
+docker compose --env-file ./.env down

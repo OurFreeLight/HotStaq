@@ -8,11 +8,12 @@ export enum ConnectionStatus
 {
 	Disconnected,
 	Connecting,
-	Connected
+	Connected,
+	Error
 }
 
 /**
- * The server-side database connection.
+ * The server-side database connection. This may be deprecated and removed in a future version soon.
  */
 export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSchema>
 {
@@ -75,7 +76,7 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
      */
 	abstract queryOne? (queryString: string, values?: any[]): Promise<DBResultType>;
     /**
-     * Make multiple queries.
+     * Make multiple queries. This is not implemented in all databases, and most likely will be removed.
      */
 	abstract multiQuery? (queryStrings: string[] | { query: string; values: any[]; }[]): Promise<DBResultType[]>;
 	/**

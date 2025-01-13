@@ -1,0 +1,54 @@
+{{- if .Values.ingress.certManager.enabled }}
+{{- $fullName := include "app.fullname" . -}}
+{{- if .Values.app_web.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $fullName }}-frontend-issuer
+spec:
+  acme:
+    email: {{ .Values.ingress.certManager.email }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: {{ $fullName }}-frontend-private-key
+    solvers:
+    - selector: {}
+      http01:
+        ingress:
+          class: {{ .Values.ingress.className }}
+---
+{{- end -}}
+{{- if .Values.app_api.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $fullName }}-issuer
+spec:
+  acme:
+    email: {{ .Values.ingress.certManager.email }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: {{ $fullName }}-private-key
+    solvers:
+    - selector: {}
+      http01:
+        ingress:
+          class: {{ .Values.ingress.className }}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $fullName }}-dicebear-issuer
+spec:
+  acme:
+    email: {{ .Values.ingress.certManager.email }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: {{ $fullName }}-dicebear-private-key
+    solvers:
+    - selector: {}
+      http01:
+        ingress:
+          class: {{ .Values.ingress.className }}
+{{- end }}
+{{- end -}}

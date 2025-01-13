@@ -52,6 +52,7 @@ You can configure how HotStaq starts by using the following environment variable
 	* Accepted values:
 		* mysql
 		* influx
+		* postgres
 * DATABASE_DISABLE
 	* Type: number
 	* Description: If set to 0, the database will not be used.
@@ -64,6 +65,7 @@ You can configure how HotStaq starts by using the following environment variable
 	* Accepted values:
 		* MySql example: 127.0.0.1
 		* Influx example: http://127.0.0.1:8086
+		* Postgres example: 127.0.0.1
 * DATABASE_PORT
 	* Type: number
 	* Description: The database port to use.
