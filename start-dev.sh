@@ -8,6 +8,4 @@ fi
 
 source ./.env
 
-docker-compose --env-file ./.env up -d
-
-sleep 5
+docker compose --env-file ./.env up -d

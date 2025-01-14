@@ -532,10 +532,16 @@ export class HotWebSocketServer
 
 		await new Promise<void> ((resolve, reject) =>
 			{
-				this.io.close ((err: Error) =>
+				this.io.close ((err: NodeJS.ErrnoException) =>
 					{
 						if (err != null)
-							throw err;
+						{
+							if (err.code != null)
+							{
+								if (err.code !== "ERR_SERVER_NOT_RUNNING")
+									throw err;
+							}
+						}
 
 						this.logger.verbose (`WebSocket Server has stopped listening.`);
 						resolve ();

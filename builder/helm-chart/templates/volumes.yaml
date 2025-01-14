@@ -1,0 +1,16 @@
+{{- if .Values.database.deploy -}}
+{{- $fullName := include "app.fullname" . -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $fullName }}-database-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.database.storage.storageClassName }}
+  storageClassName: {{ .Values.database.storage.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.database.storage.size }}
+{{- end -}}

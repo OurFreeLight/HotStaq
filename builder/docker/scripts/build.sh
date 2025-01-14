@@ -35,7 +35,7 @@ if [ "$PROD" == "1" ]; then
         $WEB_IMAGE:$WEB_IMAGE_VERSION
     docker tag $WEB_IMAGE.slim:latest $WEB_IMAGE:$WEB_IMAGE_VERSION 2>/dev/null
     docker tag $API_IMAGE.slim:latest $WEB_IMAGE:$WEB_IMAGE_VERSION 2>/dev/null
-    docker-compose -f ./docker-compose.yaml down 2>/dev/null;
+    docker compose -f ./docker-compose.yaml down 2>/dev/null;
   fi
 
   if docker --help | grep -q scan; then

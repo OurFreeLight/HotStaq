@@ -544,6 +544,78 @@ return (newModule);
 	}
 
 	/**
+	 * Prepare a HotSite for building. This will return the replace keys to use for 
+	 * every file that will be generated. Additionally, this will ensure the HotSite 
+	 * is named properly, and check if the target output directory already exists.
+	 * Also, this will normalize the output directory.
+	 * 
+	 * @param generatorType The type of generator to use. Can be:
+	 * * docker
+	 * * helm
+	 */
+	protected async prepareHotsiteBuild (hotsite: HotSite, generatorType: "docker" | "helm"): Promise<any>
+	{
+		if (hotsite.name == null)
+			throw new Error (`HotSite ${hotsite.hotsitePath} is missing a name!`);
+
+		HotStaq.checkHotSiteName (hotsite.name, true);
+
+		this.outputDir = ppath.normalize (`${this.outputDir}/`);
+		let dockerfilePortsStr: string = "";
+		let httpPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "http"]);
+		let httpsPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "https"]);
+		let httpApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttp"]);
+		let httpsApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttps"]);
+		let hotsitePath: string = `/app/HotSite.json`;
+
+		if (await HotIO.exists (`${this.outputDir}/${generatorType}/${hotsite.name}/app/`) === true)
+		{
+			this.logger.info (`Unable to create ${generatorType} files because the directory "${this.outputDir}/${generatorType}/${hotsite.name}/app/" already exists!`);
+
+			return;
+		}
+
+		await HotIO.mkdir (`${this.outputDir}/${generatorType}/${hotsite.name}/app/`);
+
+		if (httpPort != null)
+		{
+			dockerfilePortsStr += `ARG HTTP_PORT=${httpPort}
+	ENV HTTP_PORT \${HTTP_PORT}
+	EXPOSE \${HTTP_PORT}`;
+		}
+
+		if (httpsPort != null)
+		{
+			dockerfilePortsStr += `ARG HTTPS_PORT=${httpsPort}
+	ENV HTTPS_PORT \${HTTPS_PORT}
+	EXPOSE \${HTTPS_PORT}`;
+		}
+
+		if (dockerfilePortsStr === "")
+		{
+			httpPort = 5000;
+			dockerfilePortsStr += `ARG HTTP_PORT=5000
+	ENV HTTP_PORT \${HTTP_PORT}
+	EXPOSE \${HTTP_PORT}`;
+		}
+
+		if (httpApiPort == null)
+			httpApiPort = 5001;
+
+		let replaceKeys = {
+				NAMESPACE: this.dockerNamespace,
+				HOTSITE_NAME: hotsite.name,
+				REAL_HOTSTAQ_VERSION: this.hotstaqVersion,
+				DOCKERFILE_PORTS: dockerfilePortsStr,
+				REAL_HTTP_PORT: httpPort.toString (),
+				REAL_API_HTTP_PORT: httpApiPort.toString (),
+				HOTSITE_PATH: hotsitePath
+			};
+
+		return (replaceKeys);
+	}
+
+	/**
 	 * During install, copy files to their correct locations. All copying will 
 	 * stop if stopAfterFirstIsFound is set to true, and the first file is found.
 	 * 
@@ -699,102 +771,76 @@ return (newModule);
 			{
 				const hotsite: HotSite = this.hotsites[iIdx];
 
+				this.logger.info (`Preparing Dockerfile "${hotsite.name}"...`);
+
+				let replaceKeys = await this.prepareHotsiteBuild (hotsite, "docker");
+
 				this.logger.info (`Building Dockerfile "${hotsite.name}"...`);
 
-				if (hotsite.name == null)
-					throw new Error (`HotSite ${hotsite.hotsitePath} is missing a name!`);
+				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`), `${this.outputDir}/docker/${hotsite.name}/prod.dockerfile`);
+				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`), `${this.outputDir}/docker/${hotsite.name}/dev.dockerfile`);
+				await this.replaceKeysInFile (`${this.outputDir}/docker/${hotsite.name}/prod.dockerfile`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/docker/${hotsite.name}/dev.dockerfile`, replaceKeys);
+				await HotIO.copyFiles (`${dockerDir}/scripts/`, `${this.outputDir}/`);
+				await HotIO.copyFiles (`${dockerDir}/app/`, `${this.outputDir}/docker/${hotsite.name}/app/`);
+				await HotIO.copyFile (`${dockerDir}/dockerignore`, `${this.outputDir}/.dockerignore`);
+				await HotIO.copyFile (`${dockerDir}/docker-compose.gen.yaml`, `${this.outputDir}/docker-compose.yaml`);
+				await HotIO.copyFile (`${dockerDir}/env-skeleton`, `${this.outputDir}/env-skeleton`);
 
-				HotStaq.checkHotSiteName (hotsite.name, true);
+				await this.replaceKeysInFile (`${this.outputDir}/docker/${hotsite.name}/app/start.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/docker/${hotsite.name}/app/start-pkg.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/env-skeleton`, replaceKeys);
 
-				const hotsiteName: string = hotsite.name;
-				let outputDir: string = ppath.normalize (`${this.outputDir}/`);
-				let dockerfilePortsStr: string = "";
-				let httpPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "http"]);
-				let httpsPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "https"]);
-				let httpApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttp"]);
-				let httpsApiPort: number = HotStaq.getValueFromHotSiteObj (hotsite, ["server", "ports", "apiHttps"]);
-				let hotsitePath: string = `/app/HotSite.json`;
+				await this.replaceKeysInFile (`${this.outputDir}/docker-compose.yaml`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/build.bat`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/build.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/start.bat`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/start.sh`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/stop.bat`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/stop.sh`, replaceKeys);
 
-				if (await HotIO.exists (`${outputDir}/docker/${hotsiteName}/app/`) === true)
+				if (await HotIO.exists (`${this.outputDir}/README.md`) === true)
 				{
-					this.logger.info (`Unable to create Docker files because the directory "${outputDir}/docker/${hotsiteName}/app/" already exists!`);
-
-					return;
-				}
-
-				await HotIO.mkdir (`${outputDir}/docker/${hotsiteName}/app/`);
-
-				if (httpPort != null)
-				{
-					dockerfilePortsStr += `ARG HTTP_PORT=${httpPort}
-ENV HTTP_PORT \${HTTP_PORT}
-EXPOSE \${HTTP_PORT}`;
-				}
-
-				if (httpsPort != null)
-				{
-					dockerfilePortsStr += `ARG HTTPS_PORT=${httpsPort}
-ENV HTTPS_PORT \${HTTPS_PORT}
-EXPOSE \${HTTPS_PORT}`;
-				}
-
-				if (dockerfilePortsStr === "")
-				{
-					httpPort = 5000;
-					dockerfilePortsStr += `ARG HTTP_PORT=5000
-ENV HTTP_PORT \${HTTP_PORT}
-EXPOSE \${HTTP_PORT}`;
-				}
-
-				if (httpApiPort == null)
-					httpApiPort = 5001;
-
-				let replaceKeys = {
-						NAMESPACE: this.dockerNamespace,
-						HOTSITE_NAME: hotsiteName,
-						REAL_HOTSTAQ_VERSION: this.hotstaqVersion,
-						DOCKERFILE_PORTS: dockerfilePortsStr,
-						REAL_HTTP_PORT: httpPort.toString (),
-						REAL_API_HTTP_PORT: httpApiPort.toString (),
-						HOTSITE_PATH: hotsitePath
-					};
-
-				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`), `${outputDir}/docker/${hotsiteName}/prod.dockerfile`);
-				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`), `${outputDir}/docker/${hotsiteName}/dev.dockerfile`);
-				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/prod.dockerfile`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/dev.dockerfile`, replaceKeys);
-				await HotIO.copyFiles (`${dockerDir}/scripts/`, `${outputDir}/`);
-				await HotIO.copyFiles (`${dockerDir}/app/`, `${outputDir}/docker/${hotsiteName}/app/`);
-				await HotIO.copyFile (`${dockerDir}/dockerignore`, `${outputDir}/.dockerignore`);
-				await HotIO.copyFile (`${dockerDir}/docker-compose.gen.yaml`, `${outputDir}/docker-compose.yaml`);
-				await HotIO.copyFile (`${dockerDir}/env-skeleton`, `${outputDir}/env-skeleton`);
-
-				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/app/start.sh`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/docker/${hotsiteName}/app/start-pkg.sh`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/env-skeleton`, replaceKeys);
-
-				await this.replaceKeysInFile (`${outputDir}/docker-compose.yaml`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/build.bat`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/build.sh`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/start.bat`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/start.sh`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/stop.bat`, replaceKeys);
-				await this.replaceKeysInFile (`${outputDir}/stop.sh`, replaceKeys);
-
-				if (await HotIO.exists (`${outputDir}/README.md`) === true)
-				{
-					const prevREADME: string = await HotIO.readTextFile (`${outputDir}/README.md`);
+					const prevREADME: string = await HotIO.readTextFile (`${this.outputDir}/README.md`);
 					const dockerREADME: string = await HotIO.readTextFile (`${dockerDir}/README.md`);
 
 					// Only append the docker readme if it's not already there...
 					if (prevREADME.indexOf ("Docker Getting Started") < 0)
-						await HotIO.writeTextFile (`${outputDir}/README.md`, `${prevREADME}\n${dockerREADME}`);
+						await HotIO.writeTextFile (`${this.outputDir}/README.md`, `${prevREADME}\n${dockerREADME}`);
 				}
 
 				this.logger.info (`Finished building Dockerfile "${hotsite.name}"...`);
 			}
 
 			this.logger.info ("Finished building docker files...");
+		}
+
+		if (this.helmChart === true)
+		{
+			this.logger.info ("Building helm chart files (THIS IS EXPERIMENTAL AND UNTESTED)...");
+
+			const helmDir: string = ppath.normalize (`${__dirname}/../../builder/helm-chart`);
+
+			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
+			{
+				const hotsite: HotSite = this.hotsites[iIdx];
+
+				this.logger.info (`Preparing Helm Chart "${hotsite.name}"...`);
+
+				let replaceKeys = await this.prepareHotsiteBuild (hotsite, "helm");
+
+				this.logger.info (`Building Helm Chart "${hotsite.name}"...`);
+
+				await HotIO.copyFiles (`${helmDir}/`, `${this.outputDir}/helm/`);
+
+				await this.replaceKeysInFile (`${this.outputDir}/helm/values.yaml`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/helm/Chart.yaml`, replaceKeys);
+				await this.replaceKeysInFile (`${this.outputDir}/helm/README.md`, replaceKeys);
+
+				this.logger.info ("Finished building Helm Chart...");
+			}
+
+			this.logger.info ("Finished building helm chart files (THIS IS EXPERIMENTAL AND UNTESTED)...");
 		}
 	}
 

@@ -6,4 +6,4 @@ if not exist ".\.env" (
     Exit /B 1
 )
 
-docker-compose --env-file ./.env down
+docker compose --env-file ./.env down

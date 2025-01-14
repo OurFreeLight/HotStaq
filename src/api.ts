@@ -40,7 +40,7 @@ import { HotTestPage } from "./HotTestPage";
 import { HotTestSeleniumDriver } from "./HotTestSeleniumDriver";
 
 // Database stuff
-import { HotDB, ConnectionStatus } from "./HotDB";
+import { HotDB, HotDBType, ConnectionStatus } from "./HotDB";
 import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
 import { HotDBGenerationType, HotDBSchema } from "./schemas/HotDBSchema";
 
@@ -54,6 +54,10 @@ import { MySQLSchemaTable } from "./schemas/mysql/MySQLSchemaTable";
 // Influx specific stuff
 import { HotDBInflux } from "./schemas/HotDBInflux";
 import { InfluxSchema } from "./schemas/influx/InfluxSchema";
+
+// Postgres specific stuff
+import { HotDBPostgres, PostgresResults } from "./schemas/HotDBPostgres";
+import { PostgresSchema } from "./schemas/postgres/PostgresSchema";
 
 HotStaq.isWeb = false;
 
@@ -79,6 +83,7 @@ export {
 		HotPage,
 		HotIO,
 		HotDB,
+		HotDBType,
 		ConnectionStatus,
 		HotRoute,
 		HotRouteMethod, IHotRouteMethod,
@@ -122,5 +127,8 @@ export {
 		MySQLSchemaField,
 		MySQLSchemaTable,
 		HotDBInflux,
-		InfluxSchema
+		InfluxSchema,
+		HotDBPostgres, 
+		PostgresResults, 
+		PostgresSchema
 	};

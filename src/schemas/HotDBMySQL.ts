@@ -1,12 +1,7 @@
 import * as mysql from "mysql2";
 
-import * as ppath from "path";
-import * as vm from "vm";
-
-import { ConnectionStatus, HotDB } from "../HotDB";
+import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
-import { HotIO } from "../HotIO";
-import { HotDBMigration } from "./HotDBMigration";
 import { MySQLSchema } from "./mysql/MySQLSchema";
 
 /**
@@ -24,7 +19,7 @@ export interface MySQLResults
  */
 export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
 {
-	constructor (db: mysql.Pool = null, type: string = "mysql", schema: MySQLSchema = null)
+	constructor (db: mysql.Pool = null, type: HotDBType = HotDBType.MySQL, schema: MySQLSchema = null)
 	{
 		super (db, type, schema);
 	}
@@ -180,7 +175,7 @@ return (migration.version);
 	 * Sync the migrations table tracker. This keeps track of all database table migrations. 
 	 * If the "migrations" table is missing, it will be created.
 	 */
-	async syncMigrationsTableTracker (): Promise<void>
+	/*async syncMigrationsTableTracker (): Promise<void>
 	{
 		if (await this.tableCheck ("migrations") === false)
 		{
@@ -207,7 +202,7 @@ return (migration.version);
 						});
 				});
 		}
-	}
+	}*/
 
 	/**
 	 * Checks if the table exists.
@@ -326,6 +321,8 @@ return (migration.version);
 	 * if misused! Ideally this should only be used when making changes to tables!
 	 * Additionally, this could overwhelm the server and each command sent is not 
 	 * guaranteed to be done in order.**
+	 * 
+	 * @deprecated
 	 */
 	async multiQuery (queryStrings: string[] | { query: string; values: any[]; }[]): Promise<MySQLResults[]>
 	{
@@ -388,8 +385,22 @@ return (migration.version);
 	 */
 	async disconnect (): Promise<void>
 	{
-		this.dbCheck ();
+		return (new Promise<void> ((resolve, reject) =>
+		{
+			this.dbCheck ();
 
-		this.db.end ();
+			this.db.end ((err: mysql.QueryError) =>
+				{
+					if (err)
+					{
+						reject (err);
+
+						return;
+					}
+
+					this.connectionStatus = ConnectionStatus.Disconnected;
+					resolve ();
+				});
+		}));
 	}
 }

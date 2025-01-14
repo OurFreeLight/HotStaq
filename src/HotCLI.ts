@@ -18,6 +18,8 @@ import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
 import { APItoLoad, HotAPI } from "./HotAPI";
 import { HotTesterMochaSelenium } from "./HotTesterMochaSelenium";
 import { HotDBMySQL } from "./schemas/HotDBMySQL";
+import { HotDBInflux } from "./schemas/HotDBInflux";
+import { HotDBPostgres } from "./schemas/HotDBPostgres";
 import { HotIO } from "./HotIO";
 import { HotAgentAPI } from "./HotAgentAPI";
 import { HotTester } from "./HotTester";
@@ -203,6 +205,12 @@ export class HotCLI
 			if (dbinfo.type === "mysql")
 				dbClass = HotDBMySQL;
 
+			if (dbinfo.type === "influx")
+				dbClass = HotDBInflux;
+
+			if (dbinfo.type === "postgres")
+				dbClass = HotDBPostgres;
+
 			api.db = new dbClass ();
 			await server.setAPI (api);
 
@@ -295,6 +303,12 @@ export class HotCLI
 			{
 				createHotBuilder ();
 				builder.dockerNamespace = arg;
+			});
+		buildCmd.option ("--helm", "Build Helm Charts from the given HotSite.json files. THIS IS EXPERIMENTAL AND UNTESTED. GOOD LUCK.", 
+			(arg: string, previous: any) =>
+			{
+				createHotBuilder ();
+				builder.helmChart = true;
 			});
 		buildCmd.option ("--hotstaq-version <version>", `Specify the HotStaq version to use. If not specified, the current version of HotStaq will be used to generate the files.`, 
 			(arg: string, previous: any) =>

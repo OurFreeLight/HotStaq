@@ -13,6 +13,7 @@ docs/
 
 create-test-temp/
 temp*/
+!templates/
 
 # Logs
 logs

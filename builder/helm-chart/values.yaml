@@ -1,0 +1,111 @@
+# Default values for this application.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+imageSettings:
+  pullSecrets: ""
+  pullPolicy: IfNotPresent
+
+app_web:
+  enabled: true
+  image: ${NAMESPACE}/${HOTSITE_NAME}:1.0.0
+  ingress:
+    hosts:
+      - host: example.com
+
+app_api:
+  enabled: true
+  image: ${NAMESPACE}/${HOTSITE_NAME}-api:1.0.0
+  logLevel: verbose
+  baseWebUrl: http://localhost:5000
+  baseApiUrl: http://localhost:5000
+  jwtSecretKey: 974h59734h578w345h798
+  database:
+    server: localhost
+    port: 3306
+    username: a9384u59e4sjtr
+    password: 32497h587w34he
+    schema: appdb
+  apiResources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  webResources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+database:
+  deploy: true
+  deployProxy: false
+  image: mariadb:10.10
+  storage:
+    size: 20Gi
+    storageClassName: ""
+  rootPassword: 3948w57yhsaw4875
+  schema: appdb
+  username: a9384u59e4sjtr
+  password: 32497h587w34he
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  certManager: 
+    enabled: false
+    email: example@example.com
+  hosts:
+    - host: example.com
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

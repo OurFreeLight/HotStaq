@@ -1,16 +1,20 @@
-version: "3.7"
 services:
   # Used just to make sure the database has started before continuing.
   init-database-mariadb:
-    image: mariadb:10.10
+    image: mariadb:${MARIADB_VERSION}
     depends_on:
       database-mariadb:
         condition: service_healthy
-    environment:
-      MYSQL_ROOT_PASSWORD: cdO1KjwiC8ksOqCV1s0
-      MYSQL_DATABASE: hotstaq
-      MYSQL_USER: 5NKVBAt7OrzrumQyQVs
-      MYSQL_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+    command: 
+      - "exit 0"
+    networks:
+      - hotstaq-build-network
+
+  init-database-postgres:
+    image: postgres:${POSTGRES_VERSION}
+    depends_on:
+      database-postgres:
+        condition: service_healthy
     command: 
       - "exit 0"
     networks:
@@ -29,6 +33,22 @@ services:
       MYSQL_DATABASE: hotstaq
       MYSQL_USER: 5NKVBAt7OrzrumQyQVs
       MYSQL_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+    networks:
+      - hotstaq-build-network
+
+  database-postgres:
+    image: postgres:${POSTGRES_VERSION}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U 5NKVBAt7OrzrumQyQVs -d hotstaq -h localhost || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${POSTGRES_DB_PORT}:5432"
+    environment:
+      POSTGRES_DB: hotstaq
+      POSTGRES_USER: 5NKVBAt7OrzrumQyQVs
+      POSTGRES_PASSWORD: 1BBrZbKYRUM7oiMA5oY
     networks:
       - hotstaq-build-network
 

@@ -1,6 +1,6 @@
 import { InfluxDB, ClientOptions, WriteApi, QueryApi, FluxTableMetaData, flux, Point } from "@influxdata/influxdb-client";
 
-import { ConnectionStatus, HotDB } from "../HotDB";
+import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { InfluxSchema } from "./influx/InfluxSchema";
 
@@ -18,7 +18,7 @@ export class HotDBInflux extends HotDB<InfluxDB, void, InfluxSchema>
 	 */
 	queryApi: QueryApi;
 
-	constructor (db: InfluxDB = null, type: string = "influx", schema: InfluxSchema = null)
+	constructor (db: InfluxDB = null, type: HotDBType = HotDBType.Influx, schema: InfluxSchema = null)
 	{
 		super (db, type, schema);
 	}
