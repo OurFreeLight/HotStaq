@@ -47,7 +47,7 @@ services:
     networks:
       - ${HOTSITE_NAME}-network
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1"]
+      test: ["CMD", "mariadb-admin" ,"ping", "-h", "127.0.0.1"]
       retries: 10
       timeout: 10s
     volumes:
