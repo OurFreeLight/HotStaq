@@ -41,7 +41,7 @@ spec:
           livenessProbe:
             exec:
               command:
-                - mysqladmin
+                - mariadb-admin
                 - ping
                 - -h
                 - localhost
@@ -53,7 +53,7 @@ spec:
           readinessProbe:
             exec:
               command:
-                - mysqladmin
+                - mariadb-admin
                 - ping
                 - -h
                 - localhost

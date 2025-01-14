@@ -28,6 +28,7 @@ import { HotRoute } from "./HotRoute";
 import { HotRouteMethod } from "./HotRouteMethod";
 import { HotServerType } from "./HotServer";
 import { HotDeployer } from "./HotDeployer";
+import { HotDBType } from "./HotDB";
 
 HotStaq.isWeb = false;
 
@@ -202,7 +203,7 @@ export class HotCLI
 		{
 			let dbClass = null;
 
-			if (dbinfo.type === "mysql")
+			if ((dbinfo.type === "mysql") || (dbinfo.type === "mariadb"))
 				dbClass = HotDBMySQL;
 
 			if (dbinfo.type === "influx")
@@ -211,7 +212,14 @@ export class HotCLI
 			if (dbinfo.type === "postgres")
 				dbClass = HotDBPostgres;
 
+			if (dbClass == null)
+				throw new Error (`Unable to use database type ${dbinfo.type}, no class available.`);
+
 			api.db = new dbClass ();
+
+			if (dbinfo.type === "mariadb")
+				api.db.type = HotDBType.MariaDB;
+
 			await server.setAPI (api);
 
 			if (dbinfo.username === "")
