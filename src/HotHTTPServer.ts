@@ -1559,8 +1559,11 @@ export class HotHTTPServer extends HotServer
 
 									if (err != null)
 									{
-										if (err.code !== "ERR_SERVER_NOT_RUNNING")
-											throw err;
+										if (err.code != null)
+										{
+											if (err.code !== "ERR_SERVER_NOT_RUNNING")
+												throw err;
+										}
 									}
 
 									this.logger.verbose (`HTTP server has shut down.`);
@@ -1573,12 +1576,18 @@ export class HotHTTPServer extends HotServer
 				{
 					promises.push (new Promise<void> ((resolve2, reject) =>
 						{
-							this.httpsListener.close ((err: Error) =>
+							this.httpsListener.close ((err: NodeJS.ErrnoException) =>
 								{
 									this.expressApp = null;
 
 									if (err != null)
-										throw err;
+									{
+										if (err.code != null)
+										{
+											if (err.code !== "ERR_SERVER_NOT_RUNNING")
+												throw err;
+										}
+									}
 
 									this.logger.verbose (`HTTPS server has shut down.`);
 									resolve2 ();
