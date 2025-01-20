@@ -2,6 +2,7 @@ import * as http from "http";
 import * as https from "https";
 import * as ppath from "path";
 import * as fs from "fs";
+import { performance } from "perf_hooks";
 import { F_OK } from "constants";
 
 import express from "express";
@@ -173,6 +174,19 @@ export class HotHTTPServer extends HotServer
 			afterUploadIdUse: boolean;
 		};
 	/**
+	 * The request reporter interval.
+	 */
+	requestReporterInterval: NodeJS.Timer;
+	/**
+	 * The number of requests served, this will be incremented each time a request is served, 
+	 * and if it reaches (Number.MAX_SAFE_INTEGER - 1), it will be reset to 0.
+	 */
+	numRequestsServed: number;
+	/**
+	 * The active requests being processed currently.
+	 */
+	activeRequests: { [requestNum: number]: DOMHighResTimeStamp };
+	/**
 	 * If set to true, worker threads will be used. NOT WORKING YET. DO NOT USE.
 	 */
 	useWorkerThreads: boolean;
@@ -295,6 +309,9 @@ export class HotHTTPServer extends HotServer
 		this.autoDeleteUploadOptions = {
 				afterUploadIdUse: true
 			};
+		this.requestReporterInterval = null;
+		this.numRequestsServed = 0;
+		this.activeRequests = {};
 		this.useWorkerThreads = false;
 		this.options = {
 				onCall: null,
@@ -678,16 +695,30 @@ export class HotHTTPServer extends HotServer
 				this.expressApp[expressType] (methodName, 
 					async (req: express.Request, res: express.Response) =>
 					{
-						let sendResponse = (value: any) =>
+						let sendResponse = (value: any, requestNum: number) =>
 							{
+								let start = this.activeRequests[requestNum];
+								let end = performance.now ();
+								let diff = (end - start);
+
+								delete this.activeRequests[requestNum];
+
+								this.logger.verbose (`${method} ${route} ${methodName} took ${diff}ms`);
+
 								if (value !== undefined)
 									res.json (value);
 							};
 
 						if (this.useWorkerThreads === false)
 						{
+							if (this.numRequestsServed >= (Number.MAX_SAFE_INTEGER - 1))
+								this.numRequestsServed = 0;
+
+							const requestNum = this.numRequestsServed++;
+						
+							this.activeRequests[requestNum] = performance.now ();
 							let response = await processRequest (this, this.logger, route, method, methodName, req, res);
-							sendResponse (response);
+							sendResponse (response, requestNum);
 
 							return;
 						}
@@ -701,6 +732,13 @@ export class HotHTTPServer extends HotServer
 
 								try
 								{
+									if (this.numRequestsServed >= (Number.MAX_SAFE_INTEGER - 1))
+										this.numRequestsServed = 0;
+		
+									const requestNum = this.numRequestsServed++;
+								
+									this.activeRequests[requestNum] = performance.now ();
+
 									// workerData.logger, workerData.route, workerData.method, workerData.methodName, workerData.req, workerData.res
 									let worker = new Worker (`${__dirname}/HotHTTPServerThread.js`, {
 											"workerData": {
@@ -709,21 +747,24 @@ export class HotHTTPServer extends HotServer
 												}
 										});
 
-									worker.on ("message", (value: any) =>
+									worker.on ("message", function (requestNum2: number, value: any)
 										{
-											sendResponse (value);
+											sendResponse (value, requestNum2);
 											resolveIt ();
-										});
+										}.bind (this, requestNum));
 									worker.on ("error", (err: Error) =>
 										{
 											this.logger.error (`Error in worker: ${err.message}`);
 											resolveIt ();
 										});
-									worker.on ("exit", (code: number) =>
+									worker.on ("exit", function(requestNum2: number, code: number)
 										{
-											this.logger.error (`Worker exited with code: ${code}`);
+											if (this.activeRequests[requestNum2] != null)
+												delete this.activeRequests[requestNum2];
+
+											this.logger.verbose (`Worker exited with code: ${code}`);
 											resolveIt ();
-										});
+										}.bind (this, requestNum));
 									worker.postMessage ({});
 								}
 								catch (ex)
@@ -1262,7 +1303,10 @@ export class HotHTTPServer extends HotServer
 					this.logger.info (`JSON limit: ${JSONLimit}`);
 
 					if (this.useWorkerThreads === true)
+					{
 						Worker = require ("node:worker_threads").Worker;
+						this.logger.info (`WARNING: WORKER THREADS ENABLED. THIS IS AN EXPERIMENTAL FEATURE AND IS MOST LIKELY NOT WORKING YET.`);
+					}
 
 					if (this.useWebsocketServer === true)
 						this.websocketServer = new HotWebSocketServer (this);
@@ -1394,10 +1438,42 @@ export class HotHTTPServer extends HotServer
 						}
 					}
 
+					let requestReporter = () =>
+					{
+						let numRequests: number = Object.keys(this.activeRequests).length;
+
+						if (numRequests < 1)
+						{
+							clearInterval (this.requestReporterInterval);
+
+							this.logger.info (`Finished processing all requests...`);
+
+							return;
+						}
+
+						this.logger.info (`Still processing ${numRequests} requests...`);
+					};
+					let sigHandler = (typeReceived: string, serverType: string, listener: any) =>
+						{
+							this.logger.info (`${typeReceived} signal received: Stopping ${serverType} server. Data loss and partial database writes can occur if this is stopped prematurely.`);
+
+							listener.close (() => {
+								this.logger.info(`${serverType} server stopped. No longer listening for any new incoming requests...`);
+
+								this.requestReporterInterval = setInterval (() =>
+								{
+									requestReporter ();
+								}, 2000);
+							});
+						};
+
 					if (this.ssl.cert === "")
 					{
 						this.httpListener = http.createServer (this.expressApp);
 						this.httpListener.listen (this.ports.http, this.listenAddress, completedSetup);
+
+						process.on ('SIGTERM', sigHandler.bind (this, "SIGTERM", "HTTP", this.httpListener));
+						process.on ('SIGINT', sigHandler.bind (this, "SIGINT", "HTTP", this.httpListener));
 					}
 					else
 					{
@@ -1416,6 +1492,18 @@ export class HotHTTPServer extends HotServer
 								{
 									this.logger.info (`Redirecting HTTP(${this.ports.http}) traffic to HTTPS(${this.ports.https})`);
 								});
+
+							let stopRedirectServer = () => 
+								{
+									this.logger.info (`SIGTERM signal received: Stopping HTTP redirect server. Data loss and partial database writes can occur if this is stopped prematurely.`);
+		
+									this.httpListener.close (() => {
+										this.logger.info(`HTTP redirect server stopped`);
+									});
+								};
+
+							process.on ('SIGTERM', stopRedirectServer);
+							process.on ('SIGINT', stopRedirectServer);
 						}
 
 						this.httpsListener = https.createServer ({
@@ -1424,6 +1512,9 @@ export class HotHTTPServer extends HotServer
 								ca: this.ssl.ca
 							}, this.expressApp);
 						this.httpsListener.listen (this.ports.https, this.listenAddress, completedSetup);
+
+						process.on ('SIGTERM', sigHandler.bind (this, "SIGTERM", "HTTPS", this.httpsListener));
+						process.on ('SIGINT', sigHandler.bind (this, "SIGINT", "HTTPS", this.httpsListener));
 					}
 
 					if (this.useWebsocketServer === true)

@@ -11,6 +11,7 @@ export interface PostgresResults
 {
 	error: any;
 	results: any;
+	rawResults: any;
 	fields: pg.FieldDef[];
 }
 
@@ -248,7 +249,8 @@ return (migration.version);
 
 			return ({
 				error: null,
-				results: result,
+				results: result.rows,
+				rawResults: result,
 				fields: result.fields
 			});
 		}
@@ -257,6 +259,7 @@ return (migration.version);
 			return ({
 				error: err,
 				results: null,
+				rawResults: null,
 				fields: []
 			});
 		}
@@ -286,6 +289,7 @@ return (migration.version);
 			return ({
 				error: null,
 				results: tempResults,
+				rawResults: result,
 				fields: result.fields
 			});
 		}
@@ -294,6 +298,7 @@ return (migration.version);
 			return ({
 				error: err,
 				results: null,
+				rawResults: null,
 				fields: []
 			});
 		}
