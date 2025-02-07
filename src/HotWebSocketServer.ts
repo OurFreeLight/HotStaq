@@ -293,7 +293,7 @@ export class HotWebSocketServer
 									}
 									catch (ex)
 									{
-										this.logger.error (`Execution error: ${ex}`);
+										this.logger.error (`WebSocket Execution Error: ${ex}`);
 										socket.emit (`${routeName}/${method.name}`, { error: ex.message });
 									}
 								});

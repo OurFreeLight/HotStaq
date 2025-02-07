@@ -320,7 +320,7 @@ export class HotTesterServer extends HotServer
 							}
 							catch (ex)
 							{
-								this.logger.error (`Execution error: ${ex.message}`);
+								this.logger.error (`HTTP Tester Execution Error: ${ex.message}`);
 								res.json ({ error: ex.message });
 							}
 						}

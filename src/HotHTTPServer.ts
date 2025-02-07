@@ -283,6 +283,10 @@ export class HotHTTPServer extends HotServer
 	 * The function to execute when handling other errors.
 	 */
 	handleOther: (err: any, req: express.Request, res: express.Response, next: any) => void;
+	/**
+	 * The status code to respond with when an API error occurs.
+	 */
+	errorHandlingResponseCode: number;
 
 	constructor (processor: HotStaq | HotServer, httpPort: number = null, httpsPort: number = null)
 	{
@@ -334,6 +338,7 @@ export class HotHTTPServer extends HotServer
 			};
 		this.handle404 = null;
 		this.handleOther = null;
+		this.errorHandlingResponseCode = 500;
 
 		if (process.env.LISTEN_ADDR != null)
 		{
@@ -703,10 +708,15 @@ export class HotHTTPServer extends HotServer
 
 								delete this.activeRequests[requestNum];
 
-								this.logger.verbose (`${method} ${route} ${methodName} took ${diff}ms`);
+								this.logger.verbose (`${methodName} took ${diff}ms`);
 
 								if (value !== undefined)
-									res.json (value);
+								{
+									if (value.error != null)
+										res.status (this.errorHandlingResponseCode).json (value);
+									else
+										res.status (200).json (value);
+								}
 							};
 
 						if (this.useWorkerThreads === false)
