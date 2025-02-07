@@ -58,7 +58,6 @@ jobs:
             npm run buildweb
             npm run buildwebdebug
             npm run version-check
-            npm link
             
             sudo npm -g install .
             
