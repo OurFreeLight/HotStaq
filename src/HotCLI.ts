@@ -82,6 +82,23 @@ export class HotCLI
 	 */
 	apis: { [name: string]: APItoLoad; };
 	/**
+	 * The server to start.
+	 */
+	servers: {
+		/**
+		 * The web server.
+		 */
+		web: HotHTTPServer;
+		/**
+		 * The api server.
+		 */
+		api: HotHTTPServer;
+		/**
+		 * The agent server.
+		 */
+		agent: HotHTTPServer;
+	};
+	/**
 	 * The module install action to execute.
 	 */
 	onModuleInstallAction: () => Promise<void>;
@@ -131,6 +148,11 @@ export class HotCLI
 		this.hotsitePath = "";
 		this.globalLogLevel = null;
 		this.apis = {};
+		this.servers = {
+			web: null,
+			api: null,
+			agent: null
+		};
 
 		this.creator = null;
 		this.onModuleInstallAction = null;
@@ -695,8 +717,8 @@ export class HotCLI
 	 */
 	async handleRunCommands (cmdName: string): Promise<commander.Command>
 	{
-		let webServer: HotHTTPServer = new HotHTTPServer (this.processor);
-		let apiServer: HotHTTPServer = new HotHTTPServer (this.processor);
+		this.servers.web = new HotHTTPServer (this.processor);
+		this.servers.api = new HotHTTPServer (this.processor);
 		let serverType: string = "web";
 		let globalApi: string = "";
 		let baseWebUrl: string = "";
@@ -707,6 +729,7 @@ export class HotCLI
 		let disableFileLoading: boolean = false;
 		let skipSecretFiles: boolean = true;
 		let dontLoadAPIFiles: boolean = false;
+		let errorHandlingResponseCode: number = 500;
 		let cors: { origin: string; allowedHeaders: string[] } = {
 				origin: "*",
 				allowedHeaders: []
@@ -805,7 +828,7 @@ export class HotCLI
 						if (testerSettings.deployTester === true)
 						{
 							if (baseWebUrl === "")
-								baseWebUrl = `http://127.0.0.1:${webServer.ports.http}`;
+								baseWebUrl = `http://127.0.0.1:${this.servers.web.ports.http}`;
 
 							let serverStarter = await HotTesterServer.startServer (
 								`http://${testerSettings.address}:${testerSettings.http}`, 
@@ -817,14 +840,14 @@ export class HotCLI
 
 							if (runWebTestMap === true)
 							{
-								webServer.type = HotServerType.WebTesting;
-								apiServer.type = HotServerType.WebTesting;
+								this.servers.web.type = HotServerType.WebTesting;
+								this.servers.api.type = HotServerType.WebTesting;
 							}
 
 							if (runAPITestMap === true)
 							{
-								webServer.type = HotServerType.APITesting;
-								apiServer.type = HotServerType.APITesting;
+								this.servers.web.type = HotServerType.APITesting;
+								this.servers.api.type = HotServerType.APITesting;
 							}
 
 							if (testerSettings.tester === "")
@@ -912,19 +935,19 @@ export class HotCLI
 						if (this.processor.hotSite.server.ports == null)
 							this.processor.hotSite.server.ports = {};
 
-						if (webServer != null)
+						if (this.servers.web != null)
 						{
 							if (this.processor.hotSite.server.ports.http == null)
-								this.processor.hotSite.server.ports.http = webServer.ports.http;
+								this.processor.hotSite.server.ports.http = this.servers.web.ports.http;
 
 							if (this.processor.hotSite.server.ports.https == null)
-								this.processor.hotSite.server.ports.https = webServer.ports.https;
+								this.processor.hotSite.server.ports.https = this.servers.web.ports.https;
 						}
 
-						if (apiServer != null)
+						if (this.servers.api != null)
 						{
-							this.processor.hotSite.server.ports.http = apiServer.ports.http;
-							this.processor.hotSite.server.ports.https = apiServer.ports.https;
+							this.processor.hotSite.server.ports.http = this.servers.api.ports.http;
+							this.processor.hotSite.server.ports.https = this.servers.api.ports.https;
 						}
 
 						// Go through each API and replace the base url with the base url set in the cli.
@@ -1009,7 +1032,7 @@ export class HotCLI
 					}
 
 					if (baseWebUrl === "")
-						baseWebUrl = `http://127.0.0.1:${webServer.ports.http}`;
+						baseWebUrl = `http://127.0.0.1:${this.servers.web.ports.http}`;
 
 					if ((serverType === "web") || (serverType === "web-api"))
 					{
@@ -1038,27 +1061,28 @@ export class HotCLI
 						if (cors.allowedHeaders.length === 0)
 							cors.allowedHeaders = ["Origin", "X-Requested-With", "Content-Type", "Accept"];
 
-						apiServer.cors.origin = cors.origin;
-						apiServer.cors.allowedHeaders = cors.allowedHeaders;
+						this.servers.api.cors.origin = cors.origin;
+						this.servers.api.cors.allowedHeaders = cors.allowedHeaders;
 
-						apiServer.rateLimiter.enabled = rateLimiter.enabled;
-						apiServer.rateLimiter.windowLength = rateLimiter.windowLength;
-						apiServer.rateLimiter.limit = rateLimiter.limit;
+						this.servers.api.rateLimiter.enabled = rateLimiter.enabled;
+						this.servers.api.rateLimiter.windowLength = rateLimiter.windowLength;
+						this.servers.api.rateLimiter.limit = rateLimiter.limit;
+						this.servers.api.errorHandlingResponseCode = errorHandlingResponseCode;
 
 						if (rateLimiter.store != null)
 						{
-							apiServer.rateLimiter.store.redisConfig = {
+							this.servers.api.rateLimiter.store.redisConfig = {
 									host: rateLimiter.store.host
 								};
 
 							if (rateLimiter.store.port != null)
-								apiServer.rateLimiter.store.redisConfig.port = rateLimiter.store.port;
+								this.servers.api.rateLimiter.store.redisConfig.port = rateLimiter.store.port;
 
 							if (rateLimiter.store.username != null)
-								apiServer.rateLimiter.store.redisConfig.username = rateLimiter.store.username;
+								this.servers.api.rateLimiter.store.redisConfig.username = rateLimiter.store.username;
 
 							if (rateLimiter.store.password != null)
-								apiServer.rateLimiter.store.redisConfig.password = rateLimiter.store.password;
+								this.servers.api.rateLimiter.store.redisConfig.password = rateLimiter.store.password;
 						}
 					}
 
@@ -1142,24 +1166,24 @@ export class HotCLI
 						};
 
 					if (serverType === "api")
-						await loadAndStartAPIServer ("API Server", apiServer);
+						await loadAndStartAPIServer ("API Server", this.servers.api);
 
 					if (runWebServer === true)
 					{
 						if (runAPIServer === true)
-							await loadAPIServer ("Web-API Server", webServer);
+							await loadAPIServer ("Web-API Server", this.servers.web);
 						else
-							webServer.serverType = "Web Server";
+							this.servers.web.serverType = "Web Server";
 
 						if (this.globalLogLevel != null)
-							webServer.logger.logLevel = this.globalLogLevel;
+							this.servers.web.logger.logLevel = this.globalLogLevel;
 
-						await webServer.listen ();
+						await this.servers.web.listen ();
 					}
 
 					if (listAPIRoutes === true)
 					{
-						let servers = [apiServer, testerServer];
+						let servers = [this.servers.api, testerServer];
 
 						for (let iIdx = 0; iIdx < servers.length; iIdx++)
 						{
@@ -1223,16 +1247,16 @@ export class HotCLI
 								testerServer = null;
 							}
 
-							if (webServer != null)
+							if (this.servers.web != null)
 							{
-								await webServer.shutdown ();
-								webServer = null;
+								await this.servers.web.shutdown ();
+								this.servers.web = null;
 							}
 
-							if (apiServer != null)
+							if (this.servers.api != null)
 							{
-								await apiServer.shutdown ();
-								apiServer = null;
+								await this.servers.api.shutdown ();
+								this.servers.api = null;
 							}
 
 							/// @todo Remove this once the shutdown process is fixed.
@@ -1422,9 +1446,22 @@ export class HotCLI
 			`This will allow the all servers to accept websocket connections.`, 
 			(remoteServer: string, previous: any) =>
 			{
-				webServer.useWebsocketServer = true;
-				apiServer.useWebsocketServer = true;
+				this.servers.web.useWebsocketServer = true;
+				this.servers.api.useWebsocketServer = true;
 			}, "");
+		runCmd.option (`--error-handling-response-code`, 
+			`The status code to respond with when an API error occurs.`, 
+			(value: string, previous: any) =>
+			{
+				try
+				{
+					errorHandlingResponseCode = parseInt (value);
+				}
+				catch (ex)
+				{
+					this.processor.logger.error (`Unable to parse error handling response code ${value}`);
+				}
+			}, "500");
 
 		const serverTypes: string[] = ["web", "api"];
 
@@ -1462,9 +1499,9 @@ export class HotCLI
 		
 							// @ts-ignore
 							if (currentServerType === "web")
-								webServer.ports.http = tempPort;
+								this.servers.web.ports.http = tempPort;
 							else
-								apiServer.ports.http = tempPort;
+								this.servers.api.ports.http = tempPort;
 						}
 						catch (ex)
 						{
@@ -1482,9 +1519,9 @@ export class HotCLI
 						const tempPort: number = parseInt (port);
 
 						if (currentServerType === "web")
-							webServer.ports.http = tempPort;
+							this.servers.web.ports.http = tempPort;
 						else
-							apiServer.ports.http = tempPort;
+							this.servers.api.ports.http = tempPort;
 					}
 					catch (ex)
 					{
@@ -1506,9 +1543,9 @@ export class HotCLI
 						const tempPort: number = parseInt (port);
 
 						if (currentServerType === "web")
-							webServer.ports.https = tempPort;
+							this.servers.web.ports.https = tempPort;
 						else
-							apiServer.ports.https = tempPort;
+							this.servers.api.ports.https = tempPort;
 					}
 					catch (ex)
 					{
@@ -1520,45 +1557,45 @@ export class HotCLI
 				(port: string, previous: any) =>
 				{
 					if (currentServerType === "web")
-						webServer.redirectHTTPtoHTTPS = false;
+						this.servers.web.redirectHTTPtoHTTPS = false;
 					else
-						apiServer.redirectHTTPtoHTTPS = false;
+						this.servers.api.redirectHTTPtoHTTPS = false;
 				});
 			runCmd.option (`--${currentServerType}-listen-address <address>`, 
 				`Set the ${currentServerType} listen address`, 
 				(address: string, previous: any) =>
 				{
 					if (currentServerType === "web")
-						webServer.listenAddress = address;
+						this.servers.web.listenAddress = address;
 					else
-						apiServer.listenAddress = address;
+						this.servers.api.listenAddress = address;
 				}, "0.0.0.0");
 			runCmd.option (`--${currentServerType}-ssl-cert <path>`, 
 				`Set the path to the SSL cert for the ${currentServerType} server`, 
 				(cert: string, previous: any) =>
 				{
 					if (currentServerType === "web")
-						webServer.ssl.cert = cert;
+						this.servers.web.ssl.cert = cert;
 					else
-						apiServer.ssl.cert = cert;
+						this.servers.api.ssl.cert = cert;
 				}, "");
 			runCmd.option (`--${currentServerType}-ssl-key <path>`, 
 				`Set the path to the SSL key for the ${currentServerType} server`, 
 				(key: string, previous: any) =>
 				{
 					if (currentServerType === "web")
-						webServer.ssl.key = key;
+						this.servers.web.ssl.key = key;
 					else
-						apiServer.ssl.key = key;
+						this.servers.api.ssl.key = key;
 				}, "");
 			runCmd.option (`--${currentServerType}-ssl-ca <path>`, 
 				`Set the path to the SSL CA for the ${currentServerType} server`, 
 				(ca: string, previous: any) =>
 				{
 					if (currentServerType === "web")
-						webServer.ssl.ca = ca;
+						this.servers.web.ssl.ca = ca;
 					else
-						apiServer.ssl.ca = ca;
+						this.servers.api.ssl.ca = ca;
 				}, "");
 			runCmd.option (`--${currentServerType}-log-level <level>`, 
 				`Set the logging level for the ${currentServerType} server. Can be (info,warning,error,all,none)`, 
@@ -1570,9 +1607,9 @@ export class HotCLI
 						return;
 
 					if (currentServerType === "web")
-						tempServer = webServer;
+						tempServer = this.servers.web;
 					else
-						tempServer = apiServer;
+						tempServer = this.servers.api;
 
 					if (logLevel === "info")
 						tempServer.logger.logLevel = HotLogLevel.Info;
@@ -1612,17 +1649,17 @@ export class HotCLI
 						const route: string = keyValuePair.key;
 						const path: string = keyValuePair.value;
 
-						webServer.addStaticRoute (route, path);
+						this.servers.web.addStaticRoute (route, path);
 					});
 				runCmd.option (`--${currentServerType}-serve-file-extensions`, "Serve files extensions, must be passed as a JSON array.", 
 					(arg: string, previous: any) =>
 					{
-						webServer.serveFileExtensions = JSON.parse (arg);
+						this.servers.web.serveFileExtensions = JSON.parse (arg);
 					}, JSON.stringify (HotHTTPServer.getDefaultServableExtensions ()));
 				runCmd.option (`--${currentServerType}-js-url <url>`, "The url to the HotStaq JS", 
 					(url: string, previous: any) =>
 					{
-						webServer.hottFilesAssociatedInfo.jsSrcPath = url;
+						this.servers.web.hottFilesAssociatedInfo.jsSrcPath = url;
 					});
 			}
 
@@ -1802,17 +1839,17 @@ export class HotCLI
 					let processor: HotStaq = new HotStaq ();
 					processor.logger.logLevel = HotLogLevel.Verbose;
 				
-					let apiServer: HotHTTPServer = new HotHTTPServer (processor);
-					let api: HotAgentAPI = new HotAgentAPI (baseAPIUrl, apiServer);
+					this.servers.agent = new HotHTTPServer (processor);
+					let api: HotAgentAPI = new HotAgentAPI (baseAPIUrl, this.servers.agent);
 					api.key = agentKey;
 					api.secret = agentSecret;
-					apiServer.listenAddress = listenAddr;
-					apiServer.ports.http = port;
-					apiServer.processor.api = api;
-					apiServer.api = api;
-					await apiServer.setAPI (api);
+					this.servers.agent.listenAddress = listenAddr;
+					this.servers.agent.ports.http = port;
+					this.servers.agent.processor.api = api;
+					this.servers.agent.api = api;
+					await this.servers.agent.setAPI (api);
 
-					await apiServer.listen ();
+					await this.servers.agent.listen ();
 				};
 			});
 
