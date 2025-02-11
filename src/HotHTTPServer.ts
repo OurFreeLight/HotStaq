@@ -272,6 +272,8 @@ export class HotHTTPServer extends HotServer
 							port?: number;
 							username?: string;
 							password?: string;
+							tls?: boolean;
+							tlsInsecure?: boolean;
 						};
 				};
 		};
@@ -451,16 +453,36 @@ export class HotHTTPServer extends HotServer
 							this.rateLimiter.store.redisConfig = {};
 					}
 
-					this.rateLimiter.store.redisConfig.host = process.env["RATE_LIMITER_REDIS_HOST"];
-					this.rateLimiter.store.redisConfig.port = parseInt (process.env["RATE_LIMITER_REDIS_PORT"]);
+					this.rateLimiter.store.redisConfig.host = process.env["RATE_LIMITER_REDIS_HOST"] || "localhost";
+					this.rateLimiter.store.redisConfig.port = parseInt (process.env["RATE_LIMITER_REDIS_PORT"]) || 6379;
 					this.rateLimiter.store.redisConfig.username = process.env["RATE_LIMITER_REDIS_USERNAME"];
 					this.rateLimiter.store.redisConfig.password = process.env["RATE_LIMITER_REDIS_PASSWORD"];
+					this.rateLimiter.store.redisConfig.tls = false;
+					this.rateLimiter.store.redisConfig.tlsInsecure = false;
+
+					const tlsStr = process.env["RATE_LIMITER_REDIS_TLS"] || "0";
+					const tlsInsecureStr = process.env["RATE_LIMITER_REDIS_TLS_INSECURE"] || "0";
+
+					if (tlsStr === "1")
+						this.rateLimiter.store.redisConfig.tls = true;
+
+					if (tlsInsecureStr === "1")
+						this.rateLimiter.store.redisConfig.tlsInsecure = true;
+
+					let tlsObj = undefined;
+
+					if (this.rateLimiter.store.redisConfig.tls === true)
+					{
+						tlsObj = {
+							"rejectUnauthorized": !this.rateLimiter.store.redisConfig.tlsInsecure
+						};
+					}
 
 					if (this.rateLimiter.store.redisConfig != null)
 					{
 						let redisOptions = {
-								"host": this.rateLimiter.store.redisConfig.host ?? "localhost",
-								"port": this.rateLimiter.store.redisConfig.port ?? 6379
+								"host": this.rateLimiter.store.redisConfig.host,
+								"port": this.rateLimiter.store.redisConfig.port
 							} as RedisOptions;
 
 						if (this.rateLimiter.store.redisConfig.username != null)
@@ -468,6 +490,9 @@ export class HotHTTPServer extends HotServer
 
 						if (this.rateLimiter.store.redisConfig.password != null)
 							redisOptions.password = this.rateLimiter.store.redisConfig.password;
+
+						if (this.rateLimiter.store.redisConfig.tls != null)
+							redisOptions.tls = tlsObj;
 
 						client = new RedisClient (redisOptions);
 					}
