@@ -137,6 +137,18 @@ You can configure how HotStaq starts by using the following environment variable
 	* Description: The Redis password to use for the rate limiter.
 	* Accepted values:
 		* Any string.
+* RATE_LIMITER_REDIS_TLS
+	* Type: number
+	* Description: Indicates if a TLS connection should be used.
+	* Accepted values:
+		* 0
+		* 1
+* RATE_LIMITER_REDIS_TLS_INSECURE
+	* Type: number
+	* Description: Indicates if any TLS certificates can be used.
+	* Accepted values:
+		* 0
+		* 1
 
 ## HotStaq Development Specific Environment Variables
 The following environment variables are only used during development and testing of HotStaq. These are not meant to be used for HotStaq applications:
