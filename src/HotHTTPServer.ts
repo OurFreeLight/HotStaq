@@ -340,7 +340,7 @@ export class HotHTTPServer extends HotServer
 		this.activeRequests = {};
 		this.useWorkerThreads = false;
 		this.swaggerUI = {
-				filepath: null,
+				filepath: "",
 				route: "/swagger",
 				jsonObj: null
 			};
