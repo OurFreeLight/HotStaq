@@ -729,6 +729,8 @@ export class HotCLI
 		let disableFileLoading: boolean = false;
 		let skipSecretFiles: boolean = true;
 		let dontLoadAPIFiles: boolean = false;
+		let swaggerUIFilepath: string = "";
+		let swaggerUIRoute: string = "/swagger";
 		let errorHandlingResponseCode: number = 500;
 		let cors: { origin: string; allowedHeaders: string[] } = {
 				origin: "*",
@@ -1084,6 +1086,12 @@ export class HotCLI
 							if (rateLimiter.store.password != null)
 								this.servers.api.rateLimiter.store.redisConfig.password = rateLimiter.store.password;
 						}
+
+						if (swaggerUIFilepath !== "")
+						{
+							this.servers.api.swaggerUI.filepath = swaggerUIFilepath;
+							this.servers.api.swaggerUI.route = swaggerUIRoute;
+						}
 					}
 
 					if (dbinfo != null)
@@ -1290,6 +1298,18 @@ export class HotCLI
 			{
 				dontLoadAPIFiles = true;
 			});
+		runCmd.option (`--swagger-ui <yaml_filepath>`, 
+			`If set to a JSON or YAML file, Swagger UI will run on the route /swagger. This will only work if the server type is set to web-api or api.`, 
+			(filepath: string, previous: any) =>
+			{
+				swaggerUIFilepath = filepath;
+			}, "");
+		runCmd.option (`--swagger-ui-route <route>`, 
+			`If --swagger-ui is used, you can change the default name of the route used.`, 
+			(route: string, previous: any) =>
+			{
+				swaggerUIRoute = route;
+			}, "/swagger");
 		runCmd.option (`--dont-deploy-tester`, 
 			`If set, this will not deploy a tester. If this is enabled this will cause automated tests to fail.`, 
 			(arg: string, previous: any) =>

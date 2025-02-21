@@ -12,6 +12,7 @@ import { Fields, Files, IncomingForm, Options } from "formidable";
 import { rateLimit, Options as RateLimitOptions } from "express-rate-limit";
 import { RedisStore, Options as RedisRateLimitOptions } from "rate-limit-redis";
 import RedisClient, { RedisOptions } from "ioredis";
+import * as swaggerUI from "swagger-ui-express";
 
 import { HotServer, HotServerType } from "./HotServer";
 import { HotStaq } from "./HotStaq";
@@ -191,6 +192,25 @@ export class HotHTTPServer extends HotServer
 	 */
 	useWorkerThreads: boolean;
 	/**
+	 * The Swagger UI setttings.
+	 */
+	swaggerUI: {
+		/**
+		 * If set, this will start Swagger UI from either the JSON or YAML file provided.
+		 * If this is set to a file ending with either .yml or .yaml it will be converted to JSON.
+		 */
+		filepath: string;
+		/**
+		 * The route to use.
+		 * @default /swagger
+		 */
+		route: string;
+		/**
+		 * The loaded YAML or JSON.
+		 */
+		jsonObj: any;
+	};
+	/**
 	 * The options to use when a new client has made a request.
 	 */
 	options: {
@@ -319,6 +339,11 @@ export class HotHTTPServer extends HotServer
 		this.numRequestsServed = 0;
 		this.activeRequests = {};
 		this.useWorkerThreads = false;
+		this.swaggerUI = {
+				filepath: null,
+				route: "/swagger",
+				jsonObj: null
+			};
 		this.options = {
 				onCall: null,
 				headers: [
@@ -1325,6 +1350,48 @@ export class HotHTTPServer extends HotServer
 			{
 				try
 				{
+					if (this.swaggerUI.filepath !== "")
+					{
+						const fileExt: string = ppath.extname (this.swaggerUI.filepath).toLowerCase ();
+
+						this.logger.info (`Starting Swagger UI on route "${this.swaggerUI.route}" from ${this.swaggerUI.filepath}`);
+
+						if ((fileExt === ".yml") || (fileExt === ".yaml"))
+						{
+							this.logger.verbose (() => `Reading YAML file ${this.swaggerUI.filepath}`);
+							this.swaggerUI.jsonObj = await HotIO.readYAMLFile (this.swaggerUI.filepath);
+						}
+						else
+						{
+							this.logger.verbose (() => `Reading JSON file ${this.swaggerUI.filepath}`);
+							this.swaggerUI.jsonObj = await HotIO.readJSONFile (this.swaggerUI.filepath);
+						}
+
+						this.logger.verbose (() => `Finished parsing file ${this.swaggerUI.filepath}`);
+
+
+						let protocol: string = "http";
+						let port: number = this.ports.http;
+
+						if (this.ssl.cert !== "")
+						{
+							protocol = "https";
+							port = this.ports.https;
+						}
+
+						if (this.listenAddress === "0.0.0.0")
+							this.listenAddress = "localhost";
+
+						const baseUrl = `${protocol}://${this.listenAddress}:${port}/`;
+
+						if (this.swaggerUI.jsonObj.servers == null)
+							this.swaggerUI.jsonObj.servers = [];
+
+						this.swaggerUI.jsonObj.servers.unshift ({ url: baseUrl });
+
+						this.expressApp.use (this.swaggerUI.route, swaggerUI.serve, swaggerUI.setup(this.swaggerUI.jsonObj));
+					}
+
 					let JSONLimit: string = "1mb";
 
 					if (process.env.JSON_LIMIT != null)
