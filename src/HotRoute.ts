@@ -85,7 +85,7 @@ export class HotRoute
 		executeFunction: ServerExecutionFunction = null,
 		type: HotEventMethod = HotEventMethod.POST,
 		testCases: (string | TestCaseFunction)[] | TestCaseFunction[] | TestCaseObject[] = null
-		): void
+		): HotRouteMethod | IHotRouteMethod
 	{
 		if (typeof (method) === "string")
 			method = HotRouteMethod.create (this, method, executeFunction, type, null, null, testCases);
@@ -100,6 +100,8 @@ export class HotRoute
 			method = HotRouteMethod.create (method);
 			this.methods.push ((<HotRouteMethod>method));
 		}
+
+		return (method);
 	}
 
 	/**

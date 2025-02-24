@@ -1089,6 +1089,12 @@ export class HotCLI
 
 						if (swaggerUIFilepath !== "")
 						{
+							if (serverType === "web-api")
+							{
+								this.servers.web.swaggerUI.filepath = swaggerUIFilepath;
+								this.servers.web.swaggerUI.route = swaggerUIRoute;
+							}
+
 							this.servers.api.swaggerUI.filepath = swaggerUIFilepath;
 							this.servers.api.swaggerUI.route = swaggerUIRoute;
 						}

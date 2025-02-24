@@ -76,6 +76,46 @@ export interface HotStartOptions
 }
 
 /**
+ * TypeScript conversion options for converting interfaces into usable parameters.
+ */
+export interface ITypeScriptConversionOptions
+{
+	/**
+	 * The type conversions to use when converting TypeScript types into 
+	 * parameter types.
+	 */
+	typeConversions?: { [typeName: string]: string; };
+	/**
+	 * If set to true, the first union type will be returned. If set to false,
+	 * the entire union will be returned.
+	 */
+	returnFirstUnionType?: boolean;
+	/**
+	 * The default type to use when the available OpenAPI type is unknown or 
+	 * is not a raw data type.
+	 */
+	unknownTypeDefaultsToType?: string;
+}
+
+export interface InterfaceProperty
+{
+	name: string;
+	type: string;
+	isOptional: boolean;
+	readOnly: boolean;
+	isArray: boolean;
+	comments: string[];
+	child: ParsedInterface | null;
+}
+
+export interface ParsedInterface
+{
+	name: string;
+	comments: string[];
+	properties: InterfaceProperty[];
+}
+
+/**
  * The main class that handles all HTML preprocessing, then outputs the 
  * results.
  */
@@ -132,7 +172,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.105";
+	static version: string = "0.8.106";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -357,11 +397,15 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
-	 * Convert an interface to a route parameter.
+	 * Convert a TypeScript interface to a route parameter.
+	 * This is experimental, but still works decently.
 	 */
-	static async convertInterfaceToRouteParameters (sourceCodePath: string, interfaceName: string): Promise<HotRouteMethodParameter>
+	static async convertInterfaceToRouteParameters (sourceCodePath: string, interfaceName: string, 
+			options: ITypeScriptConversionOptions = 
+				{ typeConversions: { "Date": "string" }, returnFirstUnionType: true, unknownTypeDefaultsToType: "string" }
+		): Promise<HotRouteMethodParameter>
 	{
-		let parameters: HotRouteMethodParameter = {};
+		let parameters: { [propertyName: string]: HotRouteMethodParameter; } = {};
 
 		if (HotStaq.isWeb === true)
 			throw new Error (`HotStaq.convertInterfaceToRouteParameters is not supported in the browser.`);
@@ -370,25 +414,35 @@ export class HotStaq implements IHotStaq
 		const sourceCodeContent: string = await HotIO.readTextFile (sourceCodePath);
 
 		let parseInterface = eval ("require")("./HotConvertInterfaceToRouteParameters").parseInterface;
-		const output = parseInterface ("./temp.ts", sourceCodeContent, interfaceName);
+		const output: ParsedInterface = parseInterface ("./temp.ts", sourceCodeContent, interfaceName, options);
+
+		if (output == null)
+			throw new Error (`Interface ${interfaceName} not found in ${sourceCodePath}.`);
 
 		for (let i = 0; i < output.properties.length; i++)
 		{
-			let prop = output.properties[i];
-			let name: string = prop.name;
-			let propType: string = prop.type;
-			let isOptional: boolean = prop.isOptional;
+			let prop: InterfaceProperty = output.properties[i];
 			let description: string = "";
 
 			if (prop.comments.length > 0)
 				description = prop.comments[0];
 
-			// @ts-ignore
-			parameters[name] = {
-					"type": propType,
-					"required": !isOptional,
+			parameters[prop.name] = {
+					"type": prop.type,
+					"required": !prop.isOptional,
 					"description": description
 				};
+
+			if (prop.readOnly === true)
+				parameters[prop.name].readOnly = true;
+
+			if (prop.isArray === true)
+			{
+				parameters[prop.name].type = "array";
+				parameters[prop.name].items = {
+						"type": prop.type
+					};
+			}
 		}
 
 		return (parameters);

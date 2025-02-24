@@ -181,7 +181,10 @@ export class HotGenerator
 		apis: { [name: string]: APItoLoad; }, 
 		apiToProcess: 
 			(key: string, hotsite: HotSite, loadedAPI: any, 
-				libraryName: string, apiName: string, outputDir: string, serverResult: any) => Promise<void>
+				libraryName: string, apiName: string, outputDir: string, serverResult: {
+					api: HotAPI;
+					baseAPIUrl: string;
+				}) => Promise<void>
 		): Promise<void>
 	{
 		let outputDir: string = ppath.normalize (`${this.outputDir}/`);
@@ -261,7 +264,10 @@ export class HotGenerator
 
 		await this.processAPIs (processor, apis, 
 			async (key: string, hotsite: HotSite, loadedAPI: any, 
-				libraryName: string, apiName: string, outputDir: string, serverResult: any) =>
+				libraryName: string, apiName: string, outputDir: string, serverResult: {
+					api: HotAPI;
+					baseAPIUrl: string;
+				}) =>
 			{
 				this.logger.info (`Generating Web API for ${this.generateType} using "${key}" from HotSite "${hotsite.name}"...`);
 
@@ -417,17 +423,27 @@ export class HotGenerator
 
 		await this.processAPIs (processor, apis, 
 			async (key: string, hotsite: HotSite, loadedAPI: any, 
-				libraryName: string, apiName: string, outputDir: string, serverResult: any) =>
+				libraryName: string, apiName: string, outputDir: string, serverResult: {
+					api: HotAPI;
+					baseAPIUrl: string;
+				}) =>
 			{
 				this.logger.info (`Generating ${this.generateType} Documentation "${key}" from HotSite "${hotsite.name}"...`);
 
 				let jsonObj: any = {};
 				let components: any = {};
+				let queryParameters: any = {};
 				let hotsiteDescription: string = "";
 				let servers: any = null;
 
 				if (serverResult.api.description != null)
 					hotsiteDescription = serverResult.api.description;
+
+				if (serverResult.api.openAPI.security != null)
+					jsonObj.security = serverResult.api.openAPI.security;
+
+				if (serverResult.api.openAPI.tags != null)
+					jsonObj.tags = serverResult.api.openAPI.tags;
 
 				if (this.generateType.indexOf ("openapi-3.0.0") > -1)
 				{
@@ -466,6 +482,9 @@ export class HotGenerator
 				jsonObj.info.version = version;
 				jsonObj.info.description = hotsiteDescription;
 				jsonObj.servers = servers;
+
+				if (serverResult.api.openAPI.info != null)
+					jsonObj.info = { ...jsonObj.info, ...serverResult.api.openAPI.info };
 
 				if (jsonObj.openapi != null)
 					jsonObj.paths = {};
@@ -506,10 +525,18 @@ export class HotGenerator
 					for (let iJdx = 0; iJdx < route.methods.length; iJdx++)
 					{
 						let method: HotRouteMethod = route.methods[iJdx];
+						let methodName: string = method.name;
+						let path: string = `/${route.version}/${routeName}/${methodName}`;
 						let methodType: string = method.type.toLowerCase ();
 
 						if (method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)
 							methodType = "post";
+
+						if (method.type === HotEventMethod.FILE_UPLOAD)
+						{
+							methodType = "post";
+							method.type = HotEventMethod.POST;
+						}
 
 						if (jsonObj.openapi != null)
 						{
@@ -517,7 +544,7 @@ export class HotGenerator
 								(method.type === HotEventMethod.POST) || 
 								(method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT)))
 							{
-								this.logger.verbose (`Skipping method ${method.name} because it is not a GET or POST method.`);
+								this.logger.warning (`Skipping method ${method.name} because it is not a GET or POST method.`);
 
 								continue;
 							}
@@ -528,15 +555,14 @@ export class HotGenerator
 							if (! ((method.type === HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT) || 
 								(method.type === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)))
 							{
-								this.logger.verbose (`Skipping method ${method.name} because it is not a POST_AND_WEBSOCKET_CLIENT_PUB_EVENT or WEBSOCKET_CLIENT_PUB_EVENT method.`);
+								this.logger.warning (`Skipping method ${method.name} because it is not a POST_AND_WEBSOCKET_CLIENT_PUB_EVENT or WEBSOCKET_CLIENT_PUB_EVENT method.`);
 
 								continue;
 							}
 						}
 
-						let methodName: string = method.name;
-						let path: string = `/${route.version}/${routeName}/${methodName}`;
 						let methodDescription: string = "";
+						let methodTags: string[] = [];
 						let returnsDescription: any = {
 								description: ""
 							};
@@ -561,6 +587,9 @@ export class HotGenerator
 											throw new Error (`Missing parameters for an object in ${method.name}`);
 									}
 
+									if (param.parameters instanceof Function)
+										param.parameters = await param.parameters ();
+
 									for (let key3 in param.parameters)
 									{
 										let param2 = param.parameters[key3];
@@ -572,10 +601,13 @@ export class HotGenerator
 
 										if (typeof (param2) === "string")
 											tempParam["type"] = param2;
-										else if (typeof (param2) === "function")
+										else if (param2 instanceof Function)
 											tempParam = await param2 ();
 										else
 											tempParam = param2;
+
+										if (tempParam.type === "int")
+											tempParam.type = "integer";
 		
 										if (tempParam.type === "object")
 											createdObj.properties[key3] = await getChildParameters (tempParam.parameters);
@@ -585,6 +617,13 @@ export class HotGenerator
 													type: tempParam.type || "string",
 													description: tempParam.description || ""
 												};
+
+											if (tempParam.type === "array")
+											{
+												createdObj.properties[key3].items = {
+														type: tempParam.items.type || "string"
+													};
+											}
 										}
 									}
 								}
@@ -595,8 +634,17 @@ export class HotGenerator
 						if (method.description != null)
 							methodDescription = method.description;
 
+						if (method.tags != null)
+						{
+							if (method.tags.length > 0)
+								methodTags = method.tags;
+						}
+
 						if (method.returns != null)
 						{
+							if (method.returns instanceof Function)
+								method.returns = await method.returns ();
+
 							if (method.returns.type === "object")
 							{
 								returnsDescription = {
@@ -615,13 +663,22 @@ export class HotGenerator
 										content: {
 											"application/json": {
 													schema: {
-														type: "string", 
+														type: method.returns.type || "string", 
 														description: method.returns.description || ""
 													}
 												}
 										}
 									};
+
+								if (method.returns.type === "array")
+								{
+									returnsDescription.content["application/json"].schema.items = {
+											type: method.returns.items.type || "string"
+										};
+								}
 							}
+
+							/// @todo Add support for return parameters to be executed as functions.
 						}
 
 						if (jsonObj.openapi != null)
@@ -629,6 +686,7 @@ export class HotGenerator
 							jsonObj.paths[path] = {};
 							jsonObj.paths[path][methodType] = {
 									"summary": methodDescription,
+									"tags": methodTags,
 									responses: {
 										"200": returnsDescription
 									}
@@ -640,6 +698,7 @@ export class HotGenerator
 							jsonObj.channels[path] = {
 									publish: {
 										summary: methodDescription,
+										tags: methodTags,
 										message: {
 											"payload": returnsDescription
 										}
@@ -647,64 +706,147 @@ export class HotGenerator
 								};
 						}
 
-						if (method.parameters != null)
+						const paramTypes = ["parameters", "queryParameters"] as const;
+
+						for (let iIdx = 0; iIdx < paramTypes.length; iIdx++)
 						{
-							if (Object.keys (method.parameters).length > 0)
-							{
-								components[`${routeName}_${methodName}`] = {
-									type: "object",
-									properties: {}
-								};
-								component = components[`${routeName}_${methodName}`];
-								componentName = `${routeName}_${methodName}`;
-							}
+							const paramType = paramTypes[iIdx];
+							let addType: boolean = false;
+							let tempQueryParams: any[] = [];
 
-							for (let key3 in method.parameters)
+							if (method[paramType] != null)
 							{
-								let param = method.parameters[key3];
-
-								if (param.type === "object")
-									component.properties[key3] = await getChildParameters (param);
-								else
+								if (method[paramType] instanceof Function)
 								{
-									component.properties[key3] = {
-											type: param.type || "string",
-											description: param.description || ""
+									// @ts-ignore
+									method[paramType] = await method[paramType] ();
+								}
+
+								if (Object.keys (method[paramType]).length > 0)
+								{
+									componentName = `${routeName}_${methodName}`;
+
+									if (method.parametersRefName !== "")
+										componentName = method.parametersRefName;
+
+									if (paramType === "parameters")
+									{
+										components[`${componentName}`] = {
+											type: "object",
+											properties: {}
 										};
+										component = components[`${componentName}`];
+									}
+
+									if (paramType === "queryParameters")
+									{
+										queryParameters[`${componentName}`] = [];
+										component = queryParameters[`${componentName}`];
+									}
+
+									addType = true;
 								}
 
-								if (param.required === true)
+								for (let key3 in method[paramType])
 								{
-									if (component.required == null)
-										component.required = [];
+									let param = method[paramType][key3];
 
-									component.required.push (key3);
+									if (param instanceof Function)
+										param = await param ();
+
+									if (param.type === "int")
+										param.type = "integer";
+
+									if (paramType === "queryParameters")
+									{
+										if (param.type === "object")
+											this.logger.warning (`Query parameter ${key3} is using an "object" type is not supported.`);
+										else
+										{
+											tempQueryParams.push ({
+													name: key3,
+													in: "query",
+													schema: {
+														type: param.type || "string",
+													},
+													description: param.description || ""
+												});
+										}
+
+										if (param.type === "array")
+											this.logger.warning (`Query parameter ${key3} is using an "array" type is not supported.`);
+
+										if (param.required === true)
+											this.logger.warning (`Query parameter ${key3} has required set, which is not supported.`);
+									}
+									else
+									{
+										if (param.type === "object")
+											component.properties[key3] = await getChildParameters (param);
+										else
+										{
+											component.properties[key3] = {
+													type: param.type || "string",
+													description: param.description || ""
+												};
+										}
+
+										if (param.type === "array")
+										{
+											component.properties[key3].items = {
+													type: param.items.type || "string",
+												};
+										}
+
+										if (param.readOnly === true)
+											component.readOnly = true;
+
+										if (param.required === true)
+										{
+											if (component.required == null)
+												component.required = [];
+
+											component.required.push (key3);
+										}
+									}
+
+									addType = true;
 								}
 							}
-						}
 
-						if (component != null)
-						{
-							if (jsonObj.openapi != null)
+							if (addType === true)
 							{
-								jsonObj.paths[path][methodType]["requestBody"] = {
-										required: true,
-										content: {
-											"application/json": {
-												schema: {
-													"$ref": `#/components/schemas/${componentName}`
-												}
-											}
+								if (component != null)
+								{
+									if (jsonObj.openapi != null)
+									{
+										if (paramType === "queryParameters")
+										{
+											jsonObj.paths[path][methodType]["parameters"] = tempQueryParams;
 										}
-									};
-							}
+										else
+										{
+											jsonObj.paths[path][methodType]["requestBody"] = {
+													required: true,
+													content: {
+														"application/json": {
+															schema: {
+																"$ref": `#/components/schemas/${componentName}`
+															}
+														}
+													}
+												};
+										}
+									}
 
-							if (jsonObj.asyncapi != null)
-							{
-								jsonObj.channels[path].publish = { message: { payload: {} } };
-								jsonObj.channels[path].publish.message.payload = {
-										"$ref": `#/components/schemas/${componentName}`
-									};
+									if (jsonObj.asyncapi != null)
+									{
+										jsonObj.channels[path].publish = { message: { payload: {} } };
+										jsonObj.channels[path].publish.message.payload = {
+												"$ref": `#/components/schemas/${componentName}`
+											};
+									}
+								}
 							}
 						}
 					}
@@ -713,6 +855,9 @@ export class HotGenerator
 				jsonObj.components = {
 					schemas: components
 				};
+
+				if (serverResult.api.openAPI.components != null)
+					jsonObj.components = { ...jsonObj.components, ...serverResult.api.openAPI.components };
 
 				const outputFile: string = ppath.normalize (`${outputDir}/${filename}`);
 				let outputFileExtension: string = ".json";
@@ -1025,7 +1170,10 @@ class ${data.routeName}${routeExtends}
 
 				for (let key in method.parameters)
 				{
-					let param: HotRouteMethodParameter = method.parameters[key];
+					let param = method.parameters[key];
+
+					if (param instanceof Function)
+						param = await param ();
 
 					if (param.type === "object")
 					{
@@ -1052,6 +1200,9 @@ class ${data.routeName}${routeExtends}
 
 			if (method.returns != null)
 			{
+				if (method.returns instanceof Function)
+					method.returns = await method.returns ();
+
 				if (method.returns.type === "object")
 				{
 					let returnObjType: string = `${data.routeName}_${data.methodName}_json_return_type`.toUpperCase ();
