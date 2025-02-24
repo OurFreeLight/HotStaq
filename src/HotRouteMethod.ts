@@ -275,6 +275,12 @@ export interface HotRouteMethodParameter
 	 */
 	type?: string;
 	/**
+	 * The item type in the array.
+	 * 
+	 * @todo This cannot generate objects or nested objects yet :/
+	 */
+	items?: HotRouteMethodParameter;
+	/**
 	 * The description of the parameter. Default: ""
 	 */
 	description?: string;
@@ -283,10 +289,14 @@ export interface HotRouteMethodParameter
 	 */
 	required?: boolean;
 	/**
+	 * Is this parameter read only? Default: false
+	 */
+	readOnly?: boolean;
+	/**
 	 * The parameters in the object. If using the function, the function 
 	 * will only execute if the application's connection type is set to generation.
 	 */
-	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
+	parameters?: { [name: string]: (string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>)); };
 }
 
 /**
@@ -307,13 +317,26 @@ export interface IHotRouteMethod
 	 */
 	description?: string;
 	/**
+	 * The tags for the api method.
+	 */
+	tags?: string[];
+	/**
 	 * The description of what returns from the api method.
 	 */
 	returns?: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>);
 	/**
+	 * The reference name for the parameters when generating documentation.
+	 * This is so the generated components all use the same parameters.
+	 */
+	parametersRefName?: string;
+	/**
 	 * The parameters in the api method.
 	 */
 	parameters?: { [name: string]: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
+	/**
+	 * The query parameters used in the api method.
+	 */
+	queryParameters?: { [name: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 	/**
 	 * The api call name.
 	 */
@@ -386,13 +409,26 @@ export class HotRouteMethod implements IHotRouteMethod
 	 */
 	description: string;
 	/**
+	 * The tags for the api method.
+	 */
+	tags: string[];
+	/**
 	 * The description of what returns from the api method.
 	 */
-	returns: HotRouteMethodParameter;
+	returns: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>);
+	/**
+	 * The reference name for the parameters when generating documentation.
+	 * This is so the generated components all use the same parameters.
+	 */
+	parametersRefName: string;
 	/**
 	 * The parameters in the api method.
 	 */
-	parameters: { [name: string]: HotRouteMethodParameter; };
+	parameters: { [name: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
+	/**
+	 * The query parameters used in the api method.
+	 */
+	queryParameters: { [name: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 	/**
 	 * The api call name.
 	 */
@@ -471,8 +507,11 @@ export class HotRouteMethod implements IHotRouteMethod
 		this.route = null;
 		this.name = "";
 		this.description = "";
+		this.tags = [];
 		this.returns = null;
+		this.parametersRefName = "";
 		this.parameters = {};
+		this.queryParameters = {};
 		this.type = HotEventMethod.POST;
 		this.isRegistered = false;
 		this.executeSetup = true;
@@ -511,8 +550,17 @@ export class HotRouteMethod implements IHotRouteMethod
 			if (route.name != null)
 				name = route.name;
 
+			if (route.name != null)
+				newMethod.tags = route.tags;
+
 			if (route.description != null)
 				newMethod.description = route.description;
+
+			if (route.parametersRefName != null)
+				newMethod.parametersRefName = route.parametersRefName;
+
+			if (route.queryParameters != null)
+				newMethod.queryParameters = route.queryParameters;
 
 			if (route.returns != null)
 			{
@@ -528,7 +576,7 @@ export class HotRouteMethod implements IHotRouteMethod
 				{
 					/// @fixme Can't run await here for many reasons. await is required 
 					/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
-					newMethod.returns = null;
+					newMethod.returns = route.returns;
 				}
 				else
 					newMethod.returns = route.returns;
@@ -536,37 +584,39 @@ export class HotRouteMethod implements IHotRouteMethod
 
 			if (route.parameters != null)
 			{
-				newMethod.parameters = {};
-
-				for (let key in route.parameters)
+				if (route.parameters instanceof Function)
 				{
-					let param = route.parameters[key];
-
-					if (typeof (param) === "string")
+					// @ts-ignore
+					newMethod.parameters = route.parameters;
+				}
+				else
+				{
+					for (let key in route.parameters)
 					{
-						newMethod.parameters[key] = {
-								"type": "string",
-								"required": false,
-								"description": param
-							};
-					}
-					else if (typeof (param) === "function")
-					{
-						/// @fixme Can't run await here for many reasons. await is required 
-						/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
+						let param = route.parameters[key];
 
-						newMethod.parameters[key] = {
-								"type": "string",
-								"required": false,
-								"description": ""
-							};
-					}
-					else
-					{
-						if (param.type == null)
-							param.type = "string";
+						if (typeof (param) === "string")
+						{
+							newMethod.parameters[key] = {
+									"type": "string",
+									"required": false,
+									"description": param
+								};
+						}
+						else if (typeof (param) === "function")
+						{
+							/// @fixme Can't run await here for many reasons. await is required 
+							/// to execute HotStaq.convertInterfaceToRouteParameters. Fix later...
 
-						newMethod.parameters[key] = param;
+							newMethod.parameters[key] = param;
+						}
+						else
+						{
+							if (param.type == null)
+								param.type = "string";
+
+							newMethod.parameters[key] = param;
+						}
 					}
 				}
 			}

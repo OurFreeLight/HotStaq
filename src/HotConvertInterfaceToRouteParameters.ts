@@ -1,26 +1,22 @@
 import ts from "typescript";
 
-export interface InterfaceProperty
-{
-	name: string;
-	type: string;
-	isOptional: boolean;
-	comments: string[];
-	child: ParsedInterface | null;
-}
-
-export interface ParsedInterface
-{
-	name: string;
-	comments: string[];
-	properties: InterfaceProperty[];
-}
+import { InterfaceProperty, ITypeScriptConversionOptions, ParsedInterface } from "./HotStaq";
 
 /**
  * Parse an interface from a TypeScript source file, and return a ParsedInterface object.
  */
-export function parseInterface (tempFileLocation: string, sourceCode: string, interfaceName: string): ParsedInterface | null
+export function parseInterface (tempFileLocation: string, sourceCode: string, 
+	interfaceName: string, options: ITypeScriptConversionOptions): ParsedInterface | null
 {
+	const possibleRawTypes = [
+		"string",
+		"number",
+		"integer",
+		"boolean",
+		"array",
+		"object"
+	];
+
 	// Parse the source code into an AST using the TypeScript compiler API
 	const sourceFile: ts.SourceFile = ts.createSourceFile (
 			tempFileLocation,
@@ -78,6 +74,8 @@ export function parseInterface (tempFileLocation: string, sourceCode: string, in
 					let propertyType = childNode.type ? childNode.type.getText(sourceFile) : "any";
 					const propertyComments = getComments(childNode);
 					let propertyOptional: boolean = false;
+					let propertyReadOnly: boolean = false;
+					let propertyIsArray: boolean = false;
 
 					if (childNode.questionToken != null)
 						propertyOptional = true;
@@ -92,10 +90,73 @@ export function parseInterface (tempFileLocation: string, sourceCode: string, in
 						propertyType = "object";
 					}
 
+					if (options.typeConversions != null)
+					{
+						if (options.typeConversions[propertyType] != null)
+							propertyType = options.typeConversions[propertyType];
+					}
+
+					if (ts.isUnionTypeNode(childNode.type))
+					{
+						let unionTypes: string[] = [];
+
+						childNode.type.types.forEach((type) =>
+							{
+								let pushType = true;
+								let typeText = type.getText(sourceFile);
+
+								if (options.typeConversions[typeText] != null)
+									typeText = options.typeConversions[typeText];
+
+								if ((options.returnFirstUnionType === true) && (unionTypes.length > 0))
+									pushType = false;
+
+								if (pushType === true)
+									unionTypes.push(typeText);
+							});
+
+						propertyType = unionTypes.join(" | ");
+					}
+
+					if (ts.isArrayTypeNode(childNode.type))
+						propertyIsArray = true;
+
+					childNode.type.modifiers?.forEach((modifier) =>
+						{
+							if (modifier.kind === ts.SyntaxKind.ReadonlyKeyword)
+								propertyReadOnly = true;
+
+							if (ts.isArrayTypeNode(childNode.type))
+								propertyIsArray = true;
+						});
+
+					if (options.unknownTypeDefaultsToType != null)
+					{
+						if (options.unknownTypeDefaultsToType !== "")
+						{
+							let foundType = false;
+
+							for (let iIdx = 0; iIdx < possibleRawTypes.length; iIdx++)
+							{
+								if (propertyType === possibleRawTypes[iIdx])
+								{
+									foundType = true;
+
+									break;
+								}
+							}
+
+							if (foundType === false)
+								propertyType = options.unknownTypeDefaultsToType;
+						}
+					}
+
 					properties.push({
 						name: propertyName,
 						type: propertyType,
 						isOptional: propertyOptional,
+						readOnly: propertyReadOnly,
+						isArray: propertyIsArray,
 						comments: propertyComments,
 						child: childInterface
 					});

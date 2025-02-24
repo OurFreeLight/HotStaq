@@ -70,6 +70,16 @@ export abstract class HotAPI
 	 */
 	db: HotDB;
 	/**
+	 * Additional OpenAPI documentation to be added. Anything added here 
+	 * will be merged into the OpenAPI documentation as a JSON object.
+	 */
+	openAPI: {
+		info?: any;
+		security?: any;
+		tags?: any;
+		components?: any;
+	};
+	/**
 	 * The function used for user authentication.
 	 */
 	userAuth: ServerAuthorizationFunction;
@@ -100,6 +110,7 @@ export abstract class HotAPI
 		this.createFunctions = true;
 		this.executeEventsUsing = EventExecutionType.HotRoute;
 		this.db = db;
+		this.openAPI = {};
 		this.userAuth = null;
 		this.routes = {};
 		this.onPreRegister = null;
