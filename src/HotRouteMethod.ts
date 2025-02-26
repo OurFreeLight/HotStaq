@@ -285,6 +285,10 @@ export interface HotRouteMethodParameter
 	 */
 	description?: string;
 	/**
+	 * Additional OpenAPI information. Anything added here will be automerged in.
+	 */
+	openAPI?: any;
+	/**
 	 * Is this parameter required? Default: false
 	 */
 	required?: boolean;
@@ -316,6 +320,10 @@ export interface IHotRouteMethod
 	 * The description of the api method.
 	 */
 	description?: string;
+	/**
+	 * Additional OpenAPI information. Anything added here will be automerged in.
+	 */
+	openAPI?: any;
 	/**
 	 * The tags for the api method.
 	 */
@@ -408,6 +416,10 @@ export class HotRouteMethod implements IHotRouteMethod
 	 * The description of the api method.
 	 */
 	description: string;
+	/**
+	 * Additional OpenAPI information. Anything added here will be automerged in.
+	 */
+	openAPI: any;
 	/**
 	 * The tags for the api method.
 	 */
@@ -507,6 +519,7 @@ export class HotRouteMethod implements IHotRouteMethod
 		this.route = null;
 		this.name = "";
 		this.description = "";
+		this.openAPI = null;
 		this.tags = [];
 		this.returns = null;
 		this.parametersRefName = "";
@@ -555,6 +568,9 @@ export class HotRouteMethod implements IHotRouteMethod
 
 			if (route.description != null)
 				newMethod.description = route.description;
+
+			if (route.openAPI != null)
+				newMethod.openAPI = route.openAPI;
 
 			if (route.parametersRefName != null)
 				newMethod.parametersRefName = route.parametersRefName;

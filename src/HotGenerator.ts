@@ -581,52 +581,55 @@ export class HotGenerator
 	
 								if (param.type != null)
 								{
-									if (param.type === "object")
+									if (param.parameters != null)
 									{
-										if (param.parameters == null)
-											throw new Error (`Missing parameters for an object in ${method.name}`);
-									}
+										if (param.parameters instanceof Function)
+											param.parameters = await param.parameters ();
 
-									if (param.parameters instanceof Function)
-										param.parameters = await param.parameters ();
-
-									for (let key3 in param.parameters)
-									{
-										let param2 = param.parameters[key3];
-										let tempParam: HotRouteMethodParameter = {
-												type: "string",
-												required: false,
-												description: ""
-											};
-
-										if (typeof (param2) === "string")
-											tempParam["type"] = param2;
-										else if (param2 instanceof Function)
-											tempParam = await param2 ();
-										else
-											tempParam = param2;
-
-										if (tempParam.type === "int")
-											tempParam.type = "integer";
-		
-										if (tempParam.type === "object")
-											createdObj.properties[key3] = await getChildParameters (tempParam.parameters);
-										else
+										for (let key3 in param.parameters)
 										{
-											createdObj.properties[key3] = {
-													type: tempParam.type || "string",
-													description: tempParam.description || ""
+											let param2 = param.parameters[key3];
+											let tempParam: HotRouteMethodParameter = {
+													type: "string",
+													required: false,
+													description: ""
 												};
 
-											if (tempParam.type === "array")
+											if (typeof (param2) === "string")
+												tempParam["type"] = param2;
+											else if (param2 instanceof Function)
+												tempParam = await param2 ();
+											else
+												tempParam = param2;
+
+											if (tempParam.type === "int")
+												tempParam.type = "integer";
+			
+											if (tempParam.type === "object")
+												createdObj.properties[key3] = await getChildParameters (tempParam.parameters);
+											else
 											{
-												createdObj.properties[key3].items = {
-														type: tempParam.items.type || "string"
+												createdObj.properties[key3] = {
+														type: tempParam.type || "string", 
+														description: tempParam.description || ""
 													};
+
+												if (tempParam.type === "array")
+												{
+													createdObj.properties[key3].items = {
+															type: tempParam.items.type || "string"
+														};
+
+													if (tempParam.items.openAPI != null)
+														createdObj.properties[key3].items = { ...createdObj.properties[key3].items, ...tempParam.items.openAPI };
+												}
 											}
 										}
 									}
 								}
+								
+								if (param.openAPI != null)
+									createdObj = { ...createdObj, ...param.openAPI };
 
 								return (createdObj);
 							};
@@ -678,6 +681,9 @@ export class HotGenerator
 								}
 							}
 
+							if (method.returns.openAPI != null)
+								returnsDescription = { ...returnsDescription, ...method.returns.openAPI };
+
 							/// @todo Add support for return parameters to be executed as functions.
 						}
 
@@ -691,6 +697,9 @@ export class HotGenerator
 										"200": returnsDescription
 									}
 								};
+
+							if (method.openAPI != null)
+								jsonObj.paths[path][methodType] = { ...jsonObj.paths[path][methodType], ...method.openAPI };
 						}
 
 						if (jsonObj.asyncapi != null)
@@ -763,14 +772,18 @@ export class HotGenerator
 											this.logger.warning (`Query parameter ${key3} is using an "object" type is not supported.`);
 										else
 										{
-											tempQueryParams.push ({
-													name: key3,
-													in: "query",
-													schema: {
-														type: param.type || "string",
-													},
-													description: param.description || ""
-												});
+											let obj = {
+												name: key3,
+												in: "query",
+												schema: {
+													type: param.type || "string",
+												},
+												description: param.description || ""
+											};
+
+											obj = { ...obj, ...param.openAPI };
+
+											tempQueryParams.push (obj);
 										}
 
 										if (param.type === "array")
@@ -796,6 +809,9 @@ export class HotGenerator
 											component.properties[key3].items = {
 													type: param.items.type || "string",
 												};
+
+											if (param.items.openAPI != null)
+												component.properties[key3].items = { ...component.properties[key3].items, ...param.items.openAPI };
 										}
 
 										if (param.readOnly === true)
@@ -808,6 +824,12 @@ export class HotGenerator
 
 											component.required.push (key3);
 										}
+									}
+
+									if (param.openAPI != null)
+									{
+										if (paramType === "parameters")
+											component.properties[key3] = { ...component.properties[key3], ...param.openAPI };
 									}
 
 									addType = true;

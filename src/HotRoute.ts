@@ -26,6 +26,10 @@ export class HotRoute
 	 */
 	description: string;
 	/**
+	 * Additional OpenAPI information. Anything added here will be automerged in.
+	 */
+	openAPI: any;
+	/**
 	 * The version.
 	 */
 	version: string;
@@ -57,6 +61,7 @@ export class HotRoute
 
 		this.route = route;
 		this.description = "";
+		this.openAPI = null;
 		this.version = "v1";
 		this.prefix = "";
 		this.methods = methods;
