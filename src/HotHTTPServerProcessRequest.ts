@@ -56,8 +56,8 @@ export async function processRequest (server: HotHTTPServer,
 		{
 			let statusCode = 401;
 
-			if (ex.errorCode != null)
-				statusCode = ex.errorCode;
+			if (ex.statusCode != null)
+				statusCode = ex.statusCode;
 
 			logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
 			hasAuthorization = false;
@@ -93,8 +93,8 @@ export async function processRequest (server: HotHTTPServer,
 			{
 				let statusCode = 401;
 	
-				if (ex.errorCode != null)
-					statusCode = ex.errorCode;
+				if (ex.statusCode != null)
+					statusCode = ex.statusCode;
 
 				logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
 				hasAuthorization = false;
@@ -286,8 +286,8 @@ export async function processRequest (server: HotHTTPServer,
 			{
 				let statusCode = 400;
 
-				if (ex.errorCode != null)
-					statusCode = ex.errorCode;
+				if (ex.statusCode != null)
+					statusCode = ex.statusCode;
 
 				logger.error (`HTTP Execution Error ${statusCode}: ${ex.message}`);
 				return ({ error: ex.message, errorCode: statusCode });
