@@ -54,10 +54,15 @@ export async function processRequest (server: HotHTTPServer,
 		}
 		catch (ex)
 		{
-			logger.verbose (`Authorization error: ${ex.message}`);
+			let statusCode = 401;
+
+			if (ex.errorCode != null)
+				statusCode = ex.errorCode;
+
+			logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
 			hasAuthorization = false;
 
-			return ({ error: ex.message });
+			return ({ error: ex.message, errorCode: statusCode });
 		}
 
 		if (authorizationValue === undefined)
@@ -86,10 +91,15 @@ export async function processRequest (server: HotHTTPServer,
 			}
 			catch (ex)
 			{
-				logger.verbose (`Authorization error: ${ex.message}`);
+				let statusCode = 401;
+	
+				if (ex.errorCode != null)
+					statusCode = ex.errorCode;
+
+				logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
 				hasAuthorization = false;
 
-				return ({ error: ex.message });
+				return ({ error: ex.message, errorCode: statusCode });
 			}
 
 			if (authorizationValue === undefined)
@@ -106,7 +116,7 @@ export async function processRequest (server: HotHTTPServer,
 		if (Object.keys (uploadedFiles).length > 0)
 		{
 			if (method.type !== HotEventMethod.FILE_UPLOAD)
-				throw new Error (`Cannot upload files to a non-file upload method. When registering the route be sure to use HotEventMethod.FILE_UPLOAD.`);
+				return ({ error: `Cannot upload files to a non-file upload method. When registering the route be sure to use HotEventMethod.FILE_UPLOAD.`, errorCode: 400 });
 
 			const hotstaqUploadId: string = uuidv4 ();
 
@@ -274,8 +284,13 @@ export async function processRequest (server: HotHTTPServer,
 			}
 			catch (ex)
 			{
-				logger.error (`HTTP Execution Error: ${ex.message}`);
-				return ({ error: ex.message });
+				let statusCode = 400;
+
+				if (ex.errorCode != null)
+					statusCode = ex.errorCode;
+
+				logger.error (`HTTP Execution Error ${statusCode}: ${ex.message}`);
+				return ({ error: ex.message, errorCode: statusCode });
 			}
 
 			if (foundUploadId !== "")

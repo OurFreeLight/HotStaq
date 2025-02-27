@@ -78,6 +78,10 @@ export abstract class HotAPI
 		security?: any;
 		tags?: any;
 		components?: any;
+		/**
+		 * Any extra information to add to the OpenAPI documentation.
+		 */
+		extra?: any;
 	};
 	/**
 	 * The function used for user authentication.
