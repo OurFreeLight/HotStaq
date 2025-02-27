@@ -569,6 +569,27 @@ export class HotGenerator
 						let returnsDescription: any = {
 								description: ""
 							};
+						let errorResponse = {
+								description: "An error response. See the error object for more information.",
+								content: {
+									"application/json": {
+											schema: {
+												type: "object", 
+												description: "The error object. This structure will be the same for nearly any error response.",
+												properties: {
+													"error": {
+														type: "string",
+														description: "The error message. This should not contain a stack trace."
+													},
+													"errorCode": {
+														type: "integer",
+														description: "The HTTP error code associated with the error message."
+													}
+												}
+											}
+										}
+								}
+							};
 						let component: any = null;
 						let componentName: string = "";
 
@@ -697,7 +718,10 @@ export class HotGenerator
 									"summary": methodDescription,
 									"tags": methodTags,
 									responses: {
-										"200": returnsDescription
+										"200": returnsDescription,
+										"401": errorResponse,
+										"400": errorResponse,
+										"500": errorResponse
 									}
 								};
 
