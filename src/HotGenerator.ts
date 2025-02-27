@@ -486,6 +486,9 @@ export class HotGenerator
 				if (serverResult.api.openAPI.info != null)
 					jsonObj.info = { ...jsonObj.info, ...serverResult.api.openAPI.info };
 
+				if (serverResult.api.openAPI.extra != null)
+					jsonObj = { ...jsonObj, ...serverResult.api.openAPI.extra };
+
 				if (jsonObj.openapi != null)
 					jsonObj.paths = {};
 

@@ -67,16 +67,16 @@ export class HotRoute
 		this.methods = methods;
 		this.errors = {
 				"not_authorized": HotRoute.createError ("Not authorized."),
-				"no_server_execute_function": HotRoute.createError ("Missing server execute function."),
+				"no_server_execute_function": HotRoute.createError ("Missing server execute function.", 500),
 			};
 	}
 
 	/**
 	 * Create an error JSON object.
 	 */
-	static createError (message: string): any
+	static createError (message: string, errorCode: number = 400): any
 	{
-		return ({ error: message });
+		return ({ error: message, errorCode: errorCode });
 	}
 
 	/**
