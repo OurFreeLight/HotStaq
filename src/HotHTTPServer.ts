@@ -781,17 +781,22 @@ export class HotHTTPServer extends HotServer
 
 								if (value !== undefined)
 								{
-									if (value.error != null)
+									if (value != null)
 									{
-										let statusCode = this.errorHandlingResponseCode;
+										if (value.error != null)
+										{
+											let statusCode = this.errorHandlingResponseCode;
 
-										if (value.errorCode != null)
-											statusCode = value.errorCode;
+											if (value.errorCode != null)
+												statusCode = value.errorCode;
 
-										res.status (statusCode).json (value);
+											res.status (statusCode).json (value);
+
+											return;
+										}
 									}
-									else
-										res.status (200).json (value);
+
+									res.status (200).json (value);
 								}
 							};
 
