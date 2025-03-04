@@ -1178,7 +1178,7 @@ class ${data.routeName}${routeExtends}
 						if (param.type === "object")
 						{
 							if (param.parameters == null)
-								throw new Error (`Missing parameters for an object in ${method.name}`);
+								throw new Error (`Missing parameters for an object in ${method.route.route}/${method.name}`);
 						}
 
 						for (let key3 in param.parameters)

@@ -66,6 +66,10 @@ export class HotCLI
 	 */
 	processor: HotStaq;
 	/**
+	 * The path to the .env file to use.
+	 */
+	envFile: string;
+	/**
 	 * The path to the Hotsite JSON to parse.
 	 */
 	hotsitePath: string;
@@ -145,6 +149,7 @@ export class HotCLI
 		this.processor = new HotStaq ();
 		this.processor.logger.logLevel = HotLogLevel.All;
 	
+		this.envFile = "";
 		this.hotsitePath = "";
 		this.globalLogLevel = null;
 		this.apis = {};
@@ -2202,8 +2207,6 @@ export class HotCLI
 					this.globalLogLevel = HotLogLevel.None;
 			}
 
-			let envPath: string = ppath.normalize (`${process.cwd ()}/.env`);
-
 			this.program = new commander.Command (this.name);
 			this.program.description (this.description);
 			command = this.program.version (this.VERSION);
@@ -2257,7 +2260,7 @@ export class HotCLI
 			command.option ("--env-file <path>", "Set the path to the .env file to load.", 
 				(path: string, previous: any) =>
 				{
-					envPath = path;
+					this.envFile = path;
 				});
 			command.option ("-o, --hotsite <path>", "Specify the HotSite.json to use. This will look in the current directory to find one first.", 
 				(path: string, previous: any) =>
@@ -2346,20 +2349,6 @@ export class HotCLI
 
 			let healthcheckCmd: commander.Command = await this.handleHealthcheckCommands ();
 			command.addCommand (healthcheckCmd);
-
-			if (await HotIO.exists (envPath) === true)
-			{
-				const content: string = await HotIO.readTextFile (envPath);
-				let envVars = dotenv.parse (content);
-
-				for (let key in envVars)
-				{
-					const value: any = envVars[key];
-
-					if (value != null)
-						process.env[key] = value;
-				}
-			}
 		}
 		catch (ex)
 		{
@@ -2394,6 +2383,25 @@ export class HotCLI
 	{
 		if (args.length > 2)
 			this.program.parse (args);
+
+		if (this.envFile !== "")
+		{
+			this.envFile = ppath.normalize (this.envFile);
+
+			if (await HotIO.exists (this.envFile) === true)
+			{
+				const content: string = await HotIO.readTextFile (this.envFile);
+				let envVars = dotenv.parse (content);
+
+				for (let key in envVars)
+				{
+					const value: any = envVars[key];
+
+					if (value != null)
+						process.env[key] = value;
+				}
+			}
+		}
 
 		if (this.globalLogLevel != null)
 			this.processor.logger.logLevel = this.globalLogLevel;
