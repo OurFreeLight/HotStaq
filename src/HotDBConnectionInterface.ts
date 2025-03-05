@@ -1,15 +1,14 @@
+import { HotDBType } from "./HotDB";
+
 /**
  * The database connection info.
  */
 export interface HotDBConnectionInterface
 {
     /**
-     * The type of database. Can be:
-     * * none
-     * * mysql
-     * * influx
+     * The type of database to connect to.
      */
-    type?: string;
+    type?: HotDBType;
     /**
      * The server's address.
      */
