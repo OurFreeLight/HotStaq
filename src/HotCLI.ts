@@ -796,7 +796,7 @@ export class HotCLI
 					return;
 
 				dbinfo = {
-					"type": process.env["DATABASE_TYPE"] || "mysql",
+					"type": (<HotDBType>(process.env["DATABASE_TYPE"] || "mysql")),
 					"server": process.env["DATABASE_SERVER"] || "127.0.0.1",
 					"username": process.env["DATABASE_USERNAME"] || "",
 					"password": process.env["DATABASE_PASSWORD"] || "",
@@ -977,7 +977,7 @@ export class HotCLI
 					if (process.env["DATABASE_TYPE"] != null)
 					{
 						setupDB ();
-						dbinfo.type = process.env["DATABASE_TYPE"];
+						dbinfo.type = (<HotDBType>process.env["DATABASE_TYPE"]);
 					}
 
 					if (process.env["DATABASE_SERVER"] != null)
@@ -1029,6 +1029,44 @@ export class HotCLI
 						setupDB ();
 						dbinfo.database = process.env["DATABASE_SCHEMA"];
 					}
+
+					let sslObj = null;
+
+					if ((process.env["DATABASE_SSL_REJECT_UNAUTHORIZED"] != null) || 
+						(process.env["DATABASE_SSL_CA"] != null) ||
+						(process.env["DATABASE_SSL_KEY"] != null) ||
+						(process.env["DATABASE_SSL_CERT"] != null))
+					{
+						setupDB ();
+						sslObj = {};
+					}
+
+					if (process.env["DATABASE_SSL_REJECT_UNAUTHORIZED"] != null)
+					{
+						if (process.env["DATABASE_SSL_REJECT_UNAUTHORIZED"] === "0")
+							dbinfo.ssl.rejectUnauthorized = false;
+					}
+
+					if (process.env["DATABASE_SSL_CA"] != null)
+					{
+						if (process.env["DATABASE_SSL_CA"] !== "")
+							dbinfo.ssl.ca = process.env["DATABASE_SSL_CA"];
+					}
+
+					if (process.env["DATABASE_SSL_KEY"] != null)
+					{
+						if (process.env["DATABASE_SSL_KEY"] !== "")
+							dbinfo.ssl.key = process.env["DATABASE_SSL_KEY"];
+					}
+
+					if (process.env["DATABASE_SSL_CERT"] != null)
+					{
+						if (process.env["DATABASE_SSL_CERT"] !== "")
+							dbinfo.ssl.cert = process.env["DATABASE_SSL_CERT"];
+					}
+
+					if (sslObj != null)
+						dbinfo.ssl = sslObj;
 
 					if (baseWebUrl === "")
 					{
@@ -1801,11 +1839,11 @@ export class HotCLI
 			{
 				globalApi = api_name;
 			}, "");
-		runCmd.option ("--db-type <type>", "The type of database to use. Can be (none, mysql, influx)", 
+		runCmd.option ("--db-type <type>", "The type of database to use. Can be (none, mysql, mariadb, postgres, influx)", 
 			(type: string, previous: any) =>
 			{
 				setupDB ();
-				dbinfo.type = type;
+				dbinfo.type = (<HotDBType>type);
 			}, "mysql");
 		runCmd.option ("--db-server <address>", "The address to the database", 
 			(address: string, previous: any) =>
@@ -1824,6 +1862,12 @@ export class HotCLI
 			{
 				setupDB ();
 				dbinfo.password = password;
+			});
+		runCmd.option ("--db-token <password>", "The database's token. This is insecure to use on the command line!", 
+			(token: string, previous: any) =>
+			{
+				setupDB ();
+				dbinfo.token = token;
 			});
 		runCmd.option ("--db-port <port>", "The database's port", 
 			(port: string, previous: any) =>
@@ -1844,6 +1888,30 @@ export class HotCLI
 			{
 				setupDB ();
 				dbinfo.database = schema;
+			});
+		runCmd.option ("--db-ssl-accept-unauthorized-certs", "Accept database SSL connections with unauthorized certificates.", 
+			(schema: string, previous: any) =>
+			{
+				setupDB ();
+				dbinfo.ssl.rejectUnauthorized = false;
+			});
+		runCmd.option ("--db-ssl-ca", "The path to the ssl ca certificate.",
+			(path: string, previous: any) =>
+			{
+				setupDB ();
+				dbinfo.ssl.ca = path;
+			});
+		runCmd.option ("--db-ssl-key", "The path to the ssl key certificate.",
+			(path: string, previous: any) =>
+			{
+				setupDB ();
+				dbinfo.ssl.key = path;
+			});
+		runCmd.option ("--db-ssl-cert", "The path to the ssl certificate.",
+			(path: string, previous: any) =>
+			{
+				setupDB ();
+				dbinfo.ssl.cert = path;
 			});
 
 		return (runCmd);

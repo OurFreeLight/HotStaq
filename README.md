@@ -102,6 +102,28 @@ You can configure how HotStaq starts by using the following environment variable
 	* Default: 10
 	* Accepted values:
 		* Any integer.
+* DATABASE_SSL_REJECT_UNAUTHORIZED
+	* Type: number
+	* Description: If set to 0, the database will not reject unauthorized SSL certificates.
+	* Default: 1
+	* Accepted values:
+		* 0
+		* 1
+* DATABASE_SSL_CA
+	* Type: string
+	* Description: The path to the CA certificate to use for connecting to the database using SSL.
+	* Accepted values:
+		* Any string.
+* DATABASE_SSL_CERT
+	* Type: string
+	* Description: The path to the certificate to use for connecting to the database using SSL.
+	* Accepted values:
+		* Any string.
+* DATABASE_SSL_KEY
+	* Type: string
+	* Description: The path to the key to use for connecting to the database using SSL.
+	* Accepted values:
+		* Any string.
 * JSON_LIMIT
 	* Type: string
 	* Description: The maximum amount of JSON that can be uploaded.
