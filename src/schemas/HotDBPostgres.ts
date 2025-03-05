@@ -3,6 +3,7 @@ import * as pg from "pg";
 import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { PostgresSchema } from "./postgres/PostgresSchema";
+import { HotIO } from "../HotIO";
 
 /**
  * The database results.
@@ -30,7 +31,7 @@ export class HotDBPostgres extends HotDB<pg.Pool, PostgresResults, PostgresSchem
 	 */
 	async connect (connectionInfo: HotDBConnectionInterface): Promise<any[]>
 	{
-		return (new Promise<any[]> ((resolve, reject) =>
+		return (new Promise<any[]> (async (resolve, reject) =>
 			{
 				try
 				{
@@ -45,6 +46,25 @@ export class HotDBPostgres extends HotDB<pg.Pool, PostgresResults, PostgresSchem
 						database: connectionInfo.database,
 						maxUses: this.connectionLimit
 					};
+
+					if (connectionInfo.ssl != null)
+					{
+						poolConfig.ssl = {
+							"rejectUnauthorized": true
+						};
+	
+						if (connectionInfo.ssl.rejectUnauthorized != null)
+							poolConfig.ssl.rejectUnauthorized = connectionInfo.ssl.rejectUnauthorized;
+	
+						if (connectionInfo.ssl.ca != null)
+							poolConfig.ssl.ca = await HotIO.readTextFile (connectionInfo.ssl.ca);
+	
+						if (connectionInfo.ssl.cert != null)
+							poolConfig.ssl.cert = await HotIO.readTextFile (connectionInfo.ssl.cert);
+	
+						if (connectionInfo.ssl.key != null)
+							poolConfig.ssl.key = await HotIO.readTextFile (connectionInfo.ssl.key);
+					}
 
 					if (connectionInfo.connectionObjectOverride != null)
 					{

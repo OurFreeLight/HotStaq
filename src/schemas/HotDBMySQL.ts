@@ -3,6 +3,7 @@ import * as mysql from "mysql2";
 import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { MySQLSchema } from "./mysql/MySQLSchema";
+import { HotIO } from "../HotIO";
 
 /**
  * The database results.
@@ -29,7 +30,7 @@ export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
 	 */
 	async connect (connectionInfo: HotDBConnectionInterface): Promise<any[]>
 	{
-		return (new Promise<any[]> ((resolve, reject) =>
+		return (new Promise<any[]> (async (resolve, reject) =>
 			{
 				if (process.env["DATABASE_CONNECTIONS_LIMIT"] != null)
 					this.connectionLimit = parseInt (process.env["DATABASE_CONNECTIONS_LIMIT"]);
@@ -49,6 +50,25 @@ export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
 						connectionLimit: this.connectionLimit,
 						multipleStatements: multipleStatements
 					};
+
+				if (connectionInfo.ssl != null)
+				{
+					connectionObj.ssl = {
+						"rejectUnauthorized": true
+					};
+
+					if (connectionInfo.ssl.rejectUnauthorized != null)
+						connectionObj.ssl.rejectUnauthorized = connectionInfo.ssl.rejectUnauthorized;
+
+					if (connectionInfo.ssl.ca != null)
+						connectionObj.ssl.ca = await HotIO.readTextFile (connectionInfo.ssl.ca);
+
+					if (connectionInfo.ssl.cert != null)
+						connectionObj.ssl.cert = await HotIO.readTextFile (connectionInfo.ssl.cert);
+
+					if (connectionInfo.ssl.key != null)
+						connectionObj.ssl.key = await HotIO.readTextFile (connectionInfo.ssl.key);
+				}
 
 				if (connectionInfo.connectionObjectOverride != null)
 					connectionObj = connectionInfo.connectionObjectOverride;

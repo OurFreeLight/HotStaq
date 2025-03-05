@@ -40,6 +40,9 @@ export class HotDBInflux extends HotDB<InfluxDB, void, InfluxSchema>
 				if (connectionInfo.database == null)
 					throw new Error (`A database (aka bucket) must be specified when connecting to Influx.`);
 
+				if (connectionInfo.ssl != null)
+					throw new Error (`SSL is not supported for Influx at this time.`);
+
 				if (connectionInfo.token != null)
 					influxConnection.token = connectionInfo.token;
 				else
