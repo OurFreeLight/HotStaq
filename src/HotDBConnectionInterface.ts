@@ -33,7 +33,7 @@ export interface HotDBConnectionInterface
     /**
      * The org to use.
      */
-     org?: string;
+    org?: string;
     /**
      * The database to use.
      */
@@ -56,4 +56,26 @@ export interface HotDBConnectionInterface
      * For HotDBPostgres, you can place the object for pg.PoolConfig here.
      */
     connectionObjectOverride?: any;
+    /**
+     * SSL settings.
+     */
+    ssl?: {
+        /**
+         * If set to false, any ssl cert will be accepted.
+         * @default true
+         */
+        rejectUnauthorized?: boolean;
+        /**
+         * The file path to the SSL certificate.
+         */
+        cert?: string;
+        /**
+         * The file path to the SSL key.
+         */
+        key?: string;
+        /**
+         * The file path to the SSL CA.
+         */
+        ca?: string;
+    };
 }
