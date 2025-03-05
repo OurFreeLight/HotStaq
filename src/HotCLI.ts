@@ -1030,7 +1030,7 @@ export class HotCLI
 						dbinfo.database = process.env["DATABASE_SCHEMA"];
 					}
 
-					let sslObj = null;
+					let sslObj: any = null;
 
 					if ((process.env["DATABASE_SSL_REJECT_UNAUTHORIZED"] != null) || 
 						(process.env["DATABASE_SSL_CA"] != null) ||
@@ -1044,25 +1044,25 @@ export class HotCLI
 					if (process.env["DATABASE_SSL_REJECT_UNAUTHORIZED"] != null)
 					{
 						if (process.env["DATABASE_SSL_REJECT_UNAUTHORIZED"] === "0")
-							dbinfo.ssl.rejectUnauthorized = false;
+							sslObj.rejectUnauthorized = false;
 					}
 
 					if (process.env["DATABASE_SSL_CA"] != null)
 					{
 						if (process.env["DATABASE_SSL_CA"] !== "")
-							dbinfo.ssl.ca = process.env["DATABASE_SSL_CA"];
+							sslObj.ca = process.env["DATABASE_SSL_CA"];
 					}
 
 					if (process.env["DATABASE_SSL_KEY"] != null)
 					{
 						if (process.env["DATABASE_SSL_KEY"] !== "")
-							dbinfo.ssl.key = process.env["DATABASE_SSL_KEY"];
+							sslObj.key = process.env["DATABASE_SSL_KEY"];
 					}
 
 					if (process.env["DATABASE_SSL_CERT"] != null)
 					{
 						if (process.env["DATABASE_SSL_CERT"] !== "")
-							dbinfo.ssl.cert = process.env["DATABASE_SSL_CERT"];
+							sslObj.cert = process.env["DATABASE_SSL_CERT"];
 					}
 
 					if (sslObj != null)
