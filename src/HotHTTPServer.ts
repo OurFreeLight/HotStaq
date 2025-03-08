@@ -1410,10 +1410,12 @@ export class HotHTTPServer extends HotServer
 							port = this.ports.https;
 						}
 
-						if (this.listenAddress === "0.0.0.0")
-							this.listenAddress = "localhost";
+						let listenStr = this.listenAddress;
 
-						const baseUrl = `${protocol}://${this.listenAddress}:${port}/`;
+						if (listenStr === "0.0.0.0")
+							listenStr = "localhost";
+
+						const baseUrl = `${protocol}://${listenStr}:${port}/`;
 
 						if (this.swaggerUI.jsonObj.servers == null)
 							this.swaggerUI.jsonObj.servers = [];
@@ -1603,6 +1605,8 @@ export class HotHTTPServer extends HotServer
 					if (this.ssl.cert === "")
 					{
 						this.httpListener = http.createServer (this.expressApp);
+
+						this.logger.info (`HTTP Listening on address: ${this.listenAddress}`);
 						this.httpListener.listen (this.ports.http, this.listenAddress, completedSetup);
 
 						process.on ('SIGTERM', sigHandler.bind (this, "SIGTERM", "HTTP", this.httpListener));
@@ -1621,6 +1625,7 @@ export class HotHTTPServer extends HotServer
 										});
 									res.end ();
 								});
+							this.logger.info (`HTTP Listening on address: ${this.listenAddress}`);		
 							this.httpListener.listen (this.ports.http, this.listenAddress, () =>
 								{
 									this.logger.info (`Redirecting HTTP(${this.ports.http}) traffic to HTTPS(${this.ports.https})`);
@@ -1644,6 +1649,7 @@ export class HotHTTPServer extends HotServer
 								key: this.ssl.key,
 								ca: this.ssl.ca
 							}, this.expressApp);
+						this.logger.info (`HTTPS Listening on address: ${this.listenAddress}`);
 						this.httpsListener.listen (this.ports.https, this.listenAddress, completedSetup);
 
 						process.on ('SIGTERM', sigHandler.bind (this, "SIGTERM", "HTTPS", this.httpsListener));
