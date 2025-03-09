@@ -452,7 +452,11 @@ export class Hot
 			statusCode = res.status;
 
 			if (res.ok === false)
-				throw new Error (`${res.status}: ${res.statusText}`);
+			{
+				let errorObj = await res.json ();
+
+				throw new Error (errorObj.error);
+			}
 
 			let result: any = await res.json ();
 
@@ -460,7 +464,7 @@ export class Hot
 		}
 		catch (ex)
 		{
-			return ({ "error": `${ex.message} - Could not fetch ${url}`, "errorCode": statusCode });
+			return ({ "error": ex.message, "errorCode": statusCode });
 		}
 	}
 
