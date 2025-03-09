@@ -429,6 +429,8 @@ export class Hot
 	static async jsonRequest (url: string, data: any = null, bearerToken: string = "", 
 		httpMethod: HotEventMethod = HotEventMethod.POST): Promise<any>
 	{
+		let statusCode: number = 200;
+
 		try
 		{
 			let fetchObj: any = {
@@ -447,6 +449,8 @@ export class Hot
 
 			let res = await fetch (url, fetchObj);
 
+			statusCode = res.status;
+
 			if (res.ok === false)
 				throw new Error (`${res.status}: ${res.statusText}`);
 
@@ -456,7 +460,7 @@ export class Hot
 		}
 		catch (ex)
 		{
-			return (JSON.stringify ({ "error": `${ex.message} - Could not fetch ${url}` }));
+			return ({ "error": `${ex.message} - Could not fetch ${url}`, "errorCode": statusCode });
 		}
 	}
 
