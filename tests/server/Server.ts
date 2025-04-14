@@ -7,11 +7,11 @@ import * as ppath from "path";
 
 import { Common } from "./Common";
 
-import { HotStaq } from "../../src/HotStaq";
+import { HotRouteMethodParameterMap, HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HelloWorldAPI } from "./HelloWorldAPI";
 import { HotIO } from "../../src/HotIO";
-import { HotEventMethod } from "../../src/HotRouteMethod";
+import { HotEventMethod, HotRouteMethodParameter } from "../../src/HotRouteMethod";
 
 describe ("Server Tests", () =>
 	{
@@ -32,6 +32,9 @@ describe ("Server Tests", () =>
 				server = common.server;
 
 				url = common.getUrl ();
+
+				api = new HelloWorldAPI (common.getUrl (), server);
+				await server.setAPI (api);
 			});
 		after (async () =>
 			{
@@ -57,11 +60,58 @@ describe ("Server Tests", () =>
 
 				expect (res.status).to.equal (404);
 			});
+		it ("should ensure OtherInterface returns correct valids", async () =>
+			{
+				const obj: HotRouteMethodParameterMap = await HotStaq.convertInterfaceToRouteParameters ("OtherInterface");
+				await HotStaq.convertInterfaceToRouteParameters ("OtherInterfaceAgain");
+
+				expect ((<HotRouteMethodParameter>obj["anotherString"]).validations.length).to.greaterThanOrEqual (1);
+				expect ((<HotRouteMethodParameter>obj["anotherStringObject"]).validations.length).to.greaterThanOrEqual (2);
+			});
+		it ("should validate the OtherInterface object", async () =>
+			{
+				let result: any = await api.makeCall ("/v1/hello_world/validate_other_interface", 
+					{
+						anotherString: "test",
+						anotherStringObject: "test"
+					});
+
+				expect (result.error).to.equal (undefined, "Error while validating OtherInterface!");
+				expect (result).to.equal (true);
+
+				result = await api.makeCall ("/v1/hello_world/validate_other_interface", 
+					{
+						anotherString: "test",
+						anotherStringObject: {
+							anotherNum: 3
+						}
+					});
+
+				expect (result.error).to.equal (undefined, "Error while validating OtherInterface again!");
+				expect (result).to.equal (true);
+			});
+		it ("should NOT validate the OtherInterface object", async () =>
+			{
+				let result: any = await api.makeCall ("/v1/hello_world/validate_other_interface", 
+					{
+						anotherString: "t",
+						anotherStringObject: "test"
+					});
+
+				expect (result.error).to.equal ("Text parameter 'anotherString' must be at least 2 characters long.");
+
+				result = await api.makeCall ("/v1/hello_world/validate_other_interface", 
+					{
+						anotherString: "test",
+						anotherStringObject: {
+							anotherNum: 11
+						}
+					});
+
+				expect (result.error).to.equal ("The value of number parameter 'anotherNum' must be less than 10.");
+			});
 		it ("should set the HelloWorldAPI then call it without saying hi", async () =>
 			{
-				api = new HelloWorldAPI (common.getUrl (), server);
-				await server.setAPI (api);
-
 				let result: any = await api.makeCall ("/v1/hello_world/hello", {});
 
 				expect (result.error).to.equal ("You didn't say hi.");
@@ -87,7 +137,8 @@ describe ("Server Tests", () =>
 						"indexFileKey": HotIO.readFileStream (filepath)
 					});
 
-				expect (fs.existsSync (jsonRes.path)).to.equal (true, "File was not uploaded properly!");
+				const result = fs.existsSync (jsonRes.path);
+				expect (result).to.equal (true, "File was not uploaded properly!");
 				fs.unlinkSync (jsonRes.path);
 			});
 		it ("should upload a file to HelloWorldAPI with authentication and delete it", async () =>
@@ -112,7 +163,7 @@ describe ("Server Tests", () =>
 							name: "testName"
 						}
 					}, HotEventMethod.FILE_UPLOAD, {
-						"indexFileKey": null
+						"indexFileKey": null // There is no file to upload.
 					}, "kjs1he4w57h:3u4j5n978sd");
 
 				expect (jsonRes.error).to.equal ("No file uploaded!", "File data was not transferred properly!");

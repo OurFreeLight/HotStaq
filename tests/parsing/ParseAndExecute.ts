@@ -4,8 +4,8 @@ import { expect, should } from "chai";
 import * as fs from "fs";
 import * as ppath from "path";
 
-import { HotStaq, HotPage, HotFile, DeveloperMode } from "../../src/api";
-import { HotRouteMethodParameter } from "../../src/HotRouteMethod";
+import { HotStaq, HotPage, HotFile, DeveloperMode, HotRouteMethodParameter } from "../../src/api";
+import { HotRouteMethodParameterMap } from "../../src/HotStaq";
 
 describe ("Parsing Tests", () =>
 	{
@@ -13,12 +13,22 @@ describe ("Parsing Tests", () =>
 
 		it ("should execute HotStaq.convertInterfaceToRouteParameters correctly", async () =>
 			{
-				const obj: any = await HotStaq.convertInterfaceToRouteParameters ("./tests/parsing/TestInterface.ts", "TestInterface");
+				const obj: HotRouteMethodParameterMap = await HotStaq.convertInterfaceToRouteParameters ("TestInterface");
 
-				expect (obj["testString"]).to.not.equal (null);
-				expect (obj["testString"].type).to.equal ("string");
-				expect (obj["testString"].required).to.equal (true);
-				expect (obj["testString"].description.replace (/\s/g, "")).to.equal (`Ateststring.Withanotherlinetoo.`);
+				expect ((<HotRouteMethodParameter>obj["testString"])).to.not.equal (null);
+				expect ((<HotRouteMethodParameter>obj["testString"]).type).to.equal ("string");
+				expect ((<HotRouteMethodParameter>obj["testString"]).required).to.equal (true);
+				expect ((<HotRouteMethodParameter>obj["testString"]).readOnly).to.equal (true);
+				expect ((<HotRouteMethodParameter>obj["testString"]).description.replace (/\s/g, "")).to.equal (`Ateststring.Withanotherlinetoo.`);
+
+				expect ((<HotRouteMethodParameter>obj["baseString"])).to.not.equal (null);
+				expect ((<HotRouteMethodParameter>obj["baseString"]).type).to.equal ("string");
+				expect ((<HotRouteMethodParameter>obj["baseString"]).required).to.equal (false);
+				expect ((<HotRouteMethodParameter>obj["baseString"]).description.replace (/\s/g, "")).to.equal (`Thebasestring.`);
+
+				expect ((<HotRouteMethodParameter>obj["testObject"])).to.not.equal (null);
+				expect ((<HotRouteMethodParameter>obj["testObject"]).type).to.equal ("object");
+				expect ((<HotRouteMethodParameter>obj["testObject"]).parameters).to.any.keys (["testString2"]);
 			});
 		it ("should parse a Hott file correctly", async () =>
 			{

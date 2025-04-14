@@ -25,7 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
-import { HotRouteMethodParameter } from "./HotRouteMethod";
+import { HotRouteMethodParameter, HotValidation } from "./HotRouteMethod";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
@@ -95,24 +95,28 @@ export interface ITypeScriptConversionOptions
 	 * is not a raw data type.
 	 */
 	unknownTypeDefaultsToType?: string;
+	/**
+	 * The path to the TypeScript config file to use when parsing the interface.
+	 * The interfaces must be in the project that the config file points to.
+	 */
+	tsconfigPath?: string;
 }
 
-export interface InterfaceProperty
-{
-	name: string;
-	type: string;
-	isOptional: boolean;
-	readOnly: boolean;
-	isArray: boolean;
-	comments: string[];
-	child: ParsedInterface | null;
-}
+export type HotValidatorFunction = (((strict: boolean, key: string, validation: HotValidation, value: any) => boolean) | 
+	((strict: boolean, key: string, validation: HotValidation, value: any) => Promise<boolean>));
+
+export type HotRouteMethodParameterMap = { [propertyName: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 
 export interface ParsedInterface
 {
-	name: string;
-	comments: string[];
-	properties: InterfaceProperty[];
+	type: string;
+	typeName?: string;
+	description: string;
+	required: boolean;
+	isReadOnly: boolean;
+	isArray: boolean;
+	parameters: { [propName: string]: ParsedInterface };
+	valids?: HotValidation[];
 }
 
 /**
@@ -172,7 +176,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.118";
+	static version: string = "0.8.120";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -205,6 +209,10 @@ export class HotStaq implements IHotStaq
 	 * Errors to execute when something goes wrong.
 	 */
 	static errors: { [name: string]: { redirectToUrl?: string; func?: (errType: string) => void; }; } = {};
+	/**
+	 * The validations to perform on data.
+	 */
+	static valids: { [name: string]: HotValidatorFunction | HotRouteMethodParameterMap; } = {};
 	/**
 	 * Indicates what type of execution this is.
 	 */
@@ -369,6 +377,241 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Do a base validation check.
+	 */
+	static baseValidator (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+	{
+		// notEmptyOrNull check.
+		if (validation.notEmptyOrNull)
+		{
+			if ((value === undefined) || (value === null))
+				throw new Error (`Parameter '${key}' must not be empty or null.`);
+
+			if (typeof (value) === "string")
+			{
+				if (value === "")
+					throw new Error (`Parameter '${key}' must not be empty or null.`);
+			}
+		}
+
+		// Comparison checks.
+		if (validation.comparison)
+		{
+			const comp = validation.comparison;
+
+			if ((comp.greaterThan !== undefined) && !(value > comp.greaterThan))
+				throw new Error (`Parameter '${key}' must be greater than ${comp.greaterThan}.`);
+
+			if ((comp.lessThan !== undefined) && !(value < comp.lessThan))
+				throw new Error (`Parameter '${key}' must be less than ${comp.lessThan}.`);
+
+			if ((comp.eq !== undefined) && (value !== comp.eq))
+				throw new Error (`Parameter '${key}' must equal ${comp.eq}.`);
+
+			if ((comp.not !== undefined) && (value === comp.not))
+				throw new Error (`Parameter '${key}' must not equal ${comp.not}.`);
+		}
+	
+		// Allowed values check.
+		if (validation.values)
+		{
+			if (validation.values.length > 0)
+			{
+				if (!validation.values.includes (value))
+					throw new Error (`Parameter '${key}' must be one of the allowed values.`);
+			}
+		}
+
+		return (true);
+	}
+
+	/**
+	 * Setup the initial validators.
+	 */
+	static setupValidators (): void
+	{
+		HotStaq.valids["Text"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`Parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				// Minimum length check.
+				if (validation.min !== undefined)
+				{
+					if (value.length < validation.min)
+						throw new Error (`Text parameter '${key}' must be at least ${validation.min} characters long.`);
+				}
+
+				// Maximum length check.
+				if (validation.max !== undefined)
+				{
+					if (value.length > validation.max)
+						throw new Error (`Text parameter '${key}' must be at most ${validation.max} characters long.`);
+				}
+
+				// Regex check.
+				if (validation.regex)
+				{
+					const regex = typeof (validation.regex) === "string" ? new RegExp(validation.regex) : validation.regex;
+
+					if (regex.test(value) === false)
+						throw new Error(`Text parameter '${key}' does not match the required regex pattern ${validation.regex}`);
+				}
+
+				return (true);
+			};
+		HotStaq.valids["number"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "number")
+				{
+					if (strict === true)
+						throw new Error (`Parameter '${key}' must be a number.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				// Minimum value check.
+				if (validation.min !== undefined)
+				{
+					if (value < validation.min)
+						throw new Error (`The value of number parameter '${key}' must be greater than ${validation.min}.`);
+				}
+
+				// Maximum value check.
+				if (validation.max !== undefined)
+				{
+					if (value > validation.max)
+						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
+				}
+
+				return (true);
+			};
+		HotStaq.valids["boolean"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "boolean")
+				{
+					if (strict === true)
+						throw new Error (`Boolean parameter '${key}' must be a boolean.`);
+				}
+
+				return (true);
+			};
+		HotStaq.valids["UUID"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`UUID parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+
+				if (uuidRegex.test (value) === false)
+					throw new Error(`UUID parameter '${key}' must be a valid UUID.`);
+
+				return (true);
+			};
+		HotStaq.valids["Email"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`Email parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+				if (emailRegex.test (value) === false)
+					throw new Error(`Email parameter '${key}' must be a valid email.`);
+
+				return (true);
+			};
+		HotStaq.valids["Phone"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`Phone parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+
+				if (phoneRegex.test(value) === false)
+					throw new Error(`Phone parameter '${key}' must be a valid phone number.`);
+
+				return (true);
+			};
+		HotStaq.valids["Date"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if ((! (value instanceof Date)) && (typeof (value) !== "string"))
+				{
+					if (strict === true)
+						throw new Error (`Date parameter '${key}' must be a string or Date.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				if (isNaN (Date.parse(value)))
+					throw new Error(`Date parameter '${key}' must be a valid date.`);
+
+				return (true);
+			};
+		HotStaq.valids["Enum"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`Enum parameter '${key}' must be a string.`);
+				}
+
+				if (validation.values && !validation.values.includes(value))
+					throw new Error(`Enum parameter '${key}' must be one of the allowed enum values: ${validation.values.join(", ")}`);
+
+				return (true);
+			};
+		HotStaq.valids["JS"] = async function (strict: boolean, key: string, validation: HotValidation, value: any): Promise<boolean>
+			{
+				if ((! (value instanceof Function)) && (typeof (value) !== "string"))
+				{
+					if (strict === true)
+						throw new Error (`JS parameter '${key}' must be a string or Function.`);
+				}
+
+				if (validation.func == null)
+					throw new Error(`JS parameter '${key}' must be a valid JS function.`);
+
+				const valid = await validation.func (strict, key, value);
+
+				if ((valid == null) || (valid.success == null) || (valid.failMessage == null))
+					throw new Error(`JS parameter '${key}' must be a valid JS function result in the form: { success: boolean; failMessage: string; }`);
+
+				if (valid.success === false)
+					throw new Error(valid.failMessage);
+
+				return (true);
+			};
+	}
+
+	/**
+	 * Set a validator to be used.
+	 */
+	static setValid (validName: string, validator: HotValidatorFunction | HotRouteMethodParameterMap): void
+	{
+		HotStaq.valids[validName] = validator;
+	}
+
+	/**
 	 * Parse a boolean value.
 	 */
 	static parseBoolean (value: string): boolean
@@ -397,53 +640,124 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
-	 * Convert a TypeScript interface to a route parameter.
-	 * This is experimental, but still works decently.
+	 * Recursively converts a ParsedInterface's parameters into a deep parameters map.
+	 * For an array property, the returned schema will have "type": "array" and an "items" property.
+	 * For object properties with nested parameters, a "properties" key is added.
 	 */
-	static async convertInterfaceToRouteParameters (sourceCodePath: string, interfaceName: string, 
-			options: ITypeScriptConversionOptions = 
-				{ typeConversions: { "Date": "string" }, returnFirstUnionType: true, unknownTypeDefaultsToType: "string" }
-		): Promise<HotRouteMethodParameter>
+	static convertParsedInterfaceToParameters(parsed: ParsedInterface): HotRouteMethodParameterMap
 	{
-		let parameters: { [propertyName: string]: HotRouteMethodParameter; } = {};
+		const result: HotRouteMethodParameterMap = {};
+
+		for (const key in parsed.parameters)
+		{
+			const prop: ParsedInterface = parsed.parameters[key];
+
+			// Build the base mapping for the property.
+			const param: HotRouteMethodParameter = {
+					type: prop.type, // one of your allowed raw types ("string", "number", "object", etc.)
+					required: prop.required,
+					description: prop.description || ""
+				};
+
+			if (prop.isReadOnly)
+				param.readOnly = true;
+
+			if (prop.valids)
+				param.validations = prop.valids;
+
+			// If the property is an array, set type to "array" and compute its items schema.
+			if (prop.isArray)
+			{
+				param.type = "array";
+				// If there are nested parameters (e.g. an inline object as the array element),
+				// recursively process them; otherwise, use the element type.
+				if (prop.parameters && Object.keys(prop.parameters).length > 0)
+				{
+					// Wrap the nested parameters into an object schema.
+					param.items = HotStaq.convertParsedInterfaceToParameters({
+							type: "object",
+							typeName: "",
+							description: "",
+							required: true,
+							isReadOnly: false,
+							isArray: false,
+							parameters: prop.parameters
+						});
+				}
+				else
+				{
+					// If no nested parameters, use the typeName for the element.
+					param.items = { type: prop.typeName || prop.type };
+				}
+			}
+			else
+			{
+				// If not an array and there are nested parameters,
+				// add them under a "properties" key.
+				if (prop.parameters && Object.keys(prop.parameters).length > 0)
+				{
+					param.parameters = HotStaq.convertParsedInterfaceToParameters({
+							type: "object",
+							typeName: "",
+							description: "",
+							required: true,
+							isReadOnly: false,
+							isArray: false,
+							parameters: prop.parameters
+						});
+				}
+			}
+
+			result[key] = param;
+		}
+
+		return result;
+	}
+
+	/**
+	 * Convert a TypeScript interface to a route parameter. This is experimental, but still works decently.
+	 * 
+	 * @param addToValids If this is set to true, the converted interface will be added to the valids list so it can be used to 
+	 * help validate future data.
+	 */
+	static async convertInterfaceToRouteParameters (interfaceName: string, 
+			addToValids: boolean = true,
+			options: ITypeScriptConversionOptions = null
+		): Promise<HotRouteMethodParameterMap>
+	{
+		let parameters: HotRouteMethodParameterMap = {};
 
 		if (HotStaq.isWeb === true)
 			throw new Error (`HotStaq.convertInterfaceToRouteParameters is not supported in the browser.`);
 
-		let HotIO = eval ("require")("./HotIO").HotIO; // Hack to get around Webpack.
-		const sourceCodeContent: string = await HotIO.readTextFile (sourceCodePath);
+		if (options == null)
+		{
+			options = {
+					typeConversions: { "Date": "string" }, 
+					returnFirstUnionType: true,
+					unknownTypeDefaultsToType: "string",
+					tsconfigPath: null
+				};
+		}
 
-		let parseInterface = eval ("require")("./HotConvertInterfaceToRouteParameters").parseInterface;
-		const output: ParsedInterface = parseInterface ("./temp.ts", sourceCodeContent, interfaceName, options);
+		let generateParsedInterface: (
+			interfaceName: string,
+			tsConfigFilePath: string
+		  ) => Promise<ParsedInterface> = eval ("require")("./HotConvertInterfaceToRouteParameters").generateParsedInterface;
+		let tsConfigPath = ppath.join(process.cwd(), "tsconfig.json");
+
+		if (options.tsconfigPath != null)
+			tsConfigPath = options.tsconfigPath;
+
+		const output: ParsedInterface = await generateParsedInterface (interfaceName, tsConfigPath);
 
 		if (output == null)
-			throw new Error (`Interface ${interfaceName} not found in ${sourceCodePath}.`);
+			throw new Error (`Interface ${interfaceName} not found.`);
 
-		for (let i = 0; i < output.properties.length; i++)
-		{
-			let prop: InterfaceProperty = output.properties[i];
-			let description: string = "";
+		parameters = HotStaq.convertParsedInterfaceToParameters (output);
 
-			if (prop.comments.length > 0)
-				description = prop.comments[0];
-
-			parameters[prop.name] = {
-					"type": prop.type,
-					"required": !prop.isOptional,
-					"description": description
-				};
-
-			if (prop.readOnly === true)
-				parameters[prop.name].readOnly = true;
-
-			if (prop.isArray === true)
-			{
-				parameters[prop.name].type = "array";
-				parameters[prop.name].items = {
-						"type": prop.type
-					};
-			}
-		}
+		if (addToValids === true)
+			HotStaq.setValid (interfaceName, parameters);
 
 		return (parameters);
 	}
@@ -2149,6 +2463,8 @@ hotstaq_isDocumentReady ();
 			}));
 	}
 }
+
+HotStaq.setupValidators ();
 
 if (typeof (document) !== "undefined")
 	window.addEventListener ("load", hotStaqWebStart);

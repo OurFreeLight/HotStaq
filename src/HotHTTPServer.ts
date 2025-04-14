@@ -196,7 +196,7 @@ export class HotHTTPServer extends HotServer
 	/**
 	 * The request reporter interval.
 	 */
-	requestReporterInterval: NodeJS.Timer;
+	requestReporterInterval: NodeJS.Timeout;
 	/**
 	 * The number of requests served, this will be incremented each time a request is served, 
 	 * and if it reaches (Number.MAX_SAFE_INTEGER - 1), it will be reset to 0.
@@ -827,7 +827,7 @@ export class HotHTTPServer extends HotServer
 										this.numRequestsServed = 0;
 		
 									const requestNum = this.numRequestsServed++;
-								
+
 									this.activeRequests[requestNum] = performance.now ();
 
 									// workerData.logger, workerData.route, workerData.method, workerData.methodName, workerData.req, workerData.res

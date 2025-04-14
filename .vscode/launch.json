@@ -153,7 +153,7 @@
 			]
 		},
 		{
-			"type": "pwa-node",
+			"type": "node",
 			"request": "launch",
 			"name": "Run Tests",
 			"skipFiles": [
@@ -168,7 +168,7 @@
 			"args": [
 				"--timeout", "600000000", 
 				"--colors", 
-				"./build/tests/generator/**/*.js"
+				"./build/tests/**/*.js"
 			],
 			"cwd": "${workspaceFolder}",
 			"envFile": "${workspaceFolder}/.env"

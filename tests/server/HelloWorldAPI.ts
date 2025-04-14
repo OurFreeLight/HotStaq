@@ -8,11 +8,12 @@ import { HotRoute } from "../../src/HotRoute";
 import { HotClient } from "../../src/HotClient";
 import { HotServer } from "../../src/HotServer";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
-import { HotStaq } from "../../src/HotStaq";
+import { HotRouteMethodParameterMap, HotStaq } from "../../src/HotStaq";
 import { HotTestDriver } from "../../src/HotTestDriver";
-import { HotEventMethod, ServerRequest } from "../../src/HotRouteMethod";
+import { HotEventMethod, HotRouteMethodParameter, HotValidationType, InputValidationType, ServerRequest } from "../../src/HotRouteMethod";
 
 import { HelloWorldSecond } from "./HelloWorldSecond";
+import { OtherInterface } from "../parsing/TestInterface";
 
 export class HelloWorldAPI extends HotAPI
 {
@@ -54,97 +55,116 @@ export class HelloWorldAPI extends HotAPI
 						};
 				}
 
+				this.description = "This is the hello world API.";
+
+				const otherInterface: HotRouteMethodParameterMap = await HotStaq.convertInterfaceToRouteParameters ("OtherInterface");
+
+				let route: HotRoute = new HotRoute (connection, "hello_world");
+				// @ts-ignore
+				route.wsReturnMessage = "Hello!";
+				route.description = "This is the hello world route.";
+				route.addMethod ({
+						name: "hello",
+						description: "Say hello to the server and it will respond.",
+						onServerExecute: this.helloCalled,
+						validateJSONInput: InputValidationType.Strict,
+						parameters: {
+							message: {
+								"description": "The message to send to the server. Can be: hi, hello",
+								"validations": [{ "type": HotValidationType.Enum, "values": ["hi", "hello"] }]
+							},
+							throwError: {
+								"description": "Throw an error on the server side.",
+								"required": false
+							}
+						},
+						"testCases": {},
+						returns: "The server says Hello World!"
+					});
+				route.addMethod ({
+						name: "validate_other_interface",
+						description: "Validate the OtherInterface object.",
+						onServerExecute: this.validateOtherInterface,
+						validateJSONInput: InputValidationType.Strict,
+						parameters: otherInterface,
+						"testCases": {},
+						returns: "True if the object is valid."
+					});
+				route.addMethod ("is_up", async (req: ServerRequest): Promise<any> =>
+					{
+						return (true);
+					}, HotEventMethod.GET);
+				route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
+				route.addMethod ({
+						name: "file_upload_auth",
+						onServerExecute: this.fileUploadAuth, 
+						type: HotEventMethod.FILE_UPLOAD,
+						onServerAuthorize: this.userAuth
+					});
+				route.addMethod ({
+						name: "ws_hello_event",
+						type: HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT,
+						description: "Say hello to the server and it will respond.",
+						onServerExecute: function async (req: ServerRequest)
+						{
+							const message: string = (<string>req.jsonObj.message).toLowerCase ();
+
+							if ((message === "hi") || (message === "hello"))
+								return (this.wsReturnMessage); // In this case, "this" should be the route.
+
+							return ({ error: "You didn't say hi." });
+						},
+						parameters: {
+							message: {
+								type: "string",
+								required: true,
+								description: "The message to send to the server. Can be: hi, hello"
+							}
+						},
+						"testCases": {},
+						returns: "The server says Hello World!"
+					});
+				route.addMethod ({
+						name: "ws_test_response_both",
+						type: HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT,
+						description: "Say hello to the server and it will respond.",
+						onServerExecute: this.testResponse,
+						parameters: {
+							message: "The message to send to the server. It must be: YAY!"
+						},
+						"testCases": {},
+						returns: {
+							type: "string",
+							description: "The server says received."
+						}
+					});
+				route.addMethod ("ws_test_response", this.testResponse, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
+				route.addMethod ("test_response", this.testResponse, HotEventMethod.POST, [
+								"TestAPIResponse",
+								async (driver: HotTestDriver): Promise<any> =>
+								{
+									// @ts-ignore
+									let resp = await this.hello_world.test_response ({
+											message: "YAY!"
+										});
+									driver.assert (resp === "received", "Response was not received!");
+								},
+								"TestAPIResponseAgain",
+								async (driver: HotTestDriver): Promise<any> =>
+								{
+									// @ts-ignore
+									let resp = await this.hello_world.test_response ({
+											message: "YAY!"
+										});
+									driver.assert (resp === "received", "Response was not received!");
+								}
+							]);
+				this.addRoute (route);
+
+				this.addRoute (new HelloWorldSecond (this));
+
 				return (true);
 			};
-
-		this.description = "This is the hello world API.";
-
-		let route: HotRoute = new HotRoute (connection, "hello_world");
-		// @ts-ignore
-		route.wsReturnMessage = "Hello!";
-		route.description = "This is the hello world route.";
-		route.addMethod ({
-				name: "hello",
-				description: "Say hello to the server and it will respond.",
-				onServerExecute: this.helloCalled,
-				parameters: {
-					message: "The message to send to the server. Can be: hi, hello"
-				},
-				"testCases": {},
-				returns: "The server says Hello World!"
-			});
-		route.addMethod ("is_up", async (req: ServerRequest): Promise<any> =>
-			{
-				return (true);
-			}, HotEventMethod.GET);
-		route.addMethod ("file_upload", this.fileUpload, HotEventMethod.FILE_UPLOAD);
-		route.addMethod ({
-				name: "file_upload_auth",
-				onServerExecute: this.fileUploadAuth, 
-				type: HotEventMethod.FILE_UPLOAD,
-				onServerAuthorize: this.userAuth
-			});
-		route.addMethod ({
-				name: "ws_hello_event",
-				type: HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT,
-				description: "Say hello to the server and it will respond.",
-				onServerExecute: function async (req: ServerRequest)
-				{
-					const message: string = (<string>req.jsonObj.message).toLowerCase ();
-
-					if ((message === "hi") || (message === "hello"))
-						return (this.wsReturnMessage); // In this case, "this" should be the route.
-
-					return ({ error: "You didn't say hi." });
-				},
-				parameters: {
-					message: {
-						type: "string",
-						required: true,
-						description: "The message to send to the server. Can be: hi, hello"
-					}
-				},
-				"testCases": {},
-				returns: "The server says Hello World!"
-			});
-		route.addMethod ({
-				name: "ws_test_response_both",
-				type: HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT,
-				description: "Say hello to the server and it will respond.",
-				onServerExecute: this.testResponse,
-				parameters: {
-					message: "The message to send to the server. It must be: YAY!"
-				},
-				"testCases": {},
-				returns: {
-					type: "string",
-					description: "The server says received."
-				}
-			});
-		route.addMethod ("ws_test_response", this.testResponse, HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT);
-		route.addMethod ("test_response", this.testResponse, HotEventMethod.POST, [
-						"TestAPIResponse",
-						async (driver: HotTestDriver): Promise<any> =>
-						{
-							// @ts-ignore
-							let resp = await this.hello_world.test_response ({
-									message: "YAY!"
-								});
-							driver.assert (resp === "received", "Response was not received!");
-						},
-						"TestAPIResponseAgain",
-						async (driver: HotTestDriver): Promise<any> =>
-						{
-							// @ts-ignore
-							let resp = await this.hello_world.test_response ({
-									message: "YAY!"
-								});
-							driver.assert (resp === "received", "Response was not received!");
-						}
-					]);
-		this.addRoute (route);
-
-		this.addRoute (new HelloWorldSecond (this));
 	}
 
 	/**
@@ -190,6 +210,16 @@ export class HelloWorldAPI extends HotAPI
 		}
 
 		return ({ msg: `File ${filename} uploaded to ${filepath}!`, path: filepath });
+	}
+
+	/**
+	 * Validate the OtherInterface object.
+	 */
+	async validateOtherInterface (req: ServerRequest): Promise<boolean>
+	{
+		const otherInterface: OtherInterface = req.jsonObj;
+
+		return (true);
 	}
 
 	/**

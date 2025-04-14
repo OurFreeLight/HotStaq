@@ -542,7 +542,7 @@ export class Hot
 			let jsonRes: any = await res.json ();
 
 			if (data["hotstaq"] == null)
-				data["hotstaq"] = {};
+				data["hotstaq"] = { skipValidation: true };
 
 			if (data["hotstaq"]["uploads"] == null)
 				data["hotstaq"]["uploads"] = {};

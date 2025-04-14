@@ -7,53 +7,41 @@ import { ServerRequest } from "../../src/HotRouteMethod";
  */
 export class HelloWorldSecond extends HotRoute
 {
-    constructor (api: HelloWorldAPI)
-    {
-        super (api.connection, "hello_world_second");
+	constructor (api: HelloWorldAPI)
+	{
+		super (api.connection, "hello_world_second");
 
 		this.addMethod ({
 				name: "hello_again",
 				description: "Securely say hello again to the server with authorization and it will respond.",
-                onServerAuthorize: api.userAuth,
+				onServerAuthorize: api.userAuth,
 				onServerExecute: this.complicatedHello,
 				parameters: {
 					message: {
-						type: "object",
+						type: "string",
 						required: true,
-						description: "The message to send to the server again. Can be: hi, hello",
-                        parameters: {
-                            type: {
-                                type: "string",
-                                required: true,
-                                description: "The type of message to send."
-                            },
-                            value: {
-                                type: "string",
-                                required: true,
-                                description: "The message to send."
-                            }
-                        }
+						description: "The message to send to the server again. Can be: hi, hello"
 					}
 				},
 				returns: {
-                    type: "object",
-                    required: true,
-                    description: "The message to send to the server again. Can be: hi, hello",
-                    parameters: {
-                        type: {
-                            type: "string",
-                            required: true,
-                            description: "The type of message to send."
-                        },
-                        value: {
-                            type: "string",
-                            required: true,
-                            description: "The message to send."
-                        }
-                    }
-                }
+					type: "object",
+					required: true,
+					description: "The message to send to the server again. Can be: hi, hello",
+					parameters: {
+						type: {
+							type: "string",
+							required: true,
+							description: "The type of message to send."
+						},
+						value: {
+							type: "string",
+							required: true,
+							description: "The message to send."
+						}
+					}
+				}
 			});
-    }
+	}
 
 	/**
 	 * This executes a response saying Hello from the server side.
@@ -69,14 +57,14 @@ export class HelloWorldSecond extends HotRoute
 		}
 
 		if ((message === "hi") || (message === "hello"))
-        {
+		{
 			return ({
-                    message: {
-                        type: "string",
-                        value: "Hello!"
-                    }
-                });
-        }
+					message: {
+						type: "string",
+						value: "Hello!"
+					}
+				});
+		}
 
 		return ({ error: "You didn't say hi." });
 	}
