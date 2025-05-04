@@ -1,4 +1,4 @@
-import { HotStaq, HotStartOptions, IHotStaq } from "./HotStaq";
+import { HotStaq, HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
 import { Hot, DeveloperMode } from "./Hot";
 import { HotAsset } from "./HotAsset";
@@ -11,7 +11,7 @@ import { HotPage } from "./HotPage";
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod, ServerRequest, PassType, HotRouteMethodParameter } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest, PassType, HotRouteMethodParameter, HotValidation, HotValidationType } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { HotClient } from "./HotClient";
 
@@ -35,7 +35,7 @@ HotStaq.isWeb = true;
 // Can't export interfaces from here :(
 
 export {
-    HotStaq, HotStartOptions, IHotStaq, 
+    HotStaq, HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction, 
     HotSite, HotSiteRoute, HotSiteMapPath, 
     Hot,
     HotModule,
@@ -51,7 +51,7 @@ export {
     HotRoute,
     HotRouteMethod,
     HotEventMethod,
-    ServerRequest, PassType, HotRouteMethodParameter, 
+    ServerRequest, PassType, HotRouteMethodParameter, HotValidation, HotValidationType, 
     HotServer,
     HotServerType,
     HotClient,

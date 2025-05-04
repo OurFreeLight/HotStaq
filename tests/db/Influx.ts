@@ -34,6 +34,7 @@ describe ("Database - Influx Tests", () =>
 				url = common.getUrl ();
 
 				api = new HelloWorldAPI (common.getUrl (), server);
+				await api.onPreRegister ();
 				api.db = new HotDBInflux ();
 				db = (<HotDBInflux>api.db);
 				await server.setAPI (api);

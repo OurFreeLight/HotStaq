@@ -89,6 +89,11 @@ export class HotBuilder
 	 */
 	hotsites: HotSite[];
 	/**
+	 * Will generate JSON from TypeScript interfaces.
+	 * @default false
+	 */
+	interfaces: boolean;
+	/**
 	 * Will build the web api.
 	 * @default true
 	 */
@@ -118,20 +123,47 @@ export class HotBuilder
 	 */
 	logger: HotLog;
 	/**
+	 * The configuration for interface generation.
+	 */
+	interfaceConfig: {
+		/**
+		 * The list of interfaces to generate. This is used to generate IHotParameter JSON 
+		 * files that can be consumed by TypeScript.
+		 * @default []
+		 */
+		filesToGenerate: string[];
+		/**
+		 * The location of the tsconfig to use for the TypeScript conversion.
+		 * @default ""
+		 */
+		tsconfigPath: string;
+		/**
+		 * The directory to output all generated route parameters to.
+		 * @default "./json/"
+		 */
+		outputDir: string;
+	};
+	/**
 	 * The output directory.
 	 */
 	outputDir: string;
 
 	constructor (logger: HotLog)
 	{
-		this.api = true;
+		this.interfaces = false;
+		this.api = false;
 		this.hotstaqVersion = "";
 		this.dockerNamespace = "ourfreelight";
-		this.dockerFiles = true;
+		this.dockerFiles = false;
 		this.appendReadMe = true;
 		this.helmChart = false;
 		this.hotsites = [];
 		this.logger = logger;
+		this.interfaceConfig = {
+				filesToGenerate: [],
+				tsconfigPath: "",
+				outputDir: "./json/"
+			};
 		this.outputDir = ppath.normalize (`${process.cwd ()}/`);
 	}
 
@@ -580,14 +612,14 @@ return (newModule);
 		if (httpPort != null)
 		{
 			dockerfilePortsStr += `ARG HTTP_PORT=${httpPort}
-	ENV HTTP_PORT \${HTTP_PORT}
+	ENV HTTP_PORT=\${HTTP_PORT}
 	EXPOSE \${HTTP_PORT}`;
 		}
 
 		if (httpsPort != null)
 		{
 			dockerfilePortsStr += `ARG HTTPS_PORT=${httpsPort}
-	ENV HTTPS_PORT \${HTTPS_PORT}
+	ENV HTTPS_PORT=\${HTTPS_PORT}
 	EXPOSE \${HTTPS_PORT}`;
 		}
 
@@ -595,7 +627,7 @@ return (newModule);
 		{
 			httpPort = 5000;
 			dockerfilePortsStr += `ARG HTTP_PORT=5000
-	ENV HTTP_PORT \${HTTP_PORT}
+	ENV HTTP_PORT=\${HTTP_PORT}
 	EXPOSE \${HTTP_PORT}`;
 		}
 
@@ -752,14 +784,67 @@ return (newModule);
 
 		this.logger.info (`Generating using HotStaq version: ${this.hotstaqVersion}`);
 
-		if (this.api === true)
+		if (this.interfaces === true)
 		{
-			this.logger.info ("Building web API...");
+			if (this.interfaceConfig.tsconfigPath === "")
+				this.interfaceConfig.tsconfigPath = ppath.normalize (`${process.cwd ()}/tsconfig.json`);
 
-			/// @todo Finish this...
+			if (this.interfaceConfig.outputDir === "")
+				throw new Error (`The output directory for the interface generation is not set!`);
 
-			this.logger.info ("Finished building web API...");
+			this.logger.info (`Generating IHotParameter objects to: ${this.interfaceConfig.outputDir}`);
+			this.logger.info (`Using tsconfig: ${this.interfaceConfig.tsconfigPath}`);
+
+			if (await HotIO.exists (this.interfaceConfig.outputDir) === false)
+				await HotIO.mkdir (this.interfaceConfig.outputDir);
+
+			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
+			{
+				const hotsite: HotSite = this.hotsites[iIdx];
+
+				if (hotsite.server != null)
+				{
+					if (hotsite.server.interfaces != null)
+					{
+						if (hotsite.server.interfaces.generate != null)
+						{
+							this.logger.info (`Collecting list of interfaces from HotSite ${hotsite.name}...`);
+
+							for (let iJdx = 0; iJdx < hotsite.server.interfaces.generate.length; iJdx++)
+							{
+								const interfaceGen: string = hotsite.server.interfaces.generate[iJdx];
+
+								this.interfaceConfig.filesToGenerate.push (interfaceGen);
+							}
+						}
+					}
+				}
+			}
+
+			if (this.interfaceConfig.filesToGenerate.length === 0)
+			{
+				this.logger.info (`No files to generate!`);
+				return;
+			}
+
+			for (let iIdx = 0; iIdx < this.interfaceConfig.filesToGenerate.length; iIdx++)
+			{
+				const interfaceGen: string = this.interfaceConfig.filesToGenerate[iIdx];
+
+				this.logger.info (`Generating IHotParameter objects for ${interfaceGen}...`);
+
+				const params = await HotStaq.convertInterfaceToRouteParameters (interfaceGen, false, { "tsconfigPath": this.interfaceConfig.tsconfigPath });
+				const finalPath = ppath.normalize (`${this.interfaceConfig.outputDir}/${interfaceGen}.json`);
+
+				await HotIO.writeTextFile (finalPath, JSON.stringify (params, null, 2));
+				this.logger.info (`Wrote to: ${finalPath}`);
+			}
+
+			this.logger.info (`Finished generating objects!`);
 		}
+
+		if (this.api === true)
+			throw new Error ("This is not implemented yet...");
 
 		if (this.dockerFiles === true)
 		{
@@ -776,6 +861,7 @@ return (newModule);
 				let replaceKeys = await this.prepareHotsiteBuild (hotsite, "docker");
 
 				this.logger.info (`Building Dockerfile "${hotsite.name}"...`);
+				this.logger.info (`Output Directory: ${dockerDir}`);
 
 				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.hardened.linux.gen`), `${this.outputDir}/docker/${hotsite.name}/prod.dockerfile`);
 				await HotIO.copyFile (ppath.normalize (`${dockerDir}/Dockerfile.linux.gen`), `${this.outputDir}/docker/${hotsite.name}/dev.dockerfile`);
@@ -820,6 +906,7 @@ return (newModule);
 			this.logger.info ("Building helm chart files (THIS IS EXPERIMENTAL AND UNTESTED)...");
 
 			const helmDir: string = ppath.normalize (`${__dirname}/../../builder/helm-chart`);
+			this.logger.info (`Output Directory: ${helmDir}`);
 
 			for (let iIdx = 0; iIdx < this.hotsites.length; iIdx++)
 			{
@@ -832,6 +919,7 @@ return (newModule);
 				this.logger.info (`Building Helm Chart "${hotsite.name}"...`);
 
 				await HotIO.copyFiles (`${helmDir}/`, `${this.outputDir}/helm/`);
+				this.logger.info (`Helm Chart ${hotsite.name} Output Directory: ${this.outputDir}/helm/`);
 
 				await this.replaceKeysInFile (`${this.outputDir}/helm/values.yaml`, replaceKeys);
 				await this.replaceKeysInFile (`${this.outputDir}/helm/Chart.yaml`, replaceKeys);

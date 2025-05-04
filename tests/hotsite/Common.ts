@@ -129,6 +129,7 @@ export class Common
 		this.server.serveFileExtensions = serveFileExtensions;
 		this.server.hottFilesAssociatedInfo.jsSrcPath = "/build-web/HotStaq.js";
 		let api: HelloWorldAPI = new HelloWorldAPI (this.getUrl (), this.server);
+		await api.onPreRegister ();
 		await this.server.setAPI (api);
 
 		if (this.processor.mode === DeveloperMode.Development)

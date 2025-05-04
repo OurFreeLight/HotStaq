@@ -32,6 +32,7 @@ describe ("Database - Postgres Tests", () =>
 				url = common.getUrl ();
 
 				api = new HelloWorldAPI (common.getUrl (), server);
+				await api.onPreRegister ();
 				api.db = new HotDBPostgres ();
 				await server.setAPI (api);
 			});

@@ -70,6 +70,7 @@ function extractValidFromRaw(node: Node, rawType: string): HotValidation[]
 				try
 				{
 					const validStr = match[1].trim();
+          const isArray = validStr.endsWith ("[]");
 					let parsed: HotValidation = {} as any;
 
 					if (validStr.startsWith("JS:"))
@@ -81,7 +82,10 @@ function extractValidFromRaw(node: Node, rawType: string): HotValidation[]
 						};
 					} else if (!validStr.startsWith("{")) {
 						parsed = { type: validStr as HotValidationType };
-					} else {
+					} else if (isArray === true) {
+            const parsedTypeStr = validStr.substring(0, validStr.indexOf ("[]"));
+            parsed = { type: HotValidationType.Array, associatedValid: { type: parsedTypeStr as HotValidationType } };
+          } else {
 						parsed = JSON.parse(validStr);
 					}
 

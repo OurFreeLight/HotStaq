@@ -35,6 +35,7 @@ describe ("Hotsite Tests", () =>
 				await common.load ();
 
 				let api: HelloWorldAPI = new HelloWorldAPI (common.getUrl (server), server);
+				await api.onPreRegister ();
 				await server.setAPI (api);
 				await server.listen ();
 
@@ -51,6 +52,7 @@ describe ("Hotsite Tests", () =>
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl (server)}", client);
+				await helloWorldAPI.onPreRegister ();
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl ({
@@ -134,6 +136,7 @@ describe ("Hotsite Tests", () =>
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl (server)}", client);
+				await helloWorldAPI.onPreRegister ();
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl ({

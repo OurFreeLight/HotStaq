@@ -58,6 +58,7 @@ describe ("Hotsite Testing Multi Tests - Mocha/Selenium", () =>
 				await processor.processHotSite (tester);
 
 				let api: HelloWorldAPI = new HelloWorldAPI (common.getUrl (server), server);
+				await api.onPreRegister ();
 				await server.setAPI (api);
 				await server.listen ();
 			});

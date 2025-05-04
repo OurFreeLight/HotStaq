@@ -199,7 +199,9 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 					"@types/node-fetch": "^2.6.1",
 					"@types/selenium-webdriver": "^4.1.5",
 					"@types/uuid": "^8.3.4",
-					"@types/mime-types": "^2.1.1"
+					"@types/mime-types": "^2.1.1",
+					"@types/pg": "^8.11.10",
+					"@types/pg-pool": "^2.0.6"
 				}
 			};
 

@@ -270,8 +270,13 @@ export enum HotValidationType
 	Text = "Text",
 	Email = "Email",
 	Phone = "Phone",
+	IPv4 = "IPv4",
+	IPv6 = "IPv6",
 	Date = "Date",
 	Enum = "Enum",
+	Array = "Array",
+	Ignore = "Ignore",
+	Delete = "Delete",
 	JS = "JS"
 }
 
@@ -285,6 +290,12 @@ export interface HotValidation
 	 * @default Text
 	 */
 	type?: HotValidationType;
+	/**
+	 * The associated validation for this current validation. This is mostly to be used for the Array type 
+	 * when trying to validate each item of an array.
+	 * @default Text
+	 */
+	associatedValid?: HotValidation;
 	/**
 	 * The possible values to check against. Works best using the enum type.
 	 */
@@ -316,11 +327,11 @@ export interface HotValidation
 		/**
 		 * The value to check if greater than.
 		 */
-		greaterThan?: number;
+		greaterThan?: any;
 		/**
 		 * The value to check if less than.
 		 */
-		lessThan?: number;
+		lessThan?: any;
 		/**
 		 * The value to check equal to.
 		 */

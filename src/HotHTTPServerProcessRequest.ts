@@ -34,32 +34,82 @@ async function resolveParameters(
 }
 
 // Recursive helper that validates a single value through its entire validation chain.
-async function validateRecursively(strictInput: boolean, 
-		key: string,
-		value: any,
-		validation?: HotValidation
-	): Promise<any>
+async function validateRecursively(strictInput: boolean, key: string, value: any, 
+	request: ServerRequest, validation?: HotValidation): Promise<{ deleteValue: boolean; value: any; }>
 {
+	if (HotStaq.preValidate != null)
+	{
+		const preValidation = await HotStaq.preValidate (strictInput, key, validation, value, request);
+
+		if (preValidation != null)
+		{
+			if (preValidation.deleteValue === true)
+				return { deleteValue: true, value: null };
+
+			if (preValidation.returnValue === true)
+				return { deleteValue: false, value: value };
+
+			if (preValidation.changeValidationType != null)
+				validation.type = preValidation.changeValidationType;
+		}
+	}
+
 	if (!validation)
-		return value;
+		return { deleteValue: false, value: value };
 
 	const validType = validation.type;
+
+	if (validType === HotValidationType.Ignore)
+		return { deleteValue: false, value: value };
+
+	if (validType === HotValidationType.Delete)
+		return { deleteValue: true, value: null };
+
 	const valid = HotStaq.valids[validType];
 
 	if (valid == null)
 		throw new Error(`Validation '${validType}' not found.`);
 
 	if (typeof (valid) === "function")
-		await valid (strictInput, key, validation, value);
-	else
-		await processInput (strictInput, valid, value);
+		await valid (strictInput, key, validation, value, request);
+	else if (validType === HotValidationType.Array)
+	{
+		if (Array.isArray (value) === false)
+			throw new Error(`Parameter '${key}' must be an array.`);
 
-	return validateRecursively(strictInput, key, value, validation.next);
+		if (validation.associatedValid == null)
+			throw new Error(`Parameter '${key}' must have an associated type that describes each item.`);
+
+		for (let iIdx = 0; iIdx < value.length; iIdx++)
+		{
+			const item = value[iIdx];
+
+			await validateRecursively (strictInput, key, item, request, validation.associatedValid);
+		}
+	}
+	else
+		await processInput (strictInput, valid, value, request);
+
+	if (HotStaq.postValidate != null)
+	{
+		const preValidation = await HotStaq.postValidate (strictInput, key, validation, value, request);
+
+		if (preValidation != null)
+		{
+			if (preValidation.deleteValue === true)
+				return { deleteValue: true, value: null };
+
+			if (preValidation.returnValue === true)
+				return { deleteValue: false, value: value };
+		}
+	}
+
+	return validateRecursively(strictInput, key, value, request, validation.next);
 }
   
 // Main function that validates an input object against a parameters map,
 // including nested properties defined via the `parameters` property.
-export async function processInput (strictInput: boolean, params: HotRouteMethodParameterMap, input: any): Promise<any>
+export async function processInput (strictInput: boolean, params: HotRouteMethodParameterMap, input: any, request: ServerRequest): Promise<any>
 {
 	const validatedInput: any = input;
 
@@ -93,6 +143,7 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 		if (key in input)
 		{
 			let value = input[key];
+			let deleteValue: boolean = false;
 
 			// Validate the value using its validation chain, if provided.
 			if (paramDef.validations)
@@ -105,7 +156,11 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 
 					try
 					{
-						value = await validateRecursively(strictInput, key, value, validation);
+						let validValue = await validateRecursively(strictInput, key, value, request, validation);
+
+						deleteValue = validValue.deleteValue;
+						value = validValue.value;
+
 						errMsg = null;
 
 						break;
@@ -120,13 +175,19 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 					throw errMsg;
 			}
 
+			if (deleteValue === true)
+			{
+				delete validatedInput[key];
+				continue;
+			}
+
 			// If nested parameters exist, ensure the value is an object and validate recursively.
 			if (paramDef.parameters) {
 				if (typeof value !== "object" || value === null) {
 					throw new Error(`Parameter '${key}' must be an object.`);
 				}
 				let resolvedParams = await resolveParameters(paramDef.parameters);
-				value = await processInput(strictInput, resolvedParams, value);
+				value = await processInput(strictInput, resolvedParams, value, request);
 			}
 
 			validatedInput[key] = value;
@@ -211,7 +272,10 @@ export async function processRequest (server: HotHTTPServer,
 					});
 
 				if (req.headers.authorization != null)
+				{
 					request.bearerToken = req.headers.authorization;
+					request.bearerToken = request.bearerToken.substring (7);
+				}
 
 				authorizationValue = await route.onAuthorizeUser (request);
 			}
@@ -284,6 +348,16 @@ export async function processRequest (server: HotHTTPServer,
 			});
 		}
 
+		let request = new ServerRequest ({
+				req: req,
+				res: res,
+				bearerToken: "",
+				authorizedValue: authorizationValue,
+				jsonObj: jsonObj,
+				queryObj: queryObj,
+				files: null
+			});
+
 		// The validations have to occur after any possible file uploads.
 		if (queryObj != null)
 		{
@@ -306,10 +380,10 @@ export async function processRequest (server: HotHTTPServer,
 							else
 							{
 								if (method.validateQueryInput === InputValidationType.Strict)
-									queryObj = await processInput (true, method.parameters, queryObj);
+									queryObj = await processInput (true, method.parameters, queryObj, request);
 
 								if (method.validateQueryInput === InputValidationType.Loose)
-									queryObj = await processInput (false, method.parameters, queryObj);
+									queryObj = await processInput (false, method.parameters, queryObj, request);
 							}
 						}
 						catch (ex)
@@ -349,10 +423,10 @@ export async function processRequest (server: HotHTTPServer,
 						else
 						{
 							if (method.validateJSONInput === InputValidationType.Strict)
-								jsonObj = await processInput (true, method.parameters, jsonObj);
+								jsonObj = await processInput (true, method.parameters, jsonObj, request);
 
 							if (method.validateJSONInput === InputValidationType.Loose)
-								jsonObj = await processInput (false, method.parameters, jsonObj);
+								jsonObj = await processInput (false, method.parameters, jsonObj, request);
 						}
 					}
 					catch (ex)
@@ -401,15 +475,10 @@ export async function processRequest (server: HotHTTPServer,
 					files = server.uploads[foundUploadId];
 				}
 
-				let request = new ServerRequest ({
-						req: req,
-						res: res,
-						bearerToken: "",
-						authorizedValue: authorizationValue,
-						jsonObj: jsonObj,
-						queryObj: queryObj,
-						files: files
-					});
+				request.authorizedValue = authorizationValue;
+				request.jsonObj = jsonObj;
+				request.queryObj = queryObj;
+				request.files = files;
 
 				if (req.headers.authorization != null)
 				{

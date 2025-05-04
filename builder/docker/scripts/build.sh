@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 if [ ! -f "./.env" ]; then
     echo "Missing .env file! Did you copy env-skeleton to .env?"
 

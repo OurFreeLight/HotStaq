@@ -25,7 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
-import { HotRouteMethodParameter, HotValidation } from "./HotRouteMethod";
+import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
@@ -102,8 +102,8 @@ export interface ITypeScriptConversionOptions
 	tsconfigPath?: string;
 }
 
-export type HotValidatorFunction = (((strict: boolean, key: string, validation: HotValidation, value: any) => boolean) | 
-	((strict: boolean, key: string, validation: HotValidation, value: any) => Promise<boolean>));
+export type HotValidatorFunction = (((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => boolean) | 
+	((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<boolean>));
 
 export type HotRouteMethodParameterMap = { [propertyName: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 
@@ -210,9 +210,21 @@ export class HotStaq implements IHotStaq
 	 */
 	static errors: { [name: string]: { redirectToUrl?: string; func?: (errType: string) => void; }; } = {};
 	/**
+	 * The function to execute before validating any input. This is good for ensuring certain 
+	 * users such as admins are allowed to skip validations when necessary.
+	 */
+	static preValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => 
+		Promise<{ deleteValue: boolean; returnValue: boolean; changeValidationType: HotValidationType; value: any; }>) = null;
+	/**
 	 * The validations to perform on data.
 	 */
 	static valids: { [name: string]: HotValidatorFunction | HotRouteMethodParameterMap; } = {};
+	/**
+	 * The function to execute after validating any input. This will not execute if a validation 
+	 * has failed.
+	 */
+	static postValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => 
+		Promise<{ deleteValue: boolean; returnValue: boolean; value: any; }>) = null;
 	/**
 	 * Indicates what type of execution this is.
 	 */
@@ -548,7 +560,43 @@ export class HotStaq implements IHotStaq
 				const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
 				if (phoneRegex.test(value) === false)
-					throw new Error(`Phone parameter '${key}' must be a valid phone number.`);
+					throw new Error(`Phone parameter '${key}' must be a valid phone number using regex /^\\+?[1-9]\\d{1,14}$/.`);
+
+				return (true);
+			};
+		HotStaq.valids["IPv4"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`Phone parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				// Test if value is a valid IPv4 string
+				const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+				if (ipRegex.test(value) === false)
+					throw new Error(`IPv4 parameter '${key}' must be a valid IPv4 address.`);
+
+				return (true);
+			};
+		HotStaq.valids["IPv6"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`Phone parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				// Test if value is a valid IPv6 string
+				const ipRegex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,7}:/;
+
+				if (ipRegex.test(value) === false)
+					throw new Error(`IPv4 parameter '${key}' must be a valid IPv4 address.`);
 
 				return (true);
 			};
@@ -2467,4 +2515,8 @@ hotstaq_isDocumentReady ();
 HotStaq.setupValidators ();
 
 if (typeof (document) !== "undefined")
+{
+	// @ts-ignore
+	window.HotAPI = HotAPI;
 	window.addEventListener ("load", hotStaqWebStart);
+}
