@@ -1,6 +1,7 @@
 import { HotCLI } from "./HotCLI";
 
-import { HotStaq, HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction } from "./HotStaq";
+import { HotStaq, HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, 
+	HotValidatorFunction, HotValidReturnType, IHotValidReturn } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
 import { Hot, DeveloperMode } from "./Hot";
 import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent";
@@ -65,7 +66,7 @@ export {
 		HotCLI,
 		HotStaq, 
 		HotStartOptions, 
-		IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction,
+		IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction, HotValidReturnType, IHotValidReturn, 
 		HotSite,
 		HotSiteRoute,
 		HotSiteMapPath,

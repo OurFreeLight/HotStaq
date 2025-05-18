@@ -231,7 +231,7 @@ export class HelloWorldAPI extends HotAPI
 	 */
 	async fileUploadAuth (req: ServerRequest): Promise<any>
 	{
-		const uploadDetails = HotStaq.getParam ("uploadDetails", req.jsonObj);
+		const uploadDetails = HotStaq.getParamUnsafe ("uploadDetails", req.jsonObj);
 
 		if (uploadDetails.name !== "testName")
 			throw new Error ("Incorrect upload name!");

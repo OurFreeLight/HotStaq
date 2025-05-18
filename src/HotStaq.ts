@@ -6,7 +6,7 @@ import validateModuleName from "validate-npm-package-name";
 import { HotPage } from "./HotPage";
 import { HotFile } from "./HotFile";
 
-import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent";
+import { HotComponent, IHotComponent } from "./HotComponent";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
@@ -17,7 +17,6 @@ import { HotClient } from "./HotClient";
 
 import { HotTester } from "./HotTester";
 import { HotTesterAPI } from "./HotTesterAPI";
-import { HotTestDriver } from "./HotTestDriver";
 import { HotTestMap } from "./HotTestMap";
 import { HotTestDestination} from "./HotTestDestination";
 
@@ -26,6 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
 import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
+import { validateRecursively } from "./HotProcessInput";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
@@ -102,10 +102,43 @@ export interface ITypeScriptConversionOptions
 	tsconfigPath?: string;
 }
 
-export type HotValidatorFunction = (((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => boolean) | 
-	((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<boolean>));
+export type HotValidatorFunction = (((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => IHotValidReturn) | 
+	((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>));
 
 export type HotRouteMethodParameterMap = { [propertyName: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
+
+export enum HotValidReturnType
+{
+	/**
+	 * Indicates that the value should be deleted.
+	 */
+	Delete,
+	/**
+	 * Indicates that the value should be kept. This is the default value.
+	 */
+	Return,
+	/**
+	 * Indicates that the value should be ignored.
+	 */
+	Ignore
+}
+
+export interface IHotValidReturn
+{
+	/**
+	 * How this return should be handled.
+	 */
+	type?: HotValidReturnType;
+	/**
+	 * If set to any value, this will change the return type of the validation.
+	 */
+	validationType?: HotValidationType;
+	/**
+	 * The value to be returned. This will only be used if the type is set to 
+	 * Return or Ignore.
+	 */
+	value?: any;
+}
 
 export interface ParsedInterface
 {
@@ -213,8 +246,7 @@ export class HotStaq implements IHotStaq
 	 * The function to execute before validating any input. This is good for ensuring certain 
 	 * users such as admins are allowed to skip validations when necessary.
 	 */
-	static preValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => 
-		Promise<{ deleteValue: boolean; returnValue: boolean; changeValidationType: HotValidationType; value: any; }>) = null;
+	static preValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>) = null;
 	/**
 	 * The validations to perform on data.
 	 */
@@ -223,8 +255,7 @@ export class HotStaq implements IHotStaq
 	 * The function to execute after validating any input. This will not execute if a validation 
 	 * has failed.
 	 */
-	static postValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => 
-		Promise<{ deleteValue: boolean; returnValue: boolean; value: any; }>) = null;
+	static postValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>) = null;
 	/**
 	 * Indicates what type of execution this is.
 	 */
@@ -442,7 +473,27 @@ export class HotStaq implements IHotStaq
 	 */
 	static setupValidators (): void
 	{
-		HotStaq.valids["Text"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["undefined"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+			{
+				if (value !== undefined)
+				{
+					if (strict === true)
+						throw new Error (`Parameter '${key}' must be undefined.`);
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["null"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+			{
+				if (value !== null)
+				{
+					if (strict === true)
+						throw new Error (`Parameter '${key}' must be null.`);
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["Text"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
@@ -475,9 +526,9 @@ export class HotStaq implements IHotStaq
 						throw new Error(`Text parameter '${key}' does not match the required regex pattern ${validation.regex}`);
 				}
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["number"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["number"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "number")
 				{
@@ -501,9 +552,72 @@ export class HotStaq implements IHotStaq
 						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
 				}
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["boolean"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["Number"] = HotStaq.valids["number"];
+		HotStaq.valids["Integer"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+			{
+				if (typeof (value) !== "number")
+				{
+					if (strict === true)
+						throw new Error (`Parameter '${key}' must be a number.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				const testNum = parseInt (value);
+
+				if (isNaN (testNum) === true)
+					throw new Error (`The value of number parameter '${key}' must be an integer.`);
+
+				// Minimum value check.
+				if (validation.min !== undefined)
+				{
+					if (value < validation.min)
+						throw new Error (`The value of number parameter '${key}' must be greater than ${validation.min}.`);
+				}
+
+				// Maximum value check.
+				if (validation.max !== undefined)
+				{
+					if (value > validation.max)
+						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["Float"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+			{
+				if (typeof (value) !== "number")
+				{
+					if (strict === true)
+						throw new Error (`Parameter '${key}' must be a number.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				const testNum = parseFloat (value);
+
+				if (isNaN (testNum) === true)
+					throw new Error (`The value of number parameter '${key}' must be an float.`);
+
+				// Minimum value check.
+				if (validation.min !== undefined)
+				{
+					if (value < validation.min)
+						throw new Error (`The value of number parameter '${key}' must be greater than ${validation.min}.`);
+				}
+
+				// Maximum value check.
+				if (validation.max !== undefined)
+				{
+					if (value > validation.max)
+						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["boolean"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "boolean")
 				{
@@ -511,9 +625,10 @@ export class HotStaq implements IHotStaq
 						throw new Error (`Boolean parameter '${key}' must be a boolean.`);
 				}
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["UUID"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["Boolean"] = HotStaq.valids["boolean"];
+		HotStaq.valids["UUID"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
@@ -528,9 +643,26 @@ export class HotStaq implements IHotStaq
 				if (uuidRegex.test (value) === false)
 					throw new Error(`UUID parameter '${key}' must be a valid UUID.`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["Email"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["URL"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+			{
+				if (typeof (value) !== "string")
+				{
+					if (strict === true)
+						throw new Error (`URL parameter '${key}' must be a string.`);
+				}
+
+				HotStaq.baseValidator (strict, key, validation, value);
+
+				const regex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/;
+
+				if (regex.test (value) === false)
+					throw new Error(`URL parameter '${key}' must be a valid http or https url.`);
+
+				return ({ value: value });
+			};
+		HotStaq.valids["Email"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
@@ -545,9 +677,9 @@ export class HotStaq implements IHotStaq
 				if (emailRegex.test (value) === false)
 					throw new Error(`Email parameter '${key}' must be a valid email.`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["Phone"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["Phone"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
@@ -562,9 +694,9 @@ export class HotStaq implements IHotStaq
 				if (phoneRegex.test(value) === false)
 					throw new Error(`Phone parameter '${key}' must be a valid phone number using regex /^\\+?[1-9]\\d{1,14}$/.`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["IPv4"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["IPv4"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
@@ -580,9 +712,9 @@ export class HotStaq implements IHotStaq
 				if (ipRegex.test(value) === false)
 					throw new Error(`IPv4 parameter '${key}' must be a valid IPv4 address.`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["IPv6"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["IPv6"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
@@ -598,9 +730,9 @@ export class HotStaq implements IHotStaq
 				if (ipRegex.test(value) === false)
 					throw new Error(`IPv4 parameter '${key}' must be a valid IPv4 address.`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["Date"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["Date"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if ((! (value instanceof Date)) && (typeof (value) !== "string"))
 				{
@@ -613,22 +745,86 @@ export class HotStaq implements IHotStaq
 				if (isNaN (Date.parse(value)))
 					throw new Error(`Date parameter '${key}' must be a valid date.`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["Enum"] = function (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+		HotStaq.valids["Object"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
-				if (typeof (value) !== "string")
+				if (typeof (value) !== "object")
 				{
 					if (strict === true)
-						throw new Error (`Enum parameter '${key}' must be a string.`);
+						throw new Error (`Object parameter '${key}' must be an object.`);
+				}
+
+				if (validation.properties)
+				{
+					for (let propKey in validation.properties)
+					{
+						const propValid = validation.properties[propKey];
+
+						const valueUnsafe = HotStaq.getParamUnsafe (propKey, value, true, true);
+						const validResult = await validateRecursively (strict, propKey, valueUnsafe, request, propValid);
+					}
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["Array"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+			{
+				if ((value instanceof Array) === false)
+				{
+					if (strict === true)
+						throw new Error (`Array parameter '${key}' must be a string.`);
+				}
+
+				if (Array.isArray (value) === false)
+					throw new Error(`Parameter '${key}' must be an array.`);
+		
+				if (validation.associatedValid == null)
+					throw new Error(`Parameter '${key}' must have an associated type that describes each item.`);
+		
+				for (let iIdx = 0; iIdx < value.length; iIdx++)
+				{
+					const item = value[iIdx];
+		
+					await validateRecursively (strict, key, item, request, validation.associatedValid);
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["Map"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+			{
+				if (typeof (value) !== "object")
+				{
+					if (strict === true)
+						throw new Error (`Map parameter '${key}' must be an object or map.`);
+				}
+		
+				if (validation.associatedValid == null)
+					throw new Error(`Parameter '${key}' must have an associated type that describes each map property.`);
+		
+				for (let key2 in value)
+				{
+					const item = value[key2];
+		
+					await validateRecursively (strict, key2, item, request, validation.associatedValid);
+				}
+
+				return ({ value: value });
+			};
+		HotStaq.valids["Enum"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+			{
+				if (! ((typeof (value) === "string") || (typeof (value) === "number")))
+				{
+					if (strict === true)
+						throw new Error (`Enum parameter '${key}' must be a string or number.`);
 				}
 
 				if (validation.values && !validation.values.includes(value))
 					throw new Error(`Enum parameter '${key}' must be one of the allowed enum values: ${validation.values.join(", ")}`);
 
-				return (true);
+				return ({ value: value });
 			};
-		HotStaq.valids["JS"] = async function (strict: boolean, key: string, validation: HotValidation, value: any): Promise<boolean>
+		HotStaq.valids["JS"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
 				if ((! (value instanceof Function)) && (typeof (value) !== "string"))
 				{
@@ -641,13 +837,7 @@ export class HotStaq implements IHotStaq
 
 				const valid = await validation.func (strict, key, value);
 
-				if ((valid == null) || (valid.success == null) || (valid.failMessage == null))
-					throw new Error(`JS parameter '${key}' must be a valid JS function result in the form: { success: boolean; failMessage: string; }`);
-
-				if (valid.success === false)
-					throw new Error(valid.failMessage);
-
-				return (true);
+				return (valid);
 			};
 	}
 
@@ -813,7 +1003,83 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Check if a required parameter exists inside an object. If it exists, return the value.
 	 */
-	static getParam (name: string, objWithParam: any, required: boolean = true, throwException: boolean = true): any
+	static async getParam (validate: HotValidationType | HotValidation, name: string, objWithParam: any, request: ServerRequest, required: boolean = true, 
+		throwException: boolean = true, strict: boolean = false): Promise<any>
+	{
+		if (typeof (validate) === "string")
+		{
+			validate = {
+					type: validate
+				} as HotValidation;
+		}
+
+		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+
+		return (result.value);
+	}
+
+	/**
+	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
+	 * number returned is within a certain range.
+	 * 
+	 * The value retrieved must be a number.
+	 */
+	static async getParamRange (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
+		min: number, max: number, request: ServerRequest, required: boolean = true, 
+		throwException: boolean = true, strict: boolean = false): Promise<any>
+	{
+		if (typeof (validate) === "string")
+		{
+			validate = {
+					type: validate
+				} as HotValidation;
+		}
+
+		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+
+		return (result.value);
+	}
+
+	static async getParamDefault (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
+		defaultValue: any, request: ServerRequest, strict: boolean = false): Promise<any>
+	{
+		if (typeof (validate) === "string")
+		{
+			validate = {
+					type: validate
+				} as HotValidation;
+		}
+
+		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+
+		return (result.value);
+	}
+
+	/**
+	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
+	 * number returned is within a certain range. If it does not exist, return a default value instead.
+	 * 
+	 * The value retrieved must be a number.
+	 */
+	static async getParamDefaultRange (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
+		defaultValue: any, min: number, max: number, request: ServerRequest, strict: boolean = false): Promise<any>
+	{
+		if (typeof (validate) === "string")
+		{
+			validate = {
+					type: validate
+				} as HotValidation;
+		}
+
+		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+
+		return (result.value);
+	}
+
+	/**
+	 * Check if a required parameter exists inside an object. If it exists, return the value.
+	 */
+	static getParamUnsafe (name: string, objWithParam: any, required: boolean = true, throwException: boolean = true): any
 	{
 		let value: any = objWithParam[name];
 
@@ -847,9 +1113,9 @@ export class HotStaq implements IHotStaq
 	 * 
 	 * The value retrieved must be a number.
 	 */
-	static getParamRange (name: string, objWithParam: any, min: number, max: number, required: boolean = true, throwException: boolean = true): any
+	static getParamRangeUnsafe (name: string, objWithParam: any, min: number, max: number, required: boolean = true, throwException: boolean = true): any
 	{
-		const value = HotStaq.getParam (name, objWithParam, required, throwException);
+		const value = HotStaq.getParamUnsafe (name, objWithParam, required, throwException);
 
 		if (value < min)
 			throw new Error (`Parameter ${name} must be greater than or equal to ${min}.`);
@@ -864,7 +1130,7 @@ export class HotStaq implements IHotStaq
 	 * Check if a required parameter exists inside an object. If it exists, return the value.
 	 * If it does not exist, return a default value instead.
 	 */
-	static getParamDefault (name: string, objWithParam: any, defaultValue: any): any
+	static getParamDefaultUnsafe (name: string, objWithParam: any, defaultValue: any): any
 	{
 		let value: any = objWithParam[name];
 
@@ -881,6 +1147,25 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
+	 * number returned is within a certain range. If it does not exist, return a default value instead.
+	 * 
+	 * The value retrieved must be a number.
+	 */
+	static getParamDefaultRangeUnsafe (name: string, objWithParam: any, defaultValue: any, min: number, max: number): any
+	{
+		const value = HotStaq.getParamDefaultUnsafe (name, objWithParam, defaultValue);
+
+		if (value < min)
+			throw new Error (`Parameter ${name} must be greater than or equal to ${min}.`);
+
+		if (value > max)
+			throw new Error (`Parameter ${name} must be less than or equal to ${max}.`);
+
+		return (value);
+	}
+
+	/**
 	 * Check if a value is null or empty.
 	 * 
 	 * @returns Returns true if the value is an empty string, null, undefined, 0, etc.
@@ -891,25 +1176,6 @@ export class HotStaq implements IHotStaq
 			return (true);
 
 		return (false);
-	}
-
-	/**
-	 * Check if a required parameter exists inside an object. If it exists, return the value, ensure the 
-	 * number returned is within a certain range. If it does not exist, return a default value instead.
-	 * 
-	 * The value retrieved must be a number.
-	 */
-	static getParamDefaultRange (name: string, objWithParam: any, defaultValue: any, min: number, max: number): any
-	{
-		const value = HotStaq.getParamDefault (name, objWithParam, defaultValue);
-
-		if (value < min)
-			throw new Error (`Parameter ${name} must be greater than or equal to ${min}.`);
-
-		if (value > max)
-			throw new Error (`Parameter ${name} must be less than or equal to ${max}.`);
-
-		return (value);
 	}
 
 	/**

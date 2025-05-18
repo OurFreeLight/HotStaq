@@ -35,8 +35,8 @@ export class HotAgentRoute extends HotRoute
 	 */
 	protected async execute (req: ServerRequest): Promise<any>
 	{
-		const cmd: string = HotStaq.getParam ("cmd", req.jsonObj);
-		const data: any = HotStaq.getParamDefault ("data", req.jsonObj, undefined);
+		const cmd: string = HotStaq.getParamUnsafe ("cmd", req.jsonObj);
+		const data: any = HotStaq.getParamDefaultUnsafe ("data", req.jsonObj, undefined);
         let foundCmd: string = this.thisApi.commands[cmd];
 
         if (foundCmd == null)

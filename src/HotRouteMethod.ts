@@ -5,7 +5,7 @@ import { HotServer, HotServerType } from "./HotServer";
 
 import express from "express";
 import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
-import { HotRouteMethodParameterMap } from "./HotStaq";
+import { HotRouteMethodParameterMap, IHotValidReturn } from "./HotStaq";
 
 /**
  * The available event methods.
@@ -291,19 +291,27 @@ export interface HotValidation
 	 */
 	type?: HotValidationType;
 	/**
+	 * The default value to set if the incoming input is null or undefined.
+	 */
+	defaultValue?: any;
+	/**
 	 * The associated validation for this current validation. This is mostly to be used for the Array type 
 	 * when trying to validate each item of an array.
 	 * @default Text
 	 */
 	associatedValid?: HotValidation;
 	/**
-	 * The possible values to check against. Works best using the enum type.
+	 * The possible properties to check against. Works only with the Object type.
+	 */
+	properties?: HotValidation[];
+	/**
+	 * The possible values to check against. Works best using the Enum type.
 	 */
 	values?: any[];
 	/**
 	 * The function to use to validate if the input is valid.
 	 */
-	func?: (strict: boolean, key: string, input: any) => Promise<{ success: boolean; failMessage: string; }>;
+	func?: (strict: boolean, key: string, input: any) => Promise<IHotValidReturn>;
 	/**
 	 * The regex to use to validate with.
 	 */
