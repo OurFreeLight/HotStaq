@@ -26,6 +26,7 @@ import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
 import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
 import { validateRecursively } from "./HotProcessInput";
+import { HttpError } from "./HotHTTPServer";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;
@@ -478,7 +479,7 @@ export class HotStaq implements IHotStaq
 				if (value !== undefined)
 				{
 					if (strict === true)
-						throw new Error (`Parameter '${key}' must be undefined.`);
+						throw new HttpError (`Parameter '${key}' must be undefined.`, 400);
 				}
 
 				return ({ value: value });
@@ -488,7 +489,7 @@ export class HotStaq implements IHotStaq
 				if (value !== null)
 				{
 					if (strict === true)
-						throw new Error (`Parameter '${key}' must be null.`);
+						throw new HttpError (`Parameter '${key}' must be null.`, 400);
 				}
 
 				return ({ value: value });
@@ -498,7 +499,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`Parameter '${key}' must be a string.`);
+						throw new HttpError (`Parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -507,14 +508,14 @@ export class HotStaq implements IHotStaq
 				if (validation.min !== undefined)
 				{
 					if (value.length < validation.min)
-						throw new Error (`Text parameter '${key}' must be at least ${validation.min} characters long.`);
+						throw new HttpError (`Text parameter '${key}' must be at least ${validation.min} characters long.`, 400);
 				}
 
 				// Maximum length check.
 				if (validation.max !== undefined)
 				{
 					if (value.length > validation.max)
-						throw new Error (`Text parameter '${key}' must be at most ${validation.max} characters long.`);
+						throw new HttpError (`Text parameter '${key}' must be at most ${validation.max} characters long.`, 400);
 				}
 
 				// Regex check.
@@ -523,7 +524,7 @@ export class HotStaq implements IHotStaq
 					const regex = typeof (validation.regex) === "string" ? new RegExp(validation.regex) : validation.regex;
 
 					if (regex.test(value) === false)
-						throw new Error(`Text parameter '${key}' does not match the required regex pattern ${validation.regex}`);
+						throw new HttpError(`Text parameter '${key}' does not match the required regex pattern ${validation.regex}`, 400);
 				}
 
 				return ({ value: value });
@@ -533,7 +534,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "number")
 				{
 					if (strict === true)
-						throw new Error (`Parameter '${key}' must be a number.`);
+						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -542,14 +543,14 @@ export class HotStaq implements IHotStaq
 				if (validation.min !== undefined)
 				{
 					if (value < validation.min)
-						throw new Error (`The value of number parameter '${key}' must be greater than ${validation.min}.`);
+						throw new HttpError (`The value of number parameter '${key}' must be greater than ${validation.min}.`, 400);
 				}
 
 				// Maximum value check.
 				if (validation.max !== undefined)
 				{
 					if (value > validation.max)
-						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
+						throw new HttpError (`The value of number parameter '${key}' must be less than ${validation.max}.`, 400);
 				}
 
 				return ({ value: value });
@@ -560,7 +561,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "number")
 				{
 					if (strict === true)
-						throw new Error (`Parameter '${key}' must be a number.`);
+						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -568,20 +569,20 @@ export class HotStaq implements IHotStaq
 				const testNum = parseInt (value);
 
 				if (isNaN (testNum) === true)
-					throw new Error (`The value of number parameter '${key}' must be an integer.`);
+					throw new HttpError (`The value of number parameter '${key}' must be an integer.`, 400);
 
 				// Minimum value check.
 				if (validation.min !== undefined)
 				{
 					if (value < validation.min)
-						throw new Error (`The value of number parameter '${key}' must be greater than ${validation.min}.`);
+						throw new HttpError (`The value of number parameter '${key}' must be greater than ${validation.min}.`, 400);
 				}
 
 				// Maximum value check.
 				if (validation.max !== undefined)
 				{
 					if (value > validation.max)
-						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
+						throw new HttpError (`The value of number parameter '${key}' must be less than ${validation.max}.`, 400);
 				}
 
 				return ({ value: value });
@@ -591,7 +592,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "number")
 				{
 					if (strict === true)
-						throw new Error (`Parameter '${key}' must be a number.`);
+						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -599,20 +600,20 @@ export class HotStaq implements IHotStaq
 				const testNum = parseFloat (value);
 
 				if (isNaN (testNum) === true)
-					throw new Error (`The value of number parameter '${key}' must be an float.`);
+					throw new HttpError (`The value of number parameter '${key}' must be an float.`, 400);
 
 				// Minimum value check.
 				if (validation.min !== undefined)
 				{
 					if (value < validation.min)
-						throw new Error (`The value of number parameter '${key}' must be greater than ${validation.min}.`);
+						throw new HttpError (`The value of number parameter '${key}' must be greater than ${validation.min}.`, 400);
 				}
 
 				// Maximum value check.
 				if (validation.max !== undefined)
 				{
 					if (value > validation.max)
-						throw new Error (`The value of number parameter '${key}' must be less than ${validation.max}.`);
+						throw new HttpError (`The value of number parameter '${key}' must be less than ${validation.max}.`, 400);
 				}
 
 				return ({ value: value });
@@ -622,7 +623,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "boolean")
 				{
 					if (strict === true)
-						throw new Error (`Boolean parameter '${key}' must be a boolean.`);
+						throw new HttpError (`Boolean parameter '${key}' must be a boolean.`, 400);
 				}
 
 				return ({ value: value });
@@ -633,7 +634,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`UUID parameter '${key}' must be a string.`);
+						throw new HttpError (`UUID parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -641,7 +642,7 @@ export class HotStaq implements IHotStaq
 				const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
 				if (uuidRegex.test (value) === false)
-					throw new Error(`UUID parameter '${key}' must be a valid UUID.`);
+					throw new HttpError(`UUID parameter '${key}' must be a valid UUID.`, 400);
 
 				return ({ value: value });
 			};
@@ -650,7 +651,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`URL parameter '${key}' must be a string.`);
+						throw new HttpError (`URL parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -658,7 +659,7 @@ export class HotStaq implements IHotStaq
 				const regex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/;
 
 				if (regex.test (value) === false)
-					throw new Error(`URL parameter '${key}' must be a valid http or https url.`);
+					throw new HttpError(`URL parameter '${key}' must be a valid http or https url.`, 400);
 
 				return ({ value: value });
 			};
@@ -667,7 +668,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`Email parameter '${key}' must be a string.`);
+						throw new HttpError (`Email parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -675,7 +676,7 @@ export class HotStaq implements IHotStaq
 				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 				if (emailRegex.test (value) === false)
-					throw new Error(`Email parameter '${key}' must be a valid email.`);
+					throw new HttpError(`Email parameter '${key}' must be a valid email.`, 400);
 
 				return ({ value: value });
 			};
@@ -684,7 +685,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`Phone parameter '${key}' must be a string.`);
+						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -692,7 +693,7 @@ export class HotStaq implements IHotStaq
 				const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
 				if (phoneRegex.test(value) === false)
-					throw new Error(`Phone parameter '${key}' must be a valid phone number using regex /^\\+?[1-9]\\d{1,14}$/.`);
+					throw new HttpError(`Phone parameter '${key}' must be a valid phone number using regex /^\\+?[1-9]\\d{1,14}$/.`, 400);
 
 				return ({ value: value });
 			};
@@ -701,7 +702,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`Phone parameter '${key}' must be a string.`);
+						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -710,7 +711,7 @@ export class HotStaq implements IHotStaq
 				const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 
 				if (ipRegex.test(value) === false)
-					throw new Error(`IPv4 parameter '${key}' must be a valid IPv4 address.`);
+					throw new HttpError(`IPv4 parameter '${key}' must be a valid IPv4 address.`, 400);
 
 				return ({ value: value });
 			};
@@ -719,7 +720,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "string")
 				{
 					if (strict === true)
-						throw new Error (`Phone parameter '${key}' must be a string.`);
+						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
@@ -728,7 +729,7 @@ export class HotStaq implements IHotStaq
 				const ipRegex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,7}:/;
 
 				if (ipRegex.test(value) === false)
-					throw new Error(`IPv4 parameter '${key}' must be a valid IPv4 address.`);
+					throw new HttpError(`IPv4 parameter '${key}' must be a valid IPv4 address.`, 400);
 
 				return ({ value: value });
 			};
@@ -737,13 +738,13 @@ export class HotStaq implements IHotStaq
 				if ((! (value instanceof Date)) && (typeof (value) !== "string"))
 				{
 					if (strict === true)
-						throw new Error (`Date parameter '${key}' must be a string or Date.`);
+						throw new HttpError (`Date parameter '${key}' must be a string or Date.`, 400);
 				}
 
 				HotStaq.baseValidator (strict, key, validation, value);
 
 				if (isNaN (Date.parse(value)))
-					throw new Error(`Date parameter '${key}' must be a valid date.`);
+					throw new HttpError(`Date parameter '${key}' must be a valid date.`);
 
 				return ({ value: value });
 			};
@@ -752,7 +753,7 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "object")
 				{
 					if (strict === true)
-						throw new Error (`Object parameter '${key}' must be an object.`);
+						throw new HttpError (`Object parameter '${key}' must be an object.`, 400);
 				}
 
 				if (validation.properties)
@@ -773,20 +774,43 @@ export class HotStaq implements IHotStaq
 				if ((value instanceof Array) === false)
 				{
 					if (strict === true)
-						throw new Error (`Array parameter '${key}' must be a string.`);
+						throw new HttpError (`Array parameter '${key}' must be a string.`, 400);
 				}
 
 				if (Array.isArray (value) === false)
-					throw new Error(`Parameter '${key}' must be an array.`);
+					throw new HttpError(`Parameter '${key}' must be an array.`, 400);
 		
-				if (validation.associatedValid == null)
-					throw new Error(`Parameter '${key}' must have an associated type that describes each item.`);
+				if (validation.associatedValids == null)
+					throw new HttpError(`Parameter '${key}' must have an associated type(s) that describes each item.`, 400);
+
+				if (validation.notEmptyOrNull != null)
+				{
+					if (value.length === 0)
+						throw new HttpError(`Array parameter '${key}' must not be empty or null.`, 400);
+				}
+
+				if (validation.min != null)
+				{
+					if (value.length < validation.min)
+						throw new HttpError (`Array parameter '${key}' must have at least ${validation.min} items.`, 400);
+				}
+
+				if (validation.max != null)
+				{
+					if (value.length > validation.max)
+						throw new HttpError (`Array parameter '${key}' must have at most ${validation.max} items.`, 400);
+				}
 		
 				for (let iIdx = 0; iIdx < value.length; iIdx++)
 				{
 					const item = value[iIdx];
 		
-					await validateRecursively (strict, key, item, request, validation.associatedValid);
+					for (let iJdx = 0; iJdx < validation.associatedValids.length; iJdx++)
+					{
+						const associatedValid = validation.associatedValids[iJdx];
+
+						await validateRecursively (strict, key, item, request, associatedValid);
+					}
 				}
 
 				return ({ value: value });
@@ -796,17 +820,22 @@ export class HotStaq implements IHotStaq
 				if (typeof (value) !== "object")
 				{
 					if (strict === true)
-						throw new Error (`Map parameter '${key}' must be an object or map.`);
+						throw new HttpError (`Map parameter '${key}' must be an object or map.`, 400);
 				}
 		
-				if (validation.associatedValid == null)
-					throw new Error(`Parameter '${key}' must have an associated type that describes each map property.`);
+				if (validation.associatedValids == null)
+					throw new HttpError(`Parameter '${key}' must have an associated type that describes each map property.`, 400);
 		
 				for (let key2 in value)
 				{
 					const item = value[key2];
-		
-					await validateRecursively (strict, key2, item, request, validation.associatedValid);
+
+					for (let iJdx = 0; iJdx < validation.associatedValids.length; iJdx++)
+					{
+						const associatedValid = validation.associatedValids[iJdx];
+
+						await validateRecursively (strict, key2, item, request, associatedValid);
+					}
 				}
 
 				return ({ value: value });
@@ -816,11 +845,11 @@ export class HotStaq implements IHotStaq
 				if (! ((typeof (value) === "string") || (typeof (value) === "number")))
 				{
 					if (strict === true)
-						throw new Error (`Enum parameter '${key}' must be a string or number.`);
+						throw new HttpError (`Enum parameter '${key}' must be a string or number.`, 400);
 				}
 
 				if (validation.values && !validation.values.includes(value))
-					throw new Error(`Enum parameter '${key}' must be one of the allowed enum values: ${validation.values.join(", ")}`);
+					throw new HttpError(`Enum parameter '${key}' must be one of the allowed enum values: ${validation.values.join(", ")}`, 400);
 
 				return ({ value: value });
 			};
@@ -829,11 +858,11 @@ export class HotStaq implements IHotStaq
 				if ((! (value instanceof Function)) && (typeof (value) !== "string"))
 				{
 					if (strict === true)
-						throw new Error (`JS parameter '${key}' must be a string or Function.`);
+						throw new HttpError (`JS parameter '${key}' must be a string or Function.`, 400);
 				}
 
 				if (validation.func == null)
-					throw new Error(`JS parameter '${key}' must be a valid JS function.`);
+					throw new HttpError (`JS parameter '${key}' must be a valid JS function.`, 400);
 
 				const valid = await validation.func (strict, key, value);
 

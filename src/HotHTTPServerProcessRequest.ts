@@ -62,7 +62,7 @@ export async function processRequest (server: HotHTTPServer,
 			if (ex.statusCode != null)
 				statusCode = ex.statusCode;
 
-			logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
+			logger.error (`Authorization error ${statusCode}: ${ex.message}`);
 			hasAuthorization = false;
 
 			return ({ error: ex.message, errorCode: statusCode });
@@ -102,7 +102,7 @@ export async function processRequest (server: HotHTTPServer,
 				if (ex.statusCode != null)
 					statusCode = ex.statusCode;
 
-				logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
+				logger.error (`Authorization error ${statusCode}: ${ex.message}`);
 				hasAuthorization = false;
 
 				return ({ error: ex.message, errorCode: statusCode });
@@ -113,7 +113,7 @@ export async function processRequest (server: HotHTTPServer,
 		}
 	}
 
-	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
+	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}`);
 
 	if (hasAuthorization === true)
 	{
@@ -209,7 +209,7 @@ export async function processRequest (server: HotHTTPServer,
 							if (ex.statusCode != null)
 								statusCode = ex.statusCode;
 
-							logger.verbose (`Query validation error ${statusCode}: ${ex.message}`);
+							logger.error (`Query validation error ${statusCode}: ${ex.message}`);
 							return ({ error: ex.message, errorCode: statusCode });
 						}
 					}
@@ -252,7 +252,7 @@ export async function processRequest (server: HotHTTPServer,
 						if (ex.statusCode != null)
 							statusCode = ex.statusCode;
 
-						logger.verbose (`JSON validation error ${statusCode}: ${ex.message}`);
+						logger.error (`JSON validation error ${statusCode}: ${ex.message}`);
 						return ({ error: ex.message, errorCode: statusCode });
 					}
 				}
@@ -398,7 +398,7 @@ export async function processRequest (server: HotHTTPServer,
 	}
 	else
 	{
-		logger.verbose (`${req.method} ${methodName}, not_authorized`);
+		logger.error (`${req.method} ${methodName}, not_authorized`);
 		return (route.errors["not_authorized"]);
 	}
 }

@@ -83,12 +83,12 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
 							type: HotValidationType.JS,
 							func: (<(input: any) => Promise<IHotValidReturn>>new Function(`return (async (value) => { ${jsStr} })()`))
 						};
-					} else if (!validStr.startsWith("{")) {
-						parsed = { type: validStr as HotValidationType };
 					} else if (isArray === true) {
             const parsedTypeStr = validStr.substring(0, validStr.indexOf ("[]"));
-            parsed = { type: HotValidationType.Array, associatedValid: { type: parsedTypeStr as HotValidationType } };
-          } else {
+            parsed = { type: HotValidationType.Array, associatedValids: [{ type: parsedTypeStr as HotValidationType }] };
+          } else if (!validStr.startsWith("{")) {
+						parsed = { type: validStr as HotValidationType };
+					} else {
 						parsed = JSON.parse(validStr);
 					}
 

@@ -96,7 +96,7 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 			compValid = foundValid;
 
 		if (compValid == null)
-			throw new Error (`Key '${key}' not found in valid '${validType}'`);
+			throw new HttpError (`Key '${key}' not found in valid '${validType}'`, 403);
 
 		const resolvedParams = await resolveParameters(compValid.parameters);
 		const result = await processInput (strictInput, resolvedParams, value, request, key);
@@ -219,6 +219,11 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 			}
 
 			validatedInput[key] = value;
+		}
+		else
+		{
+			if (paramDef.required === true)
+				throw new HttpError(`Parameter '${key}' is required but not provided.`, 400);
 		}
 	}
 

@@ -25,6 +25,10 @@ export enum HotEventMethod
 	 */
 	FILE_UPLOAD = "file_upload_then_post_json",
 	/**
+	 * A SSE sub event. This will close the event whenever 
+	 */
+	SSE_SUB_EVENT = "sse_sub_event",
+	/**
 	 * A websocket event.
 	 */
 	WEBSOCKET_CLIENT_PUB_EVENT = "websocket_client_pub_event",
@@ -217,6 +221,60 @@ export class ServerRequest implements IServerRequest
 		this.queryObj = obj.queryObj || null;
 		this.files = obj.files || null;
 	}
+
+	/**
+	 * Write to the HTTP response. This is mostly intended to be used 
+	 * when using SSE. This requires JSON to be sent.
+	 */
+	async httpWrite (jsonObj: any): Promise<void>
+	{
+		if (this.res == null)
+			throw new Error (`Cannot close HTTP response because it is null!`);
+
+		return (new Promise<void> ((resolve, reject) =>
+			{
+				this.res.write (JSON.stringify (jsonObj), (err: Error) =>
+					{
+						if (err != null)
+							throw err;
+
+						resolve ();
+					});
+			}));
+	}
+
+	/**
+	 * Write to the HTTP response. This is mostly intended to be used 
+	 * when using SSE.
+	 */
+	async httpWriteRaw (data: any): Promise<void>
+	{
+		if (this.res == null)
+			throw new Error (`Cannot close HTTP response because it is null!`);
+
+		return (new Promise<void> ((resolve, reject) =>
+			{
+				this.res.write (data, (err: Error) =>
+					{
+						if (err != null)
+							throw err;
+
+						resolve ();
+					});
+			}));
+	}
+
+	/**
+	 * Close the HTTP response. This is mostly intended to be used when 
+	 * using SSE.
+	 */
+	httpClose (): void
+	{
+		if (this.res == null)
+			throw new Error (`Cannot close HTTP response because it is null!`);
+
+		this.res.end ();
+	}
 }
 
 /**
@@ -295,11 +353,11 @@ export interface HotValidation
 	 */
 	defaultValue?: any;
 	/**
-	 * The associated validation for this current validation. This is mostly to be used for the Array type 
-	 * when trying to validate each item of an array.
+	 * The associated validations for this current validation. This is mostly to be used for the Array or  
+	 * Map types when trying to validate each item of an array.
 	 * @default Text
 	 */
-	associatedValid?: HotValidation;
+	associatedValids?: HotValidation[];
 	/**
 	 * The possible properties to check against. Works only with the Object type.
 	 */
@@ -317,15 +375,15 @@ export interface HotValidation
 	 */
 	regex?: string | RegExp;
 	/**
-	 * The min text length. This can also be the minimum number if the type is number.
+	 * The min text or array length. This can also be the minimum number if the type is number.
 	 */
 	min?: number;
 	/**
-	 * The max text length. This can also be the maximum number if the type is number.
+	 * The max text or array length. This can also be the maximum number if the type is number.
 	 */
 	max?: number;
 	/**
-	 * Check if the string is not empty or null.
+	 * Ensures that the string or array is not empty or null.
 	 */
 	notEmptyOrNull?: boolean;
 	/**

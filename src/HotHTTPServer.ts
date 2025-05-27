@@ -572,6 +572,9 @@ export class HotHTTPServer extends HotServer
 		if (methodType === HotEventMethod.FILE_UPLOAD)
 			expressMethod = "post";
 
+		if (methodType === HotEventMethod.SSE_SUB_EVENT)
+			expressMethod = "post";
+
 		if (methodType === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
 			expressMethod = "ws_client_pub_event";
 
@@ -769,6 +772,17 @@ export class HotHTTPServer extends HotServer
 				this.expressApp[expressType] (methodName, 
 					async (req: express.Request, res: express.Response) =>
 					{
+						if (method.type === HotEventMethod.SSE_SUB_EVENT)
+						{
+							this.logger.verbose (`Created SSE event for method: ${method.name}`);
+							res.set ({
+									'Content-Type': 'text/event-stream',
+									'Cache-Control': 'no-cache',
+									'Connection': 'keep-alive'
+								})
+							res.flushHeaders ();
+						}
+
 						let sendResponse = (value: any, requestNum: number) =>
 							{
 								let start = this.activeRequests[requestNum];
