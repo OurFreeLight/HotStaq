@@ -26,7 +26,7 @@ import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
 import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
 import { validateRecursively } from "./HotProcessInput";
-import { HttpError } from "./HotHTTPServer";
+import { HttpError } from "./HotHttpError";
 
 var HotTesterMocha: any = null;
 var HotTesterMochaSelenium: any = null;

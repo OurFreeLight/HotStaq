@@ -89,6 +89,10 @@ export interface IServerRequest
 			path: string;
 		}
 	};
+	/**
+	 * Called when the client's connection has closed for any reason.
+	 */
+	onClose?: () => void;
 }
 
 /**
@@ -206,6 +210,10 @@ export class ServerRequest implements IServerRequest
 			path: string;
 		}
 	};
+	/**
+	 * Called when the client's connection has closed for any reason.
+	 */
+	onClose: () => void;
 
 	constructor (obj: IServerRequest = null)
 	{
@@ -220,26 +228,37 @@ export class ServerRequest implements IServerRequest
 		this.jsonObj = obj.jsonObj || null;
 		this.queryObj = obj.queryObj || null;
 		this.files = obj.files || null;
+		this.onClose = obj.onClose || null;
 	}
 
 	/**
 	 * Write to the HTTP response. This is mostly intended to be used 
 	 * when using SSE. This requires JSON to be sent.
 	 */
-	async httpWrite (jsonObj: any): Promise<void>
+	async httpWrite (event: string, jsonObj: any): Promise<void>
 	{
 		if (this.res == null)
 			throw new Error (`Cannot close HTTP response because it is null!`);
 
 		return (new Promise<void> ((resolve, reject) =>
 			{
-				this.res.write (JSON.stringify (jsonObj), (err: Error) =>
-					{
-						if (err != null)
-							throw err;
+				if (this.res.writable === true)
+				{
+					let content = jsonObj;
 
-						resolve ();
-					});
+					if (typeof (jsonObj) !== "string")
+						content = JSON.stringify (jsonObj);
+
+					this.res.write (`event: ${event}\ndata: ${content}\n\n`, (err: Error) =>
+						{
+							if (err != null)
+								throw err;
+
+							resolve ();
+						});
+				}
+				else
+					resolve ();
 			}));
 	}
 
@@ -254,13 +273,18 @@ export class ServerRequest implements IServerRequest
 
 		return (new Promise<void> ((resolve, reject) =>
 			{
-				this.res.write (data, (err: Error) =>
-					{
-						if (err != null)
-							throw err;
+				if (this.res.writable === true)
+				{
+					this.res.write (data, (err: Error) =>
+						{
+							if (err != null)
+								throw err;
 
-						resolve ();
-					});
+							resolve ();
+						});
+				}
+				else
+					resolve ();
 			}));
 	}
 

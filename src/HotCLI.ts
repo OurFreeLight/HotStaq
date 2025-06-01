@@ -526,12 +526,12 @@ export class HotCLI
 				createHotCreator ();
 				this.creator.npmCommands.buildWebAPIDebug = value;
 			}, "");
-		createCmd.option (`--overwrite-cmd-npm-dev <value>`, 
+		createCmd.option (`--overwrite-cmd-npm-develop <value>`, 
 			`Overwrite the npm command for building the development script.`, 
 			(value: string, previous: any) =>
 			{
 				createHotCreator ();
-				this.creator.npmCommands.dev = value;
+				this.creator.npmCommands.develop = value;
 			}, "");
 		createCmd.option (`--overwrite-cmd-npm-start <value>`, 
 			`Overwrite the npm command for the start script.`, 

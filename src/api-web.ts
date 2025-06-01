@@ -13,6 +13,7 @@ import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HotEventMethod, ServerRequest, PassType, HotRouteMethodParameter, HotValidation, HotValidationType } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
+import { HttpError } from "./HotHttpError";
 import { HotClient } from "./HotClient";
 
 import { HotWebSocketClient } from "./HotWebSocketClient";
@@ -54,6 +55,7 @@ export {
     ServerRequest, PassType, HotRouteMethodParameter, HotValidation, HotValidationType, 
     HotServer,
     HotServerType,
+    HttpError,
     HotClient,
     HotWebSocketClient,
     HotTester, HotTestStop, HotDestination, 

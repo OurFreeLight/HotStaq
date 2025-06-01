@@ -171,7 +171,13 @@ export async function processRequest (server: HotHTTPServer,
 				authorizedValue: authorizationValue,
 				jsonObj: jsonObj,
 				queryObj: queryObj,
-				files: null
+				files: null,
+				onClose: null
+			});
+
+		res.on ("close", () => {
+				if (request.onClose != null)
+					request.onClose.call (thisObj, request);
 			});
 
 		// The validations have to occur after any possible file uploads.

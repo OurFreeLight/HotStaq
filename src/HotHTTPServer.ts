@@ -56,25 +56,6 @@ export interface HTTPHeader
 }
 
 /**
- * A HTTP error.
- */
-export class HttpError extends Error
-{
-	/**
-	 * The status code.
-	 */
-	statusCode: number;
-
-	constructor (message: string, statusCode: number = 400)
-	{
-		super (message);
-
-		this.name = "HttpError";
-		this.statusCode = statusCode;
-	}
-}
-
-/**
  * A servable file extension.
  */
 export interface ServableFileExtension
@@ -823,7 +804,9 @@ export class HotHTTPServer extends HotServer
 						
 							this.activeRequests[requestNum] = performance.now ();
 							let response = await processRequest (this, this.logger, route, method, methodName, req, res);
-							sendResponse (response, requestNum);
+
+							if (method.type !== HotEventMethod.SSE_SUB_EVENT)
+								sendResponse (response, requestNum);
 
 							return;
 						}
@@ -854,7 +837,9 @@ export class HotHTTPServer extends HotServer
 
 									worker.on ("message", function (requestNum2: number, value: any)
 										{
-											sendResponse (value, requestNum2);
+											if (method.type !== HotEventMethod.SSE_SUB_EVENT)
+												sendResponse (value, requestNum2);
+
 											resolveIt ();
 										}.bind (this, requestNum));
 									worker.on ("error", (err: Error) =>

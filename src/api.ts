@@ -17,7 +17,8 @@ import { HotRouteMethod, IHotRouteMethod, HotEventMethod, HotRouteMethodParamete
 		ServerAuthorizationFunction, ServerExecutionFunction, PassType, 
 		ServerRequest, IServerRequest, HotValidation, HotValidationType } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
-import { StaticRoute, HTTPHeader, HttpError, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
+import { StaticRoute, HTTPHeader, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
+import { HttpError } from "./HotHttpError";
 import { HotClient } from "./HotClient";
 
 // Server Websocket stuff

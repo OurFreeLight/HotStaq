@@ -66,7 +66,7 @@ export class HotCreator
 			/**
 			 * The dev start command to use.
 			 */
-			dev: string;
+			develop: string;
 			/**
 			 * The test command to use.
 			 */
@@ -104,7 +104,7 @@ export class HotCreator
 			};
 		this.npmCommands = {
 				start: "",
-				dev: "",
+				develop: "",
 				test: "node ./build/cli.js --dev --env-file .env run --server-type api --api-test && node ./build/cli.js --dev --env-file .env run --server-type web --web-test",
 				build: "",
 				buildWebAPI: "node ./build/cli.js generate --copy-to ./public/js/",
@@ -217,11 +217,11 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 		if (this.npmCommands.start !== "")
 			packageJSON.scripts["start"] = this.npmCommands.start;
 
-		if (this.npmCommands.dev === "")
-			this.npmCommands.dev = `node ./build/cli.js --hotsite ./HotSite.json --development-mode run --server-type ${this.type} --web-http-port 8080`;
+		if (this.npmCommands.develop === "")
+			this.npmCommands.develop = `node ./build/cli.js --hotsite ./HotSite.json --development-mode run --server-type ${this.type} --web-http-port 8080`;
 
-		if (this.npmCommands.dev !== "")
-			packageJSON.scripts["dev"] = this.npmCommands.dev;
+		if (this.npmCommands.develop !== "")
+			packageJSON.scripts["develop"] = this.npmCommands.develop;
 
 		if (this.npmCommands.test !== "")
 			packageJSON.scripts["test"] = this.npmCommands.test;

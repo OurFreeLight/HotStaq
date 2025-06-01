@@ -5,10 +5,14 @@ import { HotAPI } from "./HotAPI";
 import { HotTestElement } from "./HotTestElement";
 import { HotEventMethod } from "./HotRouteMethod";
 import { HotModule } from "./HotModule";
+import { HttpError } from "./HotHttpError";
+
+import EventEmitter from "events";
 
 import Cookies from "js-cookie";
 import fetch from "node-fetch";
 import FormData from "form-data";
+import { EventSourceMessage, fetchEventSource, FetchEventSourceInit } from '@microsoft/fetch-event-source';
 
 /**
  * The available developer modes.
@@ -41,6 +45,16 @@ export interface CSSObject
 	 */
 	integrityHash: string;
 }
+
+/**
+ * The SSE emitter.
+ */
+type HotSSEEmitter = {
+	"open": [Response];
+	"error": [Error];
+	"message": [any];
+	"close": [];
+};
 
 /**
  * The api used during processing.
@@ -393,6 +407,105 @@ export class Hot
 		}
 
 		return (result);
+	}
+
+	/**
+	 * Make a HTTP SSE JSON request. This will await until a connection is established.
+	 * 
+	 * @example
+	 * ```ts
+	 * await Hot.sseRequest ('/v1/hello_world/echo', { message: "Hello!" });
+	 * ```
+	 * 
+	 * @param url The full url to make the HTTP call.
+	 * @param data The data to JSON.stringify and send.
+	 * @param httpMethod The HTTP method to use to send the data.
+	 * 
+	 * @returns The parsed JSON object.
+	 */
+	static sseRequest (request: { url: string; data?: any; bearerToken?: string; 
+		httpMethod?: HotEventMethod; ctrl: AbortController;
+		autoParseMsgs?: boolean; echoErrorToConsole?: boolean; }): EventEmitter<HotSSEEmitter>
+	{
+		let statusCode: number = 200;
+		const emitter = new EventEmitter<HotSSEEmitter> ();
+
+		try
+		{
+			if ((request.url == null) || (request.url === ""))
+				throw new Error (`A url must be provided to the request.`);
+
+			if (request.ctrl == null)
+				throw new Error (`A ctrl AbortController must be provided to the request.`);
+
+			if (request.httpMethod == null)
+				request.httpMethod = HotEventMethod.POST;
+
+			if (request.echoErrorToConsole == null)
+				request.echoErrorToConsole = true;
+
+			if (request.autoParseMsgs == null)
+				request.autoParseMsgs = true;
+
+			let sseObj: FetchEventSourceInit = {
+				method: request.httpMethod,
+				headers: {
+					"Accept": "application/json",
+					"Content-Type": "application/json"
+				},
+				signal: request.ctrl.signal
+			};
+
+			if (request.httpMethod !== HotEventMethod.GET)
+				sseObj["body"] = JSON.stringify (request.data);
+
+			if (request.bearerToken != "")
+				sseObj.headers["Authorization"] = `Bearer ${request.bearerToken}`;
+
+			fetchEventSource (request.url, {
+					...sseObj, 
+					onopen: async (res: Response) =>
+					{
+						statusCode = res.status;
+
+						if (res.ok === false)
+						{
+							let errorObj = await res.json ();
+			
+							throw new Error (errorObj.error);
+						}
+			
+						emitter.emit ("open", res);
+					},
+					onerror: (error: Error) =>
+					{
+						if (request.echoErrorToConsole === true)
+							console.error (`SSE Error: ${error.message}`);
+
+						emitter.emit ("error", error);
+					},
+					onmessage: async (event: EventSourceMessage) =>
+					{
+						let msg: any = event.data;
+
+						if (request.autoParseMsgs === true)
+							msg = JSON.parse (event.data);
+
+						// @ts-ignore
+						emitter.emit (event.event, msg);
+					},
+					onclose: async () =>
+					{
+						emitter.emit ("close");
+					}
+				});
+		}
+		catch (ex)
+		{
+			throw new HttpError (ex.message, statusCode);
+		}
+
+		return (emitter);
 	}
 
 	/**

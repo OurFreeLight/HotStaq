@@ -1,4 +1,4 @@
-import { HttpError } from "./HotHTTPServer";
+import { HttpError } from "./HotHttpError";
 import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
 import { HotRouteMethodParameterMap, HotStaq, HotValidReturnType, IHotValidReturn } from "./HotStaq";
 
