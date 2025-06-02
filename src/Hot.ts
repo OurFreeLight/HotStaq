@@ -471,8 +471,9 @@ export class Hot
 						if (res.ok === false)
 						{
 							let errorObj = await res.json ();
-			
-							throw new Error (errorObj.error);
+							emitter.emit ("error", errorObj.error);
+
+							return;
 						}
 			
 						emitter.emit ("open", res);

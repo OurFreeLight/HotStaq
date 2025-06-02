@@ -22,6 +22,9 @@ export class HotAgentRoute extends HotRoute
 
         this.thisApi = api;
 
+		if (api.userAuth == null)
+			throw new Error (`When using the HotAgentRoute, you must provide a userAuth function in the API.`);
+
 		this.addMethod ({
 				name: "execute", 
 				onServerExecute: this.execute, 
