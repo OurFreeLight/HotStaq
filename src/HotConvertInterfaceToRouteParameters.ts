@@ -1,4 +1,4 @@
-import { ParsedInterface } from "./HotStaq";
+import { IHotValidReturn, ParsedInterface } from "./HotStaq";
 import ts from "typescript";
 import { Project, InterfaceDeclaration, PropertySignature, TypeLiteralNode } from "ts-morph";
 import { HotValidation, HotValidationType } from "./HotRouteMethod";
@@ -42,7 +42,7 @@ function getNodeDescription(node: Node): string {
   return description;
 }
 
-function extractValidFromRaw(node: Node, rawType: string): HotValidation[]
+function extractValidFromRaw(propName: string, node: Node, rawType: string): HotValidation[]
 {
 	// @ts-ignore
 	const sourceFile = node.getSourceFile();
@@ -56,7 +56,7 @@ function extractValidFromRaw(node: Node, rawType: string): HotValidation[]
 		rawComments = commentRanges.map(range => fullText.substring(range.pos, range.end)).join("\n");
 	}
 
-	const validRegex = /@valid\s*({[\s\S]*?}|[^\n]+)/g;
+	const validRegex = /@valid\s*([^\n]+)/g;
 	const matches = [...rawComments.matchAll(validRegex)];
 
 	if (matches.length > 0)
@@ -67,19 +67,26 @@ function extractValidFromRaw(node: Node, rawType: string): HotValidation[]
 		{
 			if (match[1])
 			{
+        let validStr = null;
+
 				try
 				{
-					const validStr = match[1].trim();
-					let parsed: HotValidation = {} as any;
+					validStr = match[1].trim();
+
+          const isArray = validStr.endsWith ("[]");
+					let parsed: HotValidation = {};
 
 					if (validStr.startsWith("JS:"))
 					{
 						const jsStr = validStr.substring(3);
 						parsed = {
 							type: HotValidationType.JS,
-							func: (<(input: any) => Promise<{ success: boolean; failMessage: string; }>>new Function(`return (async (value) => { ${jsStr} })()`))
+							func: (<(input: any) => Promise<IHotValidReturn>>new Function(`return (async (value) => { ${jsStr} })()`))
 						};
-					} else if (!validStr.startsWith("{")) {
+					} else if (isArray === true) {
+            const parsedTypeStr = validStr.substring(0, validStr.indexOf ("[]"));
+            parsed = { type: HotValidationType.Array, associatedValids: [{ type: parsedTypeStr as HotValidationType }] };
+          } else if (!validStr.startsWith("{")) {
 						parsed = { type: validStr as HotValidationType };
 					} else {
 						parsed = JSON.parse(validStr);
@@ -97,7 +104,7 @@ function extractValidFromRaw(node: Node, rawType: string): HotValidation[]
 
 					validations.push(parsed);
 				} catch (e) {
-					throw new Error(`Error parsing @valid: ${e}`);
+					throw new Error(`In property "${propName}", error parsing @valid ${validStr}: ${e}`);
 				}
 			}
 		}
@@ -186,30 +193,30 @@ function extractTypeLiteralMetadata(typeLiteralNode: TypeLiteralNode): ParsedInt
           derivedType = originalType;
         }
       }
-		const rawType = getRawType(prop);
-		// @ts-ignore
-		const propDescription = getNodeDescription(prop);
-		// @ts-ignore
-		const valids = extractValidFromRaw(prop, rawType);
-		const required = !prop.hasQuestionToken();
-		const isReadOnly: boolean = prop.isReadonly();
-		const isArray: boolean = prop.getType().isArray();
-		let subParameters: { [key: string]: ParsedInterface } = {};
+      const rawType = getRawType(prop);
+      // @ts-ignore
+      const propDescription = getNodeDescription(prop);
+      // @ts-ignore
+      const valids = extractValidFromRaw(propName, prop, rawType);
+      const required = !prop.hasQuestionToken();
+      const isReadOnly: boolean = prop.isReadonly();
+      const isArray: boolean = prop.getType().isArray();
+      let subParameters: { [key: string]: ParsedInterface } = {};
 
-		if (prop.getTypeNode() && prop.getTypeNode().getKindName() === "TypeLiteral") {
-		// @ts-ignore
-		subParameters = extractTypeLiteralMetadata(prop.getTypeNode()).parameters;
-		}
-		parameters[propName] = {
-		type: rawType,
-		typeName: derivedType,
-		description: propDescription,
-		valids: valids,
-		required: required,
-		isReadOnly: isReadOnly,
-		isArray: isArray,
-		parameters: subParameters
-		};
+      if (prop.getTypeNode() && prop.getTypeNode().getKindName() === "TypeLiteral") {
+        // @ts-ignore
+        subParameters = extractTypeLiteralMetadata(prop.getTypeNode()).parameters;
+      }
+      parameters[propName] = {
+        type: rawType,
+        typeName: derivedType,
+        description: propDescription,
+        valids: valids,
+        required: required,
+        isReadOnly: isReadOnly,
+        isArray: isArray,
+        parameters: subParameters
+      };
     }
   });
 
@@ -270,10 +277,10 @@ function extractParsedInterface(iface: InterfaceDeclaration): ParsedInterface {
       }
     }
     const rawType = getRawType(prop);
-	// @ts-ignore
+	  // @ts-ignore
     const propDescription = getNodeDescription(prop);
-	// @ts-ignore
-	const valids = extractValidFromRaw(prop, rawType);
+    // @ts-ignore
+    const valids = extractValidFromRaw(propName, prop, rawType);
     const required = !prop.hasQuestionToken();
     const isReadOnly: boolean = prop.isReadonly();
     const isArray: boolean = fullType.isArray();

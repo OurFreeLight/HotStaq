@@ -1,6 +1,7 @@
 import { HotCLI } from "./HotCLI";
 
-import { HotStaq, HotStartOptions, IHotStaq } from "./HotStaq";
+import { HotStaq, HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, 
+	HotValidatorFunction, HotValidReturnType, IHotValidReturn } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
 import { Hot, DeveloperMode } from "./Hot";
 import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent";
@@ -14,9 +15,10 @@ import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, IHotRouteMethod, HotEventMethod, HotRouteMethodParameter, 
 		ServerAuthorizationFunction, ServerExecutionFunction, PassType, 
-		ServerRequest, IServerRequest } from "./HotRouteMethod";
+		ServerRequest, IServerRequest, HotValidation, HotValidationType } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
-import { StaticRoute, HTTPHeader, HttpError, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
+import { StaticRoute, HTTPHeader, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
+import { HttpError } from "./HotHttpError";
 import { HotClient } from "./HotClient";
 
 // Server Websocket stuff
@@ -65,7 +67,7 @@ export {
 		HotCLI,
 		HotStaq, 
 		HotStartOptions, 
-		IHotStaq,
+		IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction, HotValidReturnType, IHotValidReturn, 
 		HotSite,
 		HotSiteRoute,
 		HotSiteMapPath,
@@ -90,7 +92,7 @@ export {
 		HotEventMethod, HotRouteMethodParameter, PassType, 
 		ServerAuthorizationFunction,
 		ServerExecutionFunction,
-		IServerRequest,
+		IServerRequest, HotValidation, HotValidationType,
 		ServerRequest,
 		HotServer,
 		HotServerType,

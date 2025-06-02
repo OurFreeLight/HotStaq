@@ -4,6 +4,8 @@ db/
 
 static/
 
+.turbo/
+
 .npmrc
 
 docs/

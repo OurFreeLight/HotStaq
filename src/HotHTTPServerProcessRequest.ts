@@ -11,130 +11,7 @@ import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
 import { HotAPI, EventExecutionType } from "./HotAPI";
 import { HotRouteMethodParameterMap, HotStaq } from "./HotStaq";
-
-// Helper function to resolve nested parameter definitions.
-// If a nested parameter is provided as a string, we assume a default parameter expecting text.
-async function resolveParameters(
-		nested: { [name: string]: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>) }
-	): Promise<HotRouteMethodParameterMap>
-{
-	const result: HotRouteMethodParameterMap = {};
-
-	for (const key in nested)
-	{
-		const val = nested[key];
-		if (typeof val === "string")
-			result[key] = { validations: [{ type: HotValidationType.Text }] };
-		else if (typeof (val) === "function")
-			result[key] = await val();
-		else
-			result[key] = val;
-	}
-	return result;
-}
-
-// Recursive helper that validates a single value through its entire validation chain.
-async function validateRecursively(strictInput: boolean, 
-		key: string,
-		value: any,
-		validation?: HotValidation
-	): Promise<any>
-{
-	if (!validation)
-		return value;
-
-	const validType = validation.type;
-	const valid = HotStaq.valids[validType];
-
-	if (valid == null)
-		throw new Error(`Validation '${validType}' not found.`);
-
-	if (typeof (valid) === "function")
-		await valid (strictInput, key, validation, value);
-	else
-		await processInput (strictInput, valid, value);
-
-	return validateRecursively(strictInput, key, value, validation.next);
-}
-  
-// Main function that validates an input object against a parameters map,
-// including nested properties defined via the `parameters` property.
-export async function processInput (strictInput: boolean, params: HotRouteMethodParameterMap, input: any): Promise<any>
-{
-	const validatedInput: any = input;
-
-	if (strictInput === true)
-	{
-		// Check that every key in input exists in params.
-		// @fixme This is only a shallow check....
-		for (const key in input) {
-			if (!(key in params)) {
-				throw new Error(`Unexpected parameter '${key}' provided.`);
-			}
-		}
-	}
-
-	// Process each key defined in the parameters.
-	for (const key in params)
-	{
-		let paramDef: HotRouteMethodParameter;
-		const param = params[key];
-
-		if (typeof param === "function") {
-			paramDef = await param();
-		} else if (typeof param === "string") {
-			// When defined as a string, assume a default parameter expecting text.
-			paramDef = { validations: [{ type: HotValidationType.Text }] };
-		} else {
-			paramDef = param;
-		}
-
-		// Only validate if the key is present in the input.
-		if (key in input)
-		{
-			let value = input[key];
-
-			// Validate the value using its validation chain, if provided.
-			if (paramDef.validations)
-			{
-				let errMsg = null;
-
-				for (let iIdx = 0; iIdx < paramDef.validations.length; iIdx++)
-				{
-					const validation = paramDef.validations[iIdx];
-
-					try
-					{
-						value = await validateRecursively(strictInput, key, value, validation);
-						errMsg = null;
-
-						break;
-					}
-					catch (err: any)
-					{
-						errMsg = err;
-					}
-				}
-
-				if (errMsg != null)
-					throw errMsg;
-			}
-
-			// If nested parameters exist, ensure the value is an object and validate recursively.
-			if (paramDef.parameters) {
-				if (typeof value !== "object" || value === null) {
-					throw new Error(`Parameter '${key}' must be an object.`);
-				}
-				let resolvedParams = await resolveParameters(paramDef.parameters);
-				value = await processInput(strictInput, resolvedParams, value);
-			}
-
-			validatedInput[key] = value;
-		}
-	}
-
-	return validatedInput;
-}
+import { processInput } from "./HotProcessInput";
 
 export async function processRequest (server: HotHTTPServer, 
 	logger: HotLog, route: HotRoute, 
@@ -185,7 +62,7 @@ export async function processRequest (server: HotHTTPServer,
 			if (ex.statusCode != null)
 				statusCode = ex.statusCode;
 
-			logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
+			logger.error (`Authorization error ${statusCode}: ${ex.message}`);
 			hasAuthorization = false;
 
 			return ({ error: ex.message, errorCode: statusCode });
@@ -211,7 +88,10 @@ export async function processRequest (server: HotHTTPServer,
 					});
 
 				if (req.headers.authorization != null)
+				{
 					request.bearerToken = req.headers.authorization;
+					request.bearerToken = request.bearerToken.substring (7);
+				}
 
 				authorizationValue = await route.onAuthorizeUser (request);
 			}
@@ -222,7 +102,7 @@ export async function processRequest (server: HotHTTPServer,
 				if (ex.statusCode != null)
 					statusCode = ex.statusCode;
 
-				logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
+				logger.error (`Authorization error ${statusCode}: ${ex.message}`);
 				hasAuthorization = false;
 
 				return ({ error: ex.message, errorCode: statusCode });
@@ -233,7 +113,7 @@ export async function processRequest (server: HotHTTPServer,
 		}
 	}
 
-	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
+	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}`);
 
 	if (hasAuthorization === true)
 	{
@@ -284,6 +164,22 @@ export async function processRequest (server: HotHTTPServer,
 			});
 		}
 
+		let request = new ServerRequest ({
+				req: req,
+				res: res,
+				bearerToken: "",
+				authorizedValue: authorizationValue,
+				jsonObj: jsonObj,
+				queryObj: queryObj,
+				files: null,
+				onClose: null
+			});
+
+		res.on ("close", () => {
+				if (request.onClose != null)
+					request.onClose.call (thisObj, request);
+			});
+
 		// The validations have to occur after any possible file uploads.
 		if (queryObj != null)
 		{
@@ -306,10 +202,10 @@ export async function processRequest (server: HotHTTPServer,
 							else
 							{
 								if (method.validateQueryInput === InputValidationType.Strict)
-									queryObj = await processInput (true, method.parameters, queryObj);
+									queryObj = await processInput (true, method.parameters, queryObj, request);
 
 								if (method.validateQueryInput === InputValidationType.Loose)
-									queryObj = await processInput (false, method.parameters, queryObj);
+									queryObj = await processInput (false, method.parameters, queryObj, request);
 							}
 						}
 						catch (ex)
@@ -319,7 +215,7 @@ export async function processRequest (server: HotHTTPServer,
 							if (ex.statusCode != null)
 								statusCode = ex.statusCode;
 
-							logger.verbose (`Query validation error ${statusCode}: ${ex.message}`);
+							logger.error (`Query validation error ${statusCode}: ${ex.message}`);
 							return ({ error: ex.message, errorCode: statusCode });
 						}
 					}
@@ -349,10 +245,10 @@ export async function processRequest (server: HotHTTPServer,
 						else
 						{
 							if (method.validateJSONInput === InputValidationType.Strict)
-								jsonObj = await processInput (true, method.parameters, jsonObj);
+								jsonObj = await processInput (true, method.parameters, jsonObj, request);
 
 							if (method.validateJSONInput === InputValidationType.Loose)
-								jsonObj = await processInput (false, method.parameters, jsonObj);
+								jsonObj = await processInput (false, method.parameters, jsonObj, request);
 						}
 					}
 					catch (ex)
@@ -362,7 +258,7 @@ export async function processRequest (server: HotHTTPServer,
 						if (ex.statusCode != null)
 							statusCode = ex.statusCode;
 
-						logger.verbose (`JSON validation error ${statusCode}: ${ex.message}`);
+						logger.error (`JSON validation error ${statusCode}: ${ex.message}`);
 						return ({ error: ex.message, errorCode: statusCode });
 					}
 				}
@@ -401,15 +297,10 @@ export async function processRequest (server: HotHTTPServer,
 					files = server.uploads[foundUploadId];
 				}
 
-				let request = new ServerRequest ({
-						req: req,
-						res: res,
-						bearerToken: "",
-						authorizedValue: authorizationValue,
-						jsonObj: jsonObj,
-						queryObj: queryObj,
-						files: files
-					});
+				request.authorizedValue = authorizationValue;
+				request.jsonObj = jsonObj;
+				request.queryObj = queryObj;
+				request.files = files;
 
 				if (req.headers.authorization != null)
 				{
@@ -513,7 +404,7 @@ export async function processRequest (server: HotHTTPServer,
 	}
 	else
 	{
-		logger.verbose (`${req.method} ${methodName}, not_authorized`);
+		logger.error (`${req.method} ${methodName}, not_authorized`);
 		return (route.errors["not_authorized"]);
 	}
 }

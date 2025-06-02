@@ -9,6 +9,8 @@ build-web/
 
 .npmrc
 
+.turbo/
+
 docs/
 
 create-test-temp/

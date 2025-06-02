@@ -630,7 +630,13 @@ export class HotGenerator
 												tempParam.type = "integer";
 			
 											if (tempParam.type === "object")
-												createdObj.properties[key3] = await getChildParameters (tempParam.parameters);
+											{
+												if (tempParam.parameters == null)
+													this.logger.warning (`Object parameter ${key3} is missing parameters.`);
+
+												if (tempParam.parameters != null)
+													createdObj.properties[key3] = await getChildParameters (tempParam.parameters);
+											}
 											else
 											{
 												createdObj.properties[key3] = {

@@ -42,6 +42,7 @@ describe ("WebSocket Tests", () =>
 		it ("should set the HelloWorldAPI then call it without saying hi", async () =>
 			{
 				api = new HelloWorldAPI (common.getUrl (), server);
+				await api.onPreRegister ();
 				await server.setAPI (api);
 
 				let result: any = await api.makeCall ("/v1/hello_world/hello", {});

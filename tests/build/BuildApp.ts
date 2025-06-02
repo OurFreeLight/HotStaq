@@ -36,7 +36,7 @@ describe ("Builder Tests", function ()
 
 				creator = new HotCreator (processor.logger, "app");
 				creator.outputDir = baseDir;
-				creator.hotstaqVersion = `link`; // Be sure to set the previous version for testing
+				creator.hotstaqVersion = `latest`; // Be sure to set the previous version for testing
 				await creator.create ();
 			});
 		it ("should check that package.json and HotSite.json exists", async () =>

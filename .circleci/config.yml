@@ -1,19 +1,18 @@
 version: 2.1
 
 orbs:
-  browser-tools: circleci/browser-tools@1.5.1
+  browser-tools: circleci/browser-tools@2.0.0
 
 jobs:
   test:
     docker:
-      - image: cimg/node:22.13-browsers
+      - image: cimg/node:22.16-browsers
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: Install dependencies
           command: |
-            sudo npm install -g typescript typedoc mocha
             npm install
             
             cat > "./.env.chrome" \<<EOF
@@ -54,9 +53,9 @@ jobs:
       - run:
           name: Build and install globally
           command: |
-            npm run build
-            npm run buildweb
-            npm run buildwebdebug
+            npx turbo run build
+            npx turbo run buildweb
+            npx turbo run buildwebdebug
             npm run version-check
             
             sudo npm -g install .
@@ -70,7 +69,7 @@ jobs:
             ls ./build-web/HotStaq.min.js
             ls ./build-web/HotStaqTests_HelloWorldAPI.js
             ls ./build-web/HotStaqTests.js
-      - browser-tools/install-browser-tools
+      - browser-tools/install_browser_tools
       - run:
           name: Check Chrome Installation
           command: |
@@ -196,13 +195,12 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo npm install -g typescript typedoc
             npm install
       - run:
           name: Build
           command: |
-            npm run build
-            npm run buildweb
+            npx turbo run build
+            npx turbo run buildweb
             npm run version-check
       - run:
           name: Check if everything built correctly

@@ -34,6 +34,7 @@ describe ("Server Tests", () =>
 				url = common.getUrl ();
 
 				api = new HelloWorldAPI (common.getUrl (), server);
+				await api.onPreRegister ();
 				await server.setAPI (api);
 			});
 		after (async () =>

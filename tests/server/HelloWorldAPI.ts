@@ -6,7 +6,7 @@
 import { HotAPI } from "../../src/HotAPI";
 import { HotRoute } from "../../src/HotRoute";
 import { HotClient } from "../../src/HotClient";
-import { HotServer } from "../../src/HotServer";
+import { HotServer, HotServerType } from "../../src/HotServer";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HotRouteMethodParameterMap, HotStaq } from "../../src/HotStaq";
 import { HotTestDriver } from "../../src/HotTestDriver";
@@ -57,7 +57,11 @@ export class HelloWorldAPI extends HotAPI
 
 				this.description = "This is the hello world API.";
 
-				const otherInterface: HotRouteMethodParameterMap = await HotStaq.convertInterfaceToRouteParameters ("OtherInterface");
+				let otherInterface: HotRouteMethodParameterMap = undefined;
+
+				/// @fixme This is a hack. This should not be loaded during runtime for web. The generated js file should be used instead.
+				if (HotStaq.isWeb === false)
+					otherInterface = await HotStaq.convertInterfaceToRouteParameters ("OtherInterface");
 
 				let route: HotRoute = new HotRoute (connection, "hello_world");
 				// @ts-ignore
@@ -227,7 +231,7 @@ export class HelloWorldAPI extends HotAPI
 	 */
 	async fileUploadAuth (req: ServerRequest): Promise<any>
 	{
-		const uploadDetails = HotStaq.getParam ("uploadDetails", req.jsonObj);
+		const uploadDetails = HotStaq.getParamUnsafe ("uploadDetails", req.jsonObj);
 
 		if (uploadDetails.name !== "testName")
 			throw new Error ("Incorrect upload name!");

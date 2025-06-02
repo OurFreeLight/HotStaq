@@ -5,7 +5,7 @@ import { HotServer, HotServerType } from "./HotServer";
 
 import express from "express";
 import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
-import { HotRouteMethodParameterMap } from "./HotStaq";
+import { HotRouteMethodParameterMap, IHotValidReturn } from "./HotStaq";
 
 /**
  * The available event methods.
@@ -24,6 +24,10 @@ export enum HotEventMethod
 	 * This will upload a file, then post the json request afterwards.
 	 */
 	FILE_UPLOAD = "file_upload_then_post_json",
+	/**
+	 * A SSE sub event. This will close the event whenever 
+	 */
+	SSE_SUB_EVENT = "sse_sub_event",
 	/**
 	 * A websocket event.
 	 */
@@ -85,6 +89,10 @@ export interface IServerRequest
 			path: string;
 		}
 	};
+	/**
+	 * Called when the client's connection has closed for any reason.
+	 */
+	onClose?: () => void;
 }
 
 /**
@@ -202,6 +210,10 @@ export class ServerRequest implements IServerRequest
 			path: string;
 		}
 	};
+	/**
+	 * Called when the client's connection has closed for any reason.
+	 */
+	onClose: () => void;
 
 	constructor (obj: IServerRequest = null)
 	{
@@ -216,6 +228,76 @@ export class ServerRequest implements IServerRequest
 		this.jsonObj = obj.jsonObj || null;
 		this.queryObj = obj.queryObj || null;
 		this.files = obj.files || null;
+		this.onClose = obj.onClose || null;
+	}
+
+	/**
+	 * Write to the HTTP response. This is mostly intended to be used 
+	 * when using SSE. This requires JSON to be sent.
+	 */
+	async httpWrite (event: string, jsonObj: any): Promise<void>
+	{
+		if (this.res == null)
+			throw new Error (`Cannot close HTTP response because it is null!`);
+
+		return (new Promise<void> ((resolve, reject) =>
+			{
+				if (this.res.writable === true)
+				{
+					let content = jsonObj;
+
+					if (typeof (jsonObj) !== "string")
+						content = JSON.stringify (jsonObj);
+
+					this.res.write (`event: ${event}\ndata: ${content}\n\n`, (err: Error) =>
+						{
+							if (err != null)
+								throw err;
+
+							resolve ();
+						});
+				}
+				else
+					resolve ();
+			}));
+	}
+
+	/**
+	 * Write to the HTTP response. This is mostly intended to be used 
+	 * when using SSE.
+	 */
+	async httpWriteRaw (data: any): Promise<void>
+	{
+		if (this.res == null)
+			throw new Error (`Cannot close HTTP response because it is null!`);
+
+		return (new Promise<void> ((resolve, reject) =>
+			{
+				if (this.res.writable === true)
+				{
+					this.res.write (data, (err: Error) =>
+						{
+							if (err != null)
+								throw err;
+
+							resolve ();
+						});
+				}
+				else
+					resolve ();
+			}));
+	}
+
+	/**
+	 * Close the HTTP response. This is mostly intended to be used when 
+	 * using SSE.
+	 */
+	httpClose (): void
+	{
+		if (this.res == null)
+			throw new Error (`Cannot close HTTP response because it is null!`);
+
+		this.res.end ();
 	}
 }
 
@@ -270,8 +352,13 @@ export enum HotValidationType
 	Text = "Text",
 	Email = "Email",
 	Phone = "Phone",
+	IPv4 = "IPv4",
+	IPv6 = "IPv6",
 	Date = "Date",
 	Enum = "Enum",
+	Array = "Array",
+	Ignore = "Ignore",
+	Delete = "Delete",
 	JS = "JS"
 }
 
@@ -286,27 +373,41 @@ export interface HotValidation
 	 */
 	type?: HotValidationType;
 	/**
-	 * The possible values to check against. Works best using the enum type.
+	 * The default value to set if the incoming input is null or undefined.
+	 */
+	defaultValue?: any;
+	/**
+	 * The associated validations for this current validation. This is mostly to be used for the Array or  
+	 * Map types when trying to validate each item of an array.
+	 * @default Text
+	 */
+	associatedValids?: HotValidation[];
+	/**
+	 * The possible properties to check against. Works only with the Object type.
+	 */
+	properties?: HotValidation[];
+	/**
+	 * The possible values to check against. Works best using the Enum type.
 	 */
 	values?: any[];
 	/**
 	 * The function to use to validate if the input is valid.
 	 */
-	func?: (strict: boolean, key: string, input: any) => Promise<{ success: boolean; failMessage: string; }>;
+	func?: (strict: boolean, key: string, input: any) => Promise<IHotValidReturn>;
 	/**
 	 * The regex to use to validate with.
 	 */
 	regex?: string | RegExp;
 	/**
-	 * The min text length. This can also be the minimum number if the type is number.
+	 * The min text or array length. This can also be the minimum number if the type is number.
 	 */
 	min?: number;
 	/**
-	 * The max text length. This can also be the maximum number if the type is number.
+	 * The max text or array length. This can also be the maximum number if the type is number.
 	 */
 	max?: number;
 	/**
-	 * Check if the string is not empty or null.
+	 * Ensures that the string or array is not empty or null.
 	 */
 	notEmptyOrNull?: boolean;
 	/**
@@ -316,11 +417,11 @@ export interface HotValidation
 		/**
 		 * The value to check if greater than.
 		 */
-		greaterThan?: number;
+		greaterThan?: any;
 		/**
 		 * The value to check if less than.
 		 */
-		lessThan?: number;
+		lessThan?: any;
 		/**
 		 * The value to check equal to.
 		 */

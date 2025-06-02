@@ -2,6 +2,40 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Build - Turbo",
+			"type": "shell",
+			"command": "npx turbo run dev",
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"type": "shell",
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"label": "Build web debug - Turbo",
+			"command": "npx turbo run dev-web"
+		},
+		{
+			"type": "shell",
+			"group": "build",
+			"runOptions": {
+				"instanceLimit": 1
+			},
+			"problemMatcher": [],
+			"label": "Build web tests - Turbo",
+			"command": "npx turbo run dev-web-tests"
+		},
+		{
 			"type": "typescript",
 			"tsconfig": "tsconfig.json",
 			"option": "watch",
@@ -68,6 +102,24 @@
 				"Build",
 				"Build web debug",
 				"Build web tests"
+			]
+		},
+		{
+			"type": "process",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"runOptions": {
+				"instanceLimit": 1,
+				"runOn": "folderOpen"
+			},
+			"problemMatcher": [],
+			"label": "Build all - Turbo",
+			"dependsOn": [
+				"Build - Turbo",
+				"Build web debug - Turbo",
+				"Build web tests - Turbo"
 			]
 		},
 		{
