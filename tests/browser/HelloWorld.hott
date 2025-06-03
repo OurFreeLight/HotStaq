@@ -19,6 +19,12 @@
 					message: `${msg}` // Helps ensure that existing template strings still work.
 				});
 			document.getElementById ('buttonClicked').innerHTML = JSON.stringify (result);
+
+			result = await Hot.apiCall ('/v1/hello_world/hello', {
+					message: `${msg}`,
+					throwErrorPls: true
+				});
+			document.getElementById ('APIResponse').innerHTML = JSON.stringify (result);
 		}
 
 		async function sayHelloDifferently ()
@@ -107,7 +113,8 @@
 		Hot.echo (`<div id = "iifeTest"></div>`);
 	*>
 	<span id = "onload"></span><br />
-	<span id = "DOMContentLoaded"></span>
+	<span id = "DOMContentLoaded"></span><br />
+	API Response: <span id = "APIResponse"></span>
 </body>
 
 </html>

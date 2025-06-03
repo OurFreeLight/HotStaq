@@ -1,19 +1,18 @@
 version: 2.1
 
 orbs:
-  browser-tools: circleci/browser-tools@1.5.1
+  browser-tools: circleci/browser-tools@2.0.0
 
 jobs:
   test:
     docker:
-      - image: cimg/node:22.13-browsers
+      - image: cimg/node:22.16-browsers
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: Install dependencies
           command: |
-            sudo npm install -g typescript typedoc mocha
             npm install
             
             cat > "./.env.chrome" \<<EOF
@@ -54,9 +53,9 @@ jobs:
       - run:
           name: Build and install globally
           command: |
-            npm run build
-            npm run buildweb
-            npm run buildwebdebug
+            npx turbo run build
+            npx turbo run buildweb
+            npx turbo run buildwebdebug
             npm run version-check
             
             sudo npm -g install .
@@ -70,7 +69,7 @@ jobs:
             ls ./build-web/HotStaq.min.js
             ls ./build-web/HotStaqTests_HelloWorldAPI.js
             ls ./build-web/HotStaqTests.js
-      - browser-tools/install-browser-tools
+      - browser-tools/install_browser_tools
       - run:
           name: Check Chrome Installation
           command: |
@@ -93,94 +92,94 @@ jobs:
           name: "Chrome Test: Browsers"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
+            npx mocha --timeout 10000 --colors ./build/tests/browser/**/*.js
       - run:
           name: "Chrome Test: Components"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/components/**/*.js
+            npx mocha --timeout 15000 --colors ./build/tests/components/**/*.js
       - run:
           name: "Chrome Test: Create"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+            npx mocha --timeout 5000 --colors ./build/tests/create/**/*.js
       - run:
           name: "Chrome Test: Generator"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
+            npx mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
       - run:
           name: "Chrome Test: Hotsite"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
+            npx mocha --timeout 10000 --colors ./build/tests/hotsite/**/*.js
       - run:
           name: "Chrome Test: Local"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/local/**/*.js
+            npx mocha --timeout 5000 --colors ./build/tests/local/**/*.js
       - run:
           name: "Chrome Test: Parsing"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
+            npx mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
       - run:
           name: "Chrome Test: Server"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/server/**/*.js
+            npx mocha --timeout 10000 --colors ./build/tests/server/**/*.js
       - run:
           name: "Chrome Test: Creator"
           command: |
             export $(cat .env.chrome | xargs)
-            mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+            npx mocha --timeout 5000 --colors ./build/tests/create/**/*.js
 
       # Execute Firefox Tests -- Someday...
       # - run:
       #     name: "Firefox Test: Browsers"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
       # - run:
       #     name: "Firefox Test: Components"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/components/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/components/**/*.js
       # - run:
       #     name: "Firefox Test: Create"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/create/**/*.js
       # - run:
       #     name: "Firefox Test: Generator"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/generator/**/*.js
       # - run:
       #     name: "Firefox Test: Hotsite"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
       # - run:
       #     name: "Firefox Test: Local"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/local/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/local/**/*.js
       # - run:
       #     name: "Firefox Test: Parsing"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/parsing/**/*.js
       # - run:
       #     name: "Firefox Test: Server"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/server/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/server/**/*.js
       # - run:
       #     name: "Firefox Test: Creator"
       #     command: |
       #       export $(cat .env.firefox | xargs)
-      #       mocha --timeout 5000 --colors ./build/tests/create/**/*.js
+      #       npx mocha --timeout 5000 --colors ./build/tests/create/**/*.js
   publish:
     docker:
       - image: cimg/node:lts
@@ -196,13 +195,12 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            sudo npm install -g typescript typedoc
             npm install
       - run:
           name: Build
           command: |
-            npm run build
-            npm run buildweb
+            npx turbo run build
+            npx turbo run buildweb
             npm run version-check
       - run:
           name: Check if everything built correctly

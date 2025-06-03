@@ -192,7 +192,7 @@ export class HotWebSocketServer
 						return;
 					}
 
-					this.logger.verbose (`Incoming WebSocket connection from ${incomingIP}, Authorized: true, Authorization Value: ${authorizationValue}`);
+					this.logger.verbose (`Incoming WebSocket connection from ${incomingIP}, Authorized: true`);
 
 					socket.data.authorizationValue = authorizationValue;
 

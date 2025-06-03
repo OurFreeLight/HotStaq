@@ -77,6 +77,7 @@ export class Tester extends HotTester
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${this.baseUrl}", client);
+				await helloWorldAPI.onPreRegister ();
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl (
@@ -96,6 +97,7 @@ export class Tester extends HotTester
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${this.baseUrl}", client);
+				await helloWorldAPI.onPreRegister ();
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl ({

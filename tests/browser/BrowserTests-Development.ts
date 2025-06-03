@@ -43,6 +43,7 @@ Execute this code to debug in browser:
 	window.Hot = HotStaqWeb.Hot;
 	var client = new HotClient (processor);
 	var helloWorldAPI = new HelloWorldAPI ("http://127.0.0.1:3123", client);
+	await helloWorldAPI.onPreRegister ();
 	helloWorldAPI.connection.api = helloWorldAPI;
 	processor.api = helloWorldAPI;
 	await HotStaq.displayUrl (
@@ -60,6 +61,7 @@ Execute this code to debug in browser:
 				window.Hot = HotStaqWeb.Hot;
 				var client = new HotClient (processor);
 				var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
+				await helloWorldAPI.onPreRegister ();
 				helloWorldAPI.connection.api = helloWorldAPI;
 				processor.api = helloWorldAPI;
 				await HotStaq.displayUrl (
@@ -128,11 +130,15 @@ Execute this code to debug in browser:
 
 				await HotStaq.wait (100);
 
-				elm = await common.driver.findElement (By.id ("buttonClicked"));
+				/*elm = await common.driver.findElement (By.id ("buttonClicked"));
 				let value: string = await elm.getAttribute ("innerHTML");
 				let jsonObj = JSON.parse (value);
+				expect (jsonObj).to.equal ("Hello!");*/
 
-				expect (jsonObj).to.equal ("Hello!");
+				elm = await common.driver.findElement (By.id ("APIResponse"));
+				let value = await elm.getAttribute ("innerHTML");
+				let jsonObj = JSON.parse (value);
+				expect (jsonObj.errorCode).to.equal (400);
 
 				// Tests the constructed API call route method functions
 				elm = await common.driver.wait (until.elementLocated (By.id ("testHelloWorldAPI2")));

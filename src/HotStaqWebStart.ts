@@ -356,6 +356,10 @@ export function hotStaqWebStart ()
 					}
 
 					let newAPI = new parentLib[apiName] (apiUrl, client);
+
+					if (newAPI.onPreRegister != null)
+						await newAPI.onPreRegister ();
+
 					newAPI.connection.api = newAPI;
 					processor.api = newAPI;
 				}

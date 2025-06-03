@@ -22,6 +22,9 @@ export class HotAgentRoute extends HotRoute
 
         this.thisApi = api;
 
+		if (api.userAuth == null)
+			throw new Error (`When using the HotAgentRoute, you must provide a userAuth function in the API.`);
+
 		this.addMethod ({
 				name: "execute", 
 				onServerExecute: this.execute, 
@@ -35,8 +38,8 @@ export class HotAgentRoute extends HotRoute
 	 */
 	protected async execute (req: ServerRequest): Promise<any>
 	{
-		const cmd: string = HotStaq.getParam ("cmd", req.jsonObj);
-		const data: any = HotStaq.getParamDefault ("data", req.jsonObj, undefined);
+		const cmd: string = HotStaq.getParamUnsafe ("cmd", req.jsonObj);
+		const data: any = HotStaq.getParamDefaultUnsafe ("data", req.jsonObj, undefined);
         let foundCmd: string = this.thisApi.commands[cmd];
 
         if (foundCmd == null)

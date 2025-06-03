@@ -287,7 +287,7 @@ export class HotTesterServer extends HotServer
 						}
 					}
 
-					this.logger.verbose (`${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
+					this.logger.verbose (`${req.method} ${methodName}, Authorized: ${hasAuthorization}`);
 
 					if (hasAuthorization === true)
 					{

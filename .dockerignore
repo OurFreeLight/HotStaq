@@ -2,18 +2,15 @@ build/
 build-web/
 ./app/
 
-static/
-
-.env
-.npmrc
+public/hotstaq_modules/
 
 ./*.sh
-.circleci
-.vscode
+
+.npmrc
+
+slim.report.json
 
 create-test-temp/
-temp*/
-examples/
 
 # Logs
 logs
@@ -56,6 +53,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+hotstaq_modules/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -86,8 +84,7 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variables file
-.env
-.env.test
+.env*
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

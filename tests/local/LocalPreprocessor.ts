@@ -73,23 +73,23 @@ describe ("Local Preprocessor Tests", () =>
 				for (let iIdx = 0; iIdx < falses.length; iIdx++)
 					expect (HotStaq.parseBoolean (falses[iIdx])).to.equal (false);
 			});
-		it ("should test HotStaq.getParam", async () =>
+		it ("should test HotStaq.getParamUnsafe", async () =>
 			{
 				let obj = {
 						"testParameter": "abc"
 					};
 
-				expect (HotStaq.getParam ("testParameter", obj)).to.equal ("abc");
-				expect (HotStaq.getParam ("missingParameter", obj, true, false)).to.equal (undefined);
+				expect (HotStaq.getParamUnsafe ("testParameter", obj)).to.equal ("abc");
+				expect (HotStaq.getParamUnsafe ("missingParameter", obj, true, false)).to.equal (undefined);
 			});
-		it ("should test HotStaq.getParamDefault", async () =>
+		it ("should test HotStaq.getParamDefaultUnsafe", async () =>
 			{
 				let obj = {
 						"testParameter": "abc"
 					};
 
-				expect (HotStaq.getParamDefault ("testParameter", obj, "peep")).to.equal ("abc");
-				expect (HotStaq.getParamDefault ("missingParameter", obj, "peep")).to.equal ("peep");
+				expect (HotStaq.getParamDefaultUnsafe ("testParameter", obj, "peep")).to.equal ("abc");
+				expect (HotStaq.getParamDefaultUnsafe ("missingParameter", obj, "peep")).to.equal ("peep");
 			});
 		it ("should test HotStaq.checkHotSiteName", async () =>
 			{

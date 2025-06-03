@@ -56,25 +56,6 @@ export interface HTTPHeader
 }
 
 /**
- * A HTTP error.
- */
-export class HttpError extends Error
-{
-	/**
-	 * The status code.
-	 */
-	statusCode: number;
-
-	constructor (message: string, statusCode: number = 400)
-	{
-		super (message);
-
-		this.name = "HttpError";
-		this.statusCode = statusCode;
-	}
-}
-
-/**
  * A servable file extension.
  */
 export interface ServableFileExtension
@@ -196,7 +177,7 @@ export class HotHTTPServer extends HotServer
 	/**
 	 * The request reporter interval.
 	 */
-	requestReporterInterval: NodeJS.Timer;
+	requestReporterInterval: NodeJS.Timeout;
 	/**
 	 * The number of requests served, this will be incremented each time a request is served, 
 	 * and if it reaches (Number.MAX_SAFE_INTEGER - 1), it will be reset to 0.
@@ -572,6 +553,9 @@ export class HotHTTPServer extends HotServer
 		if (methodType === HotEventMethod.FILE_UPLOAD)
 			expressMethod = "post";
 
+		if (methodType === HotEventMethod.SSE_SUB_EVENT)
+			expressMethod = "post";
+
 		if (methodType === HotEventMethod.WEBSOCKET_CLIENT_PUB_EVENT)
 			expressMethod = "ws_client_pub_event";
 
@@ -769,6 +753,17 @@ export class HotHTTPServer extends HotServer
 				this.expressApp[expressType] (methodName, 
 					async (req: express.Request, res: express.Response) =>
 					{
+						if (method.type === HotEventMethod.SSE_SUB_EVENT)
+						{
+							this.logger.verbose (`Created SSE event for method: ${method.name}`);
+							res.set ({
+									'Content-Type': 'text/event-stream',
+									'Cache-Control': 'no-cache',
+									'Connection': 'keep-alive'
+								})
+							res.flushHeaders ();
+						}
+
 						let sendResponse = (value: any, requestNum: number) =>
 							{
 								let start = this.activeRequests[requestNum];
@@ -809,7 +804,9 @@ export class HotHTTPServer extends HotServer
 						
 							this.activeRequests[requestNum] = performance.now ();
 							let response = await processRequest (this, this.logger, route, method, methodName, req, res);
-							sendResponse (response, requestNum);
+
+							if (method.type !== HotEventMethod.SSE_SUB_EVENT)
+								sendResponse (response, requestNum);
 
 							return;
 						}
@@ -827,7 +824,7 @@ export class HotHTTPServer extends HotServer
 										this.numRequestsServed = 0;
 		
 									const requestNum = this.numRequestsServed++;
-								
+
 									this.activeRequests[requestNum] = performance.now ();
 
 									// workerData.logger, workerData.route, workerData.method, workerData.methodName, workerData.req, workerData.res
@@ -840,7 +837,9 @@ export class HotHTTPServer extends HotServer
 
 									worker.on ("message", function (requestNum2: number, value: any)
 										{
-											sendResponse (value, requestNum2);
+											if (method.type !== HotEventMethod.SSE_SUB_EVENT)
+												sendResponse (value, requestNum2);
+
 											resolveIt ();
 										}.bind (this, requestNum));
 									worker.on ("error", (err: Error) =>

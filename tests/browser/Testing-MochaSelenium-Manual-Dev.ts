@@ -80,6 +80,7 @@ describe ("Browser Manual Testing From Server Tests - Mocha Selenium - Developme
 							window.Hot = HotStaqWeb.Hot;
 							var client = new HotClient (processor);
 							var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
+							await helloWorldAPI.onPreRegister ();
 							helloWorldAPI.connection.api = helloWorldAPI;
 							processor.api = helloWorldAPI;
 							await HotStaq.displayUrl (

@@ -164,7 +164,7 @@ export class HotTesterAPI extends HotAPI
 	 */
 	async pageUnloaded (request: ServerRequest): Promise<any>
 	{
-		const testerName: string = HotStaq.getParam ("testerName", request.jsonObj);
+		const testerName: string = HotStaq.getParamUnsafe ("testerName", request.jsonObj);
 
 		let tester: HotTester = this.connection.processor.testers[testerName];
 

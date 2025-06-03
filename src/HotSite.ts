@@ -100,6 +100,15 @@ export interface HotSite
 			 */
 			jsSrcPath?: string;
 			/**
+			 * The interfaces to convert into IHotParameters.
+			 */
+			interfaces?: {
+					/**
+					 * The name of the interfaces to convert into JSON objects.
+					 */
+					generate: string[];
+				};
+			/**
 			 * The ports to use.
 			 */
 			ports?: {

@@ -4,11 +4,14 @@ import { v4 as uuidv4 } from "uuid";
 import * as ppath from "path";
 
 import { HotLog } from "./HotLog";
-import { HotEventMethod, HotRouteMethod, PassType, ServerRequest } from "./HotRouteMethod";
+import { HotEventMethod, HotRouteMethod, HotRouteMethodParameter, HotValidation, 
+	HotValidationType, InputValidationType, PassType, ServerRequest } from "./HotRouteMethod";
 import { HotRoute } from "./HotRoute";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
-import { EventExecutionType } from "./HotAPI";
+import { HotAPI, EventExecutionType } from "./HotAPI";
+import { HotRouteMethodParameterMap, HotStaq } from "./HotStaq";
+import { processInput } from "./HotProcessInput";
 
 export async function processRequest (server: HotHTTPServer, 
 	logger: HotLog, route: HotRoute, 
@@ -59,7 +62,7 @@ export async function processRequest (server: HotHTTPServer,
 			if (ex.statusCode != null)
 				statusCode = ex.statusCode;
 
-			logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
+			logger.error (`Authorization error ${statusCode}: ${ex.message}`);
 			hasAuthorization = false;
 
 			return ({ error: ex.message, errorCode: statusCode });
@@ -85,7 +88,10 @@ export async function processRequest (server: HotHTTPServer,
 					});
 
 				if (req.headers.authorization != null)
+				{
 					request.bearerToken = req.headers.authorization;
+					request.bearerToken = request.bearerToken.substring (7);
+				}
 
 				authorizationValue = await route.onAuthorizeUser (request);
 			}
@@ -96,7 +102,7 @@ export async function processRequest (server: HotHTTPServer,
 				if (ex.statusCode != null)
 					statusCode = ex.statusCode;
 
-				logger.verbose (`Authorization error ${statusCode}: ${ex.message}`);
+				logger.error (`Authorization error ${statusCode}: ${ex.message}`);
 				hasAuthorization = false;
 
 				return ({ error: ex.message, errorCode: statusCode });
@@ -107,7 +113,7 @@ export async function processRequest (server: HotHTTPServer,
 		}
 	}
 
-	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}, Authorization Value: ${authorizationValue}`);
+	logger.verbose (() => `${req.method} ${methodName}, Authorized: ${hasAuthorization}`);
 
 	if (hasAuthorization === true)
 	{
@@ -158,6 +164,107 @@ export async function processRequest (server: HotHTTPServer,
 			});
 		}
 
+		let request = new ServerRequest ({
+				req: req,
+				res: res,
+				bearerToken: "",
+				authorizedValue: authorizationValue,
+				jsonObj: jsonObj,
+				queryObj: queryObj,
+				files: null,
+				onClose: null
+			});
+
+		res.on ("close", () => {
+				if (request.onClose != null)
+					request.onClose.call (thisObj, request);
+			});
+
+		// The validations have to occur after any possible file uploads.
+		if (queryObj != null)
+		{
+			if (Object.keys(queryObj).length > 0)
+			{
+				if ((method.validateQueryInput === InputValidationType.Strict) || 
+					(method.validateQueryInput === InputValidationType.Loose))
+				{
+					let skipValidation: number = 0;
+	
+					if (queryObj["hotstaq_skip_validation"] != null)
+						skipValidation = queryObj["hotstaq_skip_validation"];
+	
+					if (skipValidation === 0)
+					{
+						try
+						{
+							if (method.onValidateQueryInput != null)
+								await method.onValidateQueryInput.call (thisObj, queryObj);
+							else
+							{
+								if (method.validateQueryInput === InputValidationType.Strict)
+									queryObj = await processInput (true, method.parameters, queryObj, request);
+
+								if (method.validateQueryInput === InputValidationType.Loose)
+									queryObj = await processInput (false, method.parameters, queryObj, request);
+							}
+						}
+						catch (ex)
+						{
+							let statusCode = 400;
+
+							if (ex.statusCode != null)
+								statusCode = ex.statusCode;
+
+							logger.error (`Query validation error ${statusCode}: ${ex.message}`);
+							return ({ error: ex.message, errorCode: statusCode });
+						}
+					}
+				}
+			}
+		}
+
+		if (jsonObj != null)
+		{
+			if ((method.validateJSONInput === InputValidationType.Strict) || 
+				(method.validateJSONInput === InputValidationType.Loose))
+			{
+				let skipValidation: boolean = false;
+
+				if (jsonObj["hotstaq"] != null)
+				{
+					if (jsonObj["hotstaq"]["skipValidation"] != null)
+						skipValidation = jsonObj["hotstaq"]["skipValidation"];
+				}
+
+				if (skipValidation === false)
+				{
+					try
+					{
+						if (method.onValidateJSONInput != null)
+							await method.onValidateJSONInput.call (thisObj, jsonObj);
+						else
+						{
+							if (method.validateJSONInput === InputValidationType.Strict)
+								jsonObj = await processInput (true, method.parameters, jsonObj, request);
+
+							if (method.validateJSONInput === InputValidationType.Loose)
+								jsonObj = await processInput (false, method.parameters, jsonObj, request);
+						}
+					}
+					catch (ex)
+					{
+						let statusCode = 400;
+
+						if (ex.statusCode != null)
+							statusCode = ex.statusCode;
+
+						logger.error (`JSON validation error ${statusCode}: ${ex.message}`);
+						return ({ error: ex.message, errorCode: statusCode });
+					}
+				}
+			}
+		}
+
 		if (method.onServerExecute != null)
 		{
 			let hotstaq: any = jsonObj["hotstaq"];
@@ -190,15 +297,10 @@ export async function processRequest (server: HotHTTPServer,
 					files = server.uploads[foundUploadId];
 				}
 
-				let request = new ServerRequest ({
-						req: req,
-						res: res,
-						bearerToken: "",
-						authorizedValue: authorizationValue,
-						jsonObj: jsonObj,
-						queryObj: queryObj,
-						files: files
-					});
+				request.authorizedValue = authorizationValue;
+				request.jsonObj = jsonObj;
+				request.queryObj = queryObj;
+				request.files = files;
 
 				if (req.headers.authorization != null)
 				{
@@ -302,7 +404,7 @@ export async function processRequest (server: HotHTTPServer,
 	}
 	else
 	{
-		logger.verbose (`${req.method} ${methodName}, not_authorized`);
+		logger.error (`${req.method} ${methodName}, not_authorized`);
 		return (route.errors["not_authorized"]);
 	}
 }

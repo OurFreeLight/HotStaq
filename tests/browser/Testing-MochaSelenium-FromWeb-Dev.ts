@@ -48,6 +48,7 @@ describe ("Browser Testing From Web Tests - Mocha Selenium - Development Mode", 
 							window.Hot = HotStaqWeb.Hot;
 							var client = new HotClient (processor);
 							var helloWorldAPI = new HelloWorldAPI ("${common.getUrl ()}", client);
+							await helloWorldAPI.onPreRegister ();
 							helloWorldAPI.connection.api = helloWorldAPI;
 							processor.api = helloWorldAPI;
 							await HotStaq.displayUrl ({

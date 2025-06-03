@@ -363,7 +363,32 @@ export class HotCLI
 				createHotBuilder ();
 				builder.kubernetes = true;
 			});*/
-		buildCmd.option ("--output", "The directory path to place all files.", 
+		buildCmd.option ("--interfaces", "Generates interfaces to what is set with --interfaces-out and generate the specified interfaces that use --interface.", 
+			(arg: string, previous: any) =>
+			{
+				createHotBuilder ();
+				builder.interfaces = true;
+			});
+		buildCmd.option ("--interface <interface_name>", "The name of the interface to generate a IHotParameter JSON for.", 
+			(arg: string, previous: any) =>
+			{
+				createHotBuilder ();
+
+				builder.interfaceConfig.filesToGenerate.push (arg);
+			});
+		buildCmd.option ("--interfaces-tsconfig <path>", "The path to the tsconfig to load and use.", 
+			(arg: string, previous: any) =>
+			{
+				createHotBuilder ();
+				builder.interfaceConfig.tsconfigPath = arg;
+			});
+		buildCmd.option ("--interfaces-out <path>", "The path to output all the generated route parameters to.", 
+			(arg: string, previous: any) =>
+			{
+				createHotBuilder ();
+				builder.interfaceConfig.outputDir = arg;
+			});
+		buildCmd.option ("--output", "The path to place all files.", 
 			(arg: string, previous: any) =>
 			{
 				createHotBuilder ();
@@ -501,12 +526,12 @@ export class HotCLI
 				createHotCreator ();
 				this.creator.npmCommands.buildWebAPIDebug = value;
 			}, "");
-		createCmd.option (`--overwrite-cmd-npm-dev <value>`, 
+		createCmd.option (`--overwrite-cmd-npm-develop <value>`, 
 			`Overwrite the npm command for building the development script.`, 
 			(value: string, previous: any) =>
 			{
 				createHotCreator ();
-				this.creator.npmCommands.dev = value;
+				this.creator.npmCommands.develop = value;
 			}, "");
 		createCmd.option (`--overwrite-cmd-npm-start <value>`, 
 			`Overwrite the npm command for the start script.`, 

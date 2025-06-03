@@ -32,6 +32,7 @@ describe ("Database - Postgres Tests", () =>
 				url = common.getUrl ();
 
 				api = new HelloWorldAPI (common.getUrl (), server);
+				await api.onPreRegister ();
 				api.db = new HotDBPostgres ();
 				await server.setAPI (api);
 			});
@@ -70,7 +71,7 @@ describe ("Database - Postgres Tests", () =>
 				let results = await api.db.query ("insert into test_table (name) VALUES ($1) returning id;", ["test1"]);
 				let dbresults = results.results;
 
-				expect (dbresults.rows[0].id, "Did not insert data into the table!");
+				expect (dbresults[0].id, "Did not insert data into the table!");
 			});
 		it ("should select data from the table", async () =>
 			{
