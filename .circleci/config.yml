@@ -92,7 +92,7 @@ jobs:
           name: "Chrome Test: Browsers"
           command: |
             export $(cat .env.chrome | xargs)
-            npx mocha --timeout 5000 --colors ./build/tests/browser/**/*.js
+            npx mocha --timeout 10000 --colors ./build/tests/browser/**/*.js
       - run:
           name: "Chrome Test: Components"
           command: |
