@@ -87,7 +87,10 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 	}
 	else
 	{
-		let foundValid = valid[key];
+		const result = await processInput (strictInput, valid, value, request, key);
+		newResult = { type: HotValidReturnType.Return, value: result };
+		//let foundValid = valid[key];
+		/*let foundValid = valid;
 		let compValid: HotRouteMethodParameter = null;
 
 		if (foundValid instanceof Function)
@@ -100,7 +103,7 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 
 		const resolvedParams = await resolveParameters(compValid.parameters);
 		const result = await processInput (strictInput, resolvedParams, value, request, key);
-		newResult = { type: HotValidReturnType.Return, value: result };
+		newResult = { type: HotValidReturnType.Return, value: result };*/
 	}
 
 	if (HotStaq.postValidate != null)

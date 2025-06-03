@@ -61,7 +61,10 @@ export class HelloWorldAPI extends HotAPI
 
 				/// @fixme This is a hack. This should not be loaded during runtime for web. The generated js file should be used instead.
 				if (HotStaq.isWeb === false)
+				{
+					await HotStaq.convertInterfaceToRouteParameters ("OtherInterfaceAgain")
 					otherInterface = await HotStaq.convertInterfaceToRouteParameters ("OtherInterface");
+				}
 
 				let route: HotRoute = new HotRoute (connection, "hello_world");
 				// @ts-ignore
