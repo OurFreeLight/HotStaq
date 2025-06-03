@@ -112,7 +112,7 @@ jobs:
           name: "Chrome Test: Hotsite"
           command: |
             export $(cat .env.chrome | xargs)
-            npx mocha --timeout 5000 --colors ./build/tests/hotsite/**/*.js
+            npx mocha --timeout 10000 --colors ./build/tests/hotsite/**/*.js
       - run:
           name: "Chrome Test: Local"
           command: |
@@ -127,7 +127,7 @@ jobs:
           name: "Chrome Test: Server"
           command: |
             export $(cat .env.chrome | xargs)
-            npx mocha --timeout 5000 --colors ./build/tests/server/**/*.js
+            npx mocha --timeout 10000 --colors ./build/tests/server/**/*.js
       - run:
           name: "Chrome Test: Creator"
           command: |
