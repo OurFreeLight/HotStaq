@@ -459,8 +459,11 @@ export class Hot
 			if (request.httpMethod !== HotEventMethod.GET)
 				sseObj["body"] = JSON.stringify (request.data);
 
-			if (request.bearerToken != "")
-				sseObj.headers["Authorization"] = `Bearer ${request.bearerToken}`;
+			if (request.bearerToken != null)
+			{
+				if (request.bearerToken !== "")
+					sseObj.headers["Authorization"] = `Bearer ${request.bearerToken}`;
+			}
 
 			fetchEventSource (request.url, {
 					...sseObj, 
