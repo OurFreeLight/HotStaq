@@ -23,10 +23,10 @@
 <body>
 	<button id = "test">test</button>
 <*
-	Hot.echo (`<button id = "helloWorld" onclick = "document.getElementById ('buttonClicked').innerHTML='Clicked';">Hello`);
+	Hot.echoUnsafe (`<button id = "helloWorld" onclick = "document.getElementById ('buttonClicked').innerHTML='Clicked';">Hello`);
 *>
 <*
-	Hot.echo (`World!</button>`);
+	Hot.echoUnsafe (`World!</button>`);
 *>
 	<div ?("apiResult") id = "buttonClicked"></div>
 	<input id = "message" data-test = "${'TESTING'}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />

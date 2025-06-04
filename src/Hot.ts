@@ -9,6 +9,7 @@ import { HttpError } from "./HotHttpError";
 
 import EventEmitter from "events";
 
+import he from "he";
 import Cookies from "js-cookie";
 import fetch from "node-fetch";
 import FormData from "form-data";
@@ -254,7 +255,7 @@ export class Hot
 			}
 		}
 
-		Hot.echo (await Hot.getFile (file, args));
+		Hot.echoUnsafe (await Hot.getFile (file, args));
 	}
 
 	/**
@@ -327,7 +328,7 @@ export class Hot
 		tempFile.page = this.CurrentPage;
 		let content: string = await tempFile.process (args);
 
-		Hot.echo (content);
+		Hot.echoUnsafe (content);
 	}
 
 	/**
@@ -717,6 +718,14 @@ export class Hot
 	 */
 	static echo (message: string): void
 	{
+		Hot.Output += he.encode (message);
+	}
+
+	/**
+	 * Echo out some output. Use this if you intend to output HTML that is not escaped.
+	 */
+	static echoUnsafe (message: string): void
+	{
 		Hot.Output += message;
 	}
 
@@ -732,7 +741,7 @@ export class Hot
 
 			cssOut = cssOut.replace (/\%CSS_FILE\%/g, cssFile);
 
-			Hot.echo (cssOut);
+			Hot.echoUnsafe (cssOut);
 		}
 	}
 
@@ -748,7 +757,7 @@ export class Hot
 
 			jsFileOut = jsFileOut.replace (/\%JS_FILE\%/g, jsFile);
 
-			Hot.echo (jsFileOut);
+			Hot.echoUnsafe (jsFileOut);
 		}
 	}
 
@@ -764,7 +773,7 @@ export class Hot
 
 			jsScriptOut = jsScriptOut.replace (/\%JS_CODE\%/g, jsScript);
 
-			Hot.echo (jsScriptOut);
+			Hot.echoUnsafe (jsScriptOut);
 		}
 	}
 }

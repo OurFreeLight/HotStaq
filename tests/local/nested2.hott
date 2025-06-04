@@ -1,3 +1,3 @@
 <*
-	Hot.echo (await Hot.getFile ("./tests/local/nested3.hott"));
+	Hot.echoUnsafe (await Hot.getFile ("./tests/local/nested3.hott"));
 *>
