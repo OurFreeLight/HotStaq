@@ -789,7 +789,7 @@ export class Hot
 
 if (typeof (window) == "undefined")
 {
-	const { JSDOM } = require('jsdom');
+	const { JSDOM } = eval("require")("jsdom");
 
 	Hot.__purifyWindow = new JSDOM ("").window;
 	Hot.__domPurify = DOMPurify (Hot.__purifyWindow);
