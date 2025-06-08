@@ -7,3 +7,5 @@ if not exist ".\.env" (
 )
 
 docker compose --env-file ./.env up -d
+
+timeout /t 5 /nobreak >nul

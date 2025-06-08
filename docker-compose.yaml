@@ -1,28 +1,17 @@
 services:
-  hotsitetest:
-    image: ${WEB_IMAGE}:${WEB_IMAGE_VERSION}
+  # Used just to make sure the database has started before continuing.
+  init-database-mariadb:
+    image: mariadb:10.10
     depends_on:
       hotsitetest-api:
         condition: service_healthy
-    networks:
-      - hotsitetest-network
-    healthcheck:
-      test: ["CMD", "/app/docker/hotsitetest/app/healthcheck.sh", "http://127.0.0.1:5000"]
-      retries: 10
-      timeout: 10s
-    ports:
-      - "${HTTP_PORT}:5000"
     environment:
-      SERVER_TYPE: web
-      LOG_LEVEL: all
-      HTTP_PORT: 5000
-      BASE_URL: "${BASE_URL}"
-
-  hotsitetest-api:
-    image: ${API_IMAGE}:${API_IMAGE_VERSION}
-    depends_on:
-      hotsitetest-database:
-        condition: service_healthy
+      MYSQL_ROOT_PASSWORD: cdO1KjwiC8ksOqCV1s0
+      MYSQL_DATABASE: hotstaq
+      MYSQL_USER: 5NKVBAt7OrzrumQyQVs
+      MYSQL_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+    command: 
+      - "exit 0"
     networks:
       - hotsitetest-network
     healthcheck:
@@ -58,8 +47,72 @@ services:
       MYSQL_USER: "${DATABASE_USERNAME}"
       MYSQL_PASSWORD: "${DATABASE_PASSWORD}"
 
-volumes:
-  hotsitetest-database-volume:
+  init-database-postgres:
+    image: postgres:${POSTGRES_VERSION}
+    depends_on:
+      database-postgres:
+        condition: service_healthy
+    command: 
+      - "exit 0"
+    networks:
+      - hotstaq-build-network
+
+  database-postgres:
+    image: postgres:${POSTGRES_VERSION}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U 5NKVBAt7OrzrumQyQVs -d hotstaq -h localhost || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${POSTGRES_DB_PORT}:5432"
+    environment:
+      POSTGRES_DB: hotstaq
+      POSTGRES_USER: 5NKVBAt7OrzrumQyQVs
+      POSTGRES_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+    networks:
+      - hotstaq-build-network
+
+  database-influxdb:
+    image: influxdb:${INFLUXDB_VERSION}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      retries: 10
+      timeout: 10s
+    ports:
+      - "${INFLUX_DB_PORT}:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_ORG: freelight
+      DOCKER_INFLUXDB_INIT_BUCKET: hotstaq
+      DOCKER_INFLUXDB_INIT_USERNAME: 5NKVBAt7OrzrumQyQVs
+      DOCKER_INFLUXDB_INIT_PASSWORD: 1BBrZbKYRUM7oiMA5oY
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: Ife0HerzHrloa32PsE4yg4ixA6j7tZFSMRhvBg7akUK2e
+    networks:
+      - hotstaq-build-network
+
+  testing-selenium-chrome:
+    image: selenium/standalone-chrome:${SELENIUM_VERSION}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/"]
+      retries: 10
+      timeout: 10s
+    shm_size: "2g"
+    environment:
+      SE_NODE_MAX_SESSIONS: 5
+    network_mode: "host"
+
+  # Disabled for now...
+  # testing-selenium-firefox:
+  #   image: selenium/standalone-firefox:${SELENIUM_VERSION}
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:4444/"]
+  #     retries: 10
+  #     timeout: 10s
+  #   shm_size: "2g"
+  #   environment:
+  #     SE_NODE_MAX_SESSIONS: 5
+  #   network_mode: "host"
 
 networks:
   hotsitetest-network:

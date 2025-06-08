@@ -2,7 +2,7 @@ import "mocha";
 import { expect, should } from "chai";
 import { By, until } from "selenium-webdriver";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq } from "../../src/HotStaq";
 
@@ -31,6 +31,7 @@ describe ("Basic Component Tests", () =>
  
 		it ("should load the component tests html", async () =>
 			{
+				await HotStaq.wait (3000);
 /**
 Execute this code to debug in browser:
 (async () =>

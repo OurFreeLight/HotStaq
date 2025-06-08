@@ -4,7 +4,7 @@ import { Builder, By, until, WebDriver, Session } from "selenium-webdriver";
 
 import * as oss from "os";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { DeveloperMode, HotStaq, HotTestDriver, HotTestElement, HotTester, HotTesterMochaSelenium } from "../../src/api";
 import { HotTestMap } from "../../src/HotTestMap";

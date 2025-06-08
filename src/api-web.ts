@@ -1,4 +1,8 @@
-import { HotStaq, HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction } from "./HotStaq";
+import { HotStaq } from "./HotStaq";
+
+HotStaq.isWeb = true;
+
+import { HotStartOptions, IHotStaq, ITypeScriptConversionOptions, HotRouteMethodParameterMap, HotValidatorFunction } from "./HotStaq";
 import { HotSite, HotSiteRoute, HotSiteMapPath } from "./HotSite";
 import { Hot, DeveloperMode } from "./Hot";
 import { HotAsset } from "./HotAsset";
@@ -30,8 +34,6 @@ import { HotTesterAPI } from "./HotTesterAPI";
 import { HotTestMap, HotTestPath } from "./HotTestMap";
 import { HotTestDestination } from "./HotTestDestination";
 import { HotTestPage } from "./HotTestPage";
-
-HotStaq.isWeb = true;
 
 // Can't export interfaces from here :(
 

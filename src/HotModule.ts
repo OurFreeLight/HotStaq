@@ -66,7 +66,7 @@ export class HotModule
 			});
 
 		if (echoOut === true)
-			Hot.echo (output);
+			Hot.echoUnsafe (output);
 
 		return (output);
 	}
@@ -88,7 +88,7 @@ export class HotModule
 			});
 
 		if (echoOut === true)
-			Hot.echo (output);
+			Hot.echoUnsafe (output);
 
 		return (output);
 	}
@@ -154,7 +154,7 @@ export class HotModule
 		output += `</script>`;
 
 		if (echoOut === true)
-			Hot.echo (output);
+			Hot.echoUnsafe (output);
 
 		return (output);
 	}

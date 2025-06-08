@@ -1,6 +1,6 @@
 import "mocha";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq, HotTestDriver, HotTestElement, HotTester, HotTesterMochaSelenium } from "../../src/api";
 import { HotTestMap } from "../../src/HotTestMap";

@@ -6,7 +6,7 @@
 
 <BODY>
 <*
-    Hot.echo (`<input id = "testButton" type = "button" value = "Test Button" onclick = "this.value = 'Worked!';" />`);
+    Hot.echoUnsafe (`<input id = "testButton" type = "button" value = "Test Button" onclick = "this.value = 'Worked!';" />`);
 *>
 </BODY>
 

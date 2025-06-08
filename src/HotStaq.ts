@@ -2,6 +2,7 @@ import * as ppath from "path";
 
 import fetch from "node-fetch";
 import validateModuleName from "validate-npm-package-name";
+import DOMPurify from "dompurify";
 
 import { HotPage } from "./HotPage";
 import { HotFile } from "./HotFile";
@@ -210,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.120";
+	static version: string = "0.8.121";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -904,6 +905,33 @@ export class HotStaq implements IHotStaq
 			return (false);
 
 		return (false);
+	}
+
+	/**
+	 * Sanitize a JSON object by recursively encoding string values that are present 
+	 * in the JSON to prevent XSS attacks.
+	 */
+	static sanitizeJSON<T> (obj: T): T
+	{
+		if (Array.isArray (obj))
+			return (obj.map (HotStaq.sanitizeJSON) as T);
+	
+		if (obj !== null)
+		{
+			if (typeof (obj) === "object")
+			{
+				return (Object.fromEntries (
+						Object.entries(obj).map(([key, value]) => [key, HotStaq.sanitizeJSON (value)])
+					) as T);
+			}
+		}
+	
+		// Sanitize string values
+		if (typeof (obj) === "string")
+			return (DOMPurify.sanitize (obj) as T);
+	
+		// Leave numbers, booleans, null, etc. untouched
+		return (obj);
 	}
 
 	/**

@@ -2,7 +2,7 @@ import "mocha";
 import { expect, should } from "chai";
 import { By, until, WebDriver } from "selenium-webdriver";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { APItoLoad, DeveloperMode, HotHTTPServer, HotIO, HotLogLevel, HotStaq, 
 	HotTester, HotTesterMochaSelenium, HotTesterServer, HotTestMap } from "../../src/api";
