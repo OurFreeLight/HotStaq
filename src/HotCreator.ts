@@ -87,6 +87,10 @@ export class HotCreator
 			 * The command to use to build the documentation.
 			 */
 			buildDoc: string;
+			/**
+			 * The command to use to build the interface object definitions.
+			 */
+			buildInterfaces: string;
 		};
 
 	constructor (logger: HotLog, name: string)
@@ -107,9 +111,10 @@ export class HotCreator
 				develop: "",
 				test: "node ./build/cli.js --dev --env-file .env run --server-type api --api-test && node ./build/cli.js --dev --env-file .env run --server-type web --web-test",
 				build: "",
-				buildWebAPI: "node ./build/cli.js generate --copy-to ./public/js/",
-				buildWebAPIDebug: "node ./build/cli.js generate --copy-to ./public/js/",
-				buildDoc: "node ./build/cli.js generate --generate-type openapi-3.0.0-yaml"
+				buildWebAPI: "node ./build/cli.js generate --api --generate-type javascript --copy-to ./public/js/",
+				buildWebAPIDebug: "node ./build/cli.js generate --api --generate-type javascript --copy-to ./public/js/",
+				buildDoc: "node ./build/cli.js generate --generate-type openapi-3.0.0-yaml",
+				buildInterfaces: "node ./build/cli.js build --interfaces --interfaces-out ./src/object-defs/"
 			};
 	}
 
@@ -243,6 +248,9 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 
 		if (this.npmCommands.buildDoc !== "")
 			packageJSON.scripts["build-doc"] = this.npmCommands.buildDoc;
+
+		if (this.npmCommands.buildInterfaces !== "")
+			packageJSON.scripts["build-interfaces"] = this.npmCommands.buildInterfaces;
 
 		// If this is a web only build, remove the build web scripts from packageJSON.
 		if (this.type === "web")

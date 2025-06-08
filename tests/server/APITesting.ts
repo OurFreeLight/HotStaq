@@ -6,7 +6,7 @@ import FormData from "form-data";
 import * as fs from "fs";
 import * as ppath from "path";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
@@ -29,7 +29,6 @@ describe ("API Testing Tests", () =>
 				processor.mode = DeveloperMode.Development;
 
 				common = new Common (processor);
-				await common.setupServer ();
 				await common.startServer ();
 
 				let testMap: HotTestMap = new HotTestMap ([

@@ -4,7 +4,7 @@ import { Builder, By, until, WebDriver, Session } from "selenium-webdriver";
 
 import * as oss from "os";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 import { Tester } from "./Tester";
 import { TestDriver } from "./TestDriver";
 
@@ -34,6 +34,8 @@ describe ("Browser Testing From Web Tests - Custom Tester - Development Mode", (
 				tester.testerType = "web";
 
 				common.testerServer.addTester (tester);
+
+				await HotStaq.wait (3000);
 			});
 		after (async () =>
 			{

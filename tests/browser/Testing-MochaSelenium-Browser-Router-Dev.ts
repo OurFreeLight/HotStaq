@@ -5,7 +5,7 @@ import { Builder, By, until, WebDriver, Session } from "selenium-webdriver";
 import * as oss from "os";
 import * as ppath from "path";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { DeveloperMode, HotHTTPServer, HotStaq, HotTestMap, HotTestDriver, HotTestElement, HotTester, HotTesterMochaSelenium } from "../../src/api";
 
@@ -21,8 +21,9 @@ describe ("Browser Testing From Browser Router Tests - Mocha Selenium - Developm
 				processor.mode = DeveloperMode.Development;
 
 				common = new Common (processor);
-				await common.startServer (HotHTTPServer.getDefaultServableExtensions (), 
+				await common.setupServer (HotHTTPServer.getDefaultServableExtensions (), 
 					ppath.normalize (`${process.cwd ()}/tests/browser/RouterTest.htm`));
+				await common.startServer ();
 
 				let testMap: HotTestMap = new HotTestMap ([
 						`relUrl:/tests/browser/HelloWorld -> Form-SignIn-FillOut`

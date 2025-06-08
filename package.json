@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.8.120",
+  "version": "0.8.121",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -21,7 +21,7 @@
     "build": "npx tsc --build ./tsconfig.json",
     "buildweb": "npx webpack --mode=production && npm_config_yes=true npx google-closure-compiler@latest --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",
     "buildwebdebug": "npx webpack --mode=development --stats-modules-space 999 && npx webpack --mode=development --config=webpack.config.tests.cjs",
-    "build-test-api": "hotstaq --hotsite ./tests/hotsite/HotSite.json generate"
+    "build-test-api": "node ./build/src/index.js --hotsite ./tests/hotsite/HotSite.json generate --api"
   },
   "bugs": {
     "url": "https://github.com/OurFreeLight/HotStaq/issues"
@@ -39,6 +39,7 @@
     "archiver": "^5.3.1",
     "chai": "^5.2.0",
     "commander": "^6.2.1",
+    "dompurify": "^3.2.6",
     "dotenv": "^16.0.2",
     "express": "^4.21.2",
     "express-rate-limit": "^7.3.1",
@@ -48,6 +49,7 @@
     "glob": "^11.0.0",
     "ioredis": "^5.4.1",
     "js-cookie": "^3.0.1",
+    "jsdom": "^26.1.0",
     "mime-types": "^2.1.35",
     "mocha": "^11.1.0",
     "mysql2": "^3.9.9",
@@ -55,7 +57,7 @@
     "pg": "^8.13.1",
     "pg-pool": "^3.7.0",
     "rate-limit-redis": "^4.2.0",
-    "selenium-webdriver": "^4.16.0",
+    "selenium-webdriver": "^4.33.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "swagger-ui-express": "^5.0.1",

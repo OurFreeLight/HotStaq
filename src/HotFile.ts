@@ -710,7 +710,7 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 	 * Process the content in this file. This treats each file as one large JavaScript
 	 * file. Any text outside of the <* *> areas will be treated as:
 	 * 
-	 * 		Hot.echo ("text");
+	 * 		Hot.echoUnsafe ("text");
 	 * 
 	 * @fixme The regex's in the offContent functions need to be fixed. There's several 
 	 * test cases where they will fail.
@@ -781,18 +781,18 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 
 				if (throwErrors === true)
 				{
-					Hot.echo (content);
+					Hot.echoUnsafe (content);
 
 					return;
 				}
 
 				try
 				{
-					Hot.echo (content);
+					Hot.echoUnsafe (content);
 				}
 				catch (ex)
 				{
-					Hot.echo ("");
+					Hot.echoUnsafe ("");
 				}
 			}
 

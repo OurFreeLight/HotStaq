@@ -1,7 +1,7 @@
 import "mocha";
 import { expect } from "chai";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";

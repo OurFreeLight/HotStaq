@@ -2,7 +2,7 @@ import "mocha";
 import { expect, should } from "chai";
 import { By, until, WebDriver } from "selenium-webdriver";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { DeveloperMode, HotHTTPServer, HotLogLevel, HotStaq, HotTester, HotTesterMochaSelenium, HotTesterServer, HotTestMap } from "../../src/api";
 import { HelloWorldAPI } from "../server/HelloWorldAPI";
@@ -41,11 +41,13 @@ describe ("Hotsite Testing Tests", () =>
 	
 				tester = new HotTesterMochaSelenium (processor, "HotTesterMochaSelenium", common.getUrl (server));
 
+				/*
+				// @todo Get this to work again. This stopped working nicely after years of being used????
 				if (process.env["TESTING_DEVTOOLS"] != null)
 				{
 					if (process.env["TESTING_DEVTOOLS"] === "1")
 						tester.driver.openDevTools = true;
-				}
+				}*/
 
 				if (process.env["TESTING_RUN_HEADLESS"] != null)
 					tester.driver.headless = true;

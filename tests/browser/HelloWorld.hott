@@ -73,10 +73,10 @@
 
 <body>
 <*
-	Hot.echo (`<button id = "helloWorld" onclick = "document.getElementById ('buttonClicked').innerHTML='Clicked';">Hello`);
+	Hot.echoUnsafe (`<button id = "helloWorld" onclick = "document.getElementById ('buttonClicked').innerHTML='Clicked';">Hello`);
 *>
 <*
-	Hot.echo (`World!</button><div id = "buttonClicked"></div>`);
+	Hot.echoUnsafe (`World!</button><div id = "buttonClicked"></div>`);
 *>
 	<input id = "message" data-test = "${testData}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
 	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
@@ -110,7 +110,7 @@
 	<br /><br />
 	<a href = "./TestingMochaSelenium">Router Testing-MochaSelenium Test</a>
 	<*
-		Hot.echo (`<div id = "iifeTest"></div>`);
+		Hot.echoUnsafe (`<div id = "iifeTest"></div>`);
 	*>
 	<span id = "onload"></span><br />
 	<span id = "DOMContentLoaded"></span><br />

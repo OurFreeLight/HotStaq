@@ -1,6 +1,6 @@
 import "mocha";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 import { Tester } from "./Tester";
 import { TestDriver } from "./TestDriver";
 

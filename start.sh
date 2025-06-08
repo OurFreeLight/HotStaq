@@ -7,3 +7,5 @@ if [ ! -f "./.env" ]; then
 fi
 
 docker compose --env-file ./.env up -d
+
+sleep 5

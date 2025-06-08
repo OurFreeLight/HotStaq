@@ -1,7 +1,7 @@
 import "mocha";
 import { expect, should } from "chai";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
@@ -30,18 +30,7 @@ describe ("Database - Influx Tests", () =>
 				processor = common.processor;
 				server = common.server;
 
-				await common.startServer ();
-				url = common.getUrl ();
-
-				api = new HelloWorldAPI (common.getUrl (), server);
-				await api.onPreRegister ();
-				api.db = new HotDBInflux ();
-				db = (<HotDBInflux>api.db);
-				await server.setAPI (api);
-			});
-		after (async () =>
-			{
-				await common.shutdown ();
+				db = new HotDBInflux ();
 			});
 
 		it ("should connect to the database", async () =>

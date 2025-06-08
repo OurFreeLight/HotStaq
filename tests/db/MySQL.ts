@@ -1,7 +1,7 @@
 import "mocha";
 import { expect, should } from "chai";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
@@ -20,6 +20,7 @@ describe ("Database - MySQL Tests", () =>
 		let server: HotHTTPServer = null;
 		let api: HelloWorldAPI = null;
 		let url: string = "";
+		let db: HotDBMySQL = null;
 
 		before (async () =>
 			{
@@ -28,22 +29,12 @@ describe ("Database - MySQL Tests", () =>
 				processor = common.processor;
 				server = common.server;
 
-				await common.startServer ();
-				url = common.getUrl ();
-
-				api = new HelloWorldAPI (common.getUrl (), server);
-				await api.onPreRegister ();
-				api.db = new HotDBMySQL ();
-				await server.setAPI (api);
-			});
-		after (async () =>
-			{
-				await common.shutdown ();
+				db = new HotDBMySQL ();
 			});
 
 		it ("should connect to the database", async () =>
 			{
-				await api.db.connect ({
+				await db.connect ({
 						"server": process.env["DATABASE_SERVER"],
 						"username": process.env["DATABASE_USERNAME"],
 						"password": process.env["DATABASE_PASSWORD"],
@@ -53,7 +44,7 @@ describe ("Database - MySQL Tests", () =>
 			});
 		it ("should create a new table", async () =>
 			{
-				let results = await api.db.query (`
+				let results = await db.query (`
 					create table if not exists testTable (
 							id       INT(5)        NOT NULL UNIQUE AUTO_INCREMENT,
 							name     VARCHAR(255)  NOT NULL DEFAULT '',
@@ -62,33 +53,33 @@ describe ("Database - MySQL Tests", () =>
 
 				expect (results.results, "Did not create a table!");
 
-				let tableExists: boolean = await api.db.tableCheck ("testTable");
+				let tableExists: boolean = await db.tableCheck ("testTable");
 
 				expect (tableExists).to.equal (true, "Did not create a table!");
 			});
 		it ("should insert data into the table", async () =>
 			{
-				let results = await api.db.query ("insert into testTable set name = ?", ["test1"]);
+				let results = await db.query ("insert into testTable set name = ?", ["test1"]);
 				let dbresults = results.results;
 
 				expect (dbresults.insertId, "Did not insert data into the table!");
 			});
 		it ("should select data from the table", async () =>
 			{
-				let results = await api.db.queryOne ("select * from testTable where name = ?", ["test1"]);
+				let results = await db.queryOne ("select * from testTable where name = ?", ["test1"]);
 				let dbresults = results.results;
 
 				should ().equal (dbresults.name, "test1", "Did not select data from the table!");
 			});
 		it ("should select data from an incorrect table", async () =>
 			{
-				let results = await api.db.queryOne ("select * from testTableBad where name = ?", ["test1"]);
+				let results = await db.queryOne ("select * from testTableBad where name = ?", ["test1"]);
 
 				expect (results.error, "Did not incorrectly select data from the table!");
 			});
 		it ("should drop the table", async () =>
 			{
-				let results = await api.db.query ("DROP TABLE testTable;", []);
+				let results = await db.query ("DROP TABLE testTable;", []);
 
 				should ().equal (results.error, null, "Did not drop the table!");
 			});
@@ -113,14 +104,14 @@ describe ("Database - MySQL Tests", () =>
 					new MySQLSchemaField ({ name: "authHash", dataType: "VARCHAR(64)", defaultValue: "" }),
 					new MySQLSchemaField ({ name: "location", dataType: "VARCHAR(64)", defaultValue: "" })
 				]));
-				api.db.schema = schema;
+				db.schema = schema;
 
-				//await api.db.syncAllTables ();
+				//await db.syncAllTables ();
 
-				let tableExists: boolean =  await api.db.tableCheck ("freeUsers");
+				let tableExists: boolean =  await db.tableCheck ("freeUsers");
 				expect (tableExists, "Did not create a table!");
 
-				tableExists =  await api.db.tableCheck ("authHashes");
+				tableExists =  await db.tableCheck ("authHashes");
 				expect (tableExists, "Did not create a table!");
 			});
 		it ("should NOT alter or recreate the testTable", async () =>
@@ -143,17 +134,17 @@ describe ("Database - MySQL Tests", () =>
 					new MySQLSchemaField ({ name: "authHash", dataType: "VARCHAR(64)", defaultValue: "" }),
 					new MySQLSchemaField ({ name: "location", dataType: "VARCHAR(64)", defaultValue: "" })
 				]));
-				api.db.schema = schema;
+				db.schema = schema;
 
-				//await api.db.syncAllTables ();
+				//await db.syncAllTables ();
 
 				/// @fixme Needs additional verification that the fields have not moved. 
 				/// This is mostly here to just catch exceptions.
 
-				let tableExists: boolean =  await api.db.tableCheck ("freeUsers");
+				let tableExists: boolean =  await db.tableCheck ("freeUsers");
 				expect (tableExists, "Did not create a table!");
 
-				tableExists =  await api.db.tableCheck ("authHashes");
+				tableExists =  await db.tableCheck ("authHashes");
 				expect (tableExists, "Did not create a table!");
 			});*/
 	});

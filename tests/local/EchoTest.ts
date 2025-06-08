@@ -13,7 +13,7 @@ describe ("Echo Tests", () =>
 			<html>
 			
 			<*
-				Hot.echo (\`
+				Hot.echoUnsafe (\`
 				<head>
 					<title>Echo Test</title>
 				</head>
@@ -25,7 +25,7 @@ describe ("Echo Tests", () =>
 				This is the main body!
 			
 			<*
-				Hot.echo (\`
+				Hot.echoUnsafe (\`
 				</body>
 				\`);
 			*>

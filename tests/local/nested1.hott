@@ -2,13 +2,13 @@
 <html>
 
 <*
-	Hot.echo (await Hot.getFile ("./tests/local/header.hott"));
+	Hot.echoUnsafe (await Hot.getFile ("./tests/local/header.hott"));
 *>
 <*
-	Hot.echo (await Hot.getFile ("./tests/local/nested2.hott"));
+	Hot.echoUnsafe (await Hot.getFile ("./tests/local/nested2.hott"));
 *>
 <*
-	Hot.echo (await Hot.getFile ("./tests/local/footer.hott"));
+	Hot.echoUnsafe (await Hot.getFile ("./tests/local/footer.hott"));
 *>
 
 </html>

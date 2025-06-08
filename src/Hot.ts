@@ -9,6 +9,7 @@ import { HttpError } from "./HotHttpError";
 
 import EventEmitter from "events";
 
+import DOMPurify from "dompurify";
 import Cookies from "js-cookie";
 import fetch from "node-fetch";
 import FormData from "form-data";
@@ -61,6 +62,14 @@ type HotSSEEmitter = {
  */
 export class Hot
 {
+	/**
+	 * The JSDOM window that is meant to only be used internally by HotStaq on the server side and should not be used.
+	 */
+	static __purifyWindow: any = null;
+	/**
+	 * The DOMPurify object that is meant to only be used internally by HotStaq on the server and should not be used.
+	 */
+	static __domPurify: any = null;
 	/**
 	 * The currently generated page being displayed. This is cleared between every file processed.
 	 */
@@ -254,7 +263,7 @@ export class Hot
 			}
 		}
 
-		Hot.echo (await Hot.getFile (file, args));
+		Hot.echoUnsafe (await Hot.getFile (file, args));
 	}
 
 	/**
@@ -327,7 +336,7 @@ export class Hot
 		tempFile.page = this.CurrentPage;
 		let content: string = await tempFile.process (args);
 
-		Hot.echo (content);
+		Hot.echoUnsafe (content);
 	}
 
 	/**
@@ -713,9 +722,18 @@ export class Hot
 	}
 
 	/**
-	 * Echo out some output.
+	 * Echo out some output. This uses DOMPurify to sanitize the output, you can pass 
+	 * a configuration object to DOMPurify to change the sanitization behavior.
 	 */
-	static echo (message: string): void
+	static echo (message: string, cfg: DOMPurify.Config = undefined): void
+	{
+		Hot.Output += DOMPurify.sanitize (message, cfg);
+	}
+
+	/**
+	 * Echo out some output. Use this if you intend to output HTML that is not escaped.
+	 */
+	static echoUnsafe (message: string): void
 	{
 		Hot.Output += message;
 	}
@@ -732,7 +750,7 @@ export class Hot
 
 			cssOut = cssOut.replace (/\%CSS_FILE\%/g, cssFile);
 
-			Hot.echo (cssOut);
+			Hot.echoUnsafe (cssOut);
 		}
 	}
 
@@ -748,7 +766,7 @@ export class Hot
 
 			jsFileOut = jsFileOut.replace (/\%JS_FILE\%/g, jsFile);
 
-			Hot.echo (jsFileOut);
+			Hot.echoUnsafe (jsFileOut);
 		}
 	}
 
@@ -764,7 +782,20 @@ export class Hot
 
 			jsScriptOut = jsScriptOut.replace (/\%JS_CODE\%/g, jsScript);
 
-			Hot.echo (jsScriptOut);
+			Hot.echoUnsafe (jsScriptOut);
 		}
 	}
+}
+
+if (typeof (window) == "undefined")
+{
+	const { JSDOM } = require('jsdom');
+
+	Hot.__purifyWindow = new JSDOM ("").window;
+	Hot.__domPurify = DOMPurify (Hot.__purifyWindow);
+
+	Hot.echo = (message: string, cfg: DOMPurify.Config = undefined): void => 
+	{
+		Hot.Output += Hot.__domPurify.sanitize (message, cfg);
+	};
 }
