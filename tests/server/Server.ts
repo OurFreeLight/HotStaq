@@ -5,7 +5,7 @@ import fetch from "node-fetch";
 import * as fs from "fs";
 import * as ppath from "path";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotRouteMethodParameterMap, HotStaq } from "../../src/HotStaq";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
@@ -25,7 +25,6 @@ describe ("Server Tests", () =>
 			{
 				common = new Common ();
 
-				await common.setupServer ();
 				await common.startServer ();
 
 				processor = common.processor;

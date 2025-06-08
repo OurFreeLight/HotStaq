@@ -65,6 +65,8 @@ export class TestDriver extends HotTestDriver
 		let defaultCreate: boolean = true;
 		let options = new Chrome.Options ();
 
+		/*
+		// @todo Get this to work again. This stopped working nicely after years of being used????
 		if (process.env["TESTING_DEVTOOLS"] != null)
 		{
 			if (process.env["TESTING_DEVTOOLS"] === "1")
@@ -72,7 +74,7 @@ export class TestDriver extends HotTestDriver
 				options.addArguments ("--auto-open-devtools-for-tabs");
 				defaultCreate = false;
 			}
-		}
+		}*/
 
 		if ((process.env["TESTING_REMOTE_SERVER"] != null) || (process.env["TESTING_RUN_HEADLESS"] != null))
 		{

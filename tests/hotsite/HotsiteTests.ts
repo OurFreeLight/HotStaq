@@ -2,7 +2,7 @@ import "mocha";
 import { expect, should } from "chai";
 import { By, until } from "selenium-webdriver";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotHTTPServer, HotLogLevel, HotStaq } from "../../src/api";
 import { HelloWorldAPI } from "../server/HelloWorldAPI";

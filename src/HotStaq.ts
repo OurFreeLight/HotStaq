@@ -2,7 +2,7 @@ import * as ppath from "path";
 
 import fetch from "node-fetch";
 import validateModuleName from "validate-npm-package-name";
-import he from "he";
+import DOMPurify from "dompurify";
 
 import { HotPage } from "./HotPage";
 import { HotFile } from "./HotFile";
@@ -928,7 +928,7 @@ export class HotStaq implements IHotStaq
 	
 		// Sanitize string values
 		if (typeof (obj) === "string")
-			return (he.encode (obj) as T);
+			return (DOMPurify.sanitize (obj) as T);
 	
 		// Leave numbers, booleans, null, etc. untouched
 		return (obj);

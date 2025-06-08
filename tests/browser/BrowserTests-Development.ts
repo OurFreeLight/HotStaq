@@ -2,7 +2,7 @@ import "mocha";
 import { expect, should } from "chai";
 import { By, until } from "selenium-webdriver";
 
-import { Common } from "./Common";
+import { Common } from "../Common";
 
 import { HotStaq } from "../../src/api";
 
@@ -29,7 +29,7 @@ describe ("Browser Tests - Development Mode", () =>
 
 		it ("should load the Hello World html", async () =>
 			{
-				await HotStaq.wait (1000);
+				await HotStaq.wait (3000);
 
 /**
 Execute this code to debug in browser:
