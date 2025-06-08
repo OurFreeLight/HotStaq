@@ -195,6 +195,7 @@ export class Common
 		}
 
 		let api: HelloWorldAPI = new HelloWorldAPI (this.getUrl (), this.server);
+		await api.onPreRegister ();
 		await this.server.setAPI (api);
 
 		if (this.processor.mode === DeveloperMode.Development)
