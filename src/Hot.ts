@@ -71,6 +71,29 @@ export class Hot
 	 */
 	static __domPurify: any = null;
 	/**
+	 * Debugging, testing, and benchmarking related options.
+	 */
+	static Debugger = {
+			/**
+			 * If set to true, whenever HotFile.process is called, performance.now() will be called
+			 * and the time taken to process the file will be logged to the console. In addition the number 
+			 * of times process has been called will be stored in Hot.Debugger.processCount.
+			 */
+			benchmark: false,
+			/**
+			 * The number of times the process function has been called. This is used for benchmarking purposes.
+			 */
+			processCount: 0,
+			/**
+			 * The total amount of time that has been spent processing files. This is used for benchmarking purposes.
+			 */
+			processTotalTime: 0,
+			/**
+			 * The average time spent processing files. This is used for benchmarking purposes.
+			 */
+			processAvgTime: 0
+		};
+	/**
 	 * The currently generated page being displayed. This is cleared between every file processed.
 	 */
 	static CurrentPage: HotPage = null;

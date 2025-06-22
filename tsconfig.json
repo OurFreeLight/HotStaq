@@ -65,7 +65,8 @@
   },
   "include": [
     "./src/**/*",
-    "./tests/**/*"
+    "./tests/**/*",
+    "./benchmarks/**/*"
   ],
   "exclude": [
     "./node_modules/"
