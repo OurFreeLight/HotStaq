@@ -73,7 +73,7 @@ export interface TestInterface extends IBaseInterface
 	testValidations: {
 			/**
 			 * A test string.
-			 * @valid { "minLength": 5, "maxLength": 10 }
+			 * @valid { "min": 5, "max": 10 }
 			 */
 			validStr: string;
 			/**
