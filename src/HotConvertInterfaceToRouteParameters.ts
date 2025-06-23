@@ -87,7 +87,6 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
             const parsedTypeStr = validStr.substring(0, validStr.indexOf ("[]"));
             parsed = { type: HotValidationType.Array, associatedValids: [{ type: parsedTypeStr as HotValidationType }] };
           } else if (!validStr.startsWith("{")) {
-            // If validStr contains ,...{ "example": "json" } parse the JSON part only:
             const jsonStartStr = ",...{";
             const jsonStart = validStr.indexOf(jsonStartStr);
             let rawType = validStr;
