@@ -4,6 +4,7 @@ import fetch from "node-fetch";
 
 import { DeveloperMode, Hot } from "./Hot";
 import { HotPage } from "./HotPage";
+import { HotStaq } from "./HotStaq";
 
 /**
  * A file to process.
@@ -134,7 +135,35 @@ export class HotFile implements IHotFile
 	 */
 	async loadUrl (): Promise<string>
 	{
+		let t0 = null;
+
+		if (Hot.CurrentPage != null)
+		{
+			if (Hot.Debugger != null)
+			{
+				if (Hot.Debugger.benchmark === true)
+				{
+					t0 = performance.now ();
+					Hot.CurrentPage.processor.logger.info (`Downloading file "${this.name}" from "${this.url}"...`);
+				}
+			}
+		}
+
 		this.content = await HotFile.httpGet (this.url);
+
+		if (Hot.CurrentPage != null)
+		{
+			if (Hot.Debugger != null)
+			{
+				if (Hot.Debugger.benchmark === true)
+				{
+					let t1 = performance.now ();
+					let elapsed = t1 - t0;
+
+					Hot.CurrentPage.processor.logger.info (`Downloaded file "${this.name}" from "${this.url}" in ${elapsed.toFixed(2)} ms.`);
+				}
+			}
+		}
 
 		return (this.content);
 	}
@@ -340,6 +369,8 @@ export class HotFile implements IHotFile
 	static parseFunction (str: string, callbackA: (funcArgs: string[]) => void, 
 		callbackB: (funcBody: string, endType: string) => string): string
 	{
+		str = HotFile.processHotDomBlocks (str, "\`");
+
 		let startIndex = str.indexOf("<(");
 
 		while (startIndex > -1)
@@ -389,13 +420,52 @@ export class HotFile implements IHotFile
 	}
 
 	/**
+	 * Process \<hot-dom> blocks.
+	 */
+	static processHotDomBlocks(input: string, quotes: string = "\`"): string
+	{
+		let output = input.replace(/\<hot\-dom\>([\s\S]*?)\<\/hot\-dom\>/gi, 
+			(match, innerContent) => {
+				// Replace ${...} inside the hot-dom content with wrapped version
+				let transformed = innerContent.replace(/\$\{(.*?)\}/g, 
+					(_: string, expr: string) => {
+						return `#$%#@{HotStaq.sanitizeHTML(${expr.trim()})}`;
+					});
+				transformed = innerContent.replace(/\$\\\{(.*?)\}/g, 
+					(_: string, expr: string) => {
+						return `#$%#@{HotStaq.sanitizeHTML(${expr.trim()})}`;
+					});
+		
+				// Return string that will be interpreted at runtime
+				return `HotStaq.addHtmlUnsafe(null,${quotes}${transformed}${quotes})`;
+			});
+		output = output.replace(/\<hot\-dom\-escape\>([\s\S]*?)\<\/hot\-dom\-escape\>/gi, 
+			(match, innerContent) => {
+				// Replace ${...} inside the hot-dom content with wrapped version
+				let transformed = innerContent.replace(/\$\{(.*?)\}/g, 
+					(_: string, expr: string) => {
+						return `^$&#@{HotStaq.sanitizeHTML(${expr.trim()})}`;
+					});
+				transformed = innerContent.replace(/\$\\\{(.*?)\}/g, 
+					(_: string, expr: string) => {
+						return `^$&#@{HotStaq.sanitizeHTML(${expr.trim()})}`;
+					});
+		
+				// Return string that will be interpreted at runtime
+				return `HotStaq.addHtmlUnsafe(null,${quotes}${transformed}${quotes})`;
+			});
+
+		return (output);
+	}
+
+	/**
 	 * Parse all the content into a single JavaScript file to be executed. async/await is used 
 	 * in the processed JavaScript file, which means the .hott files parsed may use async/await 
 	 * within the code.
 	 * 
 	 * Will parse the following in order:
 	 * * <* JavaScript content to execute and output. Will output using Hot.echo. *>
-	 * * !{ Execute ONLY JavaScript. This will NOT output anything automatically. If you want it to output, use Hot.echo here. }
+	 * * @( Safely creates DOM from HTML content with any user input that was supplied. Any user inputs should be passed using @{input} )
 	 * * STR{ Execute some JS, and output a string using JSON.stringify. }
 	 * * ${ Execute some JS, and output the result. }
 	 * * <(arguments)=>{ Some JS to execute at a later time. }>
@@ -442,18 +512,7 @@ export class HotFile implements IHotFile
 				if (offContent === "")
 					return ("");
 
-				let tempOutput: string = HotFile.processNestedContent (
-					offContent, "!{", "}", "{", 
-					(regexFound2: string, startPos: number, endPos: number): string =>
-					{
-						let out: string = `*&&%*%@#@!${regexFound2}*&!#%@!@*!`;
-
-						return (out);
-					}, 
-					(offContent3: string): string =>
-					{
-						return (offContent3);
-					});
+				let tempOutput: string = offContent;
 				let tempOutput2: string = HotFile.processNestedContent (
 					tempOutput, "STR{", "}", "{", 
 					(regexFound2: string, startPos: number, endPos: number): string =>
@@ -523,7 +582,7 @@ Hot.echo (\`${functionCall} (this, '\${newFuncName}', arguments);\`);
 						return (newValue);
 					});
 
-				let tempOutput4: string = HotFile.processNestedContent (
+				let tempOutput4 = HotFile.processNestedContent (
 					tempOutput3, "${", "}", "{", 
 					(regexFound2: string, startPos: number, endPos: number): string =>
 					{
@@ -562,6 +621,8 @@ Hot.echo (\`${functionCall} (this, '\${newFuncName}', arguments);\`);
 
 						return (out);*/
 					});
+
+				tempOutput4 = HotFile.processHotDomBlocks (tempOutput4);
 
 				let tempOutput5: string = "";
 
@@ -703,6 +764,11 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 				return (tempOutput6);
 			}, 0);
 
+		// Replace all instances of #$%#@{ with ${
+		output = output.replace (/\#\$\%\#\@\{/g, "${");
+		// Replace all instances of ^$&#@{ with $\\{
+		output = output.replace (/\^\$\&\#\@\{/g, "$\\\\{");
+
 		return (output);
 	}
 
@@ -717,6 +783,17 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 	 */
 	async process (args: any = null): Promise<string>
 	{
+		let t0 = null;
+
+		if (Hot.Debugger != null)
+		{
+			if (Hot.Debugger.benchmark === true)
+			{
+				t0 = performance.now ();
+				Hot.Debugger.processCount++;
+			}
+		}
+
 		let thisContent: string = this.content;
 
 		if (args != null)
@@ -900,6 +977,27 @@ Hot.echo (\`data-test-object-name = "\${testElm.name}" data-test-object-func = "
 		let finalOutput: string = returnedOutput.output;
 		Hot.Output = "";
 		Hot.Arguments = tempArgs;
+
+		if (Hot.Debugger != null)
+		{
+			if (Hot.Debugger.benchmark === true)
+			{
+				let t1 = performance.now ();
+				let elapsed = t1 - t0;
+
+				Hot.Debugger.processTotalTime += elapsed;
+
+				if (Hot.Debugger.processCount > 0)
+					Hot.Debugger.processAvgTime = (Hot.Debugger.processTotalTime / Hot.Debugger.processCount);
+
+				let from = this.localFile;
+
+				if (this.url !== "")
+					from = this.url;
+
+				Hot.CurrentPage.processor.logger.info (`Processed file "${this.name}" from "${from}" in ${elapsed.toFixed(2)} ms. Average time: ${Hot.Debugger.processAvgTime.toFixed(2)} ms.`);
+			}
+		}
 
 		return (finalOutput);
 	}

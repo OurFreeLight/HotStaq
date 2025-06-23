@@ -11,7 +11,7 @@ import { HotComponent, IHotComponent } from "./HotComponent";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotAPI } from "./HotAPI";
 import { HotServer } from "./HotServer";
-import { DeveloperMode } from "./Hot";
+import { DeveloperMode, Hot } from "./Hot";
 import { HotAsset } from "./HotAsset";
 import { HotModule } from "./HotModule";
 import { HotClient } from "./HotClient";
@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.121";
+	static version: string = "0.8.122";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -908,6 +908,14 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Sanitize an HTML string.
+	 */
+	static sanitizeHTML (html: string): string
+	{
+		return (DOMPurify.sanitize (html));
+	}
+
+	/**
 	 * Sanitize a JSON object by recursively encoding string values that are present 
 	 * in the JSON to prevent XSS attacks.
 	 */
@@ -928,7 +936,7 @@ export class HotStaq implements IHotStaq
 	
 		// Sanitize string values
 		if (typeof (obj) === "string")
-			return (DOMPurify.sanitize (obj) as T);
+			return (HotStaq.sanitizeHTML (obj) as T);
 	
 		// Leave numbers, booleans, null, etc. untouched
 		return (obj);
@@ -1426,9 +1434,9 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
-	 * Add a new HTML element(s) to the current document.
+	 * Add a new HTML element(s) to the current document. THIS IS UNSAFE TO DO DIRECTLY.
 	 */
-	static addHtml (parent: string | HTMLElement, html: string | HTMLElement): HTMLElement | HTMLElement[]
+	static addHtmlUnsafe (parent: string | HTMLElement | null, html: string | HTMLElement): HTMLElement | HTMLElement[]
 	{
 		let foundParent: HTMLElement = null;
 
@@ -1436,9 +1444,6 @@ export class HotStaq implements IHotStaq
 			foundParent = document.querySelector (parent);
 		else
 			foundParent = parent;
-
-		if (foundParent == null)
-			throw new Error (`Unable to find parent ${parent}!`);
 
 		let result: HTMLElement = null;
 
@@ -1459,13 +1464,21 @@ export class HotStaq implements IHotStaq
 			{
 				let child: HTMLElement = (<HTMLElement>children[iIdx]);
 
-				results.push (foundParent.appendChild (child));
+				if (foundParent != null)
+					foundParent.appendChild (child);
+
+				results.push (child);
 			}
 
 			return (results);
 		}
 		else
-			result = foundParent.appendChild (html);
+		{
+			if (foundParent != null)
+				foundParent.appendChild (html);
+
+			result = html;
+		}
 
 		return (result);
 	}
@@ -2738,6 +2751,9 @@ hotstaq_isDocumentReady ();
 
 						if (processor == null)
 							processor = new HotStaq ();
+
+						if (processor.mode === DeveloperMode.Development)
+							Hot.Debugger.benchmark = true;
 
 						HotStaq.setupTesters (processor, options);
 

@@ -172,6 +172,17 @@
 			],
 			"cwd": "${workspaceFolder}",
 			"envFile": "${workspaceFolder}/.env"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Run Benchmarks",
+			"program": "${workspaceFolder}/build/benchmarks/index.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outputCapture": "std",
+			"args": []
 		}
 	]
 }
