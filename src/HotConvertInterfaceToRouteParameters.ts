@@ -87,7 +87,21 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
             const parsedTypeStr = validStr.substring(0, validStr.indexOf ("[]"));
             parsed = { type: HotValidationType.Array, associatedValids: [{ type: parsedTypeStr as HotValidationType }] };
           } else if (!validStr.startsWith("{")) {
-						parsed = { type: validStr as HotValidationType };
+            const jsonStartStr = ",...{";
+            const jsonStart = validStr.indexOf(jsonStartStr);
+            let rawType = validStr;
+            let mergedJSON = null;
+
+            if (jsonStart > -1) {
+              const jsonPart = validStr.substring(jsonStart + jsonStartStr.length - 1).trim();
+              mergedJSON = JSON.parse (jsonPart);
+              rawType = validStr.substring(0, jsonStart).trim();
+            }
+
+						parsed = { type: rawType as HotValidationType };
+
+            if (mergedJSON != null)
+              parsed = { ...parsed, ...mergedJSON };
 					} else {
 						parsed = JSON.parse(validStr);
 					}

@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.8.121",
+  "version": "0.8.122",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -13,6 +13,7 @@
     "dev": "npx tsc --watch",
     "dev-web": "npx webpack --mode=development --watch",
     "dev-web-tests": "npx webpack --mode=development --config=webpack.config.tests.cjs --watch",
+    "benchmarks": "node ./build/benchmarks/index.js",
     "version-check": "node ./scripts/VersionCheck.mjs",
     "test": "npm run build-test-api && export $(cat .env | xargs) && npx mocha --timeout 5000 --colors ./build/tests/**/*.js",
     "test-nyc": "npm run build-test-api && nyc mocha --require=dotenv/config --timeout 5000 --colors ./build/tests/**/*.js",

@@ -88,7 +88,7 @@ Execute this code to debug in browser:
 				var done = arguments[0];
 				var HotStaq = HotStaqWeb.HotStaq;
 				document.getElementById ("buttonClicked").innerHTML = "";
-				HotStaq.addHtml ("body", "<hello-world id = \\"dynamicHelloWorld\\" value = \\"Send\\"></hello-world>");
+				HotStaq.addHtmlUnsafe ("body", "<hello-world id = \\"dynamicHelloWorld\\" value = \\"Send\\"></hello-world>");
 				done ();`);
 			});
 		it ("should click the new Hello World button and verify the API call result", async () =>

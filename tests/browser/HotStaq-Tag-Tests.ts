@@ -111,7 +111,7 @@ describe ("HotStaq <hotstaq> Tag Tests", () =>
 
 				expect (value).to.equal ("TESTING", "Test attribute was incorrect!");
 			});
-		it ("should test the test2 attribute that uses ${} and !{}", async () =>
+		it ("should test the test2 attribute that uses ${}", async () =>
 			{
 				let elm = await common.driver.wait (until.elementLocated (By.id ("message")));
 				let value: string = await elm.getAttribute ("data-test2");

@@ -40,7 +40,7 @@ export class TableComponent extends HotComponent
 				<td>${value}</td>
 			</tr>`;
 
-			HotStaq.addHtml (tbody, rowStr);
+			HotStaq.addHtmlUnsafe (tbody, rowStr);
 		}
 	}
 

@@ -29,7 +29,7 @@
 	Hot.echoUnsafe (`World!</button>`);
 *>
 	<div ?("apiResult") id = "buttonClicked"></div>
-	<input id = "message" data-test = "${'TESTING'}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
+	<input id = "message" data-test = "${'TESTING'}" data-test2 = "<* Hot.echo ('test2data'); *>" ?("messageTestObjectName") value = "" />
 	<button ?("testHelloWorldAPIButton") id = "testHelloWorldAPI" onclick = "sayHello ();">Send</button>
 	<button id = "testHelloWorldAPI2" onclick = "sayHelloDifferently ();">Send2</button>
 </body>

@@ -78,7 +78,7 @@
 <*
 	Hot.echoUnsafe (`World!</button><div id = "buttonClicked"></div>`);
 *>
-	<input id = "message" data-test = "${testData}" data-test2 = "!{Hot.echo ('test2data');}" ?("messageTestObjectName") value = "" />
+	<input id = "message" data-test = "${testData}" data-test2 = "<* Hot.echo ('test2data'); *>" ?("messageTestObjectName") value = "" />
 	<button <* Hot.echo ("id = \"testHelloWorldAPI\"")
 	*> onclick = "<(event) =>
 		{

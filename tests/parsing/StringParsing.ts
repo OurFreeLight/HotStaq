@@ -49,26 +49,6 @@ describe ("Parsing Tests", () =>
 
 				expect (output).to.equal (correctContent);
 			});
-		it ("should parse off content straight JS, ex: !{JS_Content}", async () =>
-			{
-				let correctContent: string = fs.readFileSync (
-					ppath.normalize (`${basePath}/off-content-js/CorrectOffContentJS.hott`)).toString ();
-				let content: string = fs.readFileSync (
-					ppath.normalize (`${basePath}/off-content-js/OffContentJS.hott`)).toString ();
-				let output: string = HotFile.processNestedContent (content, "!{", "}", "{", 
-					(regexFound2: string): string =>
-					{
-						let out: string = `${regexFound2}`;
-
-						return (out);
-					}, 
-					(offContent3: string): string =>
-					{
-						return (offContent3);
-					});
-
-				expect (output).to.equal (correctContent);
-			});
 		it ("should parse off content straight JS, ex: STR{JS_Content}", async () =>
 			{
 				let correctContent: string = fs.readFileSync (
