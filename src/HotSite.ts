@@ -106,7 +106,20 @@ export interface HotSite
 					/**
 					 * The name of the interfaces to convert into JSON objects.
 					 */
-					generate: string[];
+					generate: string[] | {
+						/**
+						 * The interface name.
+						 */
+						name: string;
+						/**
+						 * The key in the JSON object that contains the interface.
+						 */
+						key?: string;
+						/**
+						 * Indicates if the key in the JSON object is required.
+						 */
+						required?: string;
+					}[];
 				};
 			/**
 			 * The ports to use.

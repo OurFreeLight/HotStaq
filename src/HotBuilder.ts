@@ -812,8 +812,15 @@ return (newModule);
 
 							for (let iJdx = 0; iJdx < hotsite.server.interfaces.generate.length; iJdx++)
 							{
-								const interfaceGen: string = hotsite.server.interfaces.generate[iJdx];
+								const interfaceGenObj = hotsite.server.interfaces.generate[iJdx];
+								let interfaceGen = {
+										name: interfaceGenObj
+									};
 
+								if (typeof (interfaceGenObj) !== "string")
+									interfaceGen = interfaceGenObj;
+
+								// @ts-ignore
 								this.interfaceConfig.filesToGenerate.push (interfaceGen);
 							}
 						}
@@ -829,12 +836,14 @@ return (newModule);
 
 			for (let iIdx = 0; iIdx < this.interfaceConfig.filesToGenerate.length; iIdx++)
 			{
-				const interfaceGen: string = this.interfaceConfig.filesToGenerate[iIdx];
+				const interfaceGen: string | { name: string; } = this.interfaceConfig.filesToGenerate[iIdx];
+				// @ts-ignore
+				const ifaceName = (typeof (interfaceGen) === "string") ? interfaceGen : interfaceGen.name;
 
-				this.logger.info (`Generating IHotParameter objects for ${interfaceGen}...`);
+				this.logger.info (`Generating IHotParameter objects for ${ifaceName}...`);
 
-				const params = await HotStaq.convertInterfaceToRouteParameters (interfaceGen, false, { "tsconfigPath": this.interfaceConfig.tsconfigPath });
-				const finalPath = ppath.normalize (`${this.interfaceConfig.outputDir}/${interfaceGen}.json`);
+				const params = await HotStaq.convertInterfaceToRouteParameters (ifaceName, false, { "tsconfigPath": this.interfaceConfig.tsconfigPath });
+				const finalPath = ppath.normalize (`${this.interfaceConfig.outputDir}/${ifaceName}.json`);
 
 				await HotIO.writeTextFile (finalPath, JSON.stringify (params, null, 2));
 				this.logger.info (`Wrote to: ${finalPath}`);

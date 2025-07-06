@@ -200,7 +200,10 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 				}
 
 				if (errMsg != null)
-					throw errMsg;
+				{
+					if (paramDef.required === true)
+						throw errMsg;
+				}
 			}
 
 			if (validReturnType != null)
@@ -226,7 +229,14 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 		else
 		{
 			if (paramDef.required === true)
-				throw new HttpError(`Parameter '${key}' is required but not provided.`, 400);
+			{
+				let parentKeyStr = "";
+
+				if (parentKey !== "")
+					parentKeyStr = ` Parent Key: '${parentKey}'`;
+
+				throw new HttpError(`Parameter '${key}' is required but not provided.${parentKeyStr}`, 400);
+			}
 		}
 	}
 

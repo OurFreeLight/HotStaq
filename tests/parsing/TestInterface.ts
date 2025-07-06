@@ -38,6 +38,12 @@ export interface OtherInterface
 	 * @valid OtherInterfaceAgain
 	 */
 	anotherStringObject: string | OtherInterfaceAgain;
+	/**
+	 * The associated relationships. Currently only 1 relationship can be accepted, the 
+	 * first relationship from here will be passed into this.relationship.
+	 * @valid (Text | OtherInterfaceAgain)[]
+	 */
+	relationships?: (string | OtherInterfaceAgain)[];
 }
 
 /**

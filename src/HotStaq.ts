@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.122";
+	static version: string = "0.8.123";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1023,7 +1023,7 @@ export class HotStaq implements IHotStaq
 	 * @param addToValids If this is set to true, the converted interface will be added to the valids list so it can be used to 
 	 * help validate future data.
 	 */
-	static async convertInterfaceToRouteParameters (interfaceName: string, 
+	static async convertInterfaceToRouteParameters (interfaceName: string | { name: string; }, 
 			addToValids: boolean = true,
 			options: ITypeScriptConversionOptions = null
 		): Promise<HotRouteMethodParameterMap>
@@ -1043,6 +1043,13 @@ export class HotStaq implements IHotStaq
 				};
 		}
 
+		let ifaceName: string = "";
+
+		if (typeof (interfaceName) === "string")
+			ifaceName = interfaceName;
+		else
+			ifaceName = interfaceName.name;
+
 		let generateParsedInterface: (
 			interfaceName: string,
 			tsConfigFilePath: string
@@ -1052,15 +1059,15 @@ export class HotStaq implements IHotStaq
 		if (options.tsconfigPath != null)
 			tsConfigPath = options.tsconfigPath;
 
-		const output: ParsedInterface = await generateParsedInterface (interfaceName, tsConfigPath);
+		const output: ParsedInterface = await generateParsedInterface (ifaceName, tsConfigPath);
 
 		if (output == null)
-			throw new Error (`Interface ${interfaceName} not found.`);
+			throw new Error (`Interface ${ifaceName} not found.`);
 
 		parameters = HotStaq.convertParsedInterfaceToParameters (output);
 
 		if (addToValids === true)
-			HotStaq.setValid (interfaceName, parameters);
+			HotStaq.setValid (ifaceName, parameters);
 
 		return (parameters);
 	}

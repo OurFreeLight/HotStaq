@@ -454,7 +454,7 @@ export interface HotRouteMethodParameter
 	 */
 	type?: string;
 	/**
-	 * The item type in the array.
+	 * The item type of each element in the array.
 	 * 
 	 * @todo This cannot generate objects or nested objects yet :/
 	 */
