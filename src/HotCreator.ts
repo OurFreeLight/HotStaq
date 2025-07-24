@@ -196,7 +196,7 @@ This will transpile the TypeScript into ES6 JavaScript by default. After this is
 				},
 				"devDependencies": {
 					"@types/express": "^4.17.13",
-					"@types/formidable": "^1.2.4",
+					"@types/formidable": "^3.4.5",
 					"@types/fs-extra": "^9.0.12",
 					"@types/js-cookie": "^2.2.7",
 					"@types/mocha": "^10.0.1",

@@ -6,6 +6,7 @@ import { HotServer, HotServerType } from "./HotServer";
 import express from "express";
 import { HotWebSocketServerClient } from "./HotWebSocketServerClient";
 import { HotRouteMethodParameterMap, IHotValidReturn } from "./HotStaq";
+import { ValidationOptions } from "./HotProcessInput";
 
 /**
  * The available event methods.
@@ -393,7 +394,7 @@ export interface HotValidation
 	/**
 	 * The function to use to validate if the input is valid.
 	 */
-	func?: (strict: boolean, key: string, input: any) => Promise<IHotValidReturn>;
+	func?: (options: ValidationOptions, key: string, input: any) => Promise<IHotValidReturn>;
 	/**
 	 * The regex to use to validate with.
 	 */
@@ -454,7 +455,7 @@ export interface HotRouteMethodParameter
 	 */
 	type?: string;
 	/**
-	 * The item type in the array.
+	 * The item type of each element in the array.
 	 * 
 	 * @todo This cannot generate objects or nested objects yet :/
 	 */
@@ -516,13 +517,13 @@ export interface IHotRouteMethod
 	 */
 	returns?: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>);
 	/**
-	 * If set to true, this will validate the query input before executing the method.
+	 * If set, this will validate the query input before executing the method.
 	 */
-	validateQueryInput?: InputValidationType;
+	validateQueryInput?: ValidationOptions;
 	/**
-	 * If set to true, this will validate the JSON input before executing the method.
+	 * If set, this will validate the JSON input before executing the method.
 	 */
-	validateJSONInput?: InputValidationType;
+	validateJSONInput?: ValidationOptions;
 	/**
 	 * The reference name for the parameters when generating documentation.
 	 * This is so the generated components all use the same parameters.
@@ -599,26 +600,6 @@ export interface IHotRouteMethod
 }
 
 /**
- * How input validation should be handled.
- */
-export enum InputValidationType
-{
-	/**
-	 * No validation will be performed.
-	 */
-	None,
-	/**
-	 * Validation will be performed according to the specification set in the parameters. 
-	 * Any extra keys will be flagged as an error.
-	 */
-	Strict,
-	/**
-	 * Validation will be performed according to the specification set in the parameters.
-	 */
-	Loose
-}
-
-/**
  * An API method to make.
  */
 export class HotRouteMethod implements IHotRouteMethod
@@ -650,11 +631,11 @@ export class HotRouteMethod implements IHotRouteMethod
 	/**
 	 * If set to true, this will validate the query input before executing the method.
 	 */
-	validateQueryInput: InputValidationType;
+	validateQueryInput: ValidationOptions;
 	/**
 	 * If set to true, this will validate the JSON input before executing the method.
 	 */
-	validateJSONInput: InputValidationType;
+	validateJSONInput: ValidationOptions;
 	/**
 	 * The reference name for the parameters when generating documentation.
 	 * This is so the generated components all use the same parameters.
@@ -757,8 +738,8 @@ export class HotRouteMethod implements IHotRouteMethod
 		this.openAPI = null;
 		this.tags = [];
 		this.returns = null;
-		this.validateQueryInput = InputValidationType.Loose;
-		this.validateJSONInput = InputValidationType.Loose;
+		this.validateQueryInput = new ValidationOptions ();
+		this.validateJSONInput = new ValidationOptions ();
 		this.parametersRefName = "";
 		this.parameters = {};
 		this.queryParameters = {};

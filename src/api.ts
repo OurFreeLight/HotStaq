@@ -9,6 +9,7 @@ import { HotFile } from "./HotFile";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotPage } from "./HotPage";
 import { HotIO } from "./HotIO";
+import { ValidationError, FalsyOptions, ValidationOptions } from "./HotProcessInput";
 
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
@@ -83,6 +84,7 @@ export {
 		HotLog,
 		HotLogLevel,
 		HotPage,
+		ValidationError, FalsyOptions, ValidationOptions,
 		HotIO,
 		HotDB,
 		HotDBType,

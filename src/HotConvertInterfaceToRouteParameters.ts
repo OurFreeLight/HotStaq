@@ -1,6 +1,6 @@
 import { IHotValidReturn, ParsedInterface } from "./HotStaq";
-import ts from "typescript";
-import { Project, InterfaceDeclaration, PropertySignature, TypeLiteralNode } from "ts-morph";
+import ts, { TypeFlags } from "typescript";
+import { Project, InterfaceDeclaration, PropertySignature, TypeLiteralNode, Type, TypeNode, SyntaxKind } from "ts-morph";
 import { HotValidation, HotValidationType } from "./HotRouteMethod";
 
 // Allowed raw types.
@@ -73,29 +73,99 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
 				{
 					validStr = match[1].trim();
 
+          let hasCombinators = false;
           const isArray = validStr.endsWith ("[]");
+					let innerValidStr = validStr;
 					let parsed: HotValidation = {};
 
-					if (validStr.startsWith("JS:"))
-					{
-						const jsStr = validStr.substring(3);
+					if (isArray)
+						innerValidStr = validStr.slice(0, -2).trim();
+
+          const finishIt = (skipArray: boolean = false) =>
+          {
+            if (isArray) {
+              if (skipArray === false) {
+                parsed = {
+                  type: HotValidationType.Array,
+                  associatedValids: [parsed]
+                };
+              }
+            }
+  
+            if (parsed.type == null)
+            {
+              if (rawType === "string")
+                rawType = "Text";
+              if (parsed.values)
+                rawType = "Enum";
+  
+              parsed.type = rawType as HotValidationType;
+            }
+          };
+
+					if (innerValidStr.startsWith("JS:")) {
+						const jsStr = innerValidStr.substring(3);
 						parsed = {
 							type: HotValidationType.JS,
 							func: (<(input: any) => Promise<IHotValidReturn>>new Function(`return (async (value) => { ${jsStr} })()`))
 						};
-					} else if (isArray === true) {
-            const parsedTypeStr = validStr.substring(0, validStr.indexOf ("[]"));
-            parsed = { type: HotValidationType.Array, associatedValids: [{ type: parsedTypeStr as HotValidationType }] };
-          } else if (!validStr.startsWith("{")) {
+          } else if (innerValidStr.startsWith("(")) {
+            const extractTypes = (input: string): string[] => {
+              const regex = /^\s*\(\s*([^)]+?)\s*\)\s*$/;
+              const match = input.match(regex);
+
+              if (!match) return [];
+
+              const inner = match[1];
+              return inner.split("|").map(type => type.trim()).filter(type => type.length > 0);
+            };
+            const extractedTypes = extractTypes(innerValidStr);
+
+            if (isArray === false)
+            {
+              for (let iIdx = 0; iIdx < extractedTypes.length; iIdx++)
+              {
+                const extractedType = extractedTypes[iIdx];
+
+                parsed = { type: extractedType as HotValidationType };
+
+                finishIt();
+
+                validations.push(parsed);
+              }
+            }
+            else
+            {
+              hasCombinators = true;
+              parsed = {
+                type: HotValidationType.Array,
+                associatedValids: []
+              };
+
+              for (let iIdx = 0; iIdx < extractedTypes.length; iIdx++)
+              {
+                const extractedType = extractedTypes[iIdx];
+                const innerParsed: HotValidation = { type: extractedType as HotValidationType };
+
+                parsed.associatedValids.push(innerParsed);
+              }
+
+              finishIt(true);
+
+              validations.push(parsed);
+            }
+
+            continue;
+          } else if (!innerValidStr.startsWith("{")) {
             const jsonStartStr = ",...{";
-            const jsonStart = validStr.indexOf(jsonStartStr);
-            let rawType = validStr;
+            const jsonStart = innerValidStr.indexOf(jsonStartStr);
+            let rawType = innerValidStr;
             let mergedJSON = null;
 
             if (jsonStart > -1) {
-              const jsonPart = validStr.substring(jsonStart + jsonStartStr.length - 1).trim();
+              const jsonPart = innerValidStr.substring(jsonStart + jsonStartStr.length - 1).trim();
               mergedJSON = JSON.parse (jsonPart);
-              rawType = validStr.substring(0, jsonStart).trim();
+              rawType = innerValidStr.substring(0, jsonStart).trim();
             }
 
 						parsed = { type: rawType as HotValidationType };
@@ -103,18 +173,10 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
             if (mergedJSON != null)
               parsed = { ...parsed, ...mergedJSON };
 					} else {
-						parsed = JSON.parse(validStr);
+						parsed = JSON.parse(innerValidStr);
 					}
 
-					if (parsed.type == null)
-					{
-						if (rawType === "string")
-							rawType = "Text";
-						if (parsed.values)
-							rawType = "Enum";
-
-						parsed.type = rawType as HotValidationType;
-					}
+          finishIt();
 
 					validations.push(parsed);
 				} catch (e) {
@@ -166,6 +228,37 @@ function getRawType(prop: PropertySignature): string {
   return "string";
 }
 
+function getFirstTypeNameFromNode(node: TypeNode): string {
+  let current: TypeNode = node;
+
+  // Unwrap any parenthesis
+  while (current.getKind() === SyntaxKind.ParenthesizedType) {
+    current = (current as any).getTypeNode();
+  }
+
+  // If it's an array type like (string | Foo)[] -> unwrap to string | Foo
+  if (current.getKind() === SyntaxKind.ArrayType) {
+    const elementType = (current as any).getElementTypeNode?.();
+    if (elementType) {
+      return getFirstTypeNameFromNode(elementType);
+    }
+  }
+
+  // If it's a union or intersection, get the first constituent type
+  if (
+    current.getKind() === SyntaxKind.UnionType ||
+    current.getKind() === SyntaxKind.IntersectionType
+  ) {
+    const subTypes = (current as any).getTypeNodes?.();
+    if (subTypes?.length > 0) {
+      return getFirstTypeNameFromNode(subTypes[0]);
+    }
+  }
+
+  // Base case: it's a simple named type, return its text
+  return current.getText().trim();
+}
+
 /**
  * Recursively extracts metadata from an inline type literal node.
  * Returns an ParsedInterface object whose "parameters" property holds the extracted members.
@@ -177,50 +270,33 @@ function extractTypeLiteralMetadata(typeLiteralNode: TypeLiteralNode): ParsedInt
     if (member.getKindName() === "PropertySignature") {
       const prop = member as PropertySignature;
       const propName = prop.getName();
-      let fullType = prop.getType();
-      let originalType = fullType.getText();
-      let derivedType = "";
-      // If the property is an array, extract the element type.
-      if (fullType.isArray()) {
-        const elementType = fullType.getArrayElementType();
-        if (elementType) {
-          const elementSymbol = elementType.getAliasSymbol() || elementType.getSymbol();
-          if (elementSymbol) {
-            derivedType = elementSymbol.getName();
-          } else {
-            derivedType = elementType.getText();
-          }
-          originalType = elementType.getText();
-        } else {
-          derivedType = originalType;
-        }
-      } else {
-        let typeSymbol = fullType.getAliasSymbol() || fullType.getSymbol();
-        if (typeSymbol) {
-          const decls = typeSymbol.getDeclarations();
-          if (decls && decls.some(d => d.getKindName() === "InterfaceDeclaration")) {
-            derivedType = typeSymbol.getName();
-          } else {
-            derivedType = typeSymbol.getName();
-          }
-        } else {
-          derivedType = originalType;
-        }
-      }
+      const fullType = prop.getType();
+      const typeNode = prop.getTypeNode();
+
+      const originalType = fullType.getText();
       const rawType = getRawType(prop);
+      const required = !prop.hasQuestionToken();
+      const isReadOnly = prop.isReadonly();
+      const isArray = fullType.isArray();
+
       // @ts-ignore
       const propDescription = getNodeDescription(prop);
       // @ts-ignore
       const valids = extractValidFromRaw(propName, prop, rawType);
-      const required = !prop.hasQuestionToken();
-      const isReadOnly: boolean = prop.isReadonly();
-      const isArray: boolean = prop.getType().isArray();
-      let subParameters: { [key: string]: ParsedInterface } = {};
 
-      if (prop.getTypeNode() && prop.getTypeNode().getKindName() === "TypeLiteral") {
-        // @ts-ignore
-        subParameters = extractTypeLiteralMetadata(prop.getTypeNode()).parameters;
+      // ✅ Use getFirstTypeNameFromNode to get the derivedType
+      let derivedType = "unknown";
+      if (typeNode) {
+        derivedType = getFirstTypeNameFromNode(typeNode);
       }
+
+      // Handle nested inline objects
+      let subParameters: { [key: string]: ParsedInterface } = {};
+      if (typeNode?.getKindName() === "TypeLiteral") {
+        // @ts-ignore
+        subParameters = extractTypeLiteralMetadata(typeNode).parameters;
+      }
+
       parameters[propName] = {
         type: rawType,
         typeName: derivedType,
@@ -251,99 +327,74 @@ function extractTypeLiteralMetadata(typeLiteralNode: TypeLiteralNode): ParsedInt
  * Otherwise, it computes the raw type and preserves the original type (or array element type) in typeName.
  */
 function extractParsedInterface(iface: InterfaceDeclaration): ParsedInterface {
+// @ts-ignore
+const structure: { docs?: { description?: string }[] } = iface.getStructure();
+const description =
+  structure.docs?.map(doc => doc.description || "").join("\n").trim() || "";
+
+let parameters: { [key: string]: ParsedInterface } = {};
+
+iface.getProperties().forEach(prop => {
+  const propName = prop.getName();
+  const fullType = prop.getType();
+  const rawType = getRawType(prop);
+  const isArray = fullType.isArray();
+  let derivedType = "unknown";
+  const typeNode = prop.getTypeNode();
+  if (typeNode) {
+    derivedType = getFirstTypeNameFromNode(typeNode);
+  }
+  const originalType = fullType.getText();
+
   // @ts-ignore
-  const structure: { docs?: { description?: string }[] } = iface.getStructure();
-  const description =
-    structure.docs && structure.docs.length > 0
-      ? structure.docs.map(doc => doc.description || "").join("\n").trim()
-      : "";
-  let parameters: { [key: string]: ParsedInterface } = {};
+  const propDescription = getNodeDescription(prop);
+  // @ts-ignore
+  const valids = extractValidFromRaw(propName, prop, rawType);
+  const required = !prop.hasQuestionToken();
+  const isReadOnly = prop.isReadonly();
 
-  iface.getProperties().forEach(prop => {
-    const propName = prop.getName();
-    const fullType = prop.getType();
-    let originalType = fullType.getText();
-    let derivedType = "";
-    if (fullType.isArray()) {
-      const elementType = fullType.getArrayElementType();
-      if (elementType) {
-        const elementSymbol = elementType.getAliasSymbol() || elementType.getSymbol();
-        if (elementSymbol) {
-          derivedType = elementSymbol.getName();
-        } else {
-          derivedType = elementType.getText();
-        }
-        originalType = elementType.getText();
-      } else {
-        derivedType = originalType;
-      }
-    } else {
-      let typeSymbol = fullType.getAliasSymbol() || fullType.getSymbol();
-      if (typeSymbol) {
-        const decls = typeSymbol.getDeclarations();
-        if (decls && decls.some(d => d.getKindName() === "InterfaceDeclaration")) {
-          derivedType = typeSymbol.getName();
-        } else {
-          derivedType = typeSymbol.getName();
-        }
-      } else {
-        derivedType = originalType;
-      }
-    }
-    const rawType = getRawType(prop);
-	  // @ts-ignore
-    const propDescription = getNodeDescription(prop);
+  let subParameters: { [key: string]: ParsedInterface } = {};
+
+  if (prop.getTypeNode()?.getKindName() === "TypeLiteral") {
     // @ts-ignore
-    const valids = extractValidFromRaw(propName, prop, rawType);
-    const required = !prop.hasQuestionToken();
-    const isReadOnly: boolean = prop.isReadonly();
-    const isArray: boolean = fullType.isArray();
-    let subParameters: { [key: string]: ParsedInterface } = {};
+    subParameters = extractTypeLiteralMetadata(prop.getTypeNode()).parameters;
+  }
 
-    if (prop.getTypeNode() && prop.getTypeNode().getKindName() === "TypeLiteral") {
-		// @ts-ignore
-		subParameters = extractTypeLiteralMetadata(prop.getTypeNode()).parameters;
-    }
-    parameters[propName] = {
-      type: rawType,
-      typeName: derivedType,
-      description: propDescription,
-	  valids: valids,
-      required: required,
-      isReadOnly: isReadOnly,
-      isArray: isArray,
-      parameters: subParameters
-    };
-  });
-
-  // Process base interfaces (inheritance) and merge their properties.
-  const baseTypes = iface.getBaseTypes();
-  baseTypes.forEach(baseType => {
-    const baseSymbol = baseType.getSymbol();
-    if (baseSymbol) {
-      const baseDeclarations = baseSymbol.getDeclarations();
-      if (baseDeclarations && baseDeclarations.length > 0) {
-        const parentDeclaration = baseDeclarations.find(
-          decl => decl.getKindName() === "InterfaceDeclaration"
-        );
-        if (parentDeclaration) {
-          const parentIface = parentDeclaration as InterfaceDeclaration;
-          const parentMetadata = extractParsedInterface(parentIface);
-          parameters = { ...parentMetadata.parameters, ...parameters };
-        }
-      }
-    }
-  });
-
-  return {
-    type: "object",
-    typeName: iface.getName(), // Preserve the interface's original name.
-    description: description,
-    required: true,
-    isReadOnly: false,
-    isArray: false,
-    parameters: parameters
+  parameters[propName] = {
+    type: rawType,
+    typeName: derivedType,
+    description: propDescription,
+    valids: valids,
+    required: required,
+    isReadOnly: isReadOnly,
+    isArray: isArray,
+    parameters: subParameters
   };
+});
+
+const baseTypes = iface.getBaseTypes();
+baseTypes.forEach(baseType => {
+  const baseSymbol = baseType.getSymbol();
+  const baseDeclarations = baseSymbol?.getDeclarations();
+  const parentDeclaration = baseDeclarations?.find(
+    decl => decl.getKindName() === "InterfaceDeclaration"
+  );
+  if (parentDeclaration) {
+    const parentIface = parentDeclaration as InterfaceDeclaration;
+    const parentMetadata = extractParsedInterface(parentIface);
+    parameters = { ...parentMetadata.parameters, ...parameters };
+  }
+});
+
+return {
+  type: "object",
+  typeName: iface.getName(),
+  description: description,
+  required: true,
+  isReadOnly: false,
+  isArray: false,
+  parameters: parameters
+};
 }
 
 /**
