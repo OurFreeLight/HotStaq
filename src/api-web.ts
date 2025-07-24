@@ -11,6 +11,7 @@ import { HotComponent, HotComponentOutput, IHotComponent } from "./HotComponent"
 import { HotFile } from "./HotFile";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotPage } from "./HotPage";
+import { ValidationError, FalsyOptions, ValidationOptions } from "./HotProcessInput";
 
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
@@ -51,6 +52,7 @@ export {
     HotLog,
     HotLogLevel,
     HotPage,
+    ValidationError, FalsyOptions, ValidationOptions,
     HotRoute,
     HotRouteMethod,
     HotEventMethod,

@@ -1,0 +1,215 @@
+{
+  "id": {
+    "type": "string",
+    "required": false,
+    "description": "The id.",
+    "validations": [
+      {
+        "type": "UUID"
+      }
+    ]
+  },
+  "creatorId": {
+    "type": "string",
+    "required": false,
+    "description": "The id of the person who created the proposal.",
+    "validations": [
+      {
+        "type": "UUID"
+      },
+      {
+        "type": "IFreeUser"
+      }
+    ]
+  },
+  "name": {
+    "type": "string",
+    "required": false,
+    "description": "-\nThe name.",
+    "validations": [
+      {
+        "type": "ObjectName"
+      }
+    ]
+  },
+  "creationDate": {
+    "type": "string",
+    "required": false,
+    "description": "When the proposal was first created.",
+    "validations": [
+      {
+        "type": "Date"
+      }
+    ]
+  },
+  "approvalStatus": {
+    "type": "string",
+    "required": false,
+    "description": "The approval status.",
+    "validations": [
+      {
+        "type": "Enum",
+        "values": [
+          "AwaitingReview",
+          "InReview",
+          "Approved",
+          "Rejected"
+        ]
+      }
+    ]
+  },
+  "currentFlag": {
+    "type": "string",
+    "required": false,
+    "description": "The associated moderator flag, if any.",
+    "validations": [
+      {
+        "type": "Text"
+      },
+      {
+        "type": "IModeratorFlag"
+      }
+    ]
+  },
+  "permissions": {
+    "type": "object",
+    "required": false,
+    "description": "The input permissions.",
+    "validations": [
+      {
+        "type": "Delete"
+      }
+    ]
+  },
+  "description": {
+    "type": "string",
+    "required": false,
+    "description": "The description.",
+    "validations": [
+      {
+        "type": "RichText"
+      }
+    ]
+  },
+  "status": {
+    "type": "string",
+    "required": false,
+    "description": "The status.",
+    "validations": [
+      {
+        "type": "Enum",
+        "values": [
+          "PrivateDraft",
+          "PublicDraft",
+          "Public"
+        ]
+      }
+    ]
+  },
+  "budget": {
+    "type": "string",
+    "required": false,
+    "description": "The associated budget.",
+    "validations": [
+      {
+        "type": "IBudget"
+      }
+    ]
+  },
+  "category": {
+    "type": "string",
+    "required": false,
+    "description": "The proposal category.",
+    "validations": [
+      {
+        "type": "Text"
+      }
+    ]
+  },
+  "priority": {
+    "type": "number",
+    "required": false,
+    "description": "The priority of the proposal.",
+    "validations": [
+      {
+        "type": "number"
+      }
+    ]
+  },
+  "tags": {
+    "type": "array",
+    "required": false,
+    "description": "The tags associated with the proposal.",
+    "validations": [
+      {
+        "type": "Array",
+        "associatedValids": [
+          {
+            "type": "Text"
+          }
+        ]
+      }
+    ],
+    "items": {
+      "type": "string"
+    }
+  },
+  "proposalStatus": {
+    "type": "string",
+    "required": false,
+    "description": "The proposal status.",
+    "validations": [
+      {
+        "type": "Enum",
+        "values": [
+          "idea",
+          "draft",
+          "lastcall",
+          "stagnant",
+          "accepted",
+          "rejected"
+        ]
+      }
+    ]
+  },
+  "lastActivityDate": {
+    "type": "string",
+    "required": false,
+    "description": "When the proposal last had activity.",
+    "validations": [
+      {
+        "type": "Date"
+      }
+    ]
+  },
+  "ideaEndDate": {
+    "type": "string",
+    "required": false,
+    "description": "The date/time the proposal will end it's idea stage.",
+    "validations": [
+      {
+        "type": "Date"
+      }
+    ]
+  },
+  "lastCallEndDate": {
+    "type": "string",
+    "required": false,
+    "description": "The date/time the proposal will end it's last call stage.",
+    "validations": [
+      {
+        "type": "Date"
+      }
+    ]
+  },
+  "stagnantEndDate": {
+    "type": "string",
+    "required": false,
+    "description": "The date/time the proposal will end it's stagnant stage and be rejected.",
+    "validations": [
+      {
+        "type": "Date"
+      }
+    ]
+  }
+}

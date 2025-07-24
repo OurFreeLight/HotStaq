@@ -5,7 +5,7 @@ import * as ppath from "path";
 
 import { HotLog } from "./HotLog";
 import { HotEventMethod, HotRouteMethod, HotRouteMethodParameter, HotValidation, 
-	HotValidationType, InputValidationType, PassType, ServerRequest } from "./HotRouteMethod";
+	HotValidationType, PassType, ServerRequest } from "./HotRouteMethod";
 import { HotRoute } from "./HotRoute";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";
@@ -117,7 +117,7 @@ export async function processRequest (server: HotHTTPServer,
 
 	if (hasAuthorization === true)
 	{
-		let uploadedFiles: any = await HotHTTPServer.getFileUploads (req);
+		let uploadedFiles: any = await HotHTTPServer.getFileUploads (logger, req);
 
 		if (Object.keys (uploadedFiles).length > 0)
 		{
@@ -139,7 +139,7 @@ export async function processRequest (server: HotHTTPServer,
 
 			for (let key in uploadedFiles)
 			{
-				let uploadedFile: any = uploadedFiles[key];
+				let uploadedFile: any = uploadedFiles[key][0];
 				const newFilePath: string = ppath.normalize (`${tempDir}/${uploadedFile.originalFilename}`);
 
 				await HotIO.moveFile (uploadedFile.filepath, newFilePath, { overwrite: true });
@@ -185,8 +185,7 @@ export async function processRequest (server: HotHTTPServer,
 		{
 			if (Object.keys(queryObj).length > 0)
 			{
-				if ((method.validateQueryInput === InputValidationType.Strict) || 
-					(method.validateQueryInput === InputValidationType.Loose))
+				if (method.validateQueryInput != null)
 				{
 					let skipValidation: number = 0;
 	
@@ -200,13 +199,7 @@ export async function processRequest (server: HotHTTPServer,
 							if (method.onValidateQueryInput != null)
 								await method.onValidateQueryInput.call (thisObj, queryObj);
 							else
-							{
-								if (method.validateQueryInput === InputValidationType.Strict)
-									queryObj = await processInput (true, method.parameters, queryObj, request);
-
-								if (method.validateQueryInput === InputValidationType.Loose)
-									queryObj = await processInput (false, method.parameters, queryObj, request);
-							}
+								queryObj = await processInput (method.validateQueryInput, method.parameters, queryObj, request);
 						}
 						catch (ex)
 						{
@@ -225,8 +218,7 @@ export async function processRequest (server: HotHTTPServer,
 
 		if (jsonObj != null)
 		{
-			if ((method.validateJSONInput === InputValidationType.Strict) || 
-				(method.validateJSONInput === InputValidationType.Loose))
+			if (method.validateJSONInput != null)
 			{
 				let skipValidation: boolean = false;
 
@@ -243,13 +235,7 @@ export async function processRequest (server: HotHTTPServer,
 						if (method.onValidateJSONInput != null)
 							await method.onValidateJSONInput.call (thisObj, jsonObj);
 						else
-						{
-							if (method.validateJSONInput === InputValidationType.Strict)
-								jsonObj = await processInput (true, method.parameters, jsonObj, request);
-
-							if (method.validateJSONInput === InputValidationType.Loose)
-								jsonObj = await processInput (false, method.parameters, jsonObj, request);
-						}
+							jsonObj = await processInput (method.validateJSONInput, method.parameters, jsonObj, request);
 					}
 					catch (ex)
 					{

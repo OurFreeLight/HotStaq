@@ -2,6 +2,74 @@ import { HttpError } from "./HotHttpError";
 import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
 import { HotRouteMethodParameterMap, HotStaq, HotValidReturnType, IHotValidReturn } from "./HotStaq";
 
+/**
+ * A validation error.
+ */
+export class ValidationError extends Error
+{
+	/**
+	 * The valid type that threw the error.
+	 */
+	validType: any;
+
+	constructor (message: string, validType: any)
+	{
+		super (message);
+
+		this.name = "HttpError";
+		this.validType = validType;
+	}
+}
+
+/**
+ * The options for when a falsy is triggered.
+ */
+export enum FalsyOptions
+{
+	/**
+	 * Throw an error message if its triggered.
+	 */
+	ThrowError,
+	/**
+	 * Delete the key/value from the object.
+	 */
+	Delete,
+	/**
+	 * Continue on to the next key for validation.
+	 */
+	Continue
+}
+
+/**
+ * The validation options available.
+ */
+export class ValidationOptions
+{
+	/**
+	 * Ensure all parameters exist.
+	 * @default false
+	 */
+	strictInput: boolean;
+	/**
+	 * How falsies are checked. When this returns true, that means the 
+	 * falsy has been triggered. 
+	 * @default null
+	 */
+	falsy: (value: any) => boolean;
+	/**
+	 * What should happen if a falsy is triggered.
+	 * @default FalsyOptions.Continue
+	 */
+	falsyOptions: FalsyOptions;
+
+	constructor (strictInput: boolean = false)
+	{
+		this.strictInput = strictInput;
+		this.falsy = null;
+		this.falsyOptions = FalsyOptions.Continue;
+	}
+}
+
 // If a nested parameter is provided as a string, we assume a default parameter expecting text.
 async function resolveParameters(
 		nested: { [name: string]: string | HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>) }
@@ -23,14 +91,14 @@ async function resolveParameters(
 }
 
 // Recursive helper that validates a single value through its entire validation chain.
-export async function validateRecursively(strictInput: boolean, key: string, input: any, 
+export async function validateRecursively(options: ValidationOptions, key: string, input: any, 
 	request: ServerRequest, validation?: HotValidation): Promise<IHotValidReturn>
 {
 	const value = input[key];
 
 	if (HotStaq.preValidate != null)
 	{
-		const result = await HotStaq.preValidate (strictInput, key, validation, value, request);
+		const result = await HotStaq.preValidate (options, key, validation, value, request);
 
 		if (result != null)
 		{
@@ -51,6 +119,21 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 	if (!validation)
 		return { value: value };
 
+	if (options.falsy != null)
+	{
+		if (options.falsy (value) === true)
+		{
+			if (options.falsyOptions === FalsyOptions.ThrowError)
+				throw new Error (`Falsy "${key}" triggered by value ${value}.`);
+
+			if (options.falsyOptions === FalsyOptions.Delete)
+				return ({ type: HotValidReturnType.Delete });
+
+			if (options.falsyOptions === FalsyOptions.Continue)
+				return ({ type: HotValidReturnType.Ignore });
+		}
+	}
+
 	const validType = validation.type;
 
 	if (validType === HotValidationType.Ignore)
@@ -62,7 +145,7 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 	const valid = HotStaq.valids[validType];
 
 	if (valid == null)
-		throw new HttpError (`Validation '${validType}' not found.`, 500);
+		throw new ValidationError (`Validation '${validType}' not found.`, validType);
 
 	if (validation.defaultValue != null)
 	{
@@ -70,45 +153,75 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 			return { value: validation.defaultValue };
 	}
 
-	let newResult = null;
-
-	if (valid instanceof Function)
-	{
-		newResult = await valid (strictInput, key, validation, value, request);
-
-		if (newResult != null)
+	const validCheck = async (value2: any): Promise<any> =>
 		{
-			if (newResult.type == null)
-				newResult.type = HotValidReturnType.Return;
+			let newResult2 = null;
 
-			if (newResult.type === HotValidReturnType.Delete)
-				return { type: HotValidReturnType.Delete };
+			if (valid instanceof Function)
+			{
+				newResult2 = await valid (options, key, validation, value2, request);
+		
+				if (newResult2 != null)
+				{
+					if (newResult2.type == null)
+						newResult2.type = HotValidReturnType.Return;
+		
+					if (newResult2.type === HotValidReturnType.Delete)
+						return { type: HotValidReturnType.Delete };
+				}
+			}
+			else
+			{
+				const result = await processInput (options, valid, value2, request, key);
+				newResult2 = { type: HotValidReturnType.Return, value: result };
+				//let foundValid = valid[key];
+				/*let foundValid = valid;
+				let compValid: HotRouteMethodParameter = null;
+		
+				if (foundValid instanceof Function)
+					compValid = await foundValid ();
+				else
+					compValid = foundValid;
+		
+				if (compValid == null)
+					throw new HttpError (`Key '${key}' not found in valid '${validType}'`, 403);
+		
+				const resolvedParams = await resolveParameters(compValid.parameters);
+				const result = await processInput (options, resolvedParams, value, request, key);
+				newResult2 = { type: HotValidReturnType.Return, value: result };*/
+			}
+
+			return (newResult2);
+		};
+
+	let newResult: any = { type: HotValidReturnType.Return };
+
+	if (value instanceof Array)
+	{
+		const resultValues = [];
+
+		for (let iIdx = 0; iIdx < value.length; iIdx++)
+		{
+			const valueElm = value[iIdx];
+			const newResult3 = await validCheck (valueElm);
+		
+			if (newResult3 != null)
+			{
+				if (newResult3.type === HotValidReturnType.Delete)
+					continue;
+			}
+
+			resultValues.push (newResult3.value);
 		}
+
+		newResult.value = resultValues;
 	}
 	else
-	{
-		const result = await processInput (strictInput, valid, value, request, key);
-		newResult = { type: HotValidReturnType.Return, value: result };
-		//let foundValid = valid[key];
-		/*let foundValid = valid;
-		let compValid: HotRouteMethodParameter = null;
-
-		if (foundValid instanceof Function)
-			compValid = await foundValid ();
-		else
-			compValid = foundValid;
-
-		if (compValid == null)
-			throw new HttpError (`Key '${key}' not found in valid '${validType}'`, 403);
-
-		const resolvedParams = await resolveParameters(compValid.parameters);
-		const result = await processInput (strictInput, resolvedParams, value, request, key);
-		newResult = { type: HotValidReturnType.Return, value: result };*/
-	}
+		newResult = await validCheck (value);
 
 	if (HotStaq.postValidate != null)
 	{
-		newResult = await HotStaq.postValidate (strictInput, key, validation, newResult.value, request);
+		newResult = await HotStaq.postValidate (options, key, validation, newResult.value, request);
 
 		if (newResult != null)
 		{
@@ -123,7 +236,7 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
 	if (newResult.type === HotValidReturnType.Return)
 		return { value: newResult.value };
 
-	return validateRecursively(strictInput, key, newResult.value, request, validation.next);
+	return validateRecursively(options, key, newResult.value, request, validation.next);
 }
 
 /**
@@ -135,14 +248,15 @@ export async function validateRecursively(strictInput: boolean, key: string, inp
  * 
  * @experimental
  */
-export async function processInput (strictInput: boolean, params: HotRouteMethodParameterMap, input: any, request: ServerRequest, parentKey: string = ""): Promise<any>
+export async function processInput (options: ValidationOptions, params: HotRouteMethodParameterMap, 
+	input: any, request: ServerRequest, parentKey: string = ""): Promise<any>
 {
 	const validatedInput: any = input;
 
 	if (! (input instanceof Object))
 		throw new Error(`Parameter '${parentKey}' must be an object.`);
 
-	if (strictInput === true)
+	if (options.strictInput === true)
 	{
 		// Check that every key in input exists in params.
 		// @fixme This is only a shallow check....
@@ -177,6 +291,7 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 			if (paramDef.validations)
 			{
 				let errMsg = null;
+				let isRequired = paramDef.required;
 
 				for (let iIdx = 0; iIdx < paramDef.validations.length; iIdx++)
 				{
@@ -184,7 +299,7 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 
 					try
 					{
-						let validValue = await validateRecursively(strictInput, key, input, request, validation);
+						let validValue = await validateRecursively(options, key, input, request, validation);
 
 						validReturnType = validValue.type;
 						value = validValue.value;
@@ -195,15 +310,16 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 					}
 					catch (err: any)
 					{
+						// ValidationErrors should always be thrown no matter what.
+						if (err instanceof ValidationError)
+							throw err;
+
 						errMsg = err;
 					}
 				}
 
 				if (errMsg != null)
-				{
-					if (paramDef.required === true)
-						throw errMsg;
-				}
+					throw errMsg;
 			}
 
 			if (validReturnType != null)
@@ -221,7 +337,7 @@ export async function processInput (strictInput: boolean, params: HotRouteMethod
 					throw new Error(`Parameter '${key}' must be an object.`);
 				}
 				let resolvedParams = await resolveParameters(paramDef.parameters);
-				value = await processInput(strictInput, resolvedParams, value, request, key);
+				value = await processInput(options, resolvedParams, value, request, key);
 			}
 
 			validatedInput[key] = value;

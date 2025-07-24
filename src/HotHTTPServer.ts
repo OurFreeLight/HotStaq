@@ -7,7 +7,7 @@ import { F_OK } from "constants";
 
 import express from "express";
 import mimeTypes from "mime-types";
-import { Fields, Files, IncomingForm, Options } from "formidable";
+import formidable, { Fields, Files, errors as formidableErrors, Options as FormidableOptions } from "formidable";
 
 import { rateLimit, Options as RateLimitOptions } from "express-rate-limit";
 import { RedisStore, Options as RedisRateLimitOptions } from "rate-limit-redis";
@@ -21,6 +21,7 @@ import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
 import { processRequest } from "./HotHTTPServerProcessRequest";
 import { HotIO } from "./HotIO";
 import { HotWebSocketServer } from "./HotWebSocketServer";
+import { HotLog } from "./HotLog";
 
 var Worker: any = null;
 
@@ -749,66 +750,88 @@ export class HotHTTPServer extends HotServer
 
 				const expressType: string = HotHTTPServer.getExpressMethodName (method.type);
 
+				const asyncHandler = (fn: express.RequestHandler): express.RequestHandler =>
+					{
+						return ((req, res, next) =>
+							{
+								Promise.resolve (fn (req, res, next)).catch ((ex) =>
+									{
+										this.logger.error (`HTTP Error: ${ex.message}`);
+										next (ex);
+									});
+							});
+					};
+
 				// @ts-ignore
 				this.expressApp[expressType] (methodName, 
-					async (req: express.Request, res: express.Response) =>
+					asyncHandler (async (req: express.Request, res: express.Response) =>
 					{
-						if (method.type === HotEventMethod.SSE_SUB_EVENT)
-						{
-							this.logger.verbose (`Created SSE event for method: ${method.name}`);
-							res.set ({
-									'Content-Type': 'text/event-stream',
-									'Cache-Control': 'no-cache',
-									'Connection': 'keep-alive'
-								})
-							res.flushHeaders ();
-						}
+						let sendResponse = null;
 
-						let sendResponse = (value: any, requestNum: number) =>
+						try
+						{
+							if (method.type === HotEventMethod.SSE_SUB_EVENT)
 							{
-								let start = this.activeRequests[requestNum];
-								let end = performance.now ();
-								let diff = (end - start);
+								this.logger.verbose (`Created SSE event for method: ${method.name}`);
+								res.set ({
+										'Content-Type': 'text/event-stream',
+										'Cache-Control': 'no-cache',
+										'Connection': 'keep-alive'
+									})
+								res.flushHeaders ();
+							}
 
-								delete this.activeRequests[requestNum];
-
-								this.logger.verbose (`${methodName} took ${diff}ms`);
-
-								if (value !== undefined)
+							sendResponse = (value: any, requestNum: number) =>
 								{
-									if (value != null)
+									let start = this.activeRequests[requestNum];
+									let end = performance.now ();
+									let diff = (end - start);
+
+									delete this.activeRequests[requestNum];
+
+									this.logger.verbose (`${methodName} took ${diff}ms`);
+
+									if (value !== undefined)
 									{
-										if (value.error != null)
+										if (value != null)
 										{
-											let statusCode = this.errorHandlingResponseCode;
+											if (value.error != null)
+											{
+												let statusCode = this.errorHandlingResponseCode;
 
-											if (value.errorCode != null)
-												statusCode = value.errorCode;
+												if (value.errorCode != null)
+													statusCode = value.errorCode;
 
-											res.status (statusCode).json (value);
+												res.status (statusCode).json (value);
 
-											return;
+												return;
+											}
 										}
+
+										res.status (200).json (value);
 									}
+								};
 
-									res.status (200).json (value);
-								}
-							};
+							if (this.useWorkerThreads === false)
+							{
+								if (this.numRequestsServed >= (Number.MAX_SAFE_INTEGER - 1))
+									this.numRequestsServed = 0;
 
-						if (this.useWorkerThreads === false)
+								const requestNum = this.numRequestsServed++;
+							
+								this.activeRequests[requestNum] = performance.now ();
+								let response = await processRequest (this, this.logger, route, method, methodName, req, res);
+
+								if (method.type !== HotEventMethod.SSE_SUB_EVENT)
+									sendResponse (response, requestNum);
+
+								return;
+							}
+						}
+						catch (ex)
 						{
-							if (this.numRequestsServed >= (Number.MAX_SAFE_INTEGER - 1))
-								this.numRequestsServed = 0;
-
-							const requestNum = this.numRequestsServed++;
-						
-							this.activeRequests[requestNum] = performance.now ();
-							let response = await processRequest (this, this.logger, route, method, methodName, req, res);
-
-							if (method.type !== HotEventMethod.SSE_SUB_EVENT)
-								sendResponse (response, requestNum);
-
-							return;
+							this.logger.error (`Critical Error: ${ex.message}`);
+							throw ex;
 						}
 
 						await new Promise<void> (async (resolve, reject) =>
@@ -863,7 +886,7 @@ export class HotHTTPServer extends HotServer
 									resolveIt ();
 								}
 							});
-					});
+					}));
 			}
 
 			this.setErrorHandlingRoutes ();
@@ -1245,40 +1268,38 @@ export class HotHTTPServer extends HotServer
 	/**
 	 * Get all files uploaded.
 	 */
-	static async getFileUploads (req: express.Request, 
-		options: Options = {
-				multiples: true, 
-				enabledPlugins: ["octetstream", "multipart"]
-			}): Promise<Files>
+	static async getFileUploads (logger: HotLog, req: express.Request, 
+		options: FormidableOptions = { multiples: true }): Promise<Files>
 	{
-		return (new Promise<Files> ((resolve, reject) =>
+		let files = {};
+
+		if (req.headers["content-type"] != null)
+		{
+			if (req.headers["content-type"].indexOf ("multipart/form-data") > -1)
 			{
-				let resolveIt: boolean = true;
-
-				if (req.headers["content-type"] != null)
+				try
 				{
-					if (req.headers["content-type"].indexOf ("multipart/form-data") > -1)
-					{
-						const form = new IncomingForm (options);
+					const form = formidable (options);
+					const [fields, foundFiles] = await form.parse (req);
 
-						form.parse (req, (err: any, fields: Fields, files: Files) =>
-							{
-								if (err != null)
-								{
-									/// @fixme Is it ok to ignore this error?
-									if (err.message !== "no parser found")
-										throw err;
-								}
-				
-								resolve (files);
-							});
-						resolveIt = false;
+					files = foundFiles;
+				}
+				catch (ex)
+				{
+					if (ex != null)
+					{
+						/// @fixme Is it ok to ignore this error?
+						if (ex.code !== formidableErrors.noParser)
+						{
+							logger.error (`Formidable: ${ex.message}`);
+							throw ex;
+						}
 					}
 				}
+			}
+		}
 
-				if (resolveIt === true)
-					resolve ({});
-			}));
+		return (files);
 	}
 
 	/**
@@ -1339,6 +1360,10 @@ export class HotHTTPServer extends HotServer
 
 		this.expressApp.use (this.handle404);
 		this.expressApp.use (this.handleOther);
+
+		this.expressApp.use ((err: any, req: express.Request, res: express.Response, next: any) => {
+			res.status (500).json ({ error: err.message });
+		});
 	}
 
 	/**

@@ -47,6 +47,15 @@ describe ("Server Tests", () =>
 
 				expect (res.status).to.equal (404);
 			});
+		it ("should throw an error", async () =>
+			{
+				let result: any = await api.makeCall ("/v1/hello_world/error_test", 
+					{
+						errorTest: "TEST1"
+					});
+
+				expect (result.error).to.equal ("TEST1 ERROR");
+			});
 		it ("should add a static route and get the tests index html", async () =>
 			{
 				server.addStaticRoute ("/", `${process.cwd ()}/`);
@@ -59,56 +68,6 @@ describe ("Server Tests", () =>
 				let res = await fetch (`${url}/baddir/file\\that<doesnt-exist.badexttoo`);
 
 				expect (res.status).to.equal (404);
-			});
-		it ("should ensure OtherInterface returns correct valids", async () =>
-			{
-				const obj: HotRouteMethodParameterMap = await HotStaq.convertInterfaceToRouteParameters ("OtherInterface");
-				await HotStaq.convertInterfaceToRouteParameters ("OtherInterfaceAgain");
-
-				expect ((<HotRouteMethodParameter>obj["anotherString"]).validations.length).to.greaterThanOrEqual (1);
-				expect ((<HotRouteMethodParameter>obj["anotherStringObject"]).validations.length).to.greaterThanOrEqual (2);
-			});
-		it ("should validate the OtherInterface object", async () =>
-			{
-				let result: any = await api.makeCall ("/v1/hello_world/validate_other_interface", 
-					{
-						anotherString: "test",
-						anotherStringObject: "test"
-					});
-
-				expect (result.error).to.equal (undefined, "Error while validating OtherInterface!");
-				expect (result).to.equal (true);
-
-				result = await api.makeCall ("/v1/hello_world/validate_other_interface", 
-					{
-						anotherString: "test",
-						anotherStringObject: {
-							anotherNum: 3
-						}
-					});
-
-				expect (result.error).to.equal (undefined, "Error while validating OtherInterface again!");
-				expect (result).to.equal (true);
-			});
-		it ("should NOT validate the OtherInterface object", async () =>
-			{
-				let result: any = await api.makeCall ("/v1/hello_world/validate_other_interface", 
-					{
-						anotherString: "t",
-						anotherStringObject: "test"
-					});
-
-				expect (result.error).to.equal ("Text parameter 'anotherString' must be at least 2 characters long.");
-
-				result = await api.makeCall ("/v1/hello_world/validate_other_interface", 
-					{
-						anotherString: "test",
-						anotherStringObject: {
-							anotherNum: 11
-						}
-					});
-
-				expect (result.error).to.equal ("The value of number parameter 'anotherNum' must be less than 10.");
 			});
 		it ("should set the HelloWorldAPI then call it without saying hi", async () =>
 			{

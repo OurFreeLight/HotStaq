@@ -26,7 +26,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
 import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
-import { validateRecursively } from "./HotProcessInput";
+import { validateRecursively, ValidationOptions } from "./HotProcessInput";
 import { HttpError } from "./HotHttpError";
 
 var HotTesterMocha: any = null;
@@ -104,8 +104,8 @@ export interface ITypeScriptConversionOptions
 	tsconfigPath?: string;
 }
 
-export type HotValidatorFunction = (((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => IHotValidReturn) | 
-	((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>));
+export type HotValidatorFunction = (((options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest) => IHotValidReturn) | 
+	((options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>));
 
 export type HotRouteMethodParameterMap = { [propertyName: string]: HotRouteMethodParameter | (() => Promise<HotRouteMethodParameter>); };
 
@@ -248,7 +248,8 @@ export class HotStaq implements IHotStaq
 	 * The function to execute before validating any input. This is good for ensuring certain 
 	 * users such as admins are allowed to skip validations when necessary.
 	 */
-	static preValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>) = null;
+	static preValidate: ((options: ValidationOptions, key: string, validation: HotValidation, 
+		value: any, request: ServerRequest) => Promise<IHotValidReturn>) = null;
 	/**
 	 * The validations to perform on data.
 	 */
@@ -257,7 +258,8 @@ export class HotStaq implements IHotStaq
 	 * The function to execute after validating any input. This will not execute if a validation 
 	 * has failed.
 	 */
-	static postValidate: ((strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest) => Promise<IHotValidReturn>) = null;
+	static postValidate: ((options: ValidationOptions, key: string, validation: HotValidation, 
+		value: any, request: ServerRequest) => Promise<IHotValidReturn>) = null;
 	/**
 	 * Indicates what type of execution this is.
 	 */
@@ -424,7 +426,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Do a base validation check.
 	 */
-	static baseValidator (strict: boolean, key: string, validation: HotValidation, value: any): boolean
+	static baseValidator (options: ValidationOptions, key: string, validation: HotValidation, value: any): boolean
 	{
 		// notEmptyOrNull check.
 		if (validation.notEmptyOrNull)
@@ -475,35 +477,35 @@ export class HotStaq implements IHotStaq
 	 */
 	static setupValidators (): void
 	{
-		HotStaq.valids["undefined"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["undefined"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (value !== undefined)
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Parameter '${key}' must be undefined.`, 400);
 				}
 
 				return ({ value: value });
 			};
-		HotStaq.valids["null"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["null"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (value !== null)
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Parameter '${key}' must be null.`, 400);
 				}
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Text"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Text"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				// Minimum length check.
 				if (validation.min !== undefined)
@@ -530,15 +532,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["number"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["number"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "number")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				// Minimum value check.
 				if (validation.min !== undefined)
@@ -557,15 +559,15 @@ export class HotStaq implements IHotStaq
 				return ({ value: value });
 			};
 		HotStaq.valids["Number"] = HotStaq.valids["number"];
-		HotStaq.valids["Integer"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Integer"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "number")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				const testNum = parseInt (value);
 
@@ -588,15 +590,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Float"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Float"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "number")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				const testNum = parseFloat (value);
 
@@ -619,26 +621,26 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["boolean"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["boolean"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "boolean")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Boolean parameter '${key}' must be a boolean.`, 400);
 				}
 
 				return ({ value: value });
 			};
 		HotStaq.valids["Boolean"] = HotStaq.valids["boolean"];
-		HotStaq.valids["UUID"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["UUID"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`UUID parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
@@ -647,15 +649,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["URL"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["URL"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`URL parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				const regex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/;
 
@@ -664,15 +666,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Email"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Email"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Email parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -681,15 +683,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Phone"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Phone"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -698,15 +700,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["IPv4"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["IPv4"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				// Test if value is a valid IPv4 string
 				const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -716,15 +718,15 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["IPv6"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["IPv6"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				// Test if value is a valid IPv6 string
 				const ipRegex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,7}:/;
@@ -734,26 +736,26 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Date"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Date"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if ((! (value instanceof Date)) && (typeof (value) !== "string"))
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Date parameter '${key}' must be a string or Date.`, 400);
 				}
 
-				HotStaq.baseValidator (strict, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value);
 
 				if (isNaN (Date.parse(value)))
 					throw new HttpError(`Date parameter '${key}' must be a valid date.`);
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Object"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+		HotStaq.valids["Object"] = async function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
 				if (typeof (value) !== "object")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Object parameter '${key}' must be an object.`, 400);
 				}
 
@@ -764,17 +766,17 @@ export class HotStaq implements IHotStaq
 						const propValid = validation.properties[propKey];
 
 						const valueUnsafe = HotStaq.getParamUnsafe (propKey, value, true, true);
-						const validResult = await validateRecursively (strict, propKey, valueUnsafe, request, propValid);
+						const validResult = await validateRecursively (options, propKey, valueUnsafe, request, propValid);
 					}
 				}
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Array"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+		HotStaq.valids["Array"] = async function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
 				if ((value instanceof Array) === false)
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Array parameter '${key}' must be a string.`, 400);
 				}
 
@@ -810,17 +812,17 @@ export class HotStaq implements IHotStaq
 					{
 						const associatedValid = validation.associatedValids[iJdx];
 
-						await validateRecursively (strict, key, item, request, associatedValid);
+						await validateRecursively (options, key, item, request, associatedValid);
 					}
 				}
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Map"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+		HotStaq.valids["Map"] = async function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
 				if (typeof (value) !== "object")
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Map parameter '${key}' must be an object or map.`, 400);
 				}
 		
@@ -835,17 +837,17 @@ export class HotStaq implements IHotStaq
 					{
 						const associatedValid = validation.associatedValids[iJdx];
 
-						await validateRecursively (strict, key2, item, request, associatedValid);
+						await validateRecursively (options, key2, item, request, associatedValid);
 					}
 				}
 
 				return ({ value: value });
 			};
-		HotStaq.valids["Enum"] = function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
+		HotStaq.valids["Enum"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (! ((typeof (value) === "string") || (typeof (value) === "number")))
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`Enum parameter '${key}' must be a string or number.`, 400);
 				}
 
@@ -854,18 +856,18 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
-		HotStaq.valids["JS"] = async function (strict: boolean, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+		HotStaq.valids["JS"] = async function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
 				if ((! (value instanceof Function)) && (typeof (value) !== "string"))
 				{
-					if (strict === true)
+					if (options.strictInput === true)
 						throw new HttpError (`JS parameter '${key}' must be a string or Function.`, 400);
 				}
 
 				if (validation.func == null)
 					throw new HttpError (`JS parameter '${key}' must be a valid JS function.`, 400);
 
-				const valid = await validation.func (strict, key, value);
+				const valid = await validation.func (options, key, value);
 
 				return (valid);
 			};
@@ -1076,7 +1078,7 @@ export class HotStaq implements IHotStaq
 	 * Check if a required parameter exists inside an object. If it exists, return the value.
 	 */
 	static async getParam (validate: HotValidationType | HotValidation, name: string, objWithParam: any, request: ServerRequest, required: boolean = true, 
-		throwException: boolean = true, strict: boolean = false): Promise<any>
+		throwException: boolean = true, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
 		{
@@ -1085,7 +1087,7 @@ export class HotStaq implements IHotStaq
 				} as HotValidation;
 		}
 
-		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+		const result = await validateRecursively (options, name, objWithParam, request, validate);
 
 		return (result.value);
 	}
@@ -1098,7 +1100,7 @@ export class HotStaq implements IHotStaq
 	 */
 	static async getParamRange (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
 		min: number, max: number, request: ServerRequest, required: boolean = true, 
-		throwException: boolean = true, strict: boolean = false): Promise<any>
+		throwException: boolean = true, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
 		{
@@ -1107,13 +1109,13 @@ export class HotStaq implements IHotStaq
 				} as HotValidation;
 		}
 
-		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+		const result = await validateRecursively (options, name, objWithParam, request, validate);
 
 		return (result.value);
 	}
 
 	static async getParamDefault (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
-		defaultValue: any, request: ServerRequest, strict: boolean = false): Promise<any>
+		defaultValue: any, request: ServerRequest, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
 		{
@@ -1122,7 +1124,7 @@ export class HotStaq implements IHotStaq
 				} as HotValidation;
 		}
 
-		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+		const result = await validateRecursively (options, name, objWithParam, request, validate);
 
 		return (result.value);
 	}
@@ -1134,7 +1136,7 @@ export class HotStaq implements IHotStaq
 	 * The value retrieved must be a number.
 	 */
 	static async getParamDefaultRange (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
-		defaultValue: any, min: number, max: number, request: ServerRequest, strict: boolean = false): Promise<any>
+		defaultValue: any, min: number, max: number, request: ServerRequest, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
 		{
@@ -1143,7 +1145,7 @@ export class HotStaq implements IHotStaq
 				} as HotValidation;
 		}
 
-		const result = await validateRecursively (strict, name, objWithParam, request, validate);
+		const result = await validateRecursively (options, name, objWithParam, request, validate);
 
 		return (result.value);
 	}

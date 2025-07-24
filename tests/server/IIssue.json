@@ -1,0 +1,197 @@
+{
+    "id": {
+      "type": "string",
+      "required": false,
+      "description": "The id.",
+      "validations": [
+        {
+          "type": "UUID"
+        }
+      ]
+    },
+    "creatorId": {
+      "type": "string",
+      "required": false,
+      "description": "The id of the person who created the proposal.",
+      "validations": [
+        {
+          "type": "UUID"
+        },
+        {
+          "type": "IFreeUser"
+        }
+      ]
+    },
+    "name": {
+      "type": "string",
+      "required": false,
+      "description": "-\nThe name.",
+      "validations": [
+        {
+          "type": "ObjectName"
+        }
+      ]
+    },
+    "creationDate": {
+      "type": "string",
+      "required": false,
+      "description": "When the proposal was first created.",
+      "validations": [
+        {
+          "type": "Date"
+        }
+      ]
+    },
+    "approvalStatus": {
+      "type": "string",
+      "required": false,
+      "description": "The approval status.",
+      "validations": [
+        {
+          "type": "Enum",
+          "values": [
+            "AwaitingReview",
+            "InReview",
+            "Approved",
+            "Rejected"
+          ]
+        }
+      ]
+    },
+    "currentFlag": {
+      "type": "string",
+      "required": false,
+      "description": "The associated moderator flag, if any.",
+      "validations": [
+        {
+          "type": "Text"
+        },
+        {
+          "type": "IModeratorFlag"
+        }
+      ]
+    },
+    "permissions": {
+      "type": "object",
+      "required": false,
+      "description": "The input permissions.",
+      "validations": [
+        {
+          "type": "Delete"
+        }
+      ]
+    },
+    "projectId": {
+      "type": "string",
+      "required": true,
+      "description": "The parent project id.",
+      "validations": [
+        {
+          "type": "UUID"
+        }
+      ]
+    },
+    "key": {
+      "type": "string",
+      "required": false,
+      "description": "The issue key.",
+      "validations": [
+        {
+          "type": "Text"
+        }
+      ]
+    },
+    "description": {
+      "type": "string",
+      "required": false,
+      "description": "The issue description.",
+      "validations": [
+        {
+          "type": "RichText"
+        }
+      ]
+    },
+    "issueStatus": {
+      "type": "string",
+      "required": false,
+      "description": "The issue status.",
+      "validations": [
+        {
+          "type": "UUID"
+        },
+        {
+          "type": "IIssueStatus"
+        }
+      ]
+    },
+    "assignees": {
+      "type": "array",
+      "required": false,
+      "description": "The assignee's ids associated with this issue.",
+      "validations": [
+        {
+          "type": "UUID"
+        },
+        {
+          "type": "IRelationship"
+        }
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "reporters": {
+      "type": "array",
+      "required": false,
+      "description": "The reporter ids.",
+      "validations": [
+        {
+          "type": "UUID"
+        },
+        {
+          "type": "IRelationship"
+        }
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "expenses": {
+      "type": "array",
+      "required": false,
+      "description": "The issue's expenses.",
+      "validations": [
+        {
+          "type": "Array",
+          "associatedValids": [
+            {
+              "type": "IExpense"
+            }
+          ]
+        }
+      ],
+      "items": {
+        "type": "Expense"
+      }
+    },
+    "storyPoints": {
+      "type": "number",
+      "required": false,
+      "description": "The number of story points required to complete this issue.",
+      "validations": [
+        {
+          "type": "Integer"
+        }
+      ]
+    },
+    "priority": {
+      "type": "number",
+      "required": false,
+      "description": "The priority, the higher the number the more important.",
+      "validations": [
+        {
+          "type": "Integer"
+        }
+      ]
+    }
+  }
