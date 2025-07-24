@@ -247,11 +247,11 @@ workflows:
             branches:
               only: 
                 - dev
-                - master
+                - main
       - publish:
           requires:
             - test
           filters:
             branches:
               only: 
-                - master
+                - main
