@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.124";
+	static version: string = "0.8.125";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -426,8 +426,17 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Do a base validation check.
 	 */
-	static baseValidator (options: ValidationOptions, key: string, validation: HotValidation, value: any): boolean
+	static baseValidator (options: ValidationOptions, key: string, validation: HotValidation, value: any, defaultStringLength: number = 4096): boolean
 	{
+		if (validation.max == null)
+		{
+			if (typeof (value) === "string")
+			{
+				if (value.length > defaultStringLength)
+					throw new HttpError (`Parameter '${key}' is longer than ${defaultStringLength} characters.`, 400);
+			}
+		}
+
 		// notEmptyOrNull check.
 		if (validation.notEmptyOrNull)
 		{
@@ -540,7 +549,8 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
+				value = parseFloat (value);
 
 				// Minimum value check.
 				if (validation.min !== undefined)
@@ -567,11 +577,10 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
+				value = parseInt (value);
 
-				const testNum = parseInt (value);
-
-				if (isNaN (testNum) === true)
+				if (isNaN (value) === true)
 					throw new HttpError (`The value of number parameter '${key}' must be an integer.`, 400);
 
 				// Minimum value check.
@@ -598,11 +607,10 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Parameter '${key}' must be a number.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
+				value = parseFloat (value);
 
-				const testNum = parseFloat (value);
-
-				if (isNaN (testNum) === true)
+				if (isNaN (value) === true)
 					throw new HttpError (`The value of number parameter '${key}' must be an float.`, 400);
 
 				// Minimum value check.
@@ -629,6 +637,14 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Boolean parameter '${key}' must be a boolean.`, 400);
 				}
 
+				if (typeof (value) === "string")
+				{
+					if (value.length > 20)
+						throw new HttpError (`Parameter '${key}' is longer than 20 characters.`, 400);
+				}
+
+				value = HotStaq.parseBoolean (value);
+
 				return ({ value: value });
 			};
 		HotStaq.valids["Boolean"] = HotStaq.valids["boolean"];
@@ -640,7 +656,7 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`UUID parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
 
 				const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
@@ -657,7 +673,7 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`URL parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 8192);
 
 				const regex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/;
 
@@ -691,7 +707,7 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
 
 				const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -708,7 +724,7 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
 
 				// Test if value is a valid IPv4 string
 				const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -726,7 +742,7 @@ export class HotStaq implements IHotStaq
 						throw new HttpError (`Phone parameter '${key}' must be a string.`, 400);
 				}
 
-				HotStaq.baseValidator (options, key, validation, value);
+				HotStaq.baseValidator (options, key, validation, value, 100);
 
 				// Test if value is a valid IPv6 string
 				const ipRegex = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:){1,7}:/;
@@ -849,6 +865,12 @@ export class HotStaq implements IHotStaq
 				{
 					if (options.strictInput === true)
 						throw new HttpError (`Enum parameter '${key}' must be a string or number.`, 400);
+				}
+
+				if (typeof (value) === "string")
+				{
+					if (value.length > 1024)
+						throw new HttpError (`Parameter '${key}' is longer than 1024 characters.`, 400);
 				}
 
 				if (validation.values && !validation.values.includes(value))
