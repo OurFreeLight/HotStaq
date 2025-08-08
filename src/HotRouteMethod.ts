@@ -343,27 +343,6 @@ export interface TestCaseObject
 }
 
 /**
- * The type of validator input to check.
- */
-export enum HotValidationType
-{
-	UUID = "UUID",
-	Boolean = "boolean",
-	Number = "number",
-	Text = "Text",
-	Email = "Email",
-	Phone = "Phone",
-	IPv4 = "IPv4",
-	IPv6 = "IPv6",
-	Date = "Date",
-	Enum = "Enum",
-	Array = "Array",
-	Ignore = "Ignore",
-	Delete = "Delete",
-	JS = "JS"
-}
-
-/**
  * Is chained together to create a validation chain.
  */
 export interface HotValidation
@@ -372,7 +351,7 @@ export interface HotValidation
 	 * The type of validation to perform.
 	 * @default Text
 	 */
-	type?: HotValidationType;
+	type?: string;
 	/**
 	 * The default value to set if the incoming input is null or undefined.
 	 */

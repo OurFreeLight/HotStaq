@@ -1,5 +1,5 @@
 import { HttpError } from "./HotHttpError";
-import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethodParameter, HotValidation, ServerRequest } from "./HotRouteMethod";
 import { HotRouteMethodParameterMap, HotStaq, HotValidReturnType, IHotValidReturn } from "./HotStaq";
 
 /**
@@ -81,7 +81,7 @@ async function resolveParameters(
 	{
 		const val = nested[key];
 		if (typeof val === "string")
-			result[key] = { validations: [{ type: HotValidationType.Text }] };
+			result[key] = { validations: [{ type: "Text" }] };
 		else if (typeof (val) === "function")
 			result[key] = await val();
 		else
@@ -136,10 +136,10 @@ export async function validateRecursively(options: ValidationOptions, key: strin
 
 	const validType = validation.type;
 
-	if (validType === HotValidationType.Ignore)
+	if (validType === "Ignore")
 		return { value: value };
 
-	if (validType === HotValidationType.Delete)
+	if (validType === "Delete")
 		return { type: HotValidReturnType.Delete };
 
 	const valid = HotStaq.valids[validType];
@@ -276,7 +276,7 @@ export async function processInput (options: ValidationOptions, params: HotRoute
 		if (typeof param === "function") {
 			paramDef = await param();
 		} else if (typeof param === "string") {
-			paramDef = { validations: [{ type: (<HotValidationType>param) }] };
+			paramDef = { validations: [{ type: param }] };
 		} else {
 			paramDef = param;
 		}

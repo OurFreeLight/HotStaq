@@ -602,7 +602,16 @@ export class Hot
 
 			if (res.ok === false)
 			{
-				let errorObj = await res.json ();
+				let errorObj = null;
+				
+				try
+				{
+					errorObj = await res.json ();
+				}
+				catch (ex)
+				{
+					errorObj = await res.text ();
+				}
 
 				throw new Error (errorObj.error);
 			}

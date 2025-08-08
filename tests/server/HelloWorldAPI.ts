@@ -10,7 +10,7 @@ import { HotServer, HotServerType } from "../../src/HotServer";
 import { HotHTTPServer } from "../../src/HotHTTPServer";
 import { HotRouteMethodParameterMap, HotStaq, IHotValidReturn } from "../../src/HotStaq";
 import { HotTestDriver } from "../../src/HotTestDriver";
-import { HotEventMethod, HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "../../src/HotRouteMethod";
+import { HotEventMethod, HotRouteMethodParameter, HotValidation, ServerRequest } from "../../src/HotRouteMethod";
 
 import { HelloWorldSecond } from "./HelloWorldSecond";
 import { OtherInterface } from "../parsing/TestInterface";
@@ -140,7 +140,7 @@ export class HelloWorldAPI extends HotAPI
 						parameters: {
 							message: {
 								"description": "The message to send to the server. Can be: hi, hello",
-								"validations": [{ "type": HotValidationType.Enum, "values": ["hi", "hello"] }]
+								"validations": [{ "type": "Enum", "values": ["hi", "hello"] }]
 							},
 							throwError: {
 								"description": "Throw an error on the server side.",

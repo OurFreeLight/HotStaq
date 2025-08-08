@@ -25,7 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
-import { HotRouteMethodParameter, HotValidation, HotValidationType, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethodParameter, HotValidation, ServerRequest } from "./HotRouteMethod";
 import { validateRecursively, ValidationOptions } from "./HotProcessInput";
 import { HttpError } from "./HotHttpError";
 
@@ -134,7 +134,7 @@ export interface IHotValidReturn
 	/**
 	 * If set to any value, this will change the return type of the validation.
 	 */
-	validationType?: HotValidationType;
+	validationType?: string;
 	/**
 	 * The value to be returned. This will only be used if the type is set to 
 	 * Return or Ignore.
@@ -878,6 +878,18 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
+		HotStaq.valids["JSON"] = async function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
+			{
+				if (typeof (value) === "string")
+				{
+					if (value.length > 1024)
+						throw new HttpError (`JSON Parameter '${key}' is longer than 1024 characters.`, 400);
+				}
+
+				value = JSON.parse (value);
+
+				return ({ value: value });
+			};
 		HotStaq.valids["JS"] = async function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): Promise<IHotValidReturn>
 			{
 				if ((! (value instanceof Function)) && (typeof (value) !== "string"))
@@ -1099,7 +1111,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * Check if a required parameter exists inside an object. If it exists, return the value.
 	 */
-	static async getParam (validate: HotValidationType | HotValidation, name: string, objWithParam: any, request: ServerRequest, required: boolean = true, 
+	static async getParam (validate: string | HotValidation, name: string, objWithParam: any, request: ServerRequest, required: boolean = true, 
 		throwException: boolean = true, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
@@ -1120,7 +1132,7 @@ export class HotStaq implements IHotStaq
 	 * 
 	 * The value retrieved must be a number.
 	 */
-	static async getParamRange (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
+	static async getParamRange (validate: string | HotValidation, name: string, objWithParam: any, 
 		min: number, max: number, request: ServerRequest, required: boolean = true, 
 		throwException: boolean = true, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
@@ -1136,7 +1148,7 @@ export class HotStaq implements IHotStaq
 		return (result.value);
 	}
 
-	static async getParamDefault (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
+	static async getParamDefault (validate: string | HotValidation, name: string, objWithParam: any, 
 		defaultValue: any, request: ServerRequest, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
@@ -1157,7 +1169,7 @@ export class HotStaq implements IHotStaq
 	 * 
 	 * The value retrieved must be a number.
 	 */
-	static async getParamDefaultRange (validate: HotValidationType | HotValidation, name: string, objWithParam: any, 
+	static async getParamDefaultRange (validate: string | HotValidation, name: string, objWithParam: any, 
 		defaultValue: any, min: number, max: number, request: ServerRequest, options: ValidationOptions = new ValidationOptions ()): Promise<any>
 	{
 		if (typeof (validate) === "string")
