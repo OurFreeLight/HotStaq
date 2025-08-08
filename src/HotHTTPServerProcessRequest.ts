@@ -5,7 +5,7 @@ import * as ppath from "path";
 
 import { HotLog } from "./HotLog";
 import { HotEventMethod, HotRouteMethod, HotRouteMethodParameter, HotValidation, 
-	HotValidationType, PassType, ServerRequest } from "./HotRouteMethod";
+	PassType, ServerRequest } from "./HotRouteMethod";
 import { HotRoute } from "./HotRoute";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotIO } from "./HotIO";

@@ -1,7 +1,7 @@
 import { IHotValidReturn, ParsedInterface } from "./HotStaq";
 import ts, { TypeFlags } from "typescript";
 import { Project, InterfaceDeclaration, PropertySignature, TypeLiteralNode, Type, TypeNode, SyntaxKind } from "ts-morph";
-import { HotValidation, HotValidationType } from "./HotRouteMethod";
+import { HotValidation } from "./HotRouteMethod";
 
 // Allowed raw types.
 const allowedRawTypes = new Set(["string", "number", "integer", "boolean", "array", "object"]);
@@ -86,7 +86,7 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
             if (isArray) {
               if (skipArray === false) {
                 parsed = {
-                  type: HotValidationType.Array,
+                  type: "Array",
                   associatedValids: [parsed]
                 };
               }
@@ -99,14 +99,14 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
               if (parsed.values)
                 rawType = "Enum";
   
-              parsed.type = rawType as HotValidationType;
+              parsed.type = rawType;
             }
           };
 
 					if (innerValidStr.startsWith("JS:")) {
 						const jsStr = innerValidStr.substring(3);
 						parsed = {
-							type: HotValidationType.JS,
+							type: "JS",
 							func: (<(input: any) => Promise<IHotValidReturn>>new Function(`return (async (value) => { ${jsStr} })()`))
 						};
           } else if (innerValidStr.startsWith("(")) {
@@ -127,7 +127,7 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
               {
                 const extractedType = extractedTypes[iIdx];
 
-                parsed = { type: extractedType as HotValidationType };
+                parsed = { type: extractedType };
 
                 finishIt();
 
@@ -138,14 +138,14 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
             {
               hasCombinators = true;
               parsed = {
-                type: HotValidationType.Array,
+                type: "Array",
                 associatedValids: []
               };
 
               for (let iIdx = 0; iIdx < extractedTypes.length; iIdx++)
               {
                 const extractedType = extractedTypes[iIdx];
-                const innerParsed: HotValidation = { type: extractedType as HotValidationType };
+                const innerParsed: HotValidation = { type: extractedType };
 
                 parsed.associatedValids.push(innerParsed);
               }
@@ -168,7 +168,7 @@ function extractValidFromRaw(propName: string, node: Node, rawType: string): Hot
               rawType = innerValidStr.substring(0, jsonStart).trim();
             }
 
-						parsed = { type: rawType as HotValidationType };
+						parsed = { type: rawType };
 
             if (mergedJSON != null)
               parsed = { ...parsed, ...mergedJSON };

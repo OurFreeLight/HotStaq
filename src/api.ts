@@ -16,7 +16,7 @@ import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, IHotRouteMethod, HotEventMethod, HotRouteMethodParameter, 
 		ServerAuthorizationFunction, ServerExecutionFunction, PassType, 
-		ServerRequest, IServerRequest, HotValidation, HotValidationType } from "./HotRouteMethod";
+		ServerRequest, IServerRequest, HotValidation } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { StaticRoute, HTTPHeader, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
 import { HttpError } from "./HotHttpError";
@@ -94,7 +94,7 @@ export {
 		HotEventMethod, HotRouteMethodParameter, PassType, 
 		ServerAuthorizationFunction,
 		ServerExecutionFunction,
-		IServerRequest, HotValidation, HotValidationType,
+		IServerRequest, HotValidation,
 		ServerRequest,
 		HotServer,
 		HotServerType,
