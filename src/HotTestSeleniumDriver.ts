@@ -139,13 +139,13 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 			if (this.headless === true)
 			{
-				options = options.headless ();
+				options = options.addArguments ("-headless");
 				this.processor.logger.verbose (`  * headless`);
 			}
 
 			if (this.disableDevShmUsage === true)
 			{
-				options = options.addArguments ("---disable-dev-shm-usage");
+				options = options.addArguments ("-disable-dev-shm-usage");
 				this.processor.logger.verbose (`  * Disable Shared Memory`);
 			}
 
@@ -157,7 +157,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 			if (process.env["USER_DATA_DIR"] != null)
 			{
-				options = options.addArguments(`user-data-dir=${process.env["USER_DATA_DIR"]}`);
+				options = options.addArguments(`-profile ${process.env["USER_DATA_DIR"]}`);
 				this.processor.logger.verbose (`  * User data dir: ${process.env["USER_DATA_DIR"]}`);
 			}
 
@@ -181,37 +181,37 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 			if (this.disableGPUAndSandbox === true)
 			{
-				options = options.addArguments ("--disable-gpu", "--no-sandbox");
+				options.addArguments ("--disable-gpu", "--no-sandbox");
 				this.processor.logger.verbose (`  * Disabled GPU and No sandbox`);
 			}
 
 			if (this.openDevTools === true)
 			{
-				options = options.addArguments ("--auto-open-devtools-for-tabs");
+				options.addArguments ("--auto-open-devtools-for-tabs");
 				this.processor.logger.verbose (`  * Auto open devtools`);
 			}
 
 			if (this.disableDevShmUsage === true)
 			{
-				options = options.addArguments ("---disable-dev-shm-usage");
+				options.addArguments ("--disable-dev-shm-usage");
 				this.processor.logger.verbose (`  * Disable Shared Memory`);
 			}
 
 			if (this.headless === true)
 			{
-				options = options.headless ();
+				options.addArguments ("--headless");
 				this.processor.logger.verbose (`  * Headless`);
 			}
 
 			if (this.windowSize != null)
 			{
-				options = options.windowSize (this.windowSize);
+				options.windowSize (this.windowSize);
 				this.processor.logger.verbose (`  * Window Size: ${this.windowSize.width}x${this.windowSize.height}`);
 			}
 
 			if (process.env["USER_DATA_DIR"] != null)
 			{
-				options = options.addArguments(`user-data-dir=${process.env["USER_DATA_DIR"]}`);
+				options.addArguments(`--user-data-dir=${process.env["USER_DATA_DIR"]}`);
 				this.processor.logger.verbose (`  * User data dir: ${process.env["USER_DATA_DIR"]}`);
 			}
 
@@ -275,7 +275,7 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			foundElm = await this.driver.wait (until.elementLocated (this.getTestObjectByName (nameStr)));
 		else
 		{
-			let elms: WebElement[] = await this.driver.wait (until.elementsLocated (this.getTestObjectByName (nameStr)));
+			let elms: WebElement[] = await this.driver.wait (until.elementsLocated (this.getTestObjectByName (nameStr))) as unknown as WebElement[];
 
 			for (let iIdx = 0; iIdx < elms.length; iIdx++)
 			{
