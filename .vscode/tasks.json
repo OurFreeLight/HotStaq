@@ -84,7 +84,7 @@
 				"clear": false
 			},
 			"label": "Build web test api",
-			"command": "hotstaq --hotsite ${workspaceFolder}/tests/hotsite/HotSite.json generate"
+			"command": "npx hotstaq --hotsite ${workspaceFolder}/tests/hotsite/HotSite.json generate"
 		},
 		{
 			"type": "process",

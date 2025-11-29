@@ -1,4 +1,4 @@
-FROM node:20-bullseye AS builder
+FROM node:24-bullseye AS builder
 
 ARG HOTSTAQ_VERSION
 
@@ -24,7 +24,7 @@ RUN cd /tmp/app && \
 	npm run build && \
 	npm run build-web
 
-FROM node:20-bullseye-slim
+FROM node:24-bullseye-slim
 
 RUN apt update && apt upgrade -y
 
