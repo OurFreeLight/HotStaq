@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.127";
+	static version: string = "0.8.128";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -920,25 +920,42 @@ export class HotStaq implements IHotStaq
 	 */
 	static parseBoolean (value: string): boolean
 	{
-		value = value.toLowerCase ();
-
-		if (value === "true")
-			return (true);
-
-		if (value === "false")
+		if (value == null)
 			return (false);
 
-		if (value === "yes")
-			return (true);
+		if ((typeof(value) === "number") || (typeof(value) === "bigint"))
+		{
+			if (value === 0)
+				return (false);
+			else
+				return (true);
+		}
 
-		if (value === "no")
-			return (false);
+		if (typeof(value) === "string")
+		{
+			if (value === "")
+				return (false);
 
-		if (value === "yep")
-			return (true);
+			value = value.toLowerCase ();
 
-		if (value === "nah")
-			return (false);
+			if (value === "true")
+				return (true);
+
+			if (value === "false")
+				return (false);
+
+			if (value === "yes")
+				return (true);
+
+			if (value === "no")
+				return (false);
+
+			if (value === "yep")
+				return (true);
+
+			if (value === "nah")
+				return (false);
+		}
 
 		return (false);
 	}
