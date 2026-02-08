@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.128";
+	static version: string = "0.8.130";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -734,6 +734,7 @@ export class HotStaq implements IHotStaq
 
 				return ({ value: value });
 			};
+		HotStaq.valids["IP"] = HotStaq.valids["IPv4"];
 		HotStaq.valids["IPv6"] = function (options: ValidationOptions, key: string, validation: HotValidation, value: any, request: ServerRequest): IHotValidReturn
 			{
 				if (typeof (value) !== "string")

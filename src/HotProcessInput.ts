@@ -172,23 +172,22 @@ export async function validateRecursively(options: ValidationOptions, key: strin
 			}
 			else
 			{
-				const result = await processInput (options, valid, value2, request, key);
-				newResult2 = { type: HotValidReturnType.Return, value: result };
-				//let foundValid = valid[key];
-				/*let foundValid = valid;
-				let compValid: HotRouteMethodParameter = null;
-		
-				if (foundValid instanceof Function)
-					compValid = await foundValid ();
+				let processResult;
+
+				// If the parameter map contains the extraction key and we're not
+				// processing array elements, pass the full input object so
+				// processInput can match the key, then extract just that key's result.
+				if (key in valid && !(value instanceof Array))
+				{
+					processResult = await processInput (options, valid, input, request, key);
+					processResult = processResult[key];
+				}
 				else
-					compValid = foundValid;
-		
-				if (compValid == null)
-					throw new HttpError (`Key '${key}' not found in valid '${validType}'`, 403);
-		
-				const resolvedParams = await resolveParameters(compValid.parameters);
-				const result = await processInput (options, resolvedParams, value, request, key);
-				newResult2 = { type: HotValidReturnType.Return, value: result };*/
+				{
+					processResult = await processInput (options, valid, value2, request, key);
+				}
+
+				newResult2 = { type: HotValidReturnType.Return, value: processResult };
 			}
 
 			return (newResult2);
