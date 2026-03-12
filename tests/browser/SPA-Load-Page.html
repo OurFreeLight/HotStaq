@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>SPA Test Page</title>
+</head>
+
+<body>
+	<div id="spa-shell">
+		<nav id="spa-nav">
+			<a id="navPage1" href="/tests/browser/SPAPage1">Page 1</a>
+			<a id="navPage2" href="/tests/browser/SPAPage2">Page 2</a>
+		</nav>
+		<div id="spa-target">
+			<div id="spa-initial-content">Initial content before SPA navigation.</div>
+		</div>
+		<span id="page1Script"></span>
+		<span id="page2Script"></span>
+		<span id="beforeNavFired"></span>
+		<span id="afterNavFired"></span>
+	</div>
+
+	<hotstaq src="/tests/browser/SPAPage1.hott" spa-target="#spa-target" router="spaRouter"></hotstaq>
+
+	<hotstaq-router name="spaRouter" serve-local="false">
+		<route path="/tests/browser/SPAPage1" src="./SPAPage1.hott"></route>
+		<route path="/tests/browser/SPAPage2" src="./SPAPage2.hott"></route>
+	</hotstaq-router>
+</body>
+
+<script type="text/javascript" src="/build-web/HotStaq.js"></script>
+
+</html>
