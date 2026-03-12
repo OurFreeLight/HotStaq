@@ -6,15 +6,18 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/node:24.11-browsers
+      - image: cimg/node:22.15-browsers
+    resource_class: medium+
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: Install dependencies
           command: |
-            npm install
-            
+            node --version
+            npm --version
+            rm -f .npmrc
+            npm ci --loglevel verbose
+
             cat > "./.env.chrome" \<<EOF
             HTTP_PORT=3123
             DATABASE_SERVER=localhost
@@ -50,6 +53,7 @@ jobs:
             TESTING_DEVTOOLS=0
             TESTING_RUN_HEADLESS=1
             EOF
+      - setup_remote_docker
       - run:
           name: Build and install globally
           command: |
@@ -182,7 +186,7 @@ jobs:
       #       npx mocha --timeout 5000 --colors ./build/tests/create/**/*.js
   publish:
     docker:
-      - image: cimg/node:lts
+      - image: cimg/node:22.15
         environment:
           NPM_ACCESS_TOKEN: $NPM_ACCESS_TOKEN
           PUBLISH_LIBRARY: $PUBLISH_LIBRARY
@@ -195,7 +199,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            npm install
+            node --version
+            npm --version
+            npm ci
       - run:
           name: Build
           command: |
