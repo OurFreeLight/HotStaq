@@ -1,3 +1,7 @@
+import { HotStaq } from "../../src/HotStaq";
+
+HotStaq.isWeb = true;
+
 import { HelloWorld } from "./HelloWorldComponent";
 import { HelloWorldAPI } from "../server/HelloWorldAPI";
 
