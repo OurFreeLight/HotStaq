@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.130";
+	static version: string = "0.8.131";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -240,6 +240,39 @@ export class HotStaq implements IHotStaq
 	 * If set to false, the page will not emit DOMContentLoaded or window.load.
 	 */
 	static dispatchReadyEvents: boolean = true;
+	/**
+	 * When SPA mode is enabled, navigating between routes will only replace
+	 * the content inside the target element instead of the entire page.
+	 * Set this to a CSS selector (e.g. "main", "#content") to enable SPA mode.
+	 * When null, full page replacement is used (default behavior).
+	 */
+	static spaTarget: string = null;
+	/**
+	 * The router manager that maps URL paths to .hott source files.
+	 * Populated by hotStaqWebStart when a `<hotstaq-router>` is present.
+	 */
+	static routerManager: { [path: string]: { redirect?: string; baseRedirect?: string; base?: string; src?: string; } } = {};
+	/**
+	 * Wildcard routes for pattern matching.
+	 */
+	static routerWildcards: string[] = [];
+	/**
+	 * The processor instance used for SPA navigation.
+	 */
+	static spaProcessor: HotStaq = null;
+	/**
+	 * If true, SPA link interception is active.
+	 */
+	static spaEnabled: boolean = false;
+	/**
+	 * Event fired before SPA navigation starts.
+	 * Return false to cancel the navigation.
+	 */
+	static onBeforeNavigate: (path: string) => boolean | Promise<boolean> = null;
+	/**
+	 * Event fired after SPA navigation completes.
+	 */
+	static onAfterNavigate: (path: string) => void | Promise<void> = null;
 	/**
 	 * Errors to execute when something goes wrong.
 	 */
@@ -1907,7 +1940,12 @@ export class HotStaq implements IHotStaq
 			if (file.url != null)
 			{
 				if (HotStaq.isWeb === true)
-					newFile.url = `${file.url}?hstqserve=nahfam`;
+				{
+					if (file.url.indexOf ("hstqserve") < 0)
+						newFile.url = `${file.url}?hstqserve=nahfam`;
+					else
+						newFile.url = file.url;
+				}
 				else
 					newFile.url = file.url;
 			}
@@ -2617,6 +2655,383 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Navigate to a route using SPA mode. Fetches and processes the .hott file
+	 * for the given path, then replaces only the SPA target element's content.
+	 * If SPA mode is not enabled (spaTarget is null), falls back to full page navigation.
+	 *
+	 * @param path The URL path to navigate to (e.g. "/proposals").
+	 * @param pushState If true, pushes the new URL to browser history. Set to false
+	 * for popstate handling where the URL is already correct.
+	 */
+	static async navigateTo (path: string, pushState: boolean = true): Promise<void>
+	{
+		// Restore SPA data from window backup if needed.
+		HotStaq.restoreSpaData ();
+
+		if (HotStaq.spaTarget == null)
+		{
+			// SPA mode not enabled, do full page navigation.
+			window.location.href = path;
+
+			return;
+		}
+
+		// Check onBeforeNavigate hook.
+		if (HotStaq.onBeforeNavigate != null)
+		{
+			let result = HotStaq.onBeforeNavigate (path);
+
+			if (result instanceof Promise)
+				result = await result;
+
+			if (result === false)
+				return;
+		}
+
+		// Resolve path to a .hott source file via the router manager.
+		let checkPath: string = path.split ("?")[0];
+		let routeSrc: string = null;
+
+		if (HotStaq.routerManager[checkPath] != null)
+		{
+			let route = HotStaq.routerManager[checkPath];
+
+			if (route.redirect != null)
+			{
+				window.location.href = route.redirect;
+
+				return;
+			}
+
+			if (route.src != null)
+				routeSrc = route.src;
+		}
+		else
+		{
+			// Check wildcards.
+			for (let iIdx = 0; iIdx < HotStaq.routerWildcards.length; iIdx++)
+			{
+				let routeWildcard: string = HotStaq.routerWildcards[iIdx];
+				let tempRouteWildcard: string = routeWildcard.replace ("*", "");
+
+				if (checkPath.indexOf (tempRouteWildcard) > -1)
+				{
+					let route = HotStaq.routerManager[routeWildcard];
+
+					if (route.src != null)
+						routeSrc = route.src;
+
+					break;
+				}
+			}
+		}
+
+		if (routeSrc == null)
+		{
+			// No route found, fall back to full page navigation.
+			window.location.href = path;
+
+			return;
+		}
+
+		// Update browser URL.
+		if (pushState === true)
+		{
+			let fullPath = path;
+
+			if (window.location.search !== "" && path.indexOf ("?") < 0)
+				fullPath = path;
+
+			window.history.pushState ({ hotstaqSpa: true }, "", fullPath);
+		}
+
+		// Process the .hott file.
+		let processor = HotStaq.spaProcessor;
+
+		if (processor == null)
+		{
+			// SPA mode requires a processor. Fall back.
+			window.location.href = path;
+
+			return;
+		}
+
+		let url = routeSrc;
+
+		if (url.indexOf ("hstqserve") < 0)
+			url += "?hstqserve=nahfam";
+
+		let options: HotStartOptions = {
+				url: url,
+				name: path,
+				processor: processor,
+				args: null
+			};
+
+		// Check if the file is already preloaded in the processor cache.
+		let cachedFile: HotFile = processor.getFile (routeSrc, false);
+
+		if (cachedFile == null)
+			cachedFile = processor.getFile (url, false);
+
+		let output: string = "";
+
+		if (cachedFile != null && cachedFile.content !== "")
+		{
+			// Use preloaded content instead of fetching.
+			let cachedOptions: HotStartOptions = {
+					content: cachedFile.content,
+					name: path,
+					processor: processor,
+					args: null
+				};
+
+			output = await HotStaq.processContent (cachedOptions);
+		}
+		else
+		{
+			output = await HotStaq.processUrl (options);
+		}
+
+		// Find the SPA target element in the current DOM.
+		let targetEl: HTMLElement = document.querySelector (HotStaq.spaTarget);
+
+		if (targetEl == null)
+		{
+			// Target not found, fall back to full page replacement.
+			await HotStaq.useOutput (output);
+
+			return;
+		}
+
+		// Parse the output to extract only the content that should go into the target.
+		let parser = new DOMParser ();
+		let doc = parser.parseFromString (output, "text/html");
+
+		// Look for a matching target element in the processed output.
+		let sourceEl: HTMLElement = doc.querySelector (HotStaq.spaTarget);
+		let contentHTML: string = "";
+
+		if (sourceEl != null)
+			contentHTML = sourceEl.innerHTML;
+		else
+			contentHTML = doc.body.innerHTML;
+
+		// Replace only the target content.
+		targetEl.innerHTML = contentHTML;
+
+		// Execute any script tags that were in the new content.
+		let tmpScripts = targetEl.getElementsByTagName ('script');
+
+		if (tmpScripts.length > 0)
+		{
+			let scripts: HTMLScriptElement[] = [];
+
+			for (let i = 0; i < tmpScripts.length; i++)
+				scripts.push (tmpScripts[i]);
+
+			for (let i = 0; i < scripts.length; i++)
+			{
+				let s: HTMLScriptElement = document.createElement ('script');
+
+				scripts[i].parentNode.appendChild (s);
+				scripts[i].parentNode.removeChild (scripts[i]);
+
+				await new Promise<void> ((resolve2, reject2) =>
+					{
+						s.onload = () =>
+							{
+								resolve2 ();
+							};
+
+						let hasSrc: boolean = false;
+
+						if (scripts[i].getAttribute ("src") != null)
+						{
+							if (scripts[i].getAttribute ("src") !== "")
+							{
+								s.setAttribute ("src", scripts[i].getAttribute ("src"));
+								hasSrc = true;
+							}
+						}
+
+						if (scripts[i].getAttribute ("type") != null)
+						{
+							if (scripts[i].getAttribute ("type") !== "")
+								s.setAttribute ("type", scripts[i].getAttribute ("type"));
+						}
+
+						s.innerHTML = scripts[i].innerHTML;
+
+						if (hasSrc === false)
+							resolve2 ();
+					});
+			}
+		}
+
+		if (HotStaq.dispatchReadyEvents === true)
+		{
+			document.dispatchEvent (new Event ("DOMContentLoaded"));
+			window.dispatchEvent (new Event ("load"));
+		}
+
+		if (HotStaq.onReadyEvent != null)
+			HotStaq.onReadyEvent (output);
+
+		// Fire onAfterNavigate hook.
+		if (HotStaq.onAfterNavigate != null)
+		{
+			let result = HotStaq.onAfterNavigate (path);
+
+			if (result instanceof Promise)
+				await result;
+		}
+	}
+
+	/**
+	 * Restore SPA data from window backup if class properties were reset.
+	 * This handles the case where useOutput's DOM replacement causes the
+	 * class static properties to be re-initialized.
+	 */
+	static restoreSpaData (): void
+	{
+		// @ts-ignore
+		if (Object.keys (HotStaq.routerManager).length === 0 && window.__hotstaqRouterManager != null)
+		{
+			// @ts-ignore
+			HotStaq.routerManager = window.__hotstaqRouterManager;
+		}
+
+		// @ts-ignore
+		if (HotStaq.routerWildcards.length === 0 && window.__hotstaqRouterWildcards != null)
+		{
+			// @ts-ignore
+			HotStaq.routerWildcards = window.__hotstaqRouterWildcards;
+		}
+
+		// @ts-ignore
+		if (HotStaq.spaProcessor == null && window.__hotstaqSpaProcessor != null)
+		{
+			// @ts-ignore
+			HotStaq.spaProcessor = window.__hotstaqSpaProcessor;
+		}
+	}
+
+	/**
+	 * Enable SPA mode. Call this to set up link interception and popstate handling.
+	 *
+	 * @param target The CSS selector for the element whose content should be replaced
+	 * during SPA navigation (e.g. "main", "#content").
+	 * @param processor The HotStaq processor instance to use for processing pages.
+	 */
+	static enableSPA (target: string, processor: HotStaq = null): void
+	{
+		HotStaq.spaTarget = target;
+		HotStaq.spaEnabled = true;
+
+		if (processor != null)
+			HotStaq.spaProcessor = processor;
+
+		// Restore SPA data from window backup if class properties were reset.
+		HotStaq.restoreSpaData ();
+
+		// Set up link interception.
+		document.addEventListener ("click", (e: MouseEvent) =>
+			{
+				// Find the closest <a> ancestor.
+				let anchor: HTMLAnchorElement = (e.target as HTMLElement).closest ("a");
+
+				if (anchor == null)
+					return;
+
+				let href: string = anchor.getAttribute ("href");
+
+				if (href == null || href === "")
+					return;
+
+				// Skip external links, hash links, javascript: links, and links with target.
+				if (href.startsWith ("http://") || href.startsWith ("https://") ||
+					href.startsWith ("#") || href.startsWith ("javascript:") ||
+					anchor.getAttribute ("target") != null)
+					return;
+
+				// Skip links with data-spa-ignore attribute.
+				if (anchor.getAttribute ("data-spa-ignore") != null)
+					return;
+
+				// Restore SPA data from window backup if needed.
+				HotStaq.restoreSpaData ();
+
+				// Check if this path is in the router.
+				let checkPath: string = href.split ("?")[0];
+				let isRegistered: boolean = (HotStaq.routerManager[checkPath] != null);
+
+				if (!isRegistered)
+				{
+					// Check wildcards.
+					for (let iIdx = 0; iIdx < HotStaq.routerWildcards.length; iIdx++)
+					{
+						let routeWildcard: string = HotStaq.routerWildcards[iIdx];
+						let tempRouteWildcard: string = routeWildcard.replace ("*", "");
+
+						if (checkPath.indexOf (tempRouteWildcard) > -1)
+						{
+							isRegistered = true;
+
+							break;
+						}
+					}
+				}
+
+				if (!isRegistered)
+					return;
+
+				// Prevent default navigation and use SPA.
+				e.preventDefault ();
+				HotStaq.navigateTo (href);
+			});
+
+		// Set up popstate handler for browser back/forward.
+		window.addEventListener ("popstate", (e: PopStateEvent) =>
+			{
+				HotStaq.navigateTo (window.location.pathname + window.location.search, false);
+			});
+
+		// Prefetch all route .hott files in the background for instant SPA navigation.
+		HotStaq.prefetchRoutes ();
+	}
+
+	/**
+	 * Prefetch all .hott files from the routerManager in the background.
+	 * This preloads route content into the processor's file cache so that
+	 * subsequent SPA navigations skip the network fetch.
+	 */
+	static prefetchRoutes (): void
+	{
+		let proc: HotStaq = HotStaq.spaProcessor;
+
+		if (proc == null)
+			return;
+
+		let currentPath: string = window.location.pathname;
+		let filesToLoad: { [name: string]: { url: string; } } = {};
+
+		for (let routePath in HotStaq.routerManager)
+		{
+			let route = HotStaq.routerManager[routePath];
+
+			if (route.src != null && routePath !== currentPath)
+			{
+				// Don't append ?hstqserve here — loadHotFiles adds it automatically.
+				filesToLoad[route.src] = { url: route.src };
+			}
+		}
+
+		if (Object.keys (filesToLoad).length > 0)
+			proc.loadHotFiles (filesToLoad);
+	}
+
+	/**
 	 * Wait for testers to load.
 	 * 
 	 * @fixme This does not wait for ALL testers to finish loading. Only 
@@ -2918,5 +3333,5 @@ if (typeof (document) !== "undefined")
 {
 	// @ts-ignore
 	window.HotAPI = HotAPI;
-	window.addEventListener ("load", hotStaqWebStart);
+	window.addEventListener ("load", hotStaqWebStart, { once: true });
 }

@@ -1439,10 +1439,16 @@ export class HotHTTPServer extends HotServer
 						if (listenStr === "0.0.0.0")
 							listenStr = "localhost";
 
-						const baseUrl = `${protocol}://${listenStr}:${port}/`;
+						let baseUrl = `${protocol}://${listenStr}:${port}/`;
 
 						if (this.swaggerUI.jsonObj.servers == null)
 							this.swaggerUI.jsonObj.servers = [];
+
+						if (process.env["BASE_API_URL"] != null)
+						{
+							if (process.env["BASE_API_URL"] !== "")
+								baseUrl = process.env["BASE_API_URL"];
+						}
 
 						this.swaggerUI.jsonObj.servers.unshift ({ url: baseUrl });
 

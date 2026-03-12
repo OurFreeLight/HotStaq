@@ -18,6 +18,10 @@ export function hotStaqWebStart ()
 			return;
 	}
 
+	// Prevent re-entry from synthetic load events dispatched by useOutput.
+	// @ts-ignore
+	window.hotstaqStartingApp = true;
+
 	let hotstaqElms = document.getElementsByTagName ("hotstaq");
 
 	// Set this to true, just in case...
@@ -60,6 +64,7 @@ export function hotStaqWebStart ()
 				let loggingLevel: string = getAttr (hotstaqElm, ["logging-level", "loggingLevel"]) || null;
 				let startDelay: string = getAttr (hotstaqElm, ["start-delay", "startDelay"]) || null;
 				let router: string = getAttr (hotstaqElm, ["router"]) || "";
+				let spaTarget: string = getAttr (hotstaqElm, ["spa-target", "spaTarget"]) || null;
 				let name: string = getAttr (hotstaqElm, ["name"]) || "default";
 				let args: string = getAttr (hotstaqElm, ["args"]) || null;
 				let apiJSUrl: string = getAttr (hotstaqElm, ["api-js-url", "apiJSUrl"]) || null;
@@ -157,9 +162,9 @@ export function hotStaqWebStart ()
 											routerWildcards.push (routerPath);
 
 										routerManager[routerPath] = {
-												redirect: redirect || undefined, 
-												baseRedirect: baseRedirect || undefined, 
-												base: base || undefined, 
+												redirect: redirect || undefined,
+												baseRedirect: baseRedirect || undefined,
+												base: base || undefined,
 												src: routerSrc || undefined
 											};
 									}
@@ -238,6 +243,17 @@ export function hotStaqWebStart ()
 					}
 				}
 
+				// Store router data on HotStaq for SPA navigation.
+				HotStaq.routerManager = routerManager;
+				HotStaq.routerWildcards = routerWildcards;
+
+				// Also save on window as a backup — these survive any class
+				// re-initialization that may occur during useOutput's DOM replacement.
+				// @ts-ignore
+				window.__hotstaqRouterManager = routerManager;
+				// @ts-ignore
+				window.__hotstaqRouterWildcards = routerWildcards;
+
 				if (args != null)
 					args = JSON.parse (args);
 				else
@@ -258,7 +274,7 @@ export function hotStaqWebStart ()
 				// @ts-ignore
 				if (window["Hot"] != null)
 					tempMode = Hot.Mode;
-		
+
 				let processor: HotStaq = null;
 
 				if (dontReuseProcessor === false)
@@ -363,6 +379,16 @@ export function hotStaqWebStart ()
 					newAPI.connection.api = newAPI;
 					processor.api = newAPI;
 				}
+
+				// Store the processor for SPA navigation.
+				HotStaq.spaProcessor = processor;
+
+				// @ts-ignore
+				window.__hotstaqSpaProcessor = processor;
+
+				// Enable SPA mode if spa-target attribute was provided.
+				if (spaTarget != null)
+					HotStaq.enableSPA (spaTarget, processor);
 
 				if (hasHtmlSource === false)
 				{

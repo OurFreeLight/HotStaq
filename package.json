@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.8.130",
+  "version": "0.8.131",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -96,6 +96,7 @@
     "webpack-cli": "^6.0.1"
   },
   "overrides": {
-    "diff": ">=8.0.3"
+    "diff": ">=8.0.3",
+    "serialize-javascript": ">=7.0.3"
   }
 }
