@@ -13,8 +13,10 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            npm install
-            
+            node --version
+            npm --version
+            npm ci
+
             cat > "./.env.chrome" \<<EOF
             HTTP_PORT=3123
             DATABASE_SERVER=localhost
@@ -195,7 +197,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            npm install
+            node --version
+            npm --version
+            npm ci
       - run:
           name: Build
           command: |
