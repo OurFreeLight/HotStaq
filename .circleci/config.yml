@@ -10,14 +10,13 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: Install dependencies
           command: |
             node --version
             npm --version
             rm -f .npmrc
-            SCARF_ANALYTICS=false npm ci --ignore-scripts
+            npm ci --loglevel verbose
 
             cat > "./.env.chrome" \<<EOF
             HTTP_PORT=3123
@@ -54,6 +53,7 @@ jobs:
             TESTING_DEVTOOLS=0
             TESTING_RUN_HEADLESS=1
             EOF
+      - setup_remote_docker
       - run:
           name: Build and install globally
           command: |
