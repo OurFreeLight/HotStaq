@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SPA Page 1</title>
+</head>
+<body>
+	<div id="spa-shell">
+		<nav id="spa-nav">
+			<a id="navPage1" href="/tests/browser/SPAPage1">Page 1</a>
+			<a id="navPage2" href="/tests/browser/SPAPage2">Page 2</a>
+		</nav>
+		<div id="spa-target">
+			<h1 id="page1Title">SPA Page 1</h1>
+			<p id="page1Text">This is the first SPA page.</p>
+			<a id="linkToPage2" href="/tests/browser/SPAPage2">Go to Page 2</a>
+			<a id="linkExternal" href="https://example.com">External Link</a>
+			<a id="linkIgnored" href="/tests/browser/SPAPage2" data-spa-ignore>Ignored SPA Link</a>
+		</div>
+		<span id="page1Script"></span>
+		<span id="page2Script"></span>
+		<span id="beforeNavFired"></span>
+		<span id="afterNavFired"></span>
+	</div>
+</body>
+</html>

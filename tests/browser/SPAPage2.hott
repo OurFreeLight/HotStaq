@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SPA Page 2</title>
+</head>
+<body>
+	<div id="spa-shell">
+		<nav id="spa-nav">
+			<a id="navPage1" href="/tests/browser/SPAPage1">Page 1</a>
+			<a id="navPage2" href="/tests/browser/SPAPage2">Page 2</a>
+		</nav>
+		<div id="spa-target">
+			<h1 id="page2Title">SPA Page 2</h1>
+			<p id="page2Text">This is the second SPA page.</p>
+			<a id="linkToPage1" href="/tests/browser/SPAPage1">Go to Page 1</a>
+			<script type="text/javascript">
+				if (document.getElementById('page2Script'))
+					document.getElementById('page2Script').innerHTML = 'page2-loaded';
+			</script>
+		</div>
+		<span id="page1Script"></span>
+		<span id="page2Script"></span>
+		<span id="beforeNavFired"></span>
+		<span id="afterNavFired"></span>
+	</div>
+</body>
+</html>

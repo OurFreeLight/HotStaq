@@ -266,6 +266,17 @@ export class Hot
 	}
 
 	/**
+	 * Navigate to a route using SPA mode. This is a convenience wrapper
+	 * around HotStaq.navigateTo().
+	 *
+	 * @param path The URL path to navigate to (e.g. "/proposals").
+	 */
+	static async navigateTo (path: string): Promise<void>
+	{
+		await HotStaq.navigateTo (path);
+	}
+
+	/**
 	 * Retrieve a file and echo out it's contents.
 	 */
 	static async include (file: HotFile | string, args: any[] = null): Promise<void>
