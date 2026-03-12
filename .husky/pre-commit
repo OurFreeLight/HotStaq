@@ -1,0 +1,11 @@
+# Sanitize package-lock.json: replace private registry URLs with public npmjs.
+# This prevents verdaccio proxy-cache URLs from leaking into committed lockfiles.
+
+if git diff --cached --name-only | grep -q 'package-lock.json'; then
+    if [ -f "package-lock.json" ]; then
+        if grep -q 'verdaccio.higheredgesoftware.com' "package-lock.json"; then
+            sed -i 's|https://verdaccio.higheredgesoftware.com/|https://registry.npmjs.org/|g' "package-lock.json"
+            git add "package-lock.json"
+        fi
+    fi
+fi

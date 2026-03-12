@@ -22,7 +22,8 @@
     "build": "npx tsc --build ./tsconfig.json",
     "buildweb": "npx webpack --mode=production && npm_config_yes=true npx google-closure-compiler@latest --js=./build-web/HotStaq.js --language_out=ECMASCRIPT_2018 --js_output_file=./build-web/HotStaq.min.js",
     "buildwebdebug": "npx webpack --mode=development --stats-modules-space 999 && npx webpack --mode=development --config=webpack.config.tests.cjs",
-    "build-test-api": "node ./build/src/index.js --hotsite ./tests/hotsite/HotSite.json generate --api"
+    "build-test-api": "node ./build/src/index.js --hotsite ./tests/hotsite/HotSite.json generate --api",
+    "prepare": "husky"
   },
   "bugs": {
     "url": "https://github.com/OurFreeLight/HotStaq/issues"
@@ -88,6 +89,7 @@
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
     "eslint": "^9.24.0",
+    "husky": "^9.1.7",
     "nyc": "^17.1.0",
     "ts-loader": "^9.5.2",
     "typedoc": "^0.28.1",
