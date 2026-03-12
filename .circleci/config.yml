@@ -16,6 +16,7 @@ jobs:
           command: |
             node --version
             npm --version
+            rm -f .npmrc
             npm ci
 
             cat > "./.env.chrome" \<<EOF
