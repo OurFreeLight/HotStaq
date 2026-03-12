@@ -6,7 +6,7 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/node:24.11-browsers
+      - image: cimg/node:22.15-browsers
     steps:
       - checkout
       - setup_remote_docker
@@ -182,7 +182,7 @@ jobs:
       #       npx mocha --timeout 5000 --colors ./build/tests/create/**/*.js
   publish:
     docker:
-      - image: cimg/node:lts
+      - image: cimg/node:22.15
         environment:
           NPM_ACCESS_TOKEN: $NPM_ACCESS_TOKEN
           PUBLISH_LIBRARY: $PUBLISH_LIBRARY
