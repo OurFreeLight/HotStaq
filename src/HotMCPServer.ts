@@ -6,7 +6,7 @@ import { ListToolsRequestSchema, CallToolRequestSchema, CallToolResult } from "@
 
 import { HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest, ServerAuthorizationFunction } from "./HotRouteMethod";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotStaq } from "./HotStaq";
@@ -85,6 +85,38 @@ export class HotMCPServer
 	 * Active SSE transports keyed by session ID.
 	 */
 	transports: { [sessionId: string]: SSEServerTransport };
+	/**
+	 * Authorized values from connection-level authorization, keyed by session ID.
+	 * Set when onServerAuthorize is used and a connection is successfully authorized.
+	 */
+	authorizedValues: { [sessionId: string]: any };
+	/**
+	 * Executes when authorizing an incoming MCP SSE connection. The value
+	 * returned from here will be stored as the connection's authorizedValue
+	 * and passed into tool call ServerRequests via bearerToken. Returning
+	 * undefined means authorization failed and the connection will be closed.
+	 * If any exceptions are thrown, the connection will be closed with an error.
+	 *
+	 * The bearer token from the MCP connection request (query param or header)
+	 * will be passed in via request.bearerToken.
+	 *
+	 * Set to null to skip connection-level authorization (default).
+	 */
+	onServerAuthorize: ServerAuthorizationFunction;
+	/**
+	 * Executes after a successful MCP SSE connection is established.
+	 */
+	onSuccessfulConnection: ((sessionId: string, authorizedValue: any) => Promise<void>);
+	/**
+	 * Executes right when a client connects before onServerAuthorize is called.
+	 * If this returns false, the connection will be closed immediately.
+	 * Use onServerAuthorize for authorization logic, not here.
+	 */
+	onConnection: ((req: express.Request) => Promise<boolean>);
+	/**
+	 * Executes after a connection fails authorization.
+	 */
+	onConnectionError: ((req: express.Request, errorMessage: string) => Promise<void>);
 
 	constructor (api: HotAPI, route: string = "/mcp")
 	{
@@ -93,6 +125,11 @@ export class HotMCPServer
 		this.logger = new HotLog (HotLogLevel.All);
 		this.tools = [];
 		this.transports = {};
+		this.authorizedValues = {};
+		this.onServerAuthorize = null;
+		this.onSuccessfulConnection = null;
+		this.onConnection = null;
+		this.onConnectionError = null;
 
 		this.server = new Server (
 				{
@@ -339,6 +376,121 @@ export class HotMCPServer
 	}
 
 	/**
+	 * Handle an incoming SSE connection request, running the connection lifecycle:
+	 * onConnection (early gate), onServerAuthorize (auth), then establishing
+	 * the MCP SSE transport. Mirrors HotWebSocketServer's connection handling.
+	 */
+	protected async handleSSEConnection (req: express.Request, res: express.Response, messageRoute: string): Promise<void>
+	{
+		this.logger.verbose (() => `New MCP SSE connection from ${req.ip}`);
+
+		// Early connection gate — developer can reject before auth runs.
+		if (this.onConnection != null)
+		{
+			let allowed: boolean = false;
+
+			try
+			{
+				allowed = await this.onConnection (req);
+			}
+			catch (ex)
+			{
+				this.logger.error (`MCP onConnection error: ${ex.message}`);
+				res.status (500).json ({ error: "Internal Server Error" });
+
+				return;
+			}
+
+			if (allowed === false)
+			{
+				this.logger.verbose (`MCP connection rejected by onConnection from ${req.ip}`);
+				res.status (403).json ({ error: "Forbidden" });
+
+				return;
+			}
+		}
+
+		// Connection-level authorization — optional, mirrors HotWebSocketServer.onServerAuthorize.
+		let authorizedValue: any = null;
+
+		if (this.onServerAuthorize != null)
+		{
+			// Extract bearer token from Authorization header or query param.
+			let bearerToken: string = "";
+
+			if (req.headers.authorization != null)
+			{
+				bearerToken = req.headers.authorization;
+
+				if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
+					bearerToken = bearerToken.substring (7);
+			}
+			else if ((req.query.token != null) && (typeof (req.query.token) === "string"))
+			{
+				bearerToken = req.query.token as string;
+			}
+
+			let request: ServerRequest = new ServerRequest ({
+					req: req,
+					res: null,
+					bearerToken: bearerToken,
+					authorizedValue: null,
+					jsonObj: req.body || {},
+					queryObj: req.query,
+					files: null
+				});
+
+			try
+			{
+				authorizedValue = await this.onServerAuthorize (request);
+			}
+			catch (ex)
+			{
+				this.logger.verbose (`MCP authorization error from ${req.ip}: ${ex.message}`);
+
+				if (this.onConnectionError != null)
+					await this.onConnectionError (req, ex.message);
+
+				res.status (401).json ({ error: ex.message });
+
+				return;
+			}
+
+			if (authorizedValue === undefined)
+			{
+				this.logger.verbose (`MCP unauthorized connection from ${req.ip}`);
+
+				if (this.onConnectionError != null)
+					await this.onConnectionError (req, "Unauthorized");
+
+				res.status (401).json ({ error: "Unauthorized" });
+
+				return;
+			}
+		}
+
+		this.logger.verbose (() => `MCP SSE connection authorized from ${req.ip}`);
+
+		let transport = new SSEServerTransport (messageRoute, res as any);
+
+		this.transports[transport.sessionId] = transport;
+
+		if (authorizedValue != null)
+			this.authorizedValues[transport.sessionId] = authorizedValue;
+
+		transport.onclose = () =>
+			{
+				delete this.transports[transport.sessionId];
+				delete this.authorizedValues[transport.sessionId];
+			};
+
+		await this.server.connect (transport);
+
+		if (this.onSuccessfulConnection != null)
+			await this.onSuccessfulConnection (transport.sessionId, authorizedValue);
+	}
+
+	/**
 	 * Attach the MCP SSE endpoints to an Express application.
 	 */
 	async attach (app: express.Express): Promise<void>
@@ -346,41 +498,19 @@ export class HotMCPServer
 		let sseRoute: string = `${this.route}/sse`;
 		let messageRoute: string = `${this.route}/message`;
 
-		// SSE endpoint
+		// SSE endpoint (/mcp/sse)
 		app.get (sseRoute, async (req: express.Request, res: express.Response) =>
 			{
-				this.logger.verbose (() => `New MCP SSE connection`);
-
-				let transport = new SSEServerTransport (messageRoute, res as any);
-
-				this.transports[transport.sessionId] = transport;
-
-				transport.onclose = () =>
-					{
-						delete this.transports[transport.sessionId];
-					};
-
-				await this.server.connect (transport);
+				await this.handleSSEConnection (req, res, messageRoute);
 			});
 
-		// Also handle GET on the base route as SSE
+		// Also handle GET on the base route as SSE (/mcp)
 		app.get (this.route, async (req: express.Request, res: express.Response) =>
 			{
-				this.logger.verbose (() => `New MCP SSE connection (base route)`);
-
-				let transport = new SSEServerTransport (messageRoute, res as any);
-
-				this.transports[transport.sessionId] = transport;
-
-				transport.onclose = () =>
-					{
-						delete this.transports[transport.sessionId];
-					};
-
-				await this.server.connect (transport);
+				await this.handleSSEConnection (req, res, messageRoute);
 			});
 
-		// Message endpoint
+		// Message endpoint — routes MCP JSON-RPC messages to the correct session transport.
 		app.post (messageRoute, async (req: express.Request, res: express.Response) =>
 			{
 				let sessionId: string = req.query.sessionId as string;
