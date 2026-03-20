@@ -1,6 +1,6 @@
 {
   "name": "hotstaq",
-  "version": "0.8.131",
+  "version": "0.8.132",
   "description": "A friendly web framework that fits nicely into devops and CI/CD pipelines.",
   "bin": {
     "hotstaq": "./bin/hotstaq"
@@ -37,6 +37,7 @@
   "dependencies": {
     "@influxdata/influxdb-client": "^1.20.0",
     "@microsoft/fetch-event-source": "^2.0.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@types/swagger-ui-express": "^4.1.7",
     "archiver": "^5.3.1",
     "chai": "^6.2.2",

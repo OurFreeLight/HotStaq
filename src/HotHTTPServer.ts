@@ -21,6 +21,7 @@ import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
 import { processRequest } from "./HotHTTPServerProcessRequest";
 import { HotIO } from "./HotIO";
 import { HotWebSocketServer } from "./HotWebSocketServer";
+import { HotMCPServer } from "./HotMCPServer";
 import { HotLog } from "./HotLog";
 
 var Worker: any = null;
@@ -212,6 +213,25 @@ export class HotHTTPServer extends HotServer
 		jsonObj: any;
 	};
 	/**
+	 * The MCP (Model Context Protocol) server settings.
+	 */
+	mcpServer: {
+		/**
+		 * If set to true, the MCP server will be enabled.
+		 * @default false
+		 */
+		enabled: boolean;
+		/**
+		 * The route to expose the MCP server on.
+		 * @default "/mcp"
+		 */
+		route: string;
+		/**
+		 * The MCP server instance.
+		 */
+		server: HotMCPServer | null;
+	};
+	/**
 	 * The options to use when a new client has made a request.
 	 */
 	options: {
@@ -344,6 +364,11 @@ export class HotHTTPServer extends HotServer
 				filepath: "",
 				route: "/swagger",
 				jsonObj: null
+			};
+		this.mcpServer = {
+				enabled: false,
+				route: "/mcp",
+				server: null
 			};
 		this.options = {
 				onCall: null,
@@ -1453,6 +1478,13 @@ export class HotHTTPServer extends HotServer
 						this.swaggerUI.jsonObj.servers.unshift ({ url: baseUrl });
 
 						this.expressApp.use (this.swaggerUI.route, swaggerUI.serve, swaggerUI.setup(this.swaggerUI.jsonObj));
+					}
+
+					if (this.mcpServer.enabled && this.api != null)
+					{
+						this.mcpServer.server = new HotMCPServer (this.api, this.mcpServer.route);
+						await this.mcpServer.server.attach (this.expressApp);
+						this.logger.info (`MCP server listening on route "${this.mcpServer.route}"`);
 					}
 
 					let JSONLimit: string = "1mb";

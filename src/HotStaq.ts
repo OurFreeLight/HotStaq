@@ -25,7 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
-import { HotRouteMethodParameter, HotValidation, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethodParameter, HotValidation, HotEventMethod, ServerRequest } from "./HotRouteMethod";
 import { validateRecursively, ValidationOptions } from "./HotProcessInput";
 import { HttpError } from "./HotHttpError";
 
@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.131";
+	static version: string = "0.8.132";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1613,6 +1613,86 @@ export class HotStaq implements IHotStaq
 		const finalStr: string = content.replace (new RegExp (`\\$\\{${key}\\}`, "g"), value);
 
 		return (finalStr);
+	}
+
+	/**
+	 * Convert a HotRouteMethodParameter type string to a JSON Schema type string.
+	 * Useful for generating MCP tool schemas, OpenAPI extensions, or any consumer
+	 * that needs JSON Schema types from HotStaq parameter definitions.
+	 */
+	static convertParamTypeToJSONSchemaType (paramType: string): string
+	{
+		if (paramType == null || paramType === "")
+			return ("string");
+
+		return (paramType);
+	}
+
+	/**
+	 * Convert a HotRouteMethodParameter to a JSON Schema property definition.
+	 * Recursively handles nested objects and arrays.
+	 * Useful for generating MCP tool schemas, OpenAPI extensions, or any consumer
+	 * that needs JSON Schema from HotStaq parameter definitions.
+	 */
+	static convertParamToJSONSchemaProperty (param: HotRouteMethodParameter): any
+	{
+		let prop: any = {
+				type: HotStaq.convertParamTypeToJSONSchemaType (param.type)
+			};
+
+		if (param.description != null)
+			prop.description = param.description;
+
+		if (param.type === "array" && param.items != null)
+		{
+			if (typeof (param.items) !== "function")
+				prop.items = HotStaq.convertParamToJSONSchemaProperty (param.items);
+		}
+
+		if (param.type === "object" && param.parameters != null)
+		{
+			prop.properties = {};
+
+			for (let subName in param.parameters)
+			{
+				let subParam = param.parameters[subName];
+
+				if (typeof (subParam) === "string")
+				{
+					prop.properties[subName] = { type: "string", description: subParam };
+				}
+				else if (typeof (subParam) !== "function")
+				{
+					prop.properties[subName] = HotStaq.convertParamToJSONSchemaProperty (subParam);
+				}
+			}
+		}
+
+		return (prop);
+	}
+
+	/**
+	 * Get the HTTP method string (e.g. "GET", "POST") from a HotEventMethod enum value.
+	 * Useful for MCP servers, API generators, and any consumer that needs to map
+	 * HotEventMethod values to HTTP method strings.
+	 */
+	static getHTTPMethodFromEvent (type: HotEventMethod): string
+	{
+		switch (type)
+		{
+			case HotEventMethod.GET:
+				return ("GET");
+			case HotEventMethod.POST:
+				return ("POST");
+			case HotEventMethod.FILE_UPLOAD:
+				return ("POST");
+			case HotEventMethod.SSE_SUB_EVENT:
+				return ("POST");
+			case HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT:
+				return ("POST");
+			default:
+				return ("POST");
+		}
 	}
 
 	/**
