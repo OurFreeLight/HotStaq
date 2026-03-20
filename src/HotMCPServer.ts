@@ -6,7 +6,7 @@ import { ListToolsRequestSchema, CallToolRequestSchema, CallToolResult } from "@
 
 import { HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod, ServerRequest } from "./HotRouteMethod";
 import { HotLog, HotLogLevel } from "./HotLog";
 import { HotHTTPServer } from "./HotHTTPServer";
 import { HotStaq } from "./HotStaq";
@@ -110,23 +110,6 @@ export class HotMCPServer
 		this.registerHandlers ();
 	}
 
-	/**
-	 * Get the HTTP method string from a HotEventMethod enum value.
-	 */
-	protected getHTTPMethod (type: HotEventMethod): string
-	{
-		switch (type)
-		{
-			case HotEventMethod.GET:
-				return ("GET");
-			case HotEventMethod.POST:
-				return ("POST");
-			case HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT:
-				return ("POST");
-			default:
-				return ("POST");
-		}
-	}
 
 	/**
 	 * Build MCP tool definitions from the API's routes and methods.
@@ -165,7 +148,7 @@ export class HotMCPServer
 					}
 				}
 
-				let httpMethod: string = this.getHTTPMethod (method.type);
+				let httpMethod: string = HotStaq.getHTTPMethodFromEvent (method.type);
 				let version: string = route.version || "v1";
 				let prefix: string = route.prefix || "";
 				let urlPath: string = `/${version}/${prefix}${route.route}/${method.name}`;
@@ -260,7 +243,7 @@ export class HotMCPServer
 	 * the full HotStaq sanitization pipeline (validation, authorization,
 	 * pre/post execute hooks, etc).
 	 */
-	protected async executeToolCall (tool: MCPToolDefinition, args: any, request?: any): Promise<CallToolResult>
+	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any): Promise<CallToolResult>
 	{
 		let server: HotHTTPServer = this.api.connection as HotHTTPServer;
 		let route: HotRoute = this.api.routes[tool.routeName];
@@ -275,25 +258,38 @@ export class HotMCPServer
 
 		let methodName: string = method.getRouteUrl ();
 
-		// Build authorization header from MCP request metadata if available
-		let headers: any = {};
+		// Extract bearer token from MCP request metadata if provided.
+		// MCP clients pass auth via request.params._meta.authorization.
+		let bearerToken: string = "";
 
-		if (request != null && request.params != null &&
-			request.params._meta != null && request.params._meta.authorization != null)
+		if (mcpRequest != null && mcpRequest.params != null &&
+			mcpRequest.params._meta != null && mcpRequest.params._meta.authorization != null)
 		{
-			headers.authorization = request.params._meta.authorization;
+			bearerToken = mcpRequest.params._meta.authorization;
+
+			// Strip "Bearer " prefix if present, matching how processRequest handles it.
+			if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
+				bearerToken = bearerToken.substring (7);
 		}
 
-		// Build synthetic Express req object
+		// Build the authorization header so processRequest can read it the same way
+		// it does for normal HTTP requests.
+		let authHeader: string = bearerToken !== "" ? `Bearer ${bearerToken}` : "";
+
+		// Build a synthetic Express req object. processRequest reads req.body/query
+		// for the JSON/query params, and req.headers.authorization for the bearer token —
+		// matching exactly how a real HTTP request arrives.
 		let req: any = {
 				method: tool.httpMethod,
 				body: (tool.httpMethod === "GET") ? {} : args,
 				query: (tool.httpMethod === "GET") ? args : {},
-				headers: headers,
-				on: () => {}
+				headers: authHeader !== "" ? { authorization: authHeader } : {},
+				on: (_event: string, _handler: any) => {}
 			};
 
-		// Build synthetic Express res object that captures the response
+		// Build a synthetic Express res that captures the response instead of
+		// writing to a real HTTP connection — same pattern as HotWebSocketServer
+		// which creates a ServerRequest without req/res when there's no HTTP context.
 		let capturedStatus: number = 200;
 		let capturedBody: any = undefined;
 
@@ -308,14 +304,19 @@ export class HotMCPServer
 					{
 						capturedBody = value;
 					},
-				on: () => {},
-				set: () => {},
+				on: (_event: string, _handler: any) => {},
+				set: (_headers: any) => {},
 				flushHeaders: () => {}
 			};
 
+		// Delegate to processRequest — this runs the full HotStaq pipeline:
+		// onServerAuthorize / onAuthorizeUser, input validation (validateQueryInput,
+		// validateJSONInput, processInput), onServerPreExecute, onServerExecute,
+		// onServerPostExecute. The ServerRequest built inside processRequest will
+		// have bearerToken set from req.headers.authorization, matching normal HTTP flow.
 		let response: any = await processRequest (server, server.logger, route, method, methodName, req as any, res as any);
 
-		// processRequest may return a value directly or the res.json path may have been used
+		// processRequest returns the result directly or routes through res.json().
 		let resultBody: any = (response !== undefined) ? response : capturedBody;
 		let isError: boolean = false;
 

@@ -25,7 +25,7 @@ import { HotSite, HotSiteRoute } from "./HotSite";
 
 import { registerComponent } from "./HotStaqRegisterComponent";
 import { hotStaqWebStart } from "./HotStaqWebStart";
-import { HotRouteMethodParameter, HotValidation, ServerRequest } from "./HotRouteMethod";
+import { HotRouteMethodParameter, HotValidation, HotEventMethod, ServerRequest } from "./HotRouteMethod";
 import { validateRecursively, ValidationOptions } from "./HotProcessInput";
 import { HttpError } from "./HotHttpError";
 
@@ -1669,6 +1669,30 @@ export class HotStaq implements IHotStaq
 		}
 
 		return (prop);
+	}
+
+	/**
+	 * Get the HTTP method string (e.g. "GET", "POST") from a HotEventMethod enum value.
+	 * Useful for MCP servers, API generators, and any consumer that needs to map
+	 * HotEventMethod values to HTTP method strings.
+	 */
+	static getHTTPMethodFromEvent (type: HotEventMethod): string
+	{
+		switch (type)
+		{
+			case HotEventMethod.GET:
+				return ("GET");
+			case HotEventMethod.POST:
+				return ("POST");
+			case HotEventMethod.FILE_UPLOAD:
+				return ("POST");
+			case HotEventMethod.SSE_SUB_EVENT:
+				return ("POST");
+			case HotEventMethod.POST_AND_WEBSOCKET_CLIENT_PUB_EVENT:
+				return ("POST");
+			default:
+				return ("POST");
+		}
 	}
 
 	/**
