@@ -74,9 +74,11 @@ export class HotMCPServer
 	 */
 	logger: HotLog;
 	/**
-	 * The MCP Server instance.
+	 * The MCP Server instances keyed by session ID.
+	 * A new Server instance is created per SSE connection because the MCP SDK
+	 * Server class only supports one active transport at a time.
 	 */
-	server: Server;
+	servers: { [sessionId: string]: Server };
 	/**
 	 * The registered tool definitions.
 	 */
@@ -125,26 +127,14 @@ export class HotMCPServer
 		this.logger = new HotLog (HotLogLevel.All);
 		this.tools = [];
 		this.transports = {};
+		this.servers = {};
 		this.authorizedValues = {};
 		this.onServerAuthorize = null;
 		this.onSuccessfulConnection = null;
 		this.onConnection = null;
 		this.onConnectionError = null;
 
-		this.server = new Server (
-				{
-					name: "HotStaq MCP Server",
-					version: "1.0.0"
-				},
-				{
-					capabilities: {
-						tools: {}
-					}
-				}
-			);
-
 		this.buildToolDefinitions ();
-		this.registerHandlers ();
 	}
 
 
@@ -215,11 +205,36 @@ export class HotMCPServer
 	}
 
 	/**
-	 * Register the MCP request handlers for tools/list and tools/call.
+	 * Create a fresh MCP Server instance with handlers registered.
+	 * A new instance is required per SSE connection because the MCP SDK
+	 * Server class only supports one active transport at a time.
 	 */
-	protected registerHandlers (): void
+	protected createServerInstance (): Server
 	{
-		this.server.setRequestHandler (ListToolsRequestSchema, async () =>
+		let instance: Server = new Server (
+				{
+					name: "HotStaq MCP Server",
+					version: "1.0.0"
+				},
+				{
+					capabilities: {
+						tools: {}
+					}
+				}
+			);
+
+		this.registerHandlers (instance);
+
+		return (instance);
+	}
+
+	/**
+	 * Register the MCP request handlers for tools/list and tools/call on
+	 * the given Server instance.
+	 */
+	protected registerHandlers (instance: Server): void
+	{
+		instance.setRequestHandler (ListToolsRequestSchema, async () =>
 			{
 				return ({
 					tools: this.tools.map ((tool) =>
@@ -233,7 +248,7 @@ export class HotMCPServer
 				});
 			});
 
-		this.server.setRequestHandler (CallToolRequestSchema, async (request: any) =>
+		instance.setRequestHandler (CallToolRequestSchema, async (request: any) =>
 			{
 				let toolName: string = request.params.name;
 				let args: any = request.params.arguments || {};
@@ -473,7 +488,12 @@ export class HotMCPServer
 
 		let transport = new SSEServerTransport (messageRoute, res as any);
 
+		// Create a fresh Server instance per connection — the MCP SDK Server
+		// only supports one active transport at a time.
+		let sessionServer: Server = this.createServerInstance ();
+
 		this.transports[transport.sessionId] = transport;
+		this.servers[transport.sessionId] = sessionServer;
 
 		if (authorizedValue != null)
 			this.authorizedValues[transport.sessionId] = authorizedValue;
@@ -481,10 +501,11 @@ export class HotMCPServer
 		transport.onclose = () =>
 			{
 				delete this.transports[transport.sessionId];
+				delete this.servers[transport.sessionId];
 				delete this.authorizedValues[transport.sessionId];
 			};
 
-		await this.server.connect (transport);
+		await sessionServer.connect (transport);
 
 		if (this.onSuccessfulConnection != null)
 			await this.onSuccessfulConnection (transport.sessionId, authorizedValue);
@@ -531,7 +552,10 @@ export class HotMCPServer
 					return;
 				}
 
-				await transport.handlePostMessage (req as any, res as any);
+				// Pass req.body as the pre-parsed body — Express's JSON middleware
+			// consumes the stream before this handler runs, so we must provide
+			// the already-parsed body explicitly.
+			await transport.handlePostMessage (req as any, res as any, req.body);
 			});
 	}
 }
