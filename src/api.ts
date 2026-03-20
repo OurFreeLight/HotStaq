@@ -19,6 +19,7 @@ import { HotRouteMethod, IHotRouteMethod, HotEventMethod, HotRouteMethodParamete
 		ServerRequest, IServerRequest, HotValidation } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { StaticRoute, HTTPHeader, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
+import { HotMCPServer } from "./HotMCPServer";
 import { HttpError } from "./HotHttpError";
 import { HotClient } from "./HotClient";
 
@@ -100,6 +101,7 @@ export {
 		HotServerType,
 		StaticRoute, HTTPHeader, HttpError, ServableFileExtension, 
 		HotHTTPServer,
+		HotMCPServer,
 		HotWebSocketServerClient,
 		HotWebSocketClient,
 		HotWebSocketServer,
