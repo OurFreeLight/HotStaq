@@ -761,8 +761,8 @@ export class HotCLI
 		let dontLoadAPIFiles: boolean = false;
 		let swaggerUIFilepath: string = "";
 		let swaggerUIRoute: string = "/swagger";
-		let mcpEnabled: boolean = (process.env["MCP_SERVER"] === "1" || process.env["MCP_SERVER"] === "true");
-		let mcpRoute: string = process.env["MCP_ROUTE"] || "/mcp";
+		let mcpEnabled: boolean = false;
+		let mcpRoute: string = "/mcp";
 		let errorHandlingResponseCode: number = 500;
 		let cors: { origin: string; allowedHeaders: string[] } = {
 				origin: "*",
@@ -1404,12 +1404,19 @@ export class HotCLI
 			{
 				mcpEnabled = true;
 			});
+
+		if (process.env["MCP_SERVER"] === "1" || process.env["MCP_SERVER"] === "true")
+			mcpEnabled = true;
+
 		runCmd.option (`--mcp-route <route>`,
 			`The route to expose the MCP server on. Default: /mcp. Can also be set via MCP_ROUTE env var.`,
 			(route: string, previous: any) =>
 			{
 				mcpRoute = route;
 			}, "/mcp");
+
+		if (process.env["MCP_ROUTE"] != null && process.env["MCP_ROUTE"] !== "")
+			mcpRoute = process.env["MCP_ROUTE"];
 		runCmd.option (`--dont-deploy-tester`, 
 			`If set, this will not deploy a tester. If this is enabled this will cause automated tests to fail.`, 
 			(arg: string, previous: any) =>

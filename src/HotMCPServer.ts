@@ -6,31 +6,11 @@ import { ListToolsRequestSchema, CallToolRequestSchema, CallToolResult } from "@
 
 import { HotAPI } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, HotEventMethod, HotRouteMethodParameter } from "./HotRouteMethod";
+import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
 import { HotLog, HotLogLevel } from "./HotLog";
-
-/**
- * A JSON Schema property definition.
- */
-interface JSONSchemaProperty
-{
-	/**
-	 * The JSON Schema type.
-	 */
-	type: string;
-	/**
-	 * The description of the property.
-	 */
-	description?: string;
-	/**
-	 * Items schema for array types.
-	 */
-	items?: JSONSchemaProperty;
-	/**
-	 * Nested properties for object types.
-	 */
-	properties?: { [name: string]: JSONSchemaProperty };
-}
+import { HotHTTPServer } from "./HotHTTPServer";
+import { HotStaq } from "./HotStaq";
+import { processRequest } from "./HotHTTPServerProcessRequest";
 
 /**
  * A tool definition for the MCP server.
@@ -50,7 +30,7 @@ interface MCPToolDefinition
 	 */
 	inputSchema: {
 		type: "object";
-		properties: { [name: string]: JSONSchemaProperty };
+		properties: { [name: string]: any };
 		required?: string[];
 	};
 	/**
@@ -61,6 +41,14 @@ interface MCPToolDefinition
 	 * The internal URL path to call.
 	 */
 	urlPath: string;
+	/**
+	 * The route name (key in api.routes).
+	 */
+	routeName: string;
+	/**
+	 * The method name on the route.
+	 */
+	methodName: string;
 }
 
 /**
@@ -82,10 +70,6 @@ export class HotMCPServer
 	 */
 	route: string;
 	/**
-	 * The base URL for making internal API calls.
-	 */
-	baseUrl: string;
-	/**
 	 * The associated logger.
 	 */
 	logger: HotLog;
@@ -106,7 +90,6 @@ export class HotMCPServer
 	{
 		this.api = api;
 		this.route = route;
-		this.baseUrl = api.baseUrl || "";
 		this.logger = new HotLog (HotLogLevel.All);
 		this.tools = [];
 		this.transports = {};
@@ -125,57 +108,6 @@ export class HotMCPServer
 
 		this.buildToolDefinitions ();
 		this.registerHandlers ();
-	}
-
-	/**
-	 * Convert a HotRouteMethodParameter type to a JSON Schema type.
-	 */
-	protected convertParamType (paramType: string): string
-	{
-		if (paramType == null || paramType === "")
-			return ("string");
-
-		return (paramType);
-	}
-
-	/**
-	 * Convert a HotRouteMethodParameter to a JSON Schema property.
-	 */
-	protected convertParameter (param: HotRouteMethodParameter): JSONSchemaProperty
-	{
-		let prop: JSONSchemaProperty = {
-				type: this.convertParamType (param.type)
-			};
-
-		if (param.description != null)
-			prop.description = param.description;
-
-		if (param.type === "array" && param.items != null)
-		{
-			if (typeof (param.items) !== "function")
-				prop.items = this.convertParameter (param.items);
-		}
-
-		if (param.type === "object" && param.parameters != null)
-		{
-			prop.properties = {};
-
-			for (let subName in param.parameters)
-			{
-				let subParam = param.parameters[subName];
-
-				if (typeof (subParam) === "string")
-				{
-					prop.properties[subName] = { type: "string", description: subParam };
-				}
-				else if (typeof (subParam) !== "function")
-				{
-					prop.properties[subName] = this.convertParameter (subParam);
-				}
-			}
-		}
-
-		return (prop);
 	}
 
 	/**
@@ -214,7 +146,7 @@ export class HotMCPServer
 			for (let method of route.methods)
 			{
 				let toolName: string = `${route.route}_${method.name}`;
-				let properties: { [name: string]: JSONSchemaProperty } = {};
+				let properties: { [name: string]: any } = {};
 				let required: string[] = [];
 
 				if (method.parameters != null)
@@ -226,7 +158,7 @@ export class HotMCPServer
 						if (typeof (param) === "function")
 							continue;
 
-						properties[paramName] = this.convertParameter (param);
+						properties[paramName] = HotStaq.convertParamToJSONSchemaProperty (param);
 
 						if (param.required === true)
 							required.push (paramName);
@@ -249,7 +181,9 @@ export class HotMCPServer
 							properties: properties
 						},
 						httpMethod: httpMethod,
-						urlPath: urlPath
+						urlPath: urlPath,
+						routeName: routeName,
+						methodName: method.name
 					};
 
 				if (required.length > 0)
@@ -298,7 +232,7 @@ export class HotMCPServer
 
 				try
 				{
-					let result = await this.executeToolCall (tool, args);
+					let result = await this.executeToolCall (tool, args, request);
 
 					return (result);
 				}
@@ -322,44 +256,82 @@ export class HotMCPServer
 	}
 
 	/**
-	 * Execute a tool call by making an internal HTTP fetch to the API endpoint.
+	 * Execute a tool call by calling processRequest directly, going through
+	 * the full HotStaq sanitization pipeline (validation, authorization,
+	 * pre/post execute hooks, etc).
 	 */
-	protected async executeToolCall (tool: MCPToolDefinition, args: any): Promise<CallToolResult>
+	protected async executeToolCall (tool: MCPToolDefinition, args: any, request?: any): Promise<CallToolResult>
 	{
-		let url: string = `${this.baseUrl}${tool.urlPath}`;
-		let fetchOptions: any = {
+		let server: HotHTTPServer = this.api.connection as HotHTTPServer;
+		let route: HotRoute = this.api.routes[tool.routeName];
+
+		if (route == null)
+			throw new Error (`Route "${tool.routeName}" not found`);
+
+		let method: HotRouteMethod | undefined = route.methods.find ((m) => m.name === tool.methodName);
+
+		if (method == null)
+			throw new Error (`Method "${tool.methodName}" not found on route "${tool.routeName}"`);
+
+		let methodName: string = method.getRouteUrl ();
+
+		// Build authorization header from MCP request metadata if available
+		let headers: any = {};
+
+		if (request != null && request.params != null &&
+			request.params._meta != null && request.params._meta.authorization != null)
+		{
+			headers.authorization = request.params._meta.authorization;
+		}
+
+		// Build synthetic Express req object
+		let req: any = {
 				method: tool.httpMethod,
-				headers: {
-					"Content-Type": "application/json"
-				}
+				body: (tool.httpMethod === "GET") ? {} : args,
+				query: (tool.httpMethod === "GET") ? args : {},
+				headers: headers,
+				on: () => {}
 			};
 
-		if (tool.httpMethod === "GET")
-		{
-			let queryParams = new URLSearchParams ();
+		// Build synthetic Express res object that captures the response
+		let capturedStatus: number = 200;
+		let capturedBody: any = undefined;
 
-			for (let key in args)
-			{
-				if (args[key] != null)
-					queryParams.append (key, String (args[key]));
-			}
+		let res: any = {
+				status: (code: number) =>
+					{
+						capturedStatus = code;
 
-			let queryString: string = queryParams.toString ();
+						return (res);
+					},
+				json: (value: any) =>
+					{
+						capturedBody = value;
+					},
+				on: () => {},
+				set: () => {},
+				flushHeaders: () => {}
+			};
 
-			if (queryString !== "")
-				url += `?${queryString}`;
-		}
+		let response: any = await processRequest (server, server.logger, route, method, methodName, req as any, res as any);
+
+		// processRequest may return a value directly or the res.json path may have been used
+		let resultBody: any = (response !== undefined) ? response : capturedBody;
+		let isError: boolean = false;
+
+		if (resultBody != null && resultBody.error != null)
+			isError = true;
+
+		let resultText: string;
+
+		if (typeof (resultBody) === "string")
+			resultText = resultBody;
 		else
-		{
-			fetchOptions.body = JSON.stringify (args);
-		}
-
-		let response = await fetch (url, fetchOptions);
-		let responseText: string = await response.text ();
+			resultText = JSON.stringify (resultBody);
 
 		let result: CallToolResult = {
-				content: [{ type: "text", text: responseText }],
-				isError: !response.ok
+				content: [{ type: "text", text: resultText }],
+				isError: isError
 			};
 
 		return (result);
