@@ -1635,6 +1635,17 @@ export class HotHTTPServer extends HotServer
 						}
 					}
 
+					// Create and attach the MCP server AFTER all routes have run their
+					// onPreRegister callbacks (where HotRouteMethod entries are added).
+					// Doing this earlier causes buildToolDefinitions() to see empty method
+					// arrays for all routes that register methods in onPreRegister.
+					if (this.mcpServer.enabled && this.api != null)
+					{
+						this.mcpServer.server = new HotMCPServer (this.api, this.mcpServer.route);
+						await this.mcpServer.server.attach (this.expressApp);
+						this.logger.info (`MCP server listening on route "${this.mcpServer.route}"`);
+					}
+
 					let requestReporter = () =>
 					{
 						let numRequests: number = Object.keys(this.activeRequests).length;
