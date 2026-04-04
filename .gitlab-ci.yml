@@ -1,0 +1,36 @@
+# hotstaq — GitLab CI/CD Pipeline
+# Triggers on every push to main.
+# Runs the full prepublishOnly sequence (docs, build, web build) and publishes to npm.
+# Requires NPM_TOKEN set as a GitLab CI/CD variable.
+
+stages:
+  - build
+  - publish
+
+build:
+  stage: build
+  image: node:20-alpine
+  before_script:
+    - apk add --no-cache python3 make g++ java-common openjdk17-jre-headless
+  script:
+    - npm ci
+    - npm run builddoc
+    - npm run build
+    - npm run buildweb
+  artifacts:
+    paths:
+      - build/
+      - build-web/
+      - docs/
+    expire_in: 1 hour
+
+publish:
+  stage: publish
+  image: node:20-alpine
+  dependencies:
+    - build
+  script:
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+    - npm publish --access public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
