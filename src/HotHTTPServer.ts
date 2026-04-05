@@ -1480,13 +1480,6 @@ export class HotHTTPServer extends HotServer
 						this.expressApp.use (this.swaggerUI.route, swaggerUI.serve, swaggerUI.setup(this.swaggerUI.jsonObj));
 					}
 
-					if (this.mcpServer.enabled && this.api != null)
-					{
-						this.mcpServer.server = new HotMCPServer (this.api, this.mcpServer.route);
-						await this.mcpServer.server.attach (this.expressApp);
-						this.logger.info (`MCP server listening on route "${this.mcpServer.route}"`);
-					}
-
 					let JSONLimit: string = "1mb";
 
 					if (process.env.JSON_LIMIT != null)
