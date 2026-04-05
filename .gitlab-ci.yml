@@ -1,0 +1,34 @@
+# hotstaq — GitLab CI/CD Pipeline
+# Mirrors CircleCI build logic: build + test on dev and main, publish to npm on main only.
+# Requires NPM_TOKEN set as a GitLab CI/CD variable.
+
+stages:
+  - build
+  - publish
+
+build:
+  stage: build
+  image: node:22-bookworm
+  script:
+    - npm ci
+    - npx turbo run build
+    - npx turbo run buildweb
+    - npm run version-check
+  artifacts:
+    paths:
+      - build/
+      - build-web/
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main"'
+
+publish:
+  stage: publish
+  image: node:22-bookworm
+  dependencies:
+    - build
+  script:
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+    - npm publish --ignore-scripts
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'

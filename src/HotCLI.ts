@@ -761,6 +761,8 @@ export class HotCLI
 		let dontLoadAPIFiles: boolean = false;
 		let swaggerUIFilepath: string = "";
 		let swaggerUIRoute: string = "/swagger";
+		let mcpEnabled: boolean = false;
+		let mcpRoute: string = "/mcp";
 		let errorHandlingResponseCode: number = 500;
 		let cors: { origin: string; allowedHeaders: string[] } = {
 				origin: "*",
@@ -1166,6 +1168,18 @@ export class HotCLI
 							this.servers.api.swaggerUI.filepath = swaggerUIFilepath;
 							this.servers.api.swaggerUI.route = swaggerUIRoute;
 						}
+
+						if (mcpEnabled)
+						{
+							if (serverType === "web-api")
+							{
+								this.servers.web.mcpServer.enabled = true;
+								this.servers.web.mcpServer.route = mcpRoute;
+							}
+
+							this.servers.api.mcpServer.enabled = true;
+							this.servers.api.mcpServer.route = mcpRoute;
+						}
 					}
 
 					if (dbinfo != null)
@@ -1378,12 +1392,31 @@ export class HotCLI
 			{
 				swaggerUIFilepath = filepath;
 			}, "");
-		runCmd.option (`--swagger-ui-route <route>`, 
-			`If --swagger-ui is used, you can change the default name of the route used.`, 
+		runCmd.option (`--swagger-ui-route <route>`,
+			`If --swagger-ui is used, you can change the default name of the route used.`,
 			(route: string, previous: any) =>
 			{
 				swaggerUIRoute = route;
 			}, "/swagger");
+		runCmd.option (`--mcp`,
+			`Enable the MCP (Model Context Protocol) server. Can also be enabled via MCP_SERVER=1 env var.`,
+			() =>
+			{
+				mcpEnabled = true;
+			});
+
+		if (process.env["MCP_SERVER"] === "1" || process.env["MCP_SERVER"] === "true")
+			mcpEnabled = true;
+
+		runCmd.option (`--mcp-route <route>`,
+			`The route to expose the MCP server on. Default: /mcp. Can also be set via MCP_ROUTE env var.`,
+			(route: string, previous: any) =>
+			{
+				mcpRoute = route;
+			}, "/mcp");
+
+		if (process.env["MCP_ROUTE"] != null && process.env["MCP_ROUTE"] !== "")
+			mcpRoute = process.env["MCP_ROUTE"];
 		runCmd.option (`--dont-deploy-tester`, 
 			`If set, this will not deploy a tester. If this is enabled this will cause automated tests to fail.`, 
 			(arg: string, previous: any) =>
