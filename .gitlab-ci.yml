@@ -29,6 +29,7 @@ publish:
     - build
   script:
     - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+    - npm ci --ignore-scripts
     - npm publish --ignore-scripts
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
