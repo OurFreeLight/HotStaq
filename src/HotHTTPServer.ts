@@ -1632,10 +1632,14 @@ export class HotHTTPServer extends HotServer
 					// onPreRegister callbacks (where HotRouteMethod entries are added).
 					// Doing this earlier causes buildToolDefinitions() to see empty method
 					// arrays for all routes that register methods in onPreRegister.
+					// Must clear error handling routes first so the MCP routes are
+					// registered above the 404 catch-all, then re-add them after.
 					if (this.mcpServer.enabled && this.api != null)
 					{
+						this.clearErrorHandlingRoutes ();
 						this.mcpServer.server = new HotMCPServer (this.api, this.mcpServer.route);
 						await this.mcpServer.server.attach (this.expressApp);
+						this.setErrorHandlingRoutes ();
 						this.logger.info (`MCP server listening on route "${this.mcpServer.route}"`);
 					}
 
