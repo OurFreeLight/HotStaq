@@ -209,7 +209,7 @@ export class HotMCPServer
 	 * A new instance is required per SSE connection because the MCP SDK
 	 * Server class only supports one active transport at a time.
 	 */
-	protected createServerInstance (): Server
+	protected createServerInstance (sessionId: string): Server
 	{
 		let instance: Server = new Server (
 				{
@@ -223,16 +223,17 @@ export class HotMCPServer
 				}
 			);
 
-		this.registerHandlers (instance);
+		this.registerHandlers (instance, sessionId);
 
 		return (instance);
 	}
 
 	/**
 	 * Register the MCP request handlers for tools/list and tools/call on
-	 * the given Server instance.
+	 * the given Server instance. The sessionId is used to look up the
+	 * connection-level authorizedValue for authenticated tool calls.
 	 */
-	protected registerHandlers (instance: Server): void
+	protected registerHandlers (instance: Server, sessionId: string): void
 	{
 		instance.setRequestHandler (ListToolsRequestSchema, async () =>
 			{
@@ -267,7 +268,7 @@ export class HotMCPServer
 
 				try
 				{
-					let result = await this.executeToolCall (tool, args, request);
+					let result = await this.executeToolCall (tool, args, request, sessionId);
 
 					return (result);
 				}
@@ -295,7 +296,7 @@ export class HotMCPServer
 	 * the full HotStaq sanitization pipeline (validation, authorization,
 	 * pre/post execute hooks, etc).
 	 */
-	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any): Promise<CallToolResult>
+	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any, sessionId?: string): Promise<CallToolResult>
 	{
 		let server: HotHTTPServer = this.api.connection as HotHTTPServer;
 		let route: HotRoute = this.api.routes[tool.routeName];
@@ -322,6 +323,23 @@ export class HotMCPServer
 			// Strip "Bearer " prefix if present, matching how processRequest handles it.
 			if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
 				bearerToken = bearerToken.substring (7);
+		}
+
+		// If no per-call token was provided, check for a connection-level
+		// authorized value. When onServerAuthorize is set and the SSE
+		// connection was authenticated, the returned value (e.g. a JWT or
+		// user object) is stored in authorizedValues keyed by session ID.
+		// We pass it through as bearerToken so processRequest's
+		// onAuthorizeUser sees it the same way it would for an HTTP request.
+		let connectionAuthorizedValue: any = null;
+
+		if (sessionId != null && this.authorizedValues[sessionId] != null)
+			connectionAuthorizedValue = this.authorizedValues[sessionId];
+
+		if (bearerToken === "" && connectionAuthorizedValue != null &&
+			typeof (connectionAuthorizedValue) === "string")
+		{
+			bearerToken = connectionAuthorizedValue;
 		}
 
 		// Build the authorization header so processRequest can read it the same way
@@ -541,8 +559,9 @@ export class HotMCPServer
 		let transport = new SSEServerTransport (messageRoute, res as any);
 
 		// Create a fresh Server instance per connection — the MCP SDK Server
-		// only supports one active transport at a time.
-		let sessionServer: Server = this.createServerInstance ();
+		// only supports one active transport at a time. Pass the session ID
+		// so tool call handlers can look up connection-level auth.
+		let sessionServer: Server = this.createServerInstance (transport.sessionId);
 
 		this.transports[transport.sessionId] = transport;
 		this.servers[transport.sessionId] = sessionServer;
