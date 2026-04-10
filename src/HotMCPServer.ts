@@ -328,14 +328,38 @@ export class HotMCPServer
 		// it does for normal HTTP requests.
 		let authHeader: string = bearerToken !== "" ? `Bearer ${bearerToken}` : "";
 
-		// Build a synthetic Express req object. processRequest reads req.body/query
-		// for the JSON/query params, and req.headers.authorization for the bearer token —
-		// matching exactly how a real HTTP request arrives.
+		// Build a synthetic Express req object that mirrors a real Express request
+		// closely enough for route handlers, middleware, and processRequest to work.
+		// In addition to body/query/headers, handlers commonly access req.ip,
+		// req.connection.remoteAddress, req.get(), req.originalUrl, req.protocol, etc.
+		let reqHeaders: any = authHeader !== "" ? { authorization: authHeader } : {};
+
 		let req: any = {
 				method: tool.httpMethod,
 				body: (tool.httpMethod === "GET") ? {} : args,
 				query: (tool.httpMethod === "GET") ? args : {},
-				headers: authHeader !== "" ? { authorization: authHeader } : {},
+				headers: reqHeaders,
+				ip: "127.0.0.1",
+				ips: [],
+				protocol: "mcp",
+				secure: false,
+				hostname: "localhost",
+				originalUrl: tool.urlPath,
+				path: tool.urlPath,
+				baseUrl: "",
+				params: {},
+				httpVersion: "1.1",
+				connection: { remoteAddress: "127.0.0.1", encrypted: false },
+				socket: { remoteAddress: "127.0.0.1", encrypted: false },
+				cookies: {},
+				get: (name: string): string | undefined =>
+					{
+						return (reqHeaders[name.toLowerCase ()]);
+					},
+				header: (name: string): string | undefined =>
+					{
+						return (reqHeaders[name.toLowerCase ()]);
+					},
 				on: (_event: string, _handler: any) => {}
 			};
 
@@ -344,6 +368,8 @@ export class HotMCPServer
 		// which creates a ServerRequest without req/res when there's no HTTP context.
 		let capturedStatus: number = 200;
 		let capturedBody: any = undefined;
+
+		let resHeaders: any = {};
 
 		let res: any = {
 				status: (code: number) =>
@@ -356,9 +382,35 @@ export class HotMCPServer
 					{
 						capturedBody = value;
 					},
+				send: (value: any) =>
+					{
+						capturedBody = value;
+					},
+				end: () => {},
 				on: (_event: string, _handler: any) => {},
-				set: (_headers: any) => {},
-				flushHeaders: () => {}
+				set: (headers: any) =>
+					{
+						if (typeof (headers) === "object")
+							Object.assign (resHeaders, headers);
+
+						return (res);
+					},
+				setHeader: (name: string, value: string) =>
+					{
+						resHeaders[name] = value;
+
+						return (res);
+					},
+				getHeader: (name: string): string | undefined =>
+					{
+						return (resHeaders[name]);
+					},
+				getHeaders: (): any =>
+					{
+						return (resHeaders);
+					},
+				flushHeaders: () => {},
+				headersSent: false
 			};
 
 		// Delegate to processRequest — this runs the full HotStaq pipeline:
