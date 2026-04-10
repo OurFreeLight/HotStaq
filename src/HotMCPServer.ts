@@ -495,26 +495,30 @@ export class HotMCPServer
 			}
 		}
 
+		// Extract bearer token from Authorization header or query param.
+		// This is done regardless of whether onServerAuthorize is set, so
+		// the token can flow into tool calls even without a custom auth callback.
+		let bearerToken: string = "";
+
+		if (req.headers.authorization != null)
+		{
+			bearerToken = req.headers.authorization;
+
+			if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
+				bearerToken = bearerToken.substring (7);
+		}
+		else if ((req.query.token != null) && (typeof (req.query.token) === "string"))
+		{
+			bearerToken = req.query.token as string;
+		}
+
 		// Connection-level authorization — optional, mirrors HotWebSocketServer.onServerAuthorize.
-		let authorizedValue: any = null;
+		// When set, the callback validates the token and returns an authorized value.
+		// When not set, the raw bearer token is stored so it can flow into tool calls.
+		let authorizedValue: any = bearerToken !== "" ? bearerToken : null;
 
 		if (this.onServerAuthorize != null)
 		{
-			// Extract bearer token from Authorization header or query param.
-			let bearerToken: string = "";
-
-			if (req.headers.authorization != null)
-			{
-				bearerToken = req.headers.authorization;
-
-				if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
-					bearerToken = bearerToken.substring (7);
-			}
-			else if ((req.query.token != null) && (typeof (req.query.token) === "string"))
-			{
-				bearerToken = req.query.token as string;
-			}
-
 			let request: ServerRequest = new ServerRequest ({
 					req: req,
 					res: null,
