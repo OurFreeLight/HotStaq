@@ -352,10 +352,16 @@ export class HotMCPServer
 		// req.connection.remoteAddress, req.get(), req.originalUrl, req.protocol, etc.
 		let reqHeaders: any = authHeader !== "" ? { authorization: authHeader } : {};
 
+		// MCP arguments are always sent as a JSON object. Route handlers read from
+		// req.jsonObj (which is req.body), so always populate body — regardless of
+		// the underlying route's HTTP method. Putting args in the query string for
+		// GET routes breaks object-typed params (e.g. list filters) because
+		// HotProcessInput.processInput rejects non-object values with "must be an
+		// object". Treating MCP calls as body-bearing requests avoids that.
 		let req: any = {
 				method: tool.httpMethod,
-				body: (tool.httpMethod === "GET") ? {} : args,
-				query: (tool.httpMethod === "GET") ? args : {},
+				body: args,
+				query: {},
 				headers: reqHeaders,
 				ip: "127.0.0.1",
 				ips: [],
