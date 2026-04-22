@@ -2,7 +2,7 @@ import "mocha";
 import { expect } from "chai";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 import { Common } from "../Common";
 
@@ -26,25 +26,17 @@ describe ("MCP Server Tests", () =>
 		 */
 		async function createMCPClient (bearerToken: string = ""): Promise<Client>
 		{
-			let url: URL = new URL (`${common.getUrl ()}/mcp/sse`);
+			let url: URL = new URL (`${common.getUrl ()}/mcp`);
 			let transportOptions: any = {};
 
 			if (bearerToken !== "")
 			{
-				transportOptions.eventSourceInit = {
-					fetch: (input: any, init: any) =>
-						{
-							let headers: any = { ...(init?.headers || {}), "Authorization": `Bearer ${bearerToken}` };
-
-							return (fetch (input, { ...init, headers }));
-						}
-				};
 				transportOptions.requestInit = {
 					headers: { "Authorization": `Bearer ${bearerToken}` }
 				};
 			}
 
-			let transport: SSEClientTransport = new SSEClientTransport (url, transportOptions);
+			let transport: StreamableHTTPClientTransport = new StreamableHTTPClientTransport (url, transportOptions);
 			let client: Client = new Client (
 					{
 						name: "HotStaq MCP Test Client",
@@ -79,22 +71,8 @@ describe ("MCP Server Tests", () =>
 			});
 		after (async () =>
 			{
-				// Close all active MCP transports so the server can shut down cleanly.
-				if (mcpServer != null)
-				{
-					for (let sessionId in mcpServer.transports)
-					{
-						try
-						{
-							await mcpServer.transports[sessionId].close ();
-						}
-						catch (ex)
-						{
-							// Ignore close errors during teardown
-						}
-					}
-				}
-
+				// Streamable HTTP transports are per-request and close with
+				// their response — nothing to iterate or pre-close here.
 				await common.shutdown ();
 			});
 
