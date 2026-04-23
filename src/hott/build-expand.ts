@@ -39,6 +39,20 @@ export interface ExpandPartialOptions
 	 * resolved absolute path, or throws if it can't be resolved.
 	 */
 	resolve: (requestedPath: string, fromFile: string) => string;
+	/**
+	 * The app's publicDir on disk. The sandbox's Hot.import looks up
+	 * installed modules under `<publicDir>/hotstaq_modules/<name>/index.js`
+	 * (the hotstaq module-install convention) to populate HotModule
+	 * instances with their css/js/html/component manifests.
+	 */
+	publicDir?: string;
+	/**
+	 * Optional shared registry of already-loaded modules. Callers who
+	 * expand multiple partials in one build can pass the same map to
+	 * amortise the module-load cost and keep name→path entries visible
+	 * across sibling expansions.
+	 */
+	moduleRegistry?: Map<string, SandboxModule>;
 }
 
 /** One completed expansion. */
@@ -48,6 +62,21 @@ export interface ExpandResult
 	html: string;
 	/** Partials transitively visited. */
 	visited: string[];
+}
+
+/**
+ * Shape of an installed hotstaq module after its index.js has run in
+ * the sandbox. Mirrors the real HotModule class (src/HotModule.ts) but
+ * declared inline so build-expand doesn't pull in SSR-only imports.
+ */
+export interface SandboxModule
+{
+	name: string;
+	js: string[];
+	css: string[];
+	html: Array<{ name: string; path: string }>;
+	componentLibrary: string;
+	components: string[];
 }
 
 /**
@@ -62,8 +91,63 @@ export async function expandPartial (opts: ExpandPartialOptions): Promise<Expand
 {
 	const visited: string[] = [];
 	const inflightCycleGuard: Set<string> = new Set ();
-	const html: string = await renderOne (opts.absPath, opts.args, opts.resolve, visited, inflightCycleGuard);
+	const registry: Map<string, SandboxModule> = opts.moduleRegistry || new Map ();
+	const publicDir: string = opts.publicDir || ppath.dirname (opts.absPath);
+	const rawHtml: string = await renderOne (
+		opts.absPath,
+		opts.args,
+		opts.resolve,
+		visited,
+		inflightCycleGuard,
+		registry,
+		publicDir
+	);
+	// admin-panel partials (and other legacy SSR partials that assume
+	// they emit a full HTML document) are cleaned up into fragment-safe
+	// HTML so the output drops straight into a <template> stash node.
+	const html: string = stripDocumentWrappers (rawHtml);
 	return ({ html, visited });
+}
+
+/**
+ * Remove <!doctype html>, <html>, <head>, <body> wrappers from a rendered
+ * fragment so it embeds cleanly into a <template> stash. Content inside
+ * the wrappers (links, scripts, style, actual body markup) is preserved.
+ *
+ * Intentionally conservative: only strips wrappers when the fragment
+ * actually starts like a full document. Leaves ordinary fragments
+ * untouched.
+ */
+export function stripDocumentWrappers (html: string): string
+{
+	let out: string = html;
+
+	// Strip leading whitespace + <!doctype ...>
+	out = out.replace (/^\s*<!doctype[^>]*>\s*/i, "");
+
+	// If there's a full <html>...</html> wrapper, unwrap it. Tolerate
+	// attributes on the opening tag (`<html lang="en">` etc).
+	const htmlOpen: RegExpMatchArray | null = out.match (/^\s*<html\b[^>]*>/i);
+	if (htmlOpen)
+	{
+		const openEnd: number = htmlOpen.index! + htmlOpen[0].length;
+		const closeIdx: number = out.lastIndexOf ("</html>");
+		if (closeIdx > openEnd)
+			out = out.substring (openEnd, closeIdx);
+		else
+			out = out.substring (openEnd);
+	}
+
+	// Drop stray <head>/</head> and <body>/</body> tags — their contents
+	// stay. Stylesheets + scripts inside <head> still apply when the
+	// fragment gets cloned into the document.
+	out = out
+		.replace (/<head\b[^>]*>/gi, "")
+		.replace (/<\/head>/gi, "")
+		.replace (/<body\b[^>]*>/gi, "")
+		.replace (/<\/body>/gi, "");
+
+	return (out.trim () + "\n");
 }
 
 const MAX_DEPTH: number = 16;
@@ -73,7 +157,9 @@ async function renderOne (
 	args: Record<string, any>,
 	resolve: (path: string, from: string) => string,
 	visited: string[],
-	inflight: Set<string>
+	inflight: Set<string>,
+	registry: Map<string, SandboxModule>,
+	publicDir: string
 ): Promise<string>
 {
 	if (inflight.has (absPath))
@@ -93,7 +179,9 @@ async function renderOne (
 	const source: string = await fsp.readFile (absPath, "utf8");
 	const parsedJs: string = HotFile.parseContent (source, false);
 
-	const result: string = await runCompiledPartial (parsedJs, args, absPath, resolve, visited, inflight);
+	const result: string = await runCompiledPartial (
+		parsedJs, args, absPath, resolve, visited, inflight, registry, publicDir
+	);
 
 	inflight.delete (absPath);
 	return (result);
@@ -105,13 +193,15 @@ async function runCompiledPartial (
 	absFrom: string,
 	resolve: (path: string, from: string) => string,
 	visited: string[],
-	inflight: Set<string>
+	inflight: Set<string>,
+	registry: Map<string, SandboxModule>,
+	publicDir: string
 ): Promise<string>
 {
 	// Build the sandbox Hot shim per invocation so parallel nested
 	// renders each get an isolated Output buffer. renderOne's callers
 	// see only the final html string.
-	const Hot: any = buildSandboxHot (absFrom, resolve, visited, inflight);
+	const Hot: any = buildSandboxHot (absFrom, resolve, visited, inflight, registry, publicDir);
 
 	// Declare each arg as a top-level var in the executed scope — matches
 	// the legacy HotPage.process() convention of `var ${key} = ${JSON};`
@@ -160,7 +250,9 @@ function buildSandboxHot (
 	absFrom: string,
 	resolve: (path: string, from: string) => string,
 	visited: string[],
-	inflight: Set<string>
+	inflight: Set<string>,
+	registry: Map<string, SandboxModule>,
+	publicDir: string
 ): any
 {
 	const runtimeOnly = (name: string) => (): never =>
@@ -196,26 +288,48 @@ function buildSandboxHot (
 		{
 			if (typeof path !== "string")
 				throw new Error (`[hs090] Hot.include at build time requires a string path; got ${typeof path}`);
-			const nextAbs: string = resolve (path, absFrom);
-			const nested: string = await renderOne (nextAbs, subArgs || {}, resolve, visited, inflight);
+			// 1. Resolve via module registry first (admin-panel-style
+			//    module-prefixed includes: "@hotstaq/admin-panel/...").
+			const modEntry: { name: string; path: string } | null = resolveViaRegistry (path, registry);
+			let nextAbs: string;
+			if (modEntry)
+				nextAbs = ppath.resolve (publicDir, modEntry.path);
+			else
+				nextAbs = resolve (path, absFrom);
+			const nested: string = await renderOne (
+				nextAbs, subArgs || {}, resolve, visited, inflight, registry, publicDir
+			);
 			Hot.Output += nested;
 		},
 		async includeJS (_url: string, _args?: any[]): Promise<void>
 		{
 			throw new Error (`[hs090] Hot.includeJS called at build time — not supported during partial expansion.`);
 		},
-		async import (pkg: string): Promise<any>
+		async import (moduleName: string): Promise<any>
 		{
-			// Try a straight require first; many @hotstaq/* packages export
-			// plain CommonJS. If that fails, return a no-op stub.
-			try
+			// First: check the registry (shared across expandPartial calls).
+			const cached: SandboxModule | undefined = registry.get (moduleName);
+			if (cached)
+				return (instantiateModuleShim (cached, Hot));
+
+			// Next: try loading from `<publicDir>/hotstaq_modules/<name>/index.js`
+			// — the hotstaq module-install convention used by apps that run
+			// `hotstaq module install @hotstaq/admin-panel`.
+			const modIndex: string = ppath.resolve (
+				publicDir, "hotstaq_modules", moduleName, "index.js"
+			);
+			if (fs.existsSync (modIndex))
 			{
-				return (require (pkg));
+				const raw: SandboxModule = await evalInstalledModuleIndex (modIndex, moduleName);
+				registry.set (moduleName, raw);
+				return (instantiateModuleShim (raw, Hot));
 			}
-			catch
-			{
-				return ({});
-			}
+
+			// Fallback: plain Node require (plenty of @hotstaq/* packages
+			// export server-side helpers this way). Return empty stub if
+			// not installed — keeps build-time expansion resilient.
+			try { return (require (moduleName)); }
+			catch { return ({}); }
 		},
 		async getJSON (_url: string): Promise<any> { return (runtimeOnly ("getJSON") ()); },
 		async jsonRequest (_url: string): Promise<any> { return (runtimeOnly ("jsonRequest") ()); },
@@ -235,8 +349,121 @@ function buildSandboxHot (
 	Hot.echoUnsafe = Hot.echoUnsafe.bind (Hot);
 	Hot.echo = Hot.echo.bind (Hot);
 	Hot.include = Hot.include.bind (Hot);
+	Hot.import = Hot.import.bind (Hot);
 
 	return (Hot);
+}
+
+/**
+ * Look up a Hot.include path against a registered module's html map.
+ * admin-panel's installed index.js registers entries like:
+ *   { name: "@hotstaq/admin-panel/admin-header.hott",
+ *     path: "hotstaq_modules/@hotstaq/admin-panel/public/html/admin-header.hott" }
+ * so a caller's `Hot.include("@hotstaq/admin-panel/admin-header.hott")` can
+ * resolve to the real file without a heuristic.
+ */
+function resolveViaRegistry (
+	requested: string,
+	registry: Map<string, SandboxModule>
+): { name: string; path: string } | null
+{
+	for (const mod of registry.values ())
+	{
+		for (const entry of mod.html)
+		{
+			if (entry.name === requested)
+				return (entry);
+		}
+	}
+	return (null);
+}
+
+/**
+ * Execute an installed hotstaq_modules/<name>/index.js to produce a
+ * SandboxModule. The legacy index.js expects `HotStaqWeb.HotModule` to
+ * be globally available — we provide a minimal class that captures the
+ * name/css/js/html/components assignments and returns itself.
+ */
+export async function evalInstalledModuleIndex (
+	indexPath: string,
+	moduleName: string
+): Promise<SandboxModule>
+{
+	const source: string = await fsp.readFile (indexPath, "utf8");
+
+	class HotModuleShim implements SandboxModule
+	{
+		name: string;
+		js: string[] = [];
+		css: string[] = [];
+		html: Array<{ name: string; path: string }> = [];
+		componentLibrary: string = "";
+		components: string[] = [];
+		constructor (n: string) { this.name = n; }
+	}
+
+	const HotStaqWeb: any = { HotModule: HotModuleShim };
+
+	// The legacy installer emits a script whose top level is
+	//   let newModule = new HotStaqWeb.HotModule("<name>");
+	//   newModule.xxx = [...];
+	//   ...
+	//   return (newModule);
+	// so wrap it in a function, apply with HotStaqWeb in scope, capture
+	// the return value.
+	// eslint-disable-next-line no-new-func
+	const fn: Function = new Function ("HotStaqWeb", source);
+	const result: SandboxModule = fn (HotStaqWeb);
+
+	if (!result || typeof result !== "object" || !result.name)
+		throw new Error (`[hs090] installed module ${moduleName} at ${indexPath} did not return a HotModule.`);
+
+	return (result);
+}
+
+/**
+ * Wrap a SandboxModule's data with the runtime helpers the legacy
+ * admin-panel templates call on the imported object: outputCSS /
+ * outputJS / outputComponents. Each emits HTML into the currently
+ * active Hot.Output buffer.
+ */
+function instantiateModuleShim (mod: SandboxModule, Hot: any): any
+{
+	return ({
+		name: mod.name,
+		js: mod.js,
+		css: mod.css,
+		html: mod.html,
+		componentLibrary: mod.componentLibrary,
+		components: mod.components,
+		outputCSS (echoOut: boolean = true): string
+		{
+			let out: string = "";
+			for (const file of mod.css)
+				out += `<link rel="stylesheet" href="${file}">\n`;
+			if (echoOut) Hot.echoUnsafe (out);
+			return (out);
+		},
+		outputJS (echoOut: boolean = true): string
+		{
+			let out: string = "";
+			for (const file of mod.js)
+				out += `<script src="${file}"></script>\n`;
+			if (echoOut) Hot.echoUnsafe (out);
+			return (out);
+		},
+		outputComponents (echoOut: boolean = true): string
+		{
+			if (mod.components.length === 0) return ("");
+			const lib: string = mod.componentLibrary ? `${mod.componentLibrary}.` : "";
+			let out: string = `<script type="text/javascript">\n`;
+			for (const c of mod.components)
+				out += `  if (typeof ${lib}${c} !== "undefined" && typeof Hot !== "undefined" && Hot.CurrentPage) Hot.CurrentPage.processor.addComponent(${lib}${c});\n`;
+			out += `</script>\n`;
+			if (echoOut) Hot.echoUnsafe (out);
+			return (out);
+		}
+	});
 }
 
 // ── ts-morph argument helpers ──────────────────────────────────────────

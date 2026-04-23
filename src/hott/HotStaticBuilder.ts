@@ -34,7 +34,7 @@ import { HotLog, HotLogLevel } from "../HotLog";
 import { compileSource } from "./compile";
 import { HottModule, PartialCallRecord } from "./types";
 import { partialIdFromPath } from "./rewrite-preamble";
-import { expandPartial } from "./build-expand";
+import { expandPartial, SandboxModule } from "./build-expand";
 import {
 	validateHotSiteForStatic,
 	HotSiteValidationIssue
@@ -151,6 +151,8 @@ export class HotStaticBuilder
 	readonly resolvedPartials: Map<string, string> = new Map ();
 	/** HS090-16: per-route chunk entries (relative dist path). */
 	readonly routeChunks: Map<string, string> = new Map ();
+	/** HS090-15 build-time expansion: shared across partial expansions. */
+	private readonly moduleRegistry: Map<string, SandboxModule> = new Map ();
 
 	constructor (site: HotSite, opts: StaticBuildOptions = {})
 	{
@@ -441,6 +443,12 @@ export class HotStaticBuilder
 		if (!this.site.web)
 			return;
 
+		// Preload every installed hotstaq module so both the top-level
+		// partial path resolver AND the sandbox's Hot.include can map
+		// module-prefixed paths (e.g. "@hotstaq/admin-panel/admin-header.hott")
+		// to their on-disk location via the module's name → path table.
+		await this.preloadInstalledModules ();
+
 		type PartialWork = {
 			stashId: string;
 			src: string;
@@ -561,6 +569,8 @@ export class HotStaticBuilder
 			const result = await expandPartial ({
 				absPath,
 				args: work.args || {},
+				publicDir: ppath.resolve (this.opts.cwd, this.opts.publicDir),
+				moduleRegistry: this.moduleRegistry,
 				resolve: (requested: string, fromFile: string): string =>
 				{
 					const resolved: string = this.resolveNestedPartialPath (requested, fromFile, fromApp);
@@ -592,6 +602,18 @@ export class HotStaticBuilder
 	 */
 	private resolveNestedPartialPath (requested: string, fromFile: string, appName: string): string
 	{
+		// 0. Check if a preloaded module registered this path under its
+		//    name → path table (admin-panel / userroute / dataroute
+		//    module-prefixed includes).
+		for (const mod of this.moduleRegistry.values ())
+		{
+			for (const entry of mod.html)
+			{
+				if (entry.name === requested)
+					return (ppath.resolve (this.opts.cwd, this.opts.publicDir, entry.path));
+			}
+		}
+
 		const fromDir: string = ppath.dirname (fromFile);
 		const candidates: string[] = [
 			ppath.resolve (fromDir, requested),
@@ -607,6 +629,48 @@ export class HotStaticBuilder
 	}
 
 	/**
+	 * Scan `<publicDir>/hotstaq_modules/` recursively for every installed
+	 * module index.js and load it into this.moduleRegistry so partial
+	 * resolution can use the name → path mappings before any preamble
+	 * has executed. Errors on a single module are logged and skipped —
+	 * one bad install shouldn't block the rest.
+	 */
+	private async preloadInstalledModules (): Promise<void>
+	{
+		const root: string = ppath.resolve (this.opts.cwd, this.opts.publicDir, "hotstaq_modules");
+		if (!fs.existsSync (root))
+			return;
+
+		const indexFiles: string[] = [];
+		await walkForIndexJs (root, indexFiles);
+
+		// Lazy import from build-expand to avoid a circular name import
+		// at module-load time (build-expand doesn't export this helper
+		// via index.ts, so we reach into the file directly).
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const { evalInstalledModuleIndex } = require ("./build-expand-internal");
+
+		for (const indexFile of indexFiles)
+		{
+			try
+			{
+				const moduleName: string = deriveModuleNameFromPath (indexFile, root);
+				if (this.moduleRegistry.has (moduleName))
+					continue;
+				const mod: SandboxModule = await evalInstalledModuleIndex (indexFile, moduleName);
+				this.moduleRegistry.set (moduleName, mod);
+			}
+			catch (err)
+			{
+				this.warnings.push ({
+					code: "hs090-15/module-preload-failed",
+					message: `Could not preload installed module at ${indexFile}: ${String ((err as Error).message || err)}.`
+				});
+			}
+		}
+	}
+
+	/**
 	 * Resolve a partial path. Explicit manifest paths are relative to
 	 * publicDir (matching docs), while Hot.include() literals in .hott
 	 * preambles use `./relative` form. Try publicDir first, then cwd
@@ -614,6 +678,18 @@ export class HotStaticBuilder
 	 */
 	private resolvePartialPath (src: string, appName: string): string
 	{
+		// First: check preloaded module registry for a name → path match.
+		// Admin-panel et al register include paths like
+		// "@hotstaq/admin-panel/admin-header.hott" here.
+		for (const mod of this.moduleRegistry.values ())
+		{
+			for (const entry of mod.html)
+			{
+				if (entry.name === src)
+					return (ppath.resolve (this.opts.cwd, this.opts.publicDir, entry.path));
+			}
+		}
+
 		const candidates: string[] = [
 			ppath.resolve (this.opts.cwd, this.opts.publicDir, src),
 			ppath.resolve (this.opts.cwd, src)
@@ -1312,6 +1388,27 @@ export function templateIdForRoute (appName: string, routePath: string): string
 function slugify (s: string): string
 {
 	return (s.replace (/[^a-zA-Z0-9_\-]/g, "-").toLowerCase ());
+}
+
+async function walkForIndexJs (dir: string, out: string[]): Promise<void>
+{
+	const entries = await fsp.readdir (dir, { withFileTypes: true });
+	for (const e of entries)
+	{
+		const p: string = ppath.join (dir, e.name);
+		if (e.isDirectory ())
+			await walkForIndexJs (p, out);
+		else if (e.isFile () && e.name === "index.js")
+			out.push (p);
+	}
+}
+
+function deriveModuleNameFromPath (indexFile: string, root: string): string
+{
+	// hotstaq_modules/<scope>/<pkg>/index.js → "<scope>/<pkg>"
+	// hotstaq_modules/<pkg>/index.js         → "<pkg>"
+	const rel: string = ppath.relative (root, ppath.dirname (indexFile));
+	return (rel.replace (/\\/g, "/"));
 }
 
 function sluggifyPath (routePath: string): string
