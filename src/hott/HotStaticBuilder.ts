@@ -28,7 +28,7 @@ import * as crypto from "crypto";
 
 import * as esbuild from "esbuild";
 
-import { HotSite, HotSiteWebRoute } from "../HotSite";
+import { HotSite, HotSiteWebRoute, HotSiteWebApiClient } from "../HotSite";
 import { HotLog, HotLogLevel } from "../HotLog";
 
 import { compileSource } from "./compile";
@@ -97,6 +97,22 @@ export interface CompiledRoute
 }
 
 /**
+ * Resolved API client wiring for one web app. Populated during build if
+ * HotSite provides enough info to bundle the generated client.
+ */
+export interface ResolvedApiClient
+{
+	/** Path the script is served at under dist/ (e.g. "js/freelight_authWeb_AppAPI.js"). */
+	distPath: string;
+	/** window.{libraryName} set as a side effect of loading the script. */
+	libraryName: string;
+	/** {libraryName}.{apiName} is the class the runtime instantiates. */
+	apiName: string;
+	/** Base URL passed to the client constructor. */
+	baseUrl: string;
+}
+
+/**
  * Orchestrator. Callers: `new HotStaticBuilder(site, opts).build()`.
  */
 export class HotStaticBuilder
@@ -107,6 +123,7 @@ export class HotStaticBuilder
 	readonly warnings: BuildWarning[] = [];
 	readonly manifestFiles: ManifestEntry[] = [];
 	readonly compiledRoutes: Map<string, CompiledRoute[]> = new Map ();
+	readonly resolvedApiClients: Map<string, ResolvedApiClient> = new Map ();
 
 	constructor (site: HotSite, opts: StaticBuildOptions = {})
 	{
@@ -141,6 +158,9 @@ export class HotStaticBuilder
 
 		// 1. parse every .hott — HS090-3 lands this; we use it directly.
 		await this.parseAllHottFiles ();
+
+		// 1b. resolve API clients (HS090-8).
+		await this.resolveApiClients ();
 
 		// 2. resolve partials — HS090-15 (stub).
 		this.note ("partial-resolve-stub",
@@ -247,6 +267,93 @@ export class HotStaticBuilder
 		}
 	}
 
+	/**
+	 * HS090-8: for each web app with an apiClient config (or one that can
+	 * be inferred from HotSite.apis), copy the generated client file into
+	 * dist/js/ and record how the entry script should wire it up.
+	 */
+	async resolveApiClients (): Promise<void>
+	{
+		if (!this.site.web || !this.site.apis)
+			return;
+
+		for (const appName of Object.keys (this.site.web))
+		{
+			const app = this.site.web[appName];
+			const cfg: HotSiteWebApiClient | undefined = app.apiClient;
+
+			// Infer: if exactly one api entry and no explicit config, use it.
+			const apiKeys: string[] = Object.keys (this.site.apis || {});
+			if (!cfg && apiKeys.length === 0)
+				continue;
+
+			const apiRef: string | undefined =
+				cfg?.apiRef ||
+				(apiKeys.length === 1 ? apiKeys[0] : undefined);
+
+			if (!apiRef)
+			{
+				if (cfg)
+				{
+					this.warnings.push ({
+						code: "hs090-8/api-ref-missing",
+						message: `web.${appName}.apiClient has no apiRef and multiple HotSite.apis entries exist.`
+					});
+				}
+				continue;
+			}
+
+			const apiDef = this.site.apis[apiRef];
+			if (!apiDef)
+			{
+				this.warnings.push ({
+					code: "hs090-8/api-ref-not-found",
+					message: `web.${appName}.apiClient.apiRef="${apiRef}" not found in HotSite.apis.`
+				});
+				continue;
+			}
+
+			const libraryName: string | undefined = apiDef.libraryName;
+			const apiName: string | undefined = apiDef.apiName;
+
+			if (!libraryName || !apiName)
+			{
+				this.warnings.push ({
+					code: "hs090-8/api-client-incomplete",
+					message: `HotSite.apis.${apiRef} is missing libraryName or apiName; skipping API client bundling.`
+				});
+				continue;
+			}
+
+			const bundleRel: string = cfg?.bundlePath ||
+				`./js/${libraryName}_${apiName}.js`;
+			const bundleAbs: string = ppath.resolve (this.opts.cwd, this.opts.publicDir, bundleRel);
+
+			if (!fs.existsSync (bundleAbs))
+			{
+				this.warnings.push ({
+					code: "hs090-8/api-client-not-built",
+					message: `API client ${bundleRel} not found at ${bundleAbs}. ` +
+						`Run \`hotstaq generate --api\` (or npm run build-web) first.`
+				});
+				continue;
+			}
+
+			const body: string = await fsp.readFile (bundleAbs, "utf8");
+			const distRel: string = `js/${libraryName}_${apiName}.js`;
+			await this.writeOutputFile (distRel, body);
+
+			const baseUrl: string = cfg?.baseUrl || apiDef.url || "";
+
+			this.resolvedApiClients.set (appName, {
+				distPath: distRel,
+				libraryName,
+				apiName,
+				baseUrl
+			});
+		}
+	}
+
 	emitTemplateStash (): string
 	{
 		const fragments: string[] = [];
@@ -275,6 +382,12 @@ export class HotStaticBuilder
 		// registers every compiled preamble + inline-script set, then
 		// bundle the whole thing through esbuild.
 		const entrySource: string = this.generateEntrySource ();
+
+		// Stash the generated entry for debugging when --verbose is set.
+		if (this.opts.verbose)
+		{
+			this.logger.info ("[hs090] generated entry source:\n" + entrySource);
+		}
 
 		const runtimeEntry: string = ppath.resolve (__dirname, "../runtime/HotStaticRuntime.js");
 
@@ -335,6 +448,37 @@ export class HotStaticBuilder
 	{
 		const runtimeSpec: string = "@hotstaq/runtime";
 		const routeRegistrations: string[] = [];
+		const apiLines: string[] = [];
+
+		// HS090-8: wire the auto-generated client. The client script is
+		// loaded via a <script> tag in index.html before app.js, so by
+		// the time this entry runs, window[libraryName] is set.
+		for (const [appName, resolved] of this.resolvedApiClients.entries ())
+		{
+			const lib: string = JSON.stringify (resolved.libraryName);
+			const api: string = JSON.stringify (resolved.apiName);
+			const base: string = JSON.stringify (resolved.baseUrl);
+
+			const qualName: string = JSON.stringify (resolved.libraryName + "." + resolved.apiName);
+			const appComment: string = JSON.stringify (appName);
+			apiLines.push (
+				`{\n` +
+				`  const __lib = (typeof globalThis !== "undefined" ? globalThis[${lib}] : undefined)\n` +
+				`    || (typeof window !== "undefined" ? window[${lib}] : undefined);\n` +
+				`  if (__lib && typeof __lib[${api}] === "function") {\n` +
+				`    try { registerApi(new __lib[${api}](${base})); }\n` +
+				`    catch (__err) { console.error("[hs090] failed to instantiate " + ${qualName} + ":", __err); }\n` +
+				`  } else {\n` +
+				`    console.warn("[hs090] API client " + ${qualName} + " not found; preambles will see an empty hotCtx.api.");\n` +
+				`  }\n` +
+				`  /* wired: ${appName} */\n` +
+				`}`
+			);
+			void appComment;
+		}
+
+		if (apiLines.length === 0)
+			apiLines.push (`registerApi({});`);
 
 		for (const [appName, compiled] of this.compiledRoutes.entries ())
 		{
@@ -360,8 +504,8 @@ export class HotStaticBuilder
 		return ([
 			`import { registerRoute, registerApi, start, configureMount } from ${JSON.stringify (runtimeSpec)};`,
 			``,
-			`// HS090-8 placeholder — real API client bundling lands next.`,
-			`registerApi({});`,
+			`// HS090-8: wire any resolved API clients into the runtime.`,
+			...apiLines,
 			``,
 			...routeRegistrations,
 			``,
@@ -379,7 +523,29 @@ export class HotStaticBuilder
 	{
 		const title: string = this.site.name || "HotStaq App";
 		const description: string = this.site.description || "";
-		const body: string = [
+
+		// HS090-8: API client needs a minimal Hot/HotAPI shim in place
+		// before its <script> evaluates, because the generated code
+		// reads `HotAPIGlobal = HotAPI` and `class ${apiName} extends
+		// HotAPIGlobal`. Without this, class declaration throws.
+		const hasApiClient: boolean = this.resolvedApiClients.size > 0;
+		const apiShim: string = hasApiClient
+			? "  <script>\n" +
+			  "    window.Hot = window.Hot || { BearerToken: null };\n" +
+			  "    window.HotAPI = window.HotAPI || class HotAPI {\n" +
+			  "      constructor(baseUrl, connection, db) {\n" +
+			  "        this.baseUrl = baseUrl; this.connection = connection || null;\n" +
+			  "        this.db = db || null; this.bearerToken = null;\n" +
+			  "      }\n" +
+			  "    };\n" +
+			  "  </script>"
+			: "";
+
+		const apiClientTags: string[] = [];
+		for (const resolved of this.resolvedApiClients.values ())
+			apiClientTags.push (`  <script src="./${resolved.distPath}"></script>`);
+
+		const lines: string[] = [
 			"<!doctype html>",
 			"<html lang=\"en\">",
 			"<head>",
@@ -393,13 +559,15 @@ export class HotStaticBuilder
 			"  <div id=\"app\"></div>",
 			"  <!-- HotStaq v0.9.0 template stash -->",
 			stash,
+			apiShim,
+			...apiClientTags,
 			`  <script src=\"./${appJs.path}\"></script>`,
 			"</body>",
 			"</html>",
 			""
-		].filter (l => l !== "").join ("\n");
+		].filter (l => l !== "");
 
-		await this.writeOutputFile ("index.html", body);
+		await this.writeOutputFile ("index.html", lines.join ("\n"));
 	}
 
 	async copyAssets (): Promise<void>

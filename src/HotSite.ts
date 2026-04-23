@@ -95,6 +95,32 @@ export interface HotSiteWebPartial
 }
 
 /**
+ * v0.9.0 API client bundling configuration (HS090-8). Tells the static
+ * builder how to find and wire the auto-generated Web API client into
+ * the emitted app.js so preambles can call `hotCtx.api.route.method(...)`
+ * without needing the legacy HotStaq.min.js global.
+ */
+export interface HotSiteWebApiClient
+{
+	/**
+	 * HotSite.apis key whose library we load. Defaults to the first
+	 * apis entry when only one is present.
+	 */
+	apiRef?: string;
+	/**
+	 * Path to the generated client JS file, relative to publicDir.
+	 * Defaults to `./js/${libraryName}_${apiName}.js` (the path emitted
+	 * by `hotstaq generate --api`).
+	 */
+	bundlePath?: string;
+	/**
+	 * Base URL passed to the client constructor at runtime. Defaults to
+	 * HotSite.apis[apiRef].url.
+	 */
+	baseUrl?: string;
+}
+
+/**
  * A HotSite to load. This SHOULD NOT contain any private secret keys, passwords,
  * or database connection information related to the server. As such, future
  * versions of the HotSite interface should not contain any database related
@@ -313,6 +339,14 @@ export interface HotSite
 				 * is used. SSR mode ignores.
 				 */
 				partials?: HotSiteWebPartial[];
+				/**
+				 * v0.9.0 API client wiring (HS090-8). When set, the
+				 * static builder copies the referenced client script
+				 * into dist/js/, emits a <script> tag in index.html,
+				 * and calls registerApi() on `new libraryName[apiName]`
+				 * so preambles access it via `hotCtx.api`.
+				 */
+				apiClient?: HotSiteWebApiClient;
 			};
 		};
 	/**
