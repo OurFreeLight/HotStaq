@@ -7,3 +7,12 @@ export {
 	HotSiteValidationIssue,
 	HotSiteValidationResult
 } from "./validate-hotsite";
+export {
+	HotStaticBuilder,
+	StaticBuildOptions,
+	BuildManifest,
+	BuildWarning,
+	ManifestEntry,
+	CompiledRoute,
+	templateIdForRoute
+} from "./HotStaticBuilder";
