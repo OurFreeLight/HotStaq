@@ -26,6 +26,8 @@ import * as fsp from "fs/promises";
 import * as ppath from "path";
 import * as crypto from "crypto";
 
+import * as esbuild from "esbuild";
+
 import { HotSite, HotSiteWebRoute } from "../HotSite";
 import { HotLog, HotLogLevel } from "../HotLog";
 
@@ -269,20 +271,102 @@ export class HotStaticBuilder
 
 	async bundleAppJs (): Promise<{ path: string; hash: string; size: number }>
 	{
-		// Placeholder until HS090-6 wires esbuild. Emits a small script
-		// exposing a `__HOTSTAQ_HS090__` global with enough metadata for
-		// manual testing.
-		const body: string = [
-			"// HotStaq v0.9.0 static runtime placeholder.",
-			"// Full implementation lands in HS090-6 (preambles + Hot.navigate + template mount).",
-			`window.__HOTSTAQ_HS090__ = { mode: ${JSON.stringify (this.opts.mode)}, ` +
-				`routes: ${JSON.stringify (this.routesForManifest ())} };`,
-			"document.addEventListener('DOMContentLoaded', () => {",
-			"  console.warn('HotStaq v0.9.0 runtime is a placeholder in this build.');",
-			"});"
-		].join ("\n");
+		// HS090-6: synthesize an entry file that imports the runtime and
+		// registers every compiled preamble + inline-script set, then
+		// bundle the whole thing through esbuild.
+		const entrySource: string = this.generateEntrySource ();
+
+		const runtimeEntry: string = ppath.resolve (__dirname, "../runtime/HotStaticRuntime.js");
+
+		const result = await esbuild.build ({
+			stdin: {
+				contents: entrySource,
+				resolveDir: ppath.resolve (__dirname, "../.."),
+				sourcefile: "__hotstaq_hs090_entry__.js",
+				loader: "js"
+			},
+			bundle: true,
+			write: false,
+			format: "iife",
+			globalName: "HotStaqStatic",
+			platform: "browser",
+			target: ["es2020"],
+			minify: this.opts.mode === "production",
+			sourcemap: this.opts.mode === "development" ? "inline" : false,
+			legalComments: "none",
+			define: {
+				"process.env.NODE_ENV": JSON.stringify (
+					this.opts.mode === "production" ? "production" : "development"
+				)
+			},
+			banner: {
+				js: "/* HotStaq v0.9.0 static build (HS090). */"
+			},
+			logLevel: "silent",
+			alias: {
+				"@hotstaq/runtime": runtimeEntry
+			}
+		});
+
+		if (result.warnings && result.warnings.length > 0)
+		{
+			for (const w of result.warnings)
+			{
+				this.warnings.push ({
+					code: "esbuild/warning",
+					message: w.text,
+					where: w.location ? `${w.location.file}:${w.location.line}` : undefined
+				});
+			}
+		}
+
+		const body: string = result.outputFiles && result.outputFiles.length > 0
+			? result.outputFiles[0].text
+			: "";
 
 		return (this.writeHashedAsset ("app", "js", body));
+	}
+
+	/**
+	 * Build the per-app entry source that registers every route's
+	 * preamble + inline scripts against the runtime, then calls start().
+	 */
+	private generateEntrySource (): string
+	{
+		const runtimeSpec: string = "@hotstaq/runtime";
+		const routeRegistrations: string[] = [];
+
+		for (const [appName, compiled] of this.compiledRoutes.entries ())
+		{
+			for (const cr of compiled)
+			{
+				const templateId: string = templateIdForRoute (appName, cr.route.path);
+				const preambleFn: string = preambleToAsyncFn (cr.module.preamble);
+				const scripts: string = JSON.stringify (cr.module.scripts);
+				const preload: string = JSON.stringify (cr.route.preload || "eager");
+
+				routeRegistrations.push (
+					`  registerRoute({\n` +
+					`    path: ${JSON.stringify (cr.route.path)},\n` +
+					`    templateId: ${JSON.stringify (templateId)},\n` +
+					`    preload: ${preload},\n` +
+					`    scripts: ${scripts},\n` +
+					`    preamble: ${preambleFn}\n` +
+					`  });`
+				);
+			}
+		}
+
+		return ([
+			`import { registerRoute, registerApi, start, configureMount } from ${JSON.stringify (runtimeSpec)};`,
+			``,
+			`// HS090-8 placeholder — real API client bundling lands next.`,
+			`registerApi({});`,
+			``,
+			...routeRegistrations,
+			``,
+			`start();`
+		].join ("\n"));
 	}
 
 	async bundleAppCss (): Promise<{ path: string; hash: string; size: number }>
@@ -478,6 +562,18 @@ export class HotStaticBuilder
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────
+
+/**
+ * Wrap a rewritten preamble source into the `async (hotCtx) => { ... }`
+ * form the runtime calls. An empty preamble compiles to a no-op.
+ */
+export function preambleToAsyncFn (src: string): string
+{
+	const body: string = src ? src.trim () : "";
+	if (body === "")
+		return (`async (hotCtx) => {}`);
+	return (`async (hotCtx) => {\n${body}\n}`);
+}
 
 export function templateIdForRoute (appName: string, routePath: string): string
 {
