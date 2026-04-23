@@ -148,6 +148,8 @@ export class HotStaticBuilder
 	readonly compiledRoutes: Map<string, CompiledRoute[]> = new Map ();
 	readonly resolvedApiClients: Map<string, ResolvedApiClient> = new Map ();
 	readonly resolvedPartials: Map<string, string> = new Map ();
+	/** HS090-16: per-route chunk entries (relative dist path). */
+	readonly routeChunks: Map<string, string> = new Map ();
 
 	constructor (site: HotSite, opts: StaticBuildOptions = {})
 	{
@@ -196,7 +198,10 @@ export class HotStaticBuilder
 		// 4. template stash.
 		const stash = this.emitTemplateStash ();
 
-		// 5. app.js bundle — HS090-6 (stub produces a placeholder bundle).
+		// 5a. emit lazy route chunks (HS090-5, HS090-16).
+		await this.bundleLazyRouteChunks ();
+
+		// 5. app.js bundle — HS090-6 (eager routes + runtime).
 		const appJs = await this.bundleAppJs ();
 
 		// 6. app.css — HS090-7 (stub: empty file).
@@ -490,8 +495,13 @@ export class HotStaticBuilder
 		{
 			for (const cr of routes)
 			{
-				const id: string = templateIdForRoute (appName, cr.route.path);
+				// HS090-5: only eager routes inline into the shell stash.
+				// Lazy/never routes ship their template inside their chunk.
 				const preload: string = cr.route.preload || "eager";
+				if (preload !== "eager")
+					continue;
+
+				const id: string = templateIdForRoute (appName, cr.route.path);
 				fragments.push (
 					`<template id="${id}" data-app="${escapeAttr (appName)}" ` +
 					`data-path="${escapeAttr (cr.route.path)}" data-preload="${preload}">` +
@@ -513,6 +523,101 @@ export class HotStaticBuilder
 		}
 
 		return (fragments.join ("\n"));
+	}
+
+	/**
+	 * HS090-5 / HS090-16: emit a separate chunk file for every lazy or
+	 * never route. The chunk is a plain script that injects the
+	 * template into the DOM and calls registerRoute() via the runtime
+	 * global the entry set up (window.__HS090_RT__).
+	 */
+	async bundleLazyRouteChunks (): Promise<void>
+	{
+		for (const [appName, compiled] of this.compiledRoutes.entries ())
+		{
+			for (const cr of compiled)
+			{
+				const preload: string = cr.route.preload || "eager";
+				if (preload === "eager")
+					continue;
+
+				const templateId: string = templateIdForRoute (appName, cr.route.path);
+				const chunkSource: string = this.generateLazyChunkSource (
+					appName, cr, templateId, preload as "lazy" | "never"
+				);
+
+				// Bundle through esbuild so preamble TS/JSX/ES2023+ syntax
+				// gets downleveled consistently with app.js.
+				const result = await esbuild.build ({
+					stdin: {
+						contents: chunkSource,
+						resolveDir: ppath.resolve (__dirname, "../.."),
+						sourcefile: `__hotstaq_hs090_chunk_${sluggifyPath (cr.route.path)}__.js`,
+						loader: "js"
+					},
+					bundle: true,
+					write: false,
+					format: "iife",
+					platform: "browser",
+					target: ["es2020"],
+					minify: this.opts.mode === "production",
+					sourcemap: this.opts.mode === "development" ? "inline" : false,
+					legalComments: "none",
+					logLevel: "silent",
+					banner: { js: `/* HotStaq v0.9.0 lazy chunk: ${cr.route.path} */` }
+				});
+
+				const body: string = result.outputFiles && result.outputFiles.length > 0
+					? result.outputFiles[0].text
+					: "";
+
+				const slug: string = sluggifyPath (cr.route.path);
+				const name: string = `app-route-${slug}`;
+				const asset = await this.writeHashedAsset (name, "js", body);
+				this.routeChunks.set (cr.route.path, asset.path);
+			}
+		}
+	}
+
+	private generateLazyChunkSource (
+		appName: string,
+		cr: CompiledRoute,
+		templateId: string,
+		preload: "lazy" | "never"
+	): string
+	{
+		const templateLiteral: string = JSON.stringify (cr.module.template);
+		const scripts: string = JSON.stringify (cr.module.scripts);
+		const preambleFn: string = preambleToAsyncFn (cr.module.preamble);
+
+		return ([
+			`(function () {`,
+			`  var rt = (typeof window !== "undefined") && window.__HS090_RT__;`,
+			`  if (!rt) {`,
+			`    console.error("[hs090] lazy chunk for ${cr.route.path} loaded before runtime");`,
+			`    return;`,
+			`  }`,
+			``,
+			`  // Inject the route template into the DOM stash.`,
+			`  if (!document.getElementById(${JSON.stringify (templateId)})) {`,
+			`    var tpl = document.createElement("template");`,
+			`    tpl.id = ${JSON.stringify (templateId)};`,
+			`    tpl.setAttribute("data-app", ${JSON.stringify (appName)});`,
+			`    tpl.setAttribute("data-path", ${JSON.stringify (cr.route.path)});`,
+			`    tpl.setAttribute("data-preload", ${JSON.stringify (preload)});`,
+			`    tpl.innerHTML = ${templateLiteral};`,
+			`    document.body.appendChild(tpl);`,
+			`  }`,
+			``,
+			`  rt.registerRoute({`,
+			`    path: ${JSON.stringify (cr.route.path)},`,
+			`    templateId: ${JSON.stringify (templateId)},`,
+			`    preload: ${JSON.stringify (preload)},`,
+			`    scripts: ${scripts},`,
+			`    preamble: ${preambleFn}`,
+			`  });`,
+			`})();`
+		].join ("\n"));
 	}
 
 	async bundleAppJs (): Promise<{ path: string; hash: string; size: number }>
@@ -619,20 +724,43 @@ export class HotStaticBuilder
 		if (apiLines.length === 0)
 			apiLines.push (`registerApi({});`);
 
+		const chunkRegistrations: string[] = [];
+
 		for (const [appName, compiled] of this.compiledRoutes.entries ())
 		{
 			for (const cr of compiled)
 			{
+				const preload: string = cr.route.preload || "eager";
+
+				if (preload !== "eager")
+				{
+					// Lazy / never — chunk URL registered; preamble + template
+					// live inside the chunk file.
+					const chunkPath: string | undefined = this.routeChunks.get (cr.route.path);
+					if (!chunkPath)
+					{
+						this.warnings.push ({
+							code: "hs090-16/chunk-missing",
+							message: `No chunk built for ${cr.route.path} (preload: ${preload}); route will 404 at runtime.`
+						});
+						continue;
+					}
+					chunkRegistrations.push (
+						`  registerChunk(${JSON.stringify (cr.route.path)}, ${JSON.stringify ("./" + chunkPath)});`
+					);
+					continue;
+				}
+
 				const templateId: string = templateIdForRoute (appName, cr.route.path);
 				const preambleFn: string = preambleToAsyncFn (cr.module.preamble);
 				const scripts: string = JSON.stringify (cr.module.scripts);
-				const preload: string = JSON.stringify (cr.route.preload || "eager");
+				const preloadJson: string = JSON.stringify (preload);
 
 				routeRegistrations.push (
 					`  registerRoute({\n` +
 					`    path: ${JSON.stringify (cr.route.path)},\n` +
 					`    templateId: ${JSON.stringify (templateId)},\n` +
-					`    preload: ${preload},\n` +
+					`    preload: ${preloadJson},\n` +
 					`    scripts: ${scripts},\n` +
 					`    preamble: ${preambleFn}\n` +
 					`  });`
@@ -641,12 +769,18 @@ export class HotStaticBuilder
 		}
 
 		return ([
-			`import { registerRoute, registerApi, start, configureMount } from ${JSON.stringify (runtimeSpec)};`,
+			`import * as __rt from ${JSON.stringify (runtimeSpec)};`,
+			`const { registerRoute, registerApi, registerChunk, start } = __rt;`,
+			``,
+			`// HS090-16: expose runtime on window so lazy chunks can call registerRoute.`,
+			`if (typeof window !== "undefined") window.__HS090_RT__ = __rt;`,
 			``,
 			`// HS090-8: wire any resolved API clients into the runtime.`,
 			...apiLines,
 			``,
 			...routeRegistrations,
+			``,
+			...chunkRegistrations,
 			``,
 			`start();`
 		].join ("\n"));
@@ -953,6 +1087,12 @@ export function templateIdForRoute (appName: string, routePath: string): string
 function slugify (s: string): string
 {
 	return (s.replace (/[^a-zA-Z0-9_\-]/g, "-").toLowerCase ());
+}
+
+function sluggifyPath (routePath: string): string
+{
+	if (routePath === "/") return ("root");
+	return (routePath.replace (/^\/+/, "").replace (/\/+$/, "").replace (/[^a-zA-Z0-9_\-]/g, "-").toLowerCase () || "root");
 }
 
 function escapeAttr (s: string): string
