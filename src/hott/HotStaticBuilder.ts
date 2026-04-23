@@ -33,6 +33,7 @@ import { HotLog, HotLogLevel } from "../HotLog";
 
 import { compileSource } from "./compile";
 import { HottModule } from "./types";
+import { partialIdFromPath } from "./rewrite-preamble";
 import {
 	validateHotSiteForStatic,
 	HotSiteValidationIssue
@@ -124,6 +125,7 @@ export class HotStaticBuilder
 	readonly manifestFiles: ManifestEntry[] = [];
 	readonly compiledRoutes: Map<string, CompiledRoute[]> = new Map ();
 	readonly resolvedApiClients: Map<string, ResolvedApiClient> = new Map ();
+	readonly resolvedPartials: Map<string, string> = new Map ();
 
 	constructor (site: HotSite, opts: StaticBuildOptions = {})
 	{
@@ -162,9 +164,8 @@ export class HotStaticBuilder
 		// 1b. resolve API clients (HS090-8).
 		await this.resolveApiClients ();
 
-		// 2. resolve partials — HS090-15 (stub).
-		this.note ("partial-resolve-stub",
-			"HS090-15 not yet implemented — partial stash IDs will pass through unresolved.");
+		// 2. resolve partials (HS090-15).
+		await this.resolvePartials ();
 
 		// 3. staticRender routes — HS090-19 (stub).
 		this.note ("static-render-stub",
@@ -265,6 +266,111 @@ export class HotStaticBuilder
 
 			this.compiledRoutes.set (appName, compiled);
 		}
+	}
+
+	/**
+	 * HS090-15: resolve every literal Hot.include() target hoisted by
+	 * the parser into a compiled partial. Also honours the explicit
+	 * `web.{appName}.partials` manifest (takes precedence; its `src` is
+	 * the canonical path for a given `id`). Partials can recursively
+	 * include other partials — we walk until a fixed point or we hit
+	 * a cycle (cycles warn and break).
+	 */
+	async resolvePartials (): Promise<void>
+	{
+		if (!this.site.web)
+			return;
+
+		type PartialWork = { id: string; src: string; fromApp: string };
+		const queue: PartialWork[] = [];
+		const seenIds: Set<string> = new Set ();
+		const idToSrc: Map<string, string> = new Map ();
+
+		// 1. Seed from explicit manifests.
+		for (const appName of Object.keys (this.site.web))
+		{
+			const app = this.site.web[appName];
+			for (const p of app.partials || [])
+				queue.push ({ id: p.id, src: p.src, fromApp: appName });
+		}
+
+		// 2. Seed from literal Hot.include() targets the parser found.
+		for (const [appName, routes] of this.compiledRoutes.entries ())
+		{
+			for (const cr of routes)
+			{
+				for (const p of cr.module.partials)
+				{
+					const id: string = partialIdFromPath (p);
+					queue.push ({ id, src: p, fromApp: appName });
+				}
+			}
+		}
+
+		while (queue.length > 0)
+		{
+			const work: PartialWork = queue.shift ()!;
+			if (seenIds.has (work.id))
+				continue;
+
+			const abs: string = this.resolvePartialPath (work.src, work.fromApp);
+
+			if (!fs.existsSync (abs))
+			{
+				this.warnings.push ({
+					code: "hs090-15/partial-not-found",
+					message: `Partial ${work.src} (id="${work.id}") not found at ${abs}.`,
+					where: `web.${work.fromApp}`
+				});
+				continue;
+			}
+
+			seenIds.add (work.id);
+
+			const source: string = await fsp.readFile (abs, "utf8");
+			const mod: HottModule = compileSource (source, { filename: abs });
+
+			for (const w of mod.warnings)
+			{
+				this.warnings.push ({
+					code: w.code,
+					message: w.message,
+					where: abs
+				});
+			}
+
+			idToSrc.set (work.id, mod.template);
+
+			// Follow literal includes inside this partial.
+			for (const childSrc of mod.partials)
+			{
+				const childId: string = partialIdFromPath (childSrc);
+				if (!seenIds.has (childId))
+					queue.push ({ id: childId, src: childSrc, fromApp: work.fromApp });
+			}
+		}
+
+		for (const [id, html] of idToSrc.entries ())
+			this.resolvedPartials.set (id, html);
+	}
+
+	/**
+	 * Resolve a partial path. Explicit manifest paths are relative to
+	 * publicDir (matching docs), while Hot.include() literals in .hott
+	 * preambles use `./relative` form. Try publicDir first, then cwd
+	 * so node_modules-relative paths still work.
+	 */
+	private resolvePartialPath (src: string, appName: string): string
+	{
+		const candidates: string[] = [
+			ppath.resolve (this.opts.cwd, this.opts.publicDir, src),
+			ppath.resolve (this.opts.cwd, src)
+		];
+		for (const c of candidates)
+			if (fs.existsSync (c))
+				return (c);
+		// Return the first so the warning has a concrete path.
+		return (candidates[0]);
 	}
 
 	/**
@@ -371,6 +477,17 @@ export class HotStaticBuilder
 					`</template>`
 				);
 			}
+		}
+
+		// HS090-15: resolved partials ship in the same stash so the
+		// runtime's hotCtx.includeStash(id) picks them up synchronously.
+		for (const [id, html] of this.resolvedPartials.entries ())
+		{
+			fragments.push (
+				`<template id="hott-partial--${escapeAttr (id)}" data-partial="${escapeAttr (id)}">` +
+				html +
+				`</template>`
+			);
 		}
 
 		return (fragments.join ("\n"));
@@ -515,8 +632,48 @@ export class HotStaticBuilder
 
 	async bundleAppCss (): Promise<{ path: string; hash: string; size: number }>
 	{
-		// Placeholder until HS090-7.
-		return (this.writeHashedAsset ("app", "css", "/* HotStaq v0.9.0 placeholder CSS (HS090-7) */\n"));
+		// HS090-7: concatenate cssFiles from every web app entry in
+		// HotSite order. Missing files warn (non-fatal) and are skipped
+		// so apps can reference admin-panel CSS without blowing up if
+		// @hotstaq/admin-panel isn't installed yet.
+		const chunks: string[] = [];
+
+		if (this.site.web)
+		{
+			for (const appName of Object.keys (this.site.web))
+			{
+				const app = this.site.web[appName];
+				const files: string[] = app.cssFiles || [];
+
+				for (const rel of files)
+				{
+					const abs: string = ppath.resolve (this.opts.cwd, rel);
+					if (!fs.existsSync (abs))
+					{
+						this.warnings.push ({
+							code: "hs090-7/css-not-found",
+							message: `cssFiles entry not found: ${rel} (resolved to ${abs}).`,
+							where: `web.${appName}.cssFiles`
+						});
+						continue;
+					}
+					const body: string = await fsp.readFile (abs, "utf8");
+					chunks.push (`/* ── ${rel} ── */\n${body}`);
+				}
+			}
+		}
+
+		if (chunks.length === 0)
+		{
+			return (this.writeHashedAsset ("app", "css",
+				"/* HotStaq v0.9.0 — no cssFiles configured. */\n"));
+		}
+
+		const combined: string = chunks.join ("\n\n");
+		const minified: string = this.opts.mode === "production"
+			? minifyCss (combined)
+			: combined;
+		return (this.writeHashedAsset ("app", "css", minified));
 	}
 
 	async emitIndexHtml (stash: string, appJs: { path: string }, appCss: { path: string }): Promise<void>
@@ -766,6 +923,22 @@ function escapeAttr (s: string): string
 function escapeText (s: string): string
 {
 	return (s.replace (/&/g, "&amp;").replace (/</g, "&lt;").replace (/>/g, "&gt;"));
+}
+
+/**
+ * Very conservative CSS minifier — strips block comments + collapses runs
+ * of whitespace. Good enough for v0.9.0 without pulling in another build-
+ * time dependency; apps that want a real minifier can pre-minify and
+ * include the already-minified file in cssFiles.
+ */
+function minifyCss (src: string): string
+{
+	return (src
+		.replace (/\/\*[\s\S]*?\*\//g, "")
+		.replace (/\s+/g, " ")
+		.replace (/\s*([{}:;,])\s*/g, "$1")
+		.replace (/;}/g, "}")
+		.trim ());
 }
 
 function formatSize (bytes: number): string

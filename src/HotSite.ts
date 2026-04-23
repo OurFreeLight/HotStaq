@@ -328,6 +328,15 @@ export interface HotSite
 				 */
 				jsFiles?: string[];
 				/**
+				 * CSS files to concatenate into dist/app.[hash].css during
+				 * `hotstaq build --static` (HS090-7). Paths are resolved
+				 * relative to cwd, so entries can reach into node_modules
+				 * (e.g. `node_modules/@hotstaq/admin-panel/public/main.css`)
+				 * or live under publicDir. Order is preserved. SSR mode
+				 * ignores.
+				 */
+				cssFiles?: string[];
+				/**
 				 * v0.9.0 static build routes. Populated for apps that opt
 				 * into `hotstaq build --static`. SSR mode ignores these —
 				 * it still discovers routes via the filesystem crawl.
