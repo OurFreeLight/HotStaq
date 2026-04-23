@@ -77,16 +77,38 @@ export interface ManifestEntry
 
 export interface BuildManifest
 {
+	/** Schema version for downstream deploy tooling. Bumped on shape changes. */
+	manifestVersion: 1;
+	/** HotSite.version when the build ran. */
 	version: string;
+	/** ISO timestamp. */
 	builtAt: string;
+	/** Build mode. */
 	mode: "production" | "development";
+	/** hotstaq package version that emitted this manifest. */
 	hotstaqVersion: string;
+	/** Canonical entry filenames relative to the dist root. */
+	entry: {
+		html: string;
+		js: string;
+		css: string;
+	};
+	/** Full list of emitted files with sizes + hashes, sorted by path. */
 	files: ManifestEntry[];
+	/** Route table the runtime registered. */
 	routes: {
 		path: string;
 		file: string;
 		preload: "eager" | "lazy" | "never";
 		staticRender: boolean;
+	}[];
+	/** API clients bundled into dist/js/ and wired into the runtime. */
+	apiClients: {
+		app: string;
+		libraryName: string;
+		apiName: string;
+		distPath: string;
+		baseUrl: string;
 	}[];
 }
 
@@ -190,7 +212,7 @@ export class HotStaticBuilder
 		await this.copyConfig ();
 
 		// 10. manifest.
-		await this.writeManifest ();
+		await this.writeManifest ({ html: "index.html", js: appJs.path, css: appCss.path });
 
 		// 11. strict gate.
 		if (this.opts.strict && this.warnings.length > 0)
@@ -748,16 +770,34 @@ export class HotStaticBuilder
 		await this.writeOutputFile ("config.json", body);
 	}
 
-	async writeManifest (): Promise<void>
+	async writeManifest (
+		entry: { html: string; js: string; css: string }
+	): Promise<void>
 	{
 		const pkg: { version?: string } = await this.readHotStaqPackageJson ();
+
+		const apiClients: BuildManifest["apiClients"] = [];
+		for (const [appName, resolved] of this.resolvedApiClients.entries ())
+		{
+			apiClients.push ({
+				app: appName,
+				libraryName: resolved.libraryName,
+				apiName: resolved.apiName,
+				distPath: resolved.distPath,
+				baseUrl: resolved.baseUrl
+			});
+		}
+
 		const manifest: BuildManifest = {
+			manifestVersion: 1,
 			version: this.site.version || "0.0.0",
 			builtAt: new Date ().toISOString (),
 			mode: this.opts.mode,
 			hotstaqVersion: pkg.version || "unknown",
+			entry,
 			files: this.manifestFiles.slice ().sort ((a, b) => a.path.localeCompare (b.path)),
-			routes: this.routesForManifest ()
+			routes: this.routesForManifest (),
+			apiClients
 		};
 
 		await this.writeOutputFile ("build-manifest.json", JSON.stringify (manifest, null, 2));
