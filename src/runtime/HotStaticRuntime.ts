@@ -449,6 +449,22 @@ function buildHotCtx (host: HTMLElement, abort: AbortController): HotCtx
 		echo (html: string): void
 		{
 			host.insertAdjacentHTML ("beforeend", html);
+		},
+		async includeJS (url: string, args: any[] = []): Promise<any>
+		{
+			// Legacy-compat helper: Hot.includeJS("./js/foo.js", [arg1, arg2])
+			// fetches the script body, evaluates it as a function body whose
+			// `this` is the hotCtx, and returns whatever it yields.
+			const abs: URL = new URL (url, location.href);
+			const res: Response = await fetch (abs.toString (), { signal: abort.signal });
+			if (!res.ok)
+				throw new Error (`includeJS ${url} → HTTP ${res.status}`);
+			const body: string = await res.text ();
+			const argNames: string[] = args.map ((_, i) => `_a${i}`);
+			// Wrap in an async function so `await` inside works.
+			// eslint-disable-next-line no-new-func
+			const fn: Function = new Function (...argNames, `return (async () => { ${body}\nreturn (typeof __hott_export !== 'undefined' ? __hott_export : undefined); })();`);
+			return (fn.apply (ctx, args));
 		}
 	};
 

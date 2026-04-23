@@ -51,6 +51,7 @@ const SIMPLE_REWRITES: Record<string, AccessRewriter | null> =
 	echoUnsafe: (ctx) => `${ctx}.echo`,
 	echo: (ctx) => `${ctx}.echo`,
 	import: (ctx) => `${ctx}.import`,
+	includeJS: (ctx) => `${ctx}.includeJS`,
 	// URL helpers — forward to the ctx-scoped URLSearchParams.
 	getUrlParam: (ctx) => `((n) => ${ctx}.search.get(n))`,
 	// Routing context.
@@ -58,8 +59,9 @@ const SIMPLE_REWRITES: Record<string, AccessRewriter | null> =
 	params: (ctx) => `${ctx}.params`,
 	// API client (HS090-8). Bundled client is exposed as ctx.api.
 	API: (ctx) => `${ctx}.api`,
-	// Left alone deliberately — too broad to rewrite safely at this stage.
-	Cookies: null,
+	// Cookie namespace — Hot.Cookies.get(x) → hotCtx.cookies.get(x).
+	Cookies: (ctx) => `${ctx}.cookies`,
+	// Left alone deliberately — too broad or runtime-only.
 	CurrentPage: null,
 	Output: null,
 	echoHtmlInput: null,

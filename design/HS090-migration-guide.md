@@ -1,6 +1,88 @@
 # Migration Guide — Porting Apps to `hotstaq build --static`
 
-**Status:** Draft • **Ticket:** HS090-21 • **Depends on:** all prior HS090-* tickets
+**Status:** In progress • **Ticket:** HS090-21 • **Depends on:** all prior HS090-* tickets
+
+## Pilot App Migration Runbook (FreelightAuth first, DAO second, Freelight last)
+
+The pilot fixture in `tests/hott/FreelightAuthFixture.ts` is the executable
+reference. When that suite is green on a commit, the surface covered here
+is known to work end to end: preambles (Hot.getJSON / Hot.Cookies.get /
+Hot.includeJS / Hot.include with literal partial), generated API client
+bundling (HS090-8), lazy chunk loading (HS090-5/-16), link + form
+interception (HS090-12/-13), scroll restoration (HS090-14).
+
+### Per-app checklist (apply in this order)
+
+```
+1. Add the hotstaq@^0.9.0 dep in package.json.
+2. Audit .hott files for dynamic Hot.include(varName) calls — refactor
+   to explicit literal branches:
+     if (cond) await Hot.include('./a.hott');
+     else      await Hot.include('./b.hott');
+   Dynamic includes warn; under --strict they error.
+3. Move admin-panel CSS and app CSS into HotSite.yaml:
+     web.{appName}.cssFiles:
+       - node_modules/@hotstaq/admin-panel/public/main.css
+       - ./public/css/app.css
+4. Declare web.{appName}.routes: path / file / preload (eager|lazy|never).
+   Mark landing + login routes eager; admin routes lazy.
+5. If an .hott uses Hot.includeJS('./js/foo.js', [args]), the helper script
+   is now evaluated inside an async Function whose positional params are
+   _a0, _a1, ... and whose `this` is the hotCtx. Adapt accordingly:
+     BEFORE (argument names from a wrapper the legacy includeJS used):
+       let config = arguments[0]; let jwt = arguments[1];
+     AFTER (positional parameters):
+       const [config, jwt] = [_a0, _a1];
+     If the script should yield a value, assign it to `__hott_export`
+     and return via the caller's Promise.
+6. Run `hotstaq generate --api` (or `npm run build-web`) to produce the
+   ./public/js/${libraryName}_${apiName}.js client. v0.9.0 bundles it
+   automatically if HotSite.apis has libraryName + apiName set.
+7. Build: `hotstaq --hotsite ./HotSite.yaml build --static --out ./dist`
+   Add `--strict` in CI. `--verbose` prints the emitted entry source
+   and per-file sizes.
+8. Preview: `cd dist && npx serve -s .` (or run a scratch static server).
+   Click every route, confirm forms + back/forward work, DevTools
+   should show no console errors after mount.
+9. Update the Helm chart:
+     - freelight-auth-frontend: nginx:alpine serving ./dist
+     - freelight-auth-api:      existing Node container, only /v1/* and
+                                /interaction/* (OIDC) routes
+     - HTTPRoute:                same host, paths split between the two
+10. Deploy staging → verify → production.
+```
+
+### Known Hot.* surface coverage (as of HS090 v0.9.0)
+
+| Source                       | Rewrite                       |
+|------------------------------|-------------------------------|
+| `Hot.Cookies.get/set/remove` | `hotCtx.cookies.*`            |
+| `Hot.getJSON(url)`           | `hotCtx.getJSON(url)`         |
+| `Hot.echoUnsafe(html)`       | `hotCtx.echo(html)`           |
+| `Hot.echo(html)`             | `hotCtx.echo(html)`           |
+| `Hot.import(pkg)`            | `hotCtx.import(pkg)`          |
+| `Hot.includeJS(url, args)`   | `hotCtx.includeJS(url, args)` |
+| `Hot.include(literal.hott)`  | build-time partial + runtime `hotCtx.includeStash(id)` |
+| `Hot.include(dynamicVar)`    | warning; refactor to literals |
+| `Hot.API`                    | `hotCtx.api`                  |
+| `Hot.getUrlParam(name)`      | `hotCtx.search.get(name)`     |
+| `Hot.pathname / .params`     | `hotCtx.pathname / .params`   |
+
+Unknown `Hot.*` references pass through and emit an `hott/hot-unknown-member`
+warning so the migration guide can catch uncovered surface.
+
+### Rollback
+
+- Apps keep both build paths (SSR + static). Revert = don't pass
+  `--static`, ship the old Node container image.
+- `hotstaq@0.8.141` images stay pinned in harbor until every pilot app
+  is production-stable on v0.9.0.
+- Helm chart changes keep the old Node-frontend container definition as
+  a commented alternative for at least two minor releases.
+
+---
+
+
 
 ## Pilot Order
 

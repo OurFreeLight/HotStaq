@@ -79,4 +79,11 @@ export interface HotCtx
 	includeStash (id: string): string;
 	/** Append to the current template's output buffer (SSR + static). */
 	echo (html: string): void;
+	/**
+	 * Fetch a JS file, execute it, and call its default export (or the
+	 * first function it assigns to module.exports) with the given args.
+	 * Returns whatever the function returns. Used by apps that were
+	 * using Hot.includeJS() in SSR mode for bootstrap helpers.
+	 */
+	includeJS (url: string, args?: any[]): Promise<any>;
 }
