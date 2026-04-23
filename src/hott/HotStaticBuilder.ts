@@ -191,9 +191,8 @@ export class HotStaticBuilder
 		// 2. resolve partials (HS090-15).
 		await this.resolvePartials ();
 
-		// 3. staticRender routes — HS090-19 (stub).
-		this.note ("static-render-stub",
-			"HS090-19 not yet implemented — staticRender: true routes will build as eager templates only.");
+		// 3. staticRender routes — HS090-19.
+		await this.prerenderStaticRoutes ();
 
 		// 4. template stash.
 		const stash = this.emitTemplateStash ();
@@ -293,6 +292,139 @@ export class HotStaticBuilder
 
 			this.compiledRoutes.set (appName, compiled);
 		}
+	}
+
+	/**
+	 * HS090-19: run staticRender: true route preambles in Node against
+	 * their fixture data and bake the resulting HTML into the route's
+	 * template. The runtime still re-runs the preamble on mount for
+	 * hydration — baked HTML exists purely for crawlers that see the
+	 * first-paint response.
+	 *
+	 * MVP supports JSON `fixtures` only. `fixturesApi` and
+	 * `fixturesScript` are accepted by the schema but will warn and
+	 * skip prerender (route falls back to eager template mode).
+	 */
+	async prerenderStaticRoutes (): Promise<void>
+	{
+		for (const [appName, compiled] of this.compiledRoutes.entries ())
+		{
+			for (const cr of compiled)
+			{
+				if (!cr.route.staticRender)
+					continue;
+
+				const fixtureData: any = await this.loadFixtureData (appName, cr);
+				if (fixtureData === undefined)
+					continue; // warning already logged; fall back to template-only.
+
+				const bakedHtml: string | null = await this.runPreambleInNode (cr, fixtureData);
+				if (bakedHtml === null)
+					continue;
+
+				// Replace the route's template with the baked HTML. The
+				// runtime re-executes the preamble on mount — idempotent
+				// preambles produce the same DOM either way; non-idempotent
+				// ones end up replacing the baked markup.
+				cr.module.template = bakedHtml;
+			}
+		}
+	}
+
+	private async loadFixtureData (appName: string, cr: CompiledRoute): Promise<any>
+	{
+		if (cr.route.fixtures)
+		{
+			const abs: string = ppath.resolve (this.opts.cwd, cr.route.fixtures);
+			if (!fs.existsSync (abs))
+			{
+				this.warnings.push ({
+					code: "hs090-19/fixture-missing",
+					message: `Fixture file not found: ${cr.route.fixtures} (resolved to ${abs}).`,
+					where: `web.${appName} route ${cr.route.path}`
+				});
+				return (undefined);
+			}
+			try
+			{
+				return (JSON.parse (await fsp.readFile (abs, "utf8")));
+			}
+			catch (err)
+			{
+				this.warnings.push ({
+					code: "hs090-19/fixture-parse-failed",
+					message: `Could not parse fixture JSON ${cr.route.fixtures}: ${String (err)}.`,
+					where: `web.${appName} route ${cr.route.path}`
+				});
+				return (undefined);
+			}
+		}
+		if (cr.route.fixturesApi || cr.route.fixturesScript)
+		{
+			this.warnings.push ({
+				code: "hs090-19/fixture-source-unsupported",
+				message: `fixturesApi / fixturesScript not supported in MVP; route ${cr.route.path} will not prerender.`,
+				where: `web.${appName}`
+			});
+			return (undefined);
+		}
+		this.warnings.push ({
+			code: "hs090-19/fixture-missing-source",
+			message: `Route ${cr.route.path} has staticRender: true but no fixtures declared.`,
+			where: `web.${appName}`
+		});
+		return (undefined);
+	}
+
+	private async runPreambleInNode (cr: CompiledRoute, fixtureData: any): Promise<string | null>
+	{
+		const echoed: string[] = [];
+		const ctx: any = {
+			cookies: {
+				get: (_name: string): string | null => null,
+				set: (_name: string, _value: string, _opts?: object): void => {},
+				remove: (_name: string, _opts?: object): void => {}
+			},
+			search: new URLSearchParams (),
+			pathname: cr.route.path,
+			params: {},
+			api: {},
+			async getJSON (url: string): Promise<any>
+			{
+				// Fixture lookup: if fixtureData has a key matching the URL,
+				// return that; else return the whole fixture object.
+				if (fixtureData && typeof fixtureData === "object" && url in fixtureData)
+					return (fixtureData[url]);
+				return (fixtureData);
+			},
+			async import (): Promise<any> { return ({}); },
+			includeStash (id: string): string
+			{
+				return (this.resolvedPartials?.get?.(id) || "");
+			},
+			echo (html: string): void { echoed.push (html); },
+			async includeJS (): Promise<any> { return (undefined); }
+		};
+		ctx.resolvedPartials = this.resolvedPartials;
+
+		try
+		{
+			// eslint-disable-next-line no-new-func
+			const fn: Function = new Function ("hotCtx",
+				`return (async () => { ${cr.module.preamble || ""}\n })();`);
+			await fn (ctx);
+		}
+		catch (err)
+		{
+			this.warnings.push ({
+				code: "hs090-19/prerender-threw",
+				message: `Preamble for ${cr.route.path} threw during prerender: ${String (err)}. Falling back to template-only.`,
+				where: cr.absFile
+			});
+			return (null);
+		}
+
+		return (cr.module.template + echoed.join (""));
 	}
 
 	/**
