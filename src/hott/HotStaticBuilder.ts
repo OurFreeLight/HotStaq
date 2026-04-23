@@ -32,8 +32,9 @@ import { HotSite, HotSiteWebRoute, HotSiteWebApiClient } from "../HotSite";
 import { HotLog, HotLogLevel } from "../HotLog";
 
 import { compileSource } from "./compile";
-import { HottModule } from "./types";
+import { HottModule, PartialCallRecord } from "./types";
 import { partialIdFromPath } from "./rewrite-preamble";
+import { expandPartial } from "./build-expand";
 import {
 	validateHotSiteForStatic,
 	HotSiteValidationIssue
@@ -440,36 +441,53 @@ export class HotStaticBuilder
 		if (!this.site.web)
 			return;
 
-		type PartialWork = { id: string; src: string; fromApp: string };
+		type PartialWork = {
+			stashId: string;
+			src: string;
+			args: Record<string, any> | null;
+			fromApp: string;
+		};
+
 		const queue: PartialWork[] = [];
 		const seenIds: Set<string> = new Set ();
-		const idToSrc: Map<string, string> = new Map ();
+		const idToHtml: Map<string, string> = new Map ();
 
-		// 1. Seed from explicit manifests.
+		// 1. Seed from explicit `partials:` manifests (no args — raw stash).
 		for (const appName of Object.keys (this.site.web))
 		{
 			const app = this.site.web[appName];
 			for (const p of app.partials || [])
-				queue.push ({ id: p.id, src: p.src, fromApp: appName });
+				queue.push ({ stashId: p.id, src: p.src, args: null, fromApp: appName });
 		}
 
-		// 2. Seed from literal Hot.include() targets the parser found.
+		// 2. Seed from every literal Hot.include() call site the parser
+		//    captured — includes args-carrying calls like
+		//    Hot.include('admin-header', { TITLE, SIDEBAR_ITEMS }).
 		for (const [appName, routes] of this.compiledRoutes.entries ())
 		{
 			for (const cr of routes)
 			{
-				for (const p of cr.module.partials)
+				// Walk structured partialCalls first.
+				for (const call of cr.module.partialCalls)
 				{
-					const id: string = partialIdFromPath (p);
-					queue.push ({ id, src: p, fromApp: appName });
+					queue.push ({
+						stashId: call.stashId,
+						src: call.path,
+						args: call.args,
+						fromApp: appName
+					});
 				}
+
+				// partialCalls is the source of truth now — every literal
+				// Hot.include site (with or without args) is captured
+				// there with its own stashId. No bare-path fallback.
 			}
 		}
 
 		while (queue.length > 0)
 		{
 			const work: PartialWork = queue.shift ()!;
-			if (seenIds.has (work.id))
+			if (seenIds.has (work.stashId))
 				continue;
 
 			const abs: string = this.resolvePartialPath (work.src, work.fromApp);
@@ -478,39 +496,114 @@ export class HotStaticBuilder
 			{
 				this.warnings.push ({
 					code: "hs090-15/partial-not-found",
-					message: `Partial ${work.src} (id="${work.id}") not found at ${abs}.`,
+					message: `Partial ${work.src} (id="${work.stashId}") not found at ${abs}.`,
 					where: `web.${work.fromApp}`
 				});
 				continue;
 			}
 
-			seenIds.add (work.id);
+			seenIds.add (work.stashId);
+
+			// Two paths: build-time expand when args are present and
+			// literal; raw-template inline otherwise.
+			if (work.args != null)
+			{
+				const expanded: string | null = await this.tryExpand (work, abs);
+				if (expanded !== null)
+				{
+					idToHtml.set (work.stashId, expanded);
+					// No need to follow child includes — expandPartial
+					// already rendered the entire transitive tree inline.
+					continue;
+				}
+				// Expansion failed (warning logged inside tryExpand);
+				// fall through to raw-template inline so the caller
+				// still gets a stash entry, even if it's not the
+				// fully-rendered version.
+			}
 
 			const source: string = await fsp.readFile (abs, "utf8");
 			const mod: HottModule = compileSource (source, { filename: abs });
 
 			for (const w of mod.warnings)
-			{
-				this.warnings.push ({
-					code: w.code,
-					message: w.message,
-					where: abs
-				});
-			}
+				this.warnings.push ({ code: w.code, message: w.message, where: abs });
 
-			idToSrc.set (work.id, mod.template);
+			idToHtml.set (work.stashId, mod.template);
 
-			// Follow literal includes inside this partial.
-			for (const childSrc of mod.partials)
+			// Follow literal includes inside this partial (raw path mode
+			// — args-less child calls just get base ids).
+			for (const childCall of mod.partialCalls)
 			{
-				const childId: string = partialIdFromPath (childSrc);
-				if (!seenIds.has (childId))
-					queue.push ({ id: childId, src: childSrc, fromApp: work.fromApp });
+				if (!seenIds.has (childCall.stashId))
+				{
+					queue.push ({
+						stashId: childCall.stashId,
+						src: childCall.path,
+						args: childCall.args,
+						fromApp: work.fromApp
+					});
+				}
 			}
 		}
 
-		for (const [id, html] of idToSrc.entries ())
+		for (const [id, html] of idToHtml.entries ())
 			this.resolvedPartials.set (id, html);
+	}
+
+	private async tryExpand (
+		work: { stashId: string; src: string; args: Record<string, any> | null; fromApp: string },
+		absPath: string
+	): Promise<string | null>
+	{
+		const fromApp: string = work.fromApp;
+		try
+		{
+			const result = await expandPartial ({
+				absPath,
+				args: work.args || {},
+				resolve: (requested: string, fromFile: string): string =>
+				{
+					const resolved: string = this.resolveNestedPartialPath (requested, fromFile, fromApp);
+					if (!fs.existsSync (resolved))
+					{
+						throw new Error (`nested partial ${requested} → ${resolved} not found`);
+					}
+					return (resolved);
+				}
+			});
+			return (result.html);
+		}
+		catch (err)
+		{
+			this.warnings.push ({
+				code: "hs090-15/expand-fallback",
+				message: `Build-time expansion of ${work.src} (id="${work.stashId}") failed: ${String ((err as Error).message || err)}. ` +
+					`Falling back to raw-template inline.`,
+				where: `web.${work.fromApp}`
+			});
+			return (null);
+		}
+	}
+
+	/**
+	 * Resolve a path used by a nested Hot.include() at build time. The
+	 * partial's own .hott file location (fromFile) is the primary anchor;
+	 * we try relative to that first, then fall back to publicDir + cwd.
+	 */
+	private resolveNestedPartialPath (requested: string, fromFile: string, appName: string): string
+	{
+		const fromDir: string = ppath.dirname (fromFile);
+		const candidates: string[] = [
+			ppath.resolve (fromDir, requested),
+			ppath.resolve (this.opts.cwd, this.opts.publicDir, requested),
+			ppath.resolve (this.opts.cwd, "public", "hotstaq_modules", requested),
+			ppath.resolve (this.opts.cwd, "node_modules", requested),
+			ppath.resolve (this.opts.cwd, requested)
+		];
+		for (const c of candidates)
+			if (fs.existsSync (c))
+				return (c);
+		return (candidates[0]);
 	}
 
 	/**

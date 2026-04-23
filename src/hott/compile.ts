@@ -5,7 +5,7 @@
  * targets are hoisted out of the preamble into module.partials.
  */
 
-import { Token, HottModule, CompileWarning } from "./types";
+import { Token, HottModule, CompileWarning, PartialCallRecord } from "./types";
 import { tokenize } from "./tokenize";
 import { rewritePreamble } from "./rewrite-preamble";
 
@@ -32,7 +32,9 @@ export function compile (tokens: Token[], opts: CompileOptions = {}): HottModule
 	const preambleParts: string[] = [];
 	const scripts: string[] = [];
 	const partials: string[] = [];
+	const partialCalls: PartialCallRecord[] = [];
 	const seenPartials: Set<string> = new Set ();
+	const seenStashIds: Set<string> = new Set ();
 
 	for (const tok of tokens)
 	{
@@ -72,6 +74,14 @@ export function compile (tokens: Token[], opts: CompileOptions = {}): HottModule
 						partials.push (p);
 					}
 				}
+				for (const call of r.partialCalls)
+				{
+					// Dedupe on stashId: same (path, argsHash) only appears once.
+					if (seenStashIds.has (call.stashId))
+						continue;
+					seenStashIds.add (call.stashId);
+					partialCalls.push (call);
+				}
 				for (const w of r.warnings)
 					warnings.push (w);
 				break;
@@ -84,6 +94,7 @@ export function compile (tokens: Token[], opts: CompileOptions = {}): HottModule
 		preamble: preambleParts.join ("\n"),
 		scripts,
 		partials,
+		partialCalls,
 		warnings
 	});
 }

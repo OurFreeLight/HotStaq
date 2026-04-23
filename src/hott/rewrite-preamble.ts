@@ -11,8 +11,10 @@
  * See design/HS090-parser-split.md "Preamble rewrite".
  */
 
+import * as crypto from "crypto";
 import { Project, SyntaxKind, Node, SourceFile } from "ts-morph";
 import { CompileWarning } from "./types";
+import { isLiteralAst, materialiseLiteral } from "./build-expand";
 
 export interface RewriteOptions
 {
@@ -26,12 +28,33 @@ export interface RewriteOptions
 	filename?: string;
 }
 
+/**
+ * A captured Hot.include() call site with enough info for the builder
+ * to resolve and optionally build-time expand the partial.
+ */
+export interface PartialCall
+{
+	/** Raw path string as written in the .hott source. */
+	path: string;
+	/** Literal args object if the call site passed one, else null. */
+	args: Record<string, any> | null;
+	/**
+	 * Stable stash id the compiled preamble references via
+	 * hotCtx.includeStash(...). Derived from path for plain literal
+	 * includes, or path + args-hash when args are present so that two
+	 * call sites with different args get distinct stash entries.
+	 */
+	stashId: string;
+}
+
 export interface RewriteResult
 {
 	/** Rewritten preamble source. */
 	source: string;
 	/** Literal Hot.include() targets, deduped, in first-seen order. */
 	partials: string[];
+	/** Structured record of every literal Hot.include call encountered. */
+	partialCalls: PartialCall[];
 	warnings: CompileWarning[];
 }
 
@@ -79,11 +102,12 @@ export function rewritePreamble (source: string, opts: RewriteOptions = {}): Rew
 	const ctx: string = opts.ctxParam || "hotCtx";
 	const warnings: CompileWarning[] = [];
 	const partials: string[] = [];
+	const partialCalls: PartialCall[] = [];
 	const seenPartials: Set<string> = new Set ();
 
 	// Fast path: if the preamble never mentions Hot at all, nothing to do.
 	if (!/\bHot\b/.test (source))
-		return ({ source, partials, warnings });
+		return ({ source, partials, partialCalls, warnings });
 
 	const project: Project = new Project ({
 		useInMemoryFileSystem: true,
@@ -110,7 +134,7 @@ export function rewritePreamble (source: string, opts: RewriteOptions = {}): Rew
 			message: "preamble declares a local `Hot` identifier; Hot.* references will not be rewritten. " +
 				"Rename the local to keep --static builds working."
 		});
-		return ({ source: sf.getFullText (), partials, warnings });
+		return ({ source: sf.getFullText (), partials, partialCalls, warnings });
 	}
 
 	sf.forEachDescendant ((node: Node) =>
@@ -134,7 +158,7 @@ export function rewritePreamble (source: string, opts: RewriteOptions = {}): Rew
 
 			if (parent && parent.getKind () === SyntaxKind.CallExpression)
 			{
-				rewriteIncludeCall (parent, ctx, partials, seenPartials, warnings);
+				rewriteIncludeCall (parent, ctx, partials, seenPartials, partialCalls, warnings);
 				return;
 			}
 
@@ -170,7 +194,7 @@ export function rewritePreamble (source: string, opts: RewriteOptions = {}): Rew
 		});
 	});
 
-	return ({ source: sf.getFullText (), partials, warnings });
+	return ({ source: sf.getFullText (), partials, partialCalls, warnings });
 }
 
 function rewriteIncludeCall (
@@ -178,6 +202,7 @@ function rewriteIncludeCall (
 	ctx: string,
 	partials: string[],
 	seen: Set<string>,
+	partialCalls: PartialCall[],
 	warnings: CompileWarning[]
 ): void
 {
@@ -205,7 +230,30 @@ function rewriteIncludeCall (
 			seen.add (stringLiteral);
 			partials.push (stringLiteral);
 		}
-		const stashId: string = partialIdFromPath (stringLiteral);
+
+		// Check for a second-arg literal object — admin-panel, userroute
+		// etc. pass { TITLE, SIDEBAR_ITEMS } here.
+		let argsValue: Record<string, any> | null = null;
+		if (args.length >= 2)
+		{
+			const second = args[1];
+			if (isLiteralAst (second))
+			{
+				argsValue = materialiseLiteral (second) as Record<string, any>;
+			}
+			else
+			{
+				warnings.push ({
+					code: "hott/hot-include-dynamic-args",
+					message: "Hot.include() called with a non-literal args object; partial will not be build-time expanded.",
+					start: call.getStart (),
+					end: call.getEnd ()
+				});
+			}
+		}
+
+		const stashId: string = stashIdFor (stringLiteral, argsValue);
+		partialCalls.push ({ path: stringLiteral, args: argsValue, stashId });
 		call.replaceWithText (`${ctx}.includeStash(${JSON.stringify (stashId)})`);
 		return;
 	}
@@ -223,6 +271,25 @@ function rewriteIncludeCall (
 	// runtime lookup for dynamic ids.
 	const argText: string = first.getText ();
 	call.replaceWithText (`${ctx}.includeStash(${argText})`);
+}
+
+/**
+ * Derive a stash id for a (path, args) pair. When args is null, the id is
+ * the plain path-based form (stable across calls) so unchanged call sites
+ * keep the same key. When args is present, we append a short content hash
+ * so call sites with different args get distinct stash entries.
+ */
+function stashIdFor (path: string, args: Record<string, any> | null): string
+{
+	const base: string = partialIdFromPath (path);
+	if (args == null)
+		return (base);
+	const hash: string = crypto
+		.createHash ("sha256")
+		.update (JSON.stringify (args))
+		.digest ("hex")
+		.substring (0, 10);
+	return (`${base}#${hash}`);
 }
 
 function asStringLiteralValue (node: Node): string | null

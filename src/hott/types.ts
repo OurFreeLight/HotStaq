@@ -29,6 +29,19 @@ export interface CompileWarning
 	end?: number;
 }
 
+/**
+ * One captured literal Hot.include call. `args` is null when the site
+ * passed no args or the args weren't a literal; the builder treats null
+ * as "fall back to raw-template stash" and non-null as "build-time
+ * expand against these args."
+ */
+export interface PartialCallRecord
+{
+	path: string;
+	args: Record<string, any> | null;
+	stashId: string;
+}
+
 export interface HottModule
 {
 	/**
@@ -47,6 +60,12 @@ export interface HottModule
 	scripts: string[];
 	/** Literal Hot.include() targets discovered during preamble rewrite. */
 	partials: string[];
+	/**
+	 * Structured record of every literal Hot.include call, including its
+	 * args object when the call site passed a literal one. Lets the
+	 * builder's HS090-15 stage expand the partial at build time.
+	 */
+	partialCalls: PartialCallRecord[];
 	/** Diagnostic warnings collected during compile; non-fatal by default. */
 	warnings: CompileWarning[];
 	/**
