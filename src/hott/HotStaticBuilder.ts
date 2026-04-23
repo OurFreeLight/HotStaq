@@ -195,6 +195,9 @@ export class HotStaticBuilder
 		// 1b. resolve API clients (HS090-8).
 		await this.resolveApiClients ();
 
+		// 1c. copy web.{app}.jsFiles + queue them for the shell head.
+		await this.resolveJsFiles ();
+
 		// 2. resolve partials (HS090-15).
 		await this.resolvePartials ();
 
@@ -736,6 +739,44 @@ export class HotStaticBuilder
 	}
 
 	/**
+	 * HS090 jsFiles wiring: for each web.{appName}.jsFiles entry, copy
+	 * the file into dist (preserving a sensible relative layout under
+	 * `js/`) and queue a shell <script> tag. Apps use this to pull in
+	 * the legacy HotStaq.min.js client when they need HotStaqWeb-based
+	 * components (admin-panel and friends).
+	 */
+	async resolveJsFiles (): Promise<void>
+	{
+		if (!this.site.web)
+			return;
+
+		for (const appName of Object.keys (this.site.web))
+		{
+			const app = this.site.web[appName];
+			const files: string[] = app.jsFiles || [];
+
+			for (const rel of files)
+			{
+				const abs: string = ppath.resolve (this.opts.cwd, rel);
+				if (!fs.existsSync (abs))
+				{
+					this.warnings.push ({
+						code: "hs090/js-file-not-found",
+						message: `jsFiles entry not found: ${rel} (resolved to ${abs}).`,
+						where: `web.${appName}.jsFiles`
+					});
+					continue;
+				}
+				const body: string = await fsp.readFile (abs, "utf8");
+				const distRel: string = `js/${ppath.basename (abs)}`;
+				await this.writeOutputFile (distRel, body);
+				if (!this.shellJs.includes (distRel))
+					this.shellJs.push (distRel);
+			}
+		}
+	}
+
+	/**
 	 * HS090-8: for each web app with an apiClient config (or one that can
 	 * be inferred from HotSite.apis), copy the generated client file into
 	 * dist/js/ and record how the entry script should wire it up.
@@ -1201,6 +1242,20 @@ export class HotStaticBuilder
 			? ""
 			: "  <script>\n" +
 			  "    window.addEventListener('DOMContentLoaded', function () {\n" +
+			  "      // HS090 legacy-client bootstrap: when an app ships HotStaq.min.js\n" +
+			  "      // via jsFiles (to get HotStaqWeb.HotComponent and the processor),\n" +
+			  "      // wire up a minimal CurrentPage so addComponent can register the\n" +
+			  "      // <admin-*> custom elements.\n" +
+			  "      if (typeof HotStaqWeb !== 'undefined') {\n" +
+			  "        if (typeof window.Hot === 'undefined') window.Hot = HotStaqWeb.Hot || {};\n" +
+			  "        if (!Hot.CurrentPage) {\n" +
+			  "          try {\n" +
+			  "            var proc = new HotStaqWeb.HotStaq();\n" +
+			  "            Hot.CurrentPage = new HotStaqWeb.HotPage(proc);\n" +
+			  "            Hot.CurrentPage.processor = proc;\n" +
+			  "          } catch (e) { console.warn('[hs090] legacy bootstrap failed:', e); }\n" +
+			  "        }\n" +
+			  "      }\n" +
 			  "      if (typeof Hot === 'undefined' || !Hot.CurrentPage || !Hot.CurrentPage.processor) return;\n" +
 			  this.shellComponents.flatMap (({ library, names }) =>
 			  {
