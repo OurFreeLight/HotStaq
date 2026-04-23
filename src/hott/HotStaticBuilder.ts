@@ -34,7 +34,7 @@ import { HotLog, HotLogLevel } from "../HotLog";
 import { compileSource } from "./compile";
 import { HottModule, PartialCallRecord } from "./types";
 import { partialIdFromPath } from "./rewrite-preamble";
-import { expandPartial, SandboxModule } from "./build-expand";
+import { expandPartial, SandboxModule, AssetCollector } from "./build-expand";
 import {
 	validateHotSiteForStatic,
 	HotSiteValidationIssue
@@ -153,6 +153,10 @@ export class HotStaticBuilder
 	readonly routeChunks: Map<string, string> = new Map ();
 	/** HS090-15 build-time expansion: shared across partial expansions. */
 	private readonly moduleRegistry: Map<string, SandboxModule> = new Map ();
+	/** HS090-15: shell-head-hoisted <link>/<script> references from modules. */
+	private readonly shellCss: string[] = [];
+	private readonly shellJs: string[] = [];
+	private readonly shellComponents: Array<{ library: string; names: string[] }> = [];
 
 	constructor (site: HotSite, opts: StaticBuildOptions = {})
 	{
@@ -566,11 +570,13 @@ export class HotStaticBuilder
 		const fromApp: string = work.fromApp;
 		try
 		{
+			const collector: AssetCollector = this.buildAssetCollector ();
 			const result = await expandPartial ({
 				absPath,
 				args: work.args || {},
 				publicDir: ppath.resolve (this.opts.cwd, this.opts.publicDir),
 				moduleRegistry: this.moduleRegistry,
+				assets: collector,
 				resolve: (requested: string, fromFile: string): string =>
 				{
 					const resolved: string = this.resolveNestedPartialPath (requested, fromFile, fromApp);
@@ -676,6 +682,34 @@ export class HotStaticBuilder
 	 * preambles use `./relative` form. Try publicDir first, then cwd
 	 * so node_modules-relative paths still work.
 	 */
+	private buildAssetCollector (): AssetCollector
+	{
+		return ({
+			addCss: (href: string): void =>
+			{
+				if (!this.shellCss.includes (href))
+					this.shellCss.push (href);
+			},
+			addJs: (src: string): void =>
+			{
+				if (!this.shellJs.includes (src))
+					this.shellJs.push (src);
+			},
+			addComponents: (library: string, names: string[]): void =>
+			{
+				let existing = this.shellComponents.find (c => c.library === library);
+				if (!existing)
+				{
+					existing = { library, names: [] };
+					this.shellComponents.push (existing);
+				}
+				for (const n of names)
+					if (!existing.names.includes (n))
+						existing.names.push (n);
+			}
+		});
+	}
+
 	private resolvePartialPath (src: string, appName: string): string
 	{
 		// First: check preloaded module registry for a name → path match.
@@ -1159,6 +1193,26 @@ export class HotStaticBuilder
 		for (const resolved of this.resolvedApiClients.values ())
 			apiClientTags.push (`  <script src="./${resolved.distPath}"></script>`);
 
+		const moduleCssLines: string[] = this.shellCss
+			.map (href => `  <link rel="stylesheet" href="./${href}">`);
+		const moduleJsLines: string[] = this.shellJs
+			.map (src => `  <script src="./${src}"></script>`);
+		const componentRegScript: string = this.shellComponents.length === 0
+			? ""
+			: "  <script>\n" +
+			  "    window.addEventListener('DOMContentLoaded', function () {\n" +
+			  "      if (typeof Hot === 'undefined' || !Hot.CurrentPage || !Hot.CurrentPage.processor) return;\n" +
+			  this.shellComponents.flatMap (({ library, names }) =>
+			  {
+				  const libPrefix: string = library ? library + "." : "";
+				  return (names.map (n =>
+					  `      try { if (typeof ${libPrefix}${n} !== 'undefined') ` +
+					  `Hot.CurrentPage.processor.addComponent(${libPrefix}${n}); } catch (e) {}`
+				  ));
+			  }).join ("\n") + "\n" +
+			  "    });\n" +
+			  "  </script>";
+
 		const lines: string[] = [
 			"<!doctype html>",
 			"<html lang=\"en\">",
@@ -1167,7 +1221,12 @@ export class HotStaticBuilder
 			"  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
 			`  <title>${escapeText (title)}</title>`,
 			description ? `  <meta name=\"description\" content=\"${escapeAttr (description)}\">` : "",
+			...moduleCssLines,
 			`  <link rel=\"stylesheet\" href=\"./${appCss.path}\">`,
+			// Module JS (jQuery / Bootstrap / DataTables / admin-panel
+			// components) loads in <head> so it's available before app.js
+			// instantiates components that depend on those globals.
+			...moduleJsLines,
 			"</head>",
 			"<body>",
 			"  <div id=\"app\"></div>",
@@ -1175,6 +1234,7 @@ export class HotStaticBuilder
 			stash,
 			apiShim,
 			...apiClientTags,
+			componentRegScript,
 			`  <script src=\"./${appJs.path}\"></script>`,
 			"</body>",
 			"</html>",

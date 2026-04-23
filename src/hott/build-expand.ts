@@ -27,6 +27,18 @@ import { Node, SyntaxKind } from "ts-morph";
 
 import { HotFile } from "../HotFile";
 
+/**
+ * Collector the builder passes in so module shims can record assets
+ * for hoisting into the shell `<head>` (HS090-7 / HS090-8 integration
+ * with the admin-panel's module manifest).
+ */
+export interface AssetCollector
+{
+	addCss (href: string): void;
+	addJs (src: string): void;
+	addComponents (componentLibrary: string, componentNames: string[]): void;
+}
+
 export interface ExpandPartialOptions
 {
 	/** Absolute path of the partial .hott file. */
@@ -53,6 +65,15 @@ export interface ExpandPartialOptions
 	 * across sibling expansions.
 	 */
 	moduleRegistry?: Map<string, SandboxModule>;
+	/**
+	 * Optional collector the builder uses to hoist module assets
+	 * (<link>/<script> references emitted by module.outputCSS/JS)
+	 * into the shell <head> instead of leaving them embedded inside
+	 * the template stash. Matches the legacy SSR behaviour more
+	 * closely: admin-panel CSS and JS load once on page entry, not
+	 * per-route-mount.
+	 */
+	assets?: AssetCollector;
 }
 
 /** One completed expansion. */
@@ -93,6 +114,7 @@ export async function expandPartial (opts: ExpandPartialOptions): Promise<Expand
 	const inflightCycleGuard: Set<string> = new Set ();
 	const registry: Map<string, SandboxModule> = opts.moduleRegistry || new Map ();
 	const publicDir: string = opts.publicDir || ppath.dirname (opts.absPath);
+	const assets: AssetCollector | null = opts.assets || null;
 	const rawHtml: string = await renderOne (
 		opts.absPath,
 		opts.args,
@@ -100,7 +122,8 @@ export async function expandPartial (opts: ExpandPartialOptions): Promise<Expand
 		visited,
 		inflightCycleGuard,
 		registry,
-		publicDir
+		publicDir,
+		assets
 	);
 	// admin-panel partials (and other legacy SSR partials that assume
 	// they emit a full HTML document) are cleaned up into fragment-safe
@@ -159,7 +182,8 @@ async function renderOne (
 	visited: string[],
 	inflight: Set<string>,
 	registry: Map<string, SandboxModule>,
-	publicDir: string
+	publicDir: string,
+	assets: AssetCollector | null
 ): Promise<string>
 {
 	if (inflight.has (absPath))
@@ -180,7 +204,7 @@ async function renderOne (
 	const parsedJs: string = HotFile.parseContent (source, false);
 
 	const result: string = await runCompiledPartial (
-		parsedJs, args, absPath, resolve, visited, inflight, registry, publicDir
+		parsedJs, args, absPath, resolve, visited, inflight, registry, publicDir, assets
 	);
 
 	inflight.delete (absPath);
@@ -195,13 +219,14 @@ async function runCompiledPartial (
 	visited: string[],
 	inflight: Set<string>,
 	registry: Map<string, SandboxModule>,
-	publicDir: string
+	publicDir: string,
+	assets: AssetCollector | null
 ): Promise<string>
 {
 	// Build the sandbox Hot shim per invocation so parallel nested
 	// renders each get an isolated Output buffer. renderOne's callers
 	// see only the final html string.
-	const Hot: any = buildSandboxHot (absFrom, resolve, visited, inflight, registry, publicDir);
+	const Hot: any = buildSandboxHot (absFrom, resolve, visited, inflight, registry, publicDir, assets);
 
 	// Declare each arg as a top-level var in the executed scope — matches
 	// the legacy HotPage.process() convention of `var ${key} = ${JSON};`
@@ -252,7 +277,8 @@ function buildSandboxHot (
 	visited: string[],
 	inflight: Set<string>,
 	registry: Map<string, SandboxModule>,
-	publicDir: string
+	publicDir: string,
+	assets: AssetCollector | null
 ): any
 {
 	const runtimeOnly = (name: string) => (): never =>
@@ -297,7 +323,7 @@ function buildSandboxHot (
 			else
 				nextAbs = resolve (path, absFrom);
 			const nested: string = await renderOne (
-				nextAbs, subArgs || {}, resolve, visited, inflight, registry, publicDir
+				nextAbs, subArgs || {}, resolve, visited, inflight, registry, publicDir, assets
 			);
 			Hot.Output += nested;
 		},
@@ -310,7 +336,7 @@ function buildSandboxHot (
 			// First: check the registry (shared across expandPartial calls).
 			const cached: SandboxModule | undefined = registry.get (moduleName);
 			if (cached)
-				return (instantiateModuleShim (cached, Hot));
+				return (instantiateModuleShim (cached, Hot, assets));
 
 			// Next: try loading from `<publicDir>/hotstaq_modules/<name>/index.js`
 			// — the hotstaq module-install convention used by apps that run
@@ -322,7 +348,7 @@ function buildSandboxHot (
 			{
 				const raw: SandboxModule = await evalInstalledModuleIndex (modIndex, moduleName);
 				registry.set (moduleName, raw);
-				return (instantiateModuleShim (raw, Hot));
+				return (instantiateModuleShim (raw, Hot, assets));
 			}
 
 			// Fallback: plain Node require (plenty of @hotstaq/* packages
@@ -427,8 +453,17 @@ export async function evalInstalledModuleIndex (
  * outputJS / outputComponents. Each emits HTML into the currently
  * active Hot.Output buffer.
  */
-function instantiateModuleShim (mod: SandboxModule, Hot: any): any
+function instantiateModuleShim (mod: SandboxModule, Hot: any, assets: AssetCollector | null): any
 {
+	// v0.9.0 behaviour: outputCSS/outputJS register the referenced files
+	// with the builder's shell-level asset collector (so <link>/<script>
+	// tags land in dist/index.html's <head>) instead of inlining them
+	// into the template stash. outputComponents behaves similarly —
+	// registers with the collector for a single shell-level script.
+	//
+	// Callers that pass echoOut=false still get the HTML back as a string
+	// so they can decide where to place it; we don't touch Hot.Output in
+	// that case.
 	return ({
 		name: mod.name,
 		js: mod.js,
@@ -440,27 +475,38 @@ function instantiateModuleShim (mod: SandboxModule, Hot: any): any
 		{
 			let out: string = "";
 			for (const file of mod.css)
+			{
 				out += `<link rel="stylesheet" href="${file}">\n`;
-			if (echoOut) Hot.echoUnsafe (out);
+				if (assets) assets.addCss (file);
+			}
+			// Intentionally do NOT echo to Hot.Output by default — the
+			// <link> tags belong in the shell <head>, not the template.
+			// Returning the HTML keeps the `const css = outputCSS(false)`
+			// pattern working for callers that need to place tags manually.
+			if (echoOut && !assets) Hot.echoUnsafe (out);
 			return (out);
 		},
 		outputJS (echoOut: boolean = true): string
 		{
 			let out: string = "";
 			for (const file of mod.js)
+			{
 				out += `<script src="${file}"></script>\n`;
-			if (echoOut) Hot.echoUnsafe (out);
+				if (assets) assets.addJs (file);
+			}
+			if (echoOut && !assets) Hot.echoUnsafe (out);
 			return (out);
 		},
 		outputComponents (echoOut: boolean = true): string
 		{
 			if (mod.components.length === 0) return ("");
 			const lib: string = mod.componentLibrary ? `${mod.componentLibrary}.` : "";
+			if (assets) assets.addComponents (mod.componentLibrary, mod.components);
 			let out: string = `<script type="text/javascript">\n`;
 			for (const c of mod.components)
 				out += `  if (typeof ${lib}${c} !== "undefined" && typeof Hot !== "undefined" && Hot.CurrentPage) Hot.CurrentPage.processor.addComponent(${lib}${c});\n`;
 			out += `</script>\n`;
-			if (echoOut) Hot.echoUnsafe (out);
+			if (echoOut && !assets) Hot.echoUnsafe (out);
 			return (out);
 		}
 	});

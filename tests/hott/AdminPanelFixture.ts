@@ -53,6 +53,7 @@ async function scaffoldAdminConsumer (): Promise<{ tmp: string; out: string }>
 		"<*\n" +
 		"  adminPanel.outputCSS();\n" +
 		"  adminPanel.outputJS();\n" +
+		"  adminPanel.outputComponents();\n" +
 		"*>\n" +
 		"</head>\n" +
 		"<body>\n" +
@@ -166,11 +167,29 @@ describe ("v0.9.0 — admin-panel operational fixture", function ()
 		expect (html).to.not.include ("${PANEL_NAME}");
 	});
 
-	it ("inlines adminPanel.outputCSS/JS as <link>/<script> tags from the module manifest", async () =>
+	it ("hoists adminPanel.outputCSS/JS into the shell <head>, NOT into the template stash", async () =>
 	{
 		const html: string = await fsp.readFile (ppath.join (out, "index.html"), "utf8");
+
+		// Link + script are present in the shell.
 		expect (html).to.include ("hotstaq_modules/@hotstaq/admin-panel/public/css/main.css");
 		expect (html).to.include ("hotstaq_modules/@hotstaq/admin-panel/public/js/components.js");
+
+		// Asset references must appear BEFORE the template stash, not
+		// inside it (the template only carries route-specific fragment
+		// HTML — CSS/JS hoisting matches SSR behaviour).
+		const cssIdx: number = html.indexOf ("hotstaq_modules/@hotstaq/admin-panel/public/css/main.css");
+		const jsIdx: number = html.indexOf ("hotstaq_modules/@hotstaq/admin-panel/public/js/components.js");
+		const stashIdx: number = html.indexOf ("<template ");
+		expect (cssIdx, "CSS link should be in shell head, above template stash").to.be.lessThan (stashIdx);
+		expect (jsIdx, "JS script should be in shell, above template stash").to.be.lessThan (stashIdx);
+	});
+
+	it ("emits a component registration script referencing AdminPanelComponentsWeb.AdminDashboard", async () =>
+	{
+		const html: string = await fsp.readFile (ppath.join (out, "index.html"), "utf8");
+		expect (html).to.include ("AdminPanelComponentsWeb.AdminDashboard");
+		expect (html).to.include ("processor.addComponent");
 	});
 
 	it ("unrolls the sidebar for-loop over SIDEBAR_ITEMS at build time", async () =>
