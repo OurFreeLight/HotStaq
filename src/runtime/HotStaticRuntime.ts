@@ -134,6 +134,8 @@ export async function navigate (path: string, opts: { replace?: boolean } = {}):
 	else
 		history.pushState (null, "", path);
 	await mount ();
+	// HS090-14: scroll to top for fresh navigations, restore on popstate.
+	window.scrollTo (0, 0);
 }
 
 /**
@@ -227,9 +229,37 @@ export function getLastContext (): HotCtx | null
 let lastCtx: HotCtx | null = null;
 
 /**
- * Intercept link clicks (HS090-13) — any same-origin <a href> in the
- * document gets routed via navigate() instead of a full page load.
- * Links with [download], [target=_blank], or [data-spa-ignore] skip.
+ * HS090-14 scroll restoration: stash scroll position on every nav and
+ * restore on popstate.
+ */
+function saveScrollPosition (): void
+{
+	try
+	{
+		const existing: any = (history.state as any) || {};
+		history.replaceState (
+			Object.assign ({}, existing, { __hs090_scroll: { x: window.scrollX, y: window.scrollY } }),
+			"", location.href
+		);
+	}
+	catch { /* replaceState can fail in some sandboxes; non-critical */ }
+}
+
+function restoreScrollPosition (): void
+{
+	const s: any = (history.state as any) || {};
+	if (s.__hs090_scroll)
+		window.scrollTo (s.__hs090_scroll.x || 0, s.__hs090_scroll.y || 0);
+	else
+		window.scrollTo (0, 0);
+}
+
+/**
+ * Intercept link clicks (HS090-13) + form submits (HS090-12 subset) —
+ * any same-origin <a href> or <form method=get action=...> routes via
+ * navigate() instead of a full page load. Links with [download],
+ * [target=_blank], or [data-spa-ignore] skip; forms with
+ * [data-spa-ignore] skip.
  */
 export function installLinkInterceptor (): void
 {
@@ -246,7 +276,34 @@ export function installLinkInterceptor (): void
 		if (!url) return;
 
 		event.preventDefault ();
+		saveScrollPosition ();
 		navigate (url.pathname + url.search + url.hash);
+	});
+
+	// HS090-12 form interception: GET forms that target same-origin get
+	// serialized into a querystring and navigated via pushState. POST
+	// forms stay as full submits — preambles handle those via hotCtx.api.
+	document.addEventListener ("submit", (event: Event) =>
+	{
+		const form = event.target as HTMLFormElement;
+		if (!form || form.tagName !== "FORM") return;
+		if (form.hasAttribute ("data-spa-ignore")) return;
+		if ((form.method || "get").toLowerCase () !== "get") return;
+
+		const action: string = form.getAttribute ("action") || location.pathname;
+		let actionUrl: URL;
+		try { actionUrl = new URL (action, location.href); }
+		catch { return; }
+		if (actionUrl.origin !== location.origin) return;
+
+		event.preventDefault ();
+		const data: FormData = new FormData (form);
+		const qs: URLSearchParams = new URLSearchParams ();
+		data.forEach ((v, k) => { if (typeof v === "string") qs.append (k, v); });
+		const q: string = qs.toString ();
+		const dest: string = actionUrl.pathname + (q ? "?" + q : "") + actionUrl.hash;
+		saveScrollPosition ();
+		navigate (dest);
 	});
 
 	// HS090-17: hover/focus prefetch. Only warms the chunk (no mount).
@@ -275,7 +332,11 @@ export function installLinkInterceptor (): void
 		maybePrefetch (findAnchor (e.target as Element));
 	});
 
-	window.addEventListener ("popstate", () => { mount (); });
+	window.addEventListener ("popstate", async () =>
+	{
+		await mount ();
+		restoreScrollPosition ();
+	});
 }
 
 function findAnchor (start: Element | null): HTMLAnchorElement | null
