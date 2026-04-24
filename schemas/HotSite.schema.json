@@ -1,0 +1,92 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://hotstaq.com/schemas/HotSite.schema.json",
+	"title": "HotSite",
+	"description": "HotStaq app configuration. v0.9.0 adds routes[].preload, routes[].staticRender, and partials[] for the --static build target.",
+	"type": "object",
+	"properties": {
+		"name": { "type": "string" },
+		"server": { "type": "object" },
+		"apis": {
+			"type": "object",
+			"additionalProperties": { "$ref": "#/definitions/api" }
+		},
+		"web": {
+			"type": "object",
+			"additionalProperties": { "$ref": "#/definitions/web" }
+		}
+	},
+	"definitions": {
+		"api": { "type": "object" },
+		"web": {
+			"type": "object",
+			"properties": {
+				"mainUrl": { "type": "string" },
+				"jsFiles": { "type": "array", "items": { "type": "string" } },
+				"routes": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/route" }
+				},
+				"partials": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/partial" },
+					"description": "Explicit partial manifest for build-time Hot.include() resolution under --static. Optional; compiler also auto-discovers string-literal include targets."
+				}
+			},
+			"required": ["routes"]
+		},
+		"route": {
+			"type": "object",
+			"properties": {
+				"path": { "type": "string" },
+				"file": { "type": "string" },
+				"preload": {
+					"type": "string",
+					"enum": ["eager", "lazy", "never"],
+					"default": "eager",
+					"description": "Preload tier. eager: inline in index.html shell. lazy: chunk prefetched on hover/focus. never: chunk loads on click only."
+				},
+				"staticRender": {
+					"type": "boolean",
+					"default": false,
+					"description": "When true, the compiler runs this route's preamble at build time against fixtures and bakes the resulting HTML into the template stash. Route must still be preload: eager."
+				},
+				"fixtures": {
+					"type": "string",
+					"description": "Path to a JSON fixtures file. Used when staticRender is true."
+				},
+				"fixturesApi": {
+					"type": "string",
+					"format": "uri",
+					"description": "Live preview API URL the compiler calls to obtain fixture data. Used when staticRender is true."
+				},
+				"fixturesScript": {
+					"type": "string",
+					"description": "Path to a script that returns fixture data. Used when staticRender is true."
+				}
+			},
+			"required": ["path", "file"],
+			"allOf": [
+				{
+					"if": { "properties": { "staticRender": { "const": true } }, "required": ["staticRender"] },
+					"then": {
+						"properties": { "preload": { "const": "eager" } },
+						"anyOf": [
+							{ "required": ["fixtures"] },
+							{ "required": ["fixturesApi"] },
+							{ "required": ["fixturesScript"] }
+						]
+					}
+				}
+			]
+		},
+		"partial": {
+			"type": "object",
+			"properties": {
+				"id": { "type": "string", "description": "Stable ID used in the <template id='hot-partial-{id}'> stash." },
+				"src": { "type": "string", "description": "Path to the partial .hott file, relative to publicDir." }
+			},
+			"required": ["id", "src"]
+		}
+	}
+}

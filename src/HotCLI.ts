@@ -12,6 +12,7 @@ import { HotLogLevel } from "./HotLog";
 import { DeveloperMode } from "./Hot";
 import { HotTesterServer } from "./HotTesterServer";
 import { HotBuilder, ModuleBuildOptions } from "./HotBuilder";
+import { HotStaticBuilder, StaticBuildOptions } from "./hott/HotStaticBuilder";
 import { HotGenerator } from "./HotGenerator";
 import { HotCreator } from "./HotCreator";
 import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
@@ -293,26 +294,70 @@ export class HotCLI
 					builder = new HotBuilder (this.processor.logger);
 			};
 
+		// v0.9.0 static-build opts; populated via --static, --strict, --out, etc.
+		// and consumed at action-time to decide SSR vs static path.
+		const staticOpts: StaticBuildOptions = {};
+		let staticMode: boolean = false;
+
 		const buildCmd: commander.Command = new commander.Command ("build");
 		buildCmd.description (`Build commands.`);
 		buildCmd.action (() =>
 			{
 				this.onBuildAction = async () =>
 				{
-					createHotBuilder ();
-
 					if (this.hotsitePath === "")
 						throw new Error (`When building, you must specify a HotSite.json!`);
 
-					if (this.hotsitePath !== "")
+					await this.processor.loadHotSite (this.hotsitePath);
+					await this.processor.processHotSite ();
+
+					if (staticMode)
 					{
-						await this.processor.loadHotSite (this.hotsitePath);
-						await this.processor.processHotSite ();
+						staticOpts.logger = this.processor.logger;
+						const staticBuilder: HotStaticBuilder = new HotStaticBuilder (
+							this.processor.hotSite,
+							staticOpts
+						);
+						await staticBuilder.build ();
+						return;
 					}
 
+					createHotBuilder ();
 					builder.hotsites = [this.processor.hotSite];
 					await builder.build ();
 				};
+			});
+		buildCmd.option ("--static", "Emit a static nginx-servable bundle (HS090 v0.9.0) instead of the SSR pipeline.",
+			(arg: string, previous: any) =>
+			{
+				staticMode = true;
+			});
+		buildCmd.option ("--strict", "Fail on compiler warnings (recommended for CI). Only effective with --static.",
+			(arg: string, previous: any) =>
+			{
+				staticOpts.strict = true;
+			});
+		buildCmd.option ("--out <dir>", "Output directory for --static builds. Defaults to ./dist.",
+			(arg: string, previous: any) =>
+			{
+				staticOpts.out = arg;
+			});
+		buildCmd.option ("--mode <mode>", "Build mode for --static: production | development.",
+			(arg: string, previous: any) =>
+			{
+				if (arg !== "production" && arg !== "development")
+					throw new Error (`--mode must be "production" or "development", got ${JSON.stringify (arg)}.`);
+				staticOpts.mode = arg as "production" | "development";
+			});
+		buildCmd.option ("--public-dir <dir>", "Public directory root for --static (default ./public).",
+			(arg: string, previous: any) =>
+			{
+				staticOpts.publicDir = arg;
+			});
+		buildCmd.option ("--verbose", "Print a per-file size report after --static builds.",
+			(arg: string, previous: any) =>
+			{
+				staticOpts.verbose = true;
 			});
 
 		/*buildCmd.option ("--watch, -w", "Watch the associated files and rebuild when changes are detected.", 
