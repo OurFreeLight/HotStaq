@@ -235,8 +235,12 @@ async function runCompiledPartial (
 	for (const key of Object.keys (args))
 		argDecls.push (`var ${key} = ${JSON.stringify (args[key])};`);
 
-	// Minimal helpers the legacy compiler expects in scope.
+	// Minimal helpers the legacy compiler expects in scope. We also
+	// expose a stub `window` so partials that feature-guard with
+	// `typeof window.__X === "undefined"` pass at build time without
+	// throwing (admin-panel-style "load deps once" guards).
 	const scaffold: string = `
+var window = typeof globalThis.window !== "undefined" ? globalThis.window : { __hott_fake_window: true };
 ${argDecls.join ("\n")}
 
 function echoOutput (content, throwErrors) {
@@ -549,20 +553,28 @@ export function isLiteralAst (node: Node): boolean
 
 		case SyntaxKind.ObjectLiteralExpression:
 		{
+			// Object literal passes if its SHAPE is valid (all property
+			// keys are names / strings / numbers). Values may be non-
+			// literal — materialiseLiteral substitutes `undefined` for
+			// those, which is what the caller's preamble-local variables
+			// would resolve to at build time anyway.
 			const obj = node.asKindOrThrow (SyntaxKind.ObjectLiteralExpression);
 			for (const prop of obj.getProperties ())
 			{
-				if (prop.getKind () !== SyntaxKind.PropertyAssignment)
+				if (prop.getKind () !== SyntaxKind.PropertyAssignment &&
+					prop.getKind () !== SyntaxKind.ShorthandPropertyAssignment)
 					return (false);
-				const pa = prop.asKindOrThrow (SyntaxKind.PropertyAssignment);
-				const nameNode = pa.getNameNode ();
-				const nk: number = nameNode.getKind ();
-				if (nk !== SyntaxKind.Identifier &&
-					nk !== SyntaxKind.StringLiteral &&
-					nk !== SyntaxKind.NumericLiteral)
-					return (false);
-				if (!isLiteralAst (pa.getInitializerOrThrow ()))
-					return (false);
+				if (prop.getKind () === SyntaxKind.PropertyAssignment)
+				{
+					const pa = prop.asKindOrThrow (SyntaxKind.PropertyAssignment);
+					const nameNode = pa.getNameNode ();
+					const nk: number = nameNode.getKind ();
+					if (nk !== SyntaxKind.Identifier &&
+						nk !== SyntaxKind.StringLiteral &&
+						nk !== SyntaxKind.NumericLiteral)
+						return (false);
+				}
+				// ShorthandPropertyAssignment always has an Identifier key.
 			}
 			return (true);
 		}
@@ -610,12 +622,20 @@ export function materialiseLiteral (node: Node): any
 			const result: Record<string, any> = {};
 			for (const prop of obj.getProperties ())
 			{
+				if (prop.getKind () === SyntaxKind.ShorthandPropertyAssignment)
+				{
+					// `{ foo }` — identifier, not a literal; substitute undefined.
+					const sp = prop.asKindOrThrow (SyntaxKind.ShorthandPropertyAssignment);
+					result[sp.getName ()] = undefined;
+					continue;
+				}
 				const pa = prop.asKindOrThrow (SyntaxKind.PropertyAssignment);
 				const nameNode = pa.getNameNode ();
 				const key: string = nameNode.getKind () === SyntaxKind.StringLiteral
 					? nameNode.asKindOrThrow (SyntaxKind.StringLiteral).getLiteralValue ()
 					: nameNode.getText ();
-				result[key] = materialiseLiteral (pa.getInitializerOrThrow ());
+				const value = pa.getInitializerOrThrow ();
+				result[key] = isLiteralAst (value) ? materialiseLiteral (value) : undefined;
 			}
 			return (result);
 		}

@@ -199,10 +199,12 @@ export async function mount (targetPath?: string): Promise<void>
 	// content in source order — that preserves admin-panel's header →
 	// body → footer layering.
 	const stashHtml: string = template.innerHTML || "";
-	if (stashHtml.trim () !== "")
+	const pureStatic: boolean = stashHtml.trim () !== "";
+	if (pureStatic)
 		host.appendChild (document.importNode (template.content, true));
 
-	const ctx: HotCtx = buildHotCtx (host, abort);
+	const buffer: EchoBuffer = { html: "" };
+	const ctx: HotCtx = buildHotCtx (host, abort, buffer);
 
 	try
 	{
@@ -218,6 +220,12 @@ export async function mount (targetPath?: string): Promise<void>
 
 	if (abort.signal.aborted)
 		return;
+
+	// Single innerHTML parse of the accumulated echoes — lets unclosed
+	// tags in one echo get closed by a later echo (admin-panel's
+	// header → body → footer layering needs this).
+	if (!pureStatic && buffer.html)
+		host.innerHTML = buffer.html;
 
 	// Re-execute inline scripts: the tokenizer left empty placeholder
 	// <script data-hott-script="hott-sN"> nodes; replace them with real
@@ -391,10 +399,22 @@ function matchChunkPath (path: string): string
  */
 export function start (): void
 {
-	if (document.readyState === "loading")
-		document.addEventListener ("DOMContentLoaded", () => initialMount ());
+	// Legacy HotStaq.min.js (when shipped via jsFiles) registers
+	// hotStaqWebStart on window.load; that callback copies HotStaqWeb
+	// keys onto window (including window.Hot) — which clobbers any
+	// Hot.CurrentPage.processor we set up earlier. We defer our initial
+	// mount until after window.load so the legacy startup runs first
+	// and our bootstrap gets the last word on Hot.CurrentPage.
+	const runLater = (): void =>
+	{
+		// Give hotStaqWebStart's microtask chain one macrotask to settle
+		// (it does its work inside a setTimeout(…, 50)).
+		setTimeout (() => initialMount (), 70);
+	};
+	if (document.readyState === "complete")
+		runLater ();
 	else
-		initialMount ();
+		window.addEventListener ("load", runLater, { once: true });
 }
 
 function initialMount (): void
@@ -422,7 +442,9 @@ function resolveRoute (path: string): RouteEntry | undefined
 	return (undefined);
 }
 
-function buildHotCtx (host: HTMLElement, abort: AbortController): HotCtx
+interface EchoBuffer { html: string }
+
+function buildHotCtx (host: HTMLElement, abort: AbortController, buffer: EchoBuffer): HotCtx
 {
 	const ctx: HotCtx =
 	{
@@ -486,16 +508,25 @@ function buildHotCtx (host: HTMLElement, abort: AbortController): HotCtx
 		},
 		includeStash (id: string): string
 		{
-			const t: HTMLTemplateElement | null =
-				document.getElementById (`hott-partial--${id}`) as HTMLTemplateElement | null;
-			if (!t) return ("");
-			const tmp: HTMLDivElement = document.createElement ("div");
-			tmp.appendChild (document.importNode (t.content, true));
-			return (tmp.innerHTML);
+			const el: HTMLElement | null = document.getElementById (`hott-partial--${id}`);
+			if (!el) return ("");
+			// Partial stash entries ship as <script type="text/html">
+			// whose .textContent preserves the raw HTML (including
+			// intentionally unbalanced tag pairs between header/footer
+			// partials).
+			return (el.textContent || "");
 		},
 		echo (html: string): void
 		{
-			host.insertAdjacentHTML ("beforeend", html);
+			// Accumulate echoes into a string buffer so the final
+			// innerHTML parse sees a single well-formed fragment.
+			// Legacy .hott partials (admin-panel's header/footer) rely
+			// on unclosed tags from one include being CLOSED by a later
+			// sibling include — per-call insertAdjacentHTML parses each
+			// piece independently, which auto-closes unbalanced tags
+			// and breaks that model.
+			if (html == null) return;
+			buffer.html += String (html);
 		},
 		async jsonRequest (url: string, body: any, auth?: string): Promise<any>
 		{

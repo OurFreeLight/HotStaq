@@ -887,14 +887,22 @@ export class HotStaticBuilder
 			}
 		}
 
-		// HS090-15: resolved partials ship in the same stash so the
-		// runtime's hotCtx.includeStash(id) picks them up synchronously.
+		// HS090-15: resolved partials ship as <script type="text/html">
+		// (not <template>) because legacy .hott partials (admin-panel
+		// header/footer) ship UNBALANCED HTML on purpose: the header
+		// opens wrapping divs that the footer closes later in the
+		// render stream. <template> parses content as HTML and auto-
+		// closes unclosed tags / drops orphan closes — destroying the
+		// pairing. <script type="text/html"> preserves content verbatim
+		// as text, and the runtime reads it via .textContent so the
+		// caller's accumulator sees the original raw HTML.
 		for (const [id, html] of this.resolvedPartials.entries ())
 		{
 			fragments.push (
-				`<template id="hott-partial--${escapeAttr (id)}" data-partial="${escapeAttr (id)}">` +
+				`<script type="text/html" id="hott-partial--${escapeAttr (id)}" ` +
+				`data-partial="${escapeAttr (id)}">` +
 				html +
-				`</template>`
+				`</script>`
 			);
 		}
 
@@ -1086,8 +1094,17 @@ export class HotStaticBuilder
 				`  const __lib = (typeof globalThis !== "undefined" ? globalThis[${lib}] : undefined)\n` +
 				`    || (typeof window !== "undefined" ? window[${lib}] : undefined);\n` +
 				`  if (__lib && typeof __lib[${api}] === "function") {\n` +
-				`    try { registerApi(new __lib[${api}](${base})); }\n` +
-				`    catch (__err) { console.error("[hs090] failed to instantiate " + ${qualName} + ":", __err); }\n` +
+				`    // Legacy HotAPI requires a non-null connection. In a\n` +
+				`    // static build there's no HotServer / HotClient wired\n` +
+				`    // up yet, so pass a stub so the constructor succeeds.\n` +
+				`    // The real fetch path lives in the generated client's\n` +
+				`    // route-method functions, which use window.fetch.\n` +
+				`    const __stubConn = { __hs090_stub: true };\n` +
+				`    try { registerApi(new __lib[${api}](${base}, __stubConn)); }\n` +
+				`    catch (__err) {\n` +
+				`      console.warn("[hs090] could not instantiate " + ${qualName} + " with stub connection; exposing the raw library namespace on hotCtx.api instead.", __err);\n` +
+				`      registerApi(__lib);\n` +
+				`    }\n` +
 				`  } else {\n` +
 				`    console.warn("[hs090] API client " + ${qualName} + " not found; preambles will see an empty hotCtx.api.");\n` +
 				`  }\n` +
@@ -1238,34 +1255,45 @@ export class HotStaticBuilder
 			.map (href => `  <link rel="stylesheet" href="./${href}">`);
 		const moduleJsLines: string[] = this.shellJs
 			.map (src => `  <script src="./${src}"></script>`);
+		const componentRegLines: string = this.shellComponents.flatMap (({ library, names }) =>
+		{
+			const libPrefix: string = library ? library + "." : "";
+			return (names.map (n =>
+				`        try { if (typeof ${libPrefix}${n} !== 'undefined') ` +
+				`Hot.CurrentPage.processor.addComponent(${libPrefix}${n}); } catch (e) {}`
+			));
+		}).join ("\n");
+
 		const componentRegScript: string = this.shellComponents.length === 0
 			? ""
 			: "  <script>\n" +
-			  "    // HS090 legacy-client bootstrap. Runs SYNCHRONOUSLY at parse time\n" +
-			  "    // (NOT wrapped in DOMContentLoaded) so Hot.CurrentPage.processor is\n" +
-			  "    // in place before app.js's runtime mount() executes the compiled\n" +
-			  "    // preamble. document.addEventListener vs window.addEventListener\n" +
-			  "    // ordering on DOMContentLoaded would otherwise race.\n" +
-			  "    (function () {\n" +
+			  "    // HS090 legacy-client bootstrap. Runs TWICE:\n" +
+			  "    //  (a) synchronously at parse time — registers admin-* custom\n" +
+			  "    //      elements immediately so templates with <admin-*> tags\n" +
+			  "    //      upgrade on insert.\n" +
+			  "    //  (b) again on window.load, AFTER hotStaqWebStart — that\n" +
+			  "    //      legacy startup copies HotStaqWeb.Hot onto window.Hot\n" +
+			  "    //      (resetting Hot.CurrentPage to null), so we re-create\n" +
+			  "    //      the page + processor so preambles running after this\n" +
+			  "    //      see a live Hot.CurrentPage.processor.\n" +
+			  "    function __hs090Setup() {\n" +
 			  "      if (typeof HotStaqWeb === 'undefined') return;\n" +
-			  "      if (typeof window.Hot === 'undefined') window.Hot = HotStaqWeb.Hot || {};\n" +
-			  "      if (!Hot.CurrentPage) {\n" +
+			  "      if (typeof window.Hot === 'undefined' || typeof window.Hot === 'object') window.Hot = HotStaqWeb.Hot || {};\n" +
+			  "      if (!Hot.CurrentPage || !Hot.CurrentPage.processor) {\n" +
 			  "        try {\n" +
 			  "          var proc = new HotStaqWeb.HotStaq();\n" +
 			  "          Hot.CurrentPage = new HotStaqWeb.HotPage(proc);\n" +
 			  "          Hot.CurrentPage.processor = proc;\n" +
-			  "        } catch (e) { console.warn('[hs090] legacy bootstrap failed:', e); }\n" +
+			  "        } catch (e) { console.warn('[hs090] legacy bootstrap failed:', e); return; }\n" +
 			  "      }\n" +
 			  "      if (!Hot.CurrentPage || !Hot.CurrentPage.processor) return;\n" +
-			  this.shellComponents.flatMap (({ library, names }) =>
-			  {
-				  const libPrefix: string = library ? library + "." : "";
-				  return (names.map (n =>
-					  `      try { if (typeof ${libPrefix}${n} !== 'undefined') ` +
-					  `Hot.CurrentPage.processor.addComponent(${libPrefix}${n}); } catch (e) {}`
-				  ));
-			  }).join ("\n") + "\n" +
-			  "    })();\n" +
+			  componentRegLines + "\n" +
+			  "    }\n" +
+			  "    __hs090Setup();\n" +
+			  "    if (document.readyState !== 'complete')\n" +
+			  "      window.addEventListener('load', function () { setTimeout(__hs090Setup, 60); }, { once: true });\n" +
+			  "    else\n" +
+			  "      setTimeout(__hs090Setup, 60);\n" +
 			  "  </script>";
 
 		const lines: string[] = [
