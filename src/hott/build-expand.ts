@@ -26,6 +26,8 @@ import * as ppath from "path";
 import { Node, SyntaxKind } from "ts-morph";
 
 import { HotFile } from "../HotFile";
+import { Hot as LegacyHot } from "../Hot";
+import { HotStaq as LegacyHotStaq } from "../HotStaq";
 
 /**
  * Collector the builder passes in so module shims can record assets
@@ -203,11 +205,26 @@ async function renderOne (
 	const source: string = await fsp.readFile (absPath, "utf8");
 	const parsedJs: string = HotFile.parseContent (source, false);
 
-	const result: string = await runCompiledPartial (
-		parsedJs, args, absPath, resolve, visited, inflight, registry, publicDir, assets
-	);
-
-	inflight.delete (absPath);
+	// The sandbox delegates echoUnsafe/echo to legacy Hot (no code
+	// duplication). Hot.Output is the static buffer that echoes
+	// accumulate into; we snapshot it before invoking so nested renders
+	// get a fresh buffer and the caller's Output isn't polluted. Build-
+	// time renders are sequential — no concurrency concern.
+	const savedOutput: string = LegacyHot.Output;
+	LegacyHot.Output = "";
+	let result: string = "";
+	try
+	{
+		await runCompiledPartial (
+			parsedJs, args, absPath, resolve, visited, inflight, registry, publicDir, assets
+		);
+		result = LegacyHot.Output;
+	}
+	finally
+	{
+		LegacyHot.Output = savedOutput;
+		inflight.delete (absPath);
+	}
 	return (result);
 }
 
@@ -293,9 +310,15 @@ function buildSandboxHot (
 		);
 	};
 
+	// The shim delegates output + html helpers directly to the legacy
+	// Hot / HotStaq classes (no duplicated echo/sanitize logic). Methods
+	// that would reach runtime-only APIs (fetch, cookies, window) stay
+	// custom — they throw or no-op so dynamic partials fall back to the
+	// raw-template stash behaviour cleanly.
 	const Hot: any =
 	{
-		Output: "",
+		// Runtime / env context fields legacy compiled .hott may read.
+		Output: "",  // unused; echoUnsafe/echo write to LegacyHot.Output directly (see renderOne).
 		Mode: 0,
 		Arguments: null,
 		CurrentPage: null,
@@ -304,47 +327,38 @@ function buildSandboxHot (
 		TesterAPI: null,
 		Data: {},
 		Debugger: null,
-		echoUnsafe (s: string): void
+		// --- delegated to legacy Hot ---
+		echoUnsafe: (s: string): void =>
 		{
 			if (s == null) return;
-			Hot.Output += String (s);
+			LegacyHot.echoUnsafe (String (s));
 		},
-		echo (s: string): void
+		echo: (s: string): void =>
 		{
 			if (s == null) return;
-			Hot.Output += String (s).replace (/&/g, "&amp;").replace (/</g, "&lt;").replace (/>/g, "&gt;");
+			LegacyHot.echo (String (s));
 		},
+		// --- custom: needs the build-time renderOne path ---
 		async include (path: string, subArgs: any = {}): Promise<void>
 		{
 			if (typeof path !== "string")
 				throw new Error (`[hs090] Hot.include at build time requires a string path; got ${typeof path}`);
-			// 1. Resolve via module registry first (admin-panel-style
-			//    module-prefixed includes: "@hotstaq/admin-panel/...").
 			const modEntry: { name: string; path: string } | null = resolveViaRegistry (path, registry);
-			let nextAbs: string;
-			if (modEntry)
-				nextAbs = ppath.resolve (publicDir, modEntry.path);
-			else
-				nextAbs = resolve (path, absFrom);
+			const nextAbs: string = modEntry
+				? ppath.resolve (publicDir, modEntry.path)
+				: resolve (path, absFrom);
 			const nested: string = await renderOne (
 				nextAbs, subArgs || {}, resolve, visited, inflight, registry, publicDir, assets
 			);
-			Hot.Output += nested;
+			LegacyHot.echoUnsafe (nested);
 		},
-		async includeJS (_url: string, _args?: any[]): Promise<void>
-		{
-			throw new Error (`[hs090] Hot.includeJS called at build time — not supported during partial expansion.`);
-		},
+		// --- custom: consults preloaded module registry ---
 		async import (moduleName: string): Promise<any>
 		{
-			// First: check the registry (shared across expandPartial calls).
 			const cached: SandboxModule | undefined = registry.get (moduleName);
 			if (cached)
 				return (instantiateModuleShim (cached, Hot, assets));
 
-			// Next: try loading from `<publicDir>/hotstaq_modules/<name>/index.js`
-			// — the hotstaq module-install convention used by apps that run
-			// `hotstaq module install @hotstaq/admin-panel`.
 			const modIndex: string = ppath.resolve (
 				publicDir, "hotstaq_modules", moduleName, "index.js"
 			);
@@ -355,14 +369,17 @@ function buildSandboxHot (
 				return (instantiateModuleShim (raw, Hot, assets));
 			}
 
-			// Fallback: plain Node require (plenty of @hotstaq/* packages
-			// export server-side helpers this way). Return empty stub if
-			// not installed — keeps build-time expansion resilient.
 			try { return (require (moduleName)); }
 			catch { return ({}); }
 		},
+		// --- runtime-only: throw so HS090-15 fallback kicks in ---
+		async includeJS (_url: string, _args?: any[]): Promise<void>
+		{
+			throw new Error (`[hs090] Hot.includeJS called at build time — not supported during partial expansion.`);
+		},
 		async getJSON (_url: string): Promise<any> { return (runtimeOnly ("getJSON") ()); },
 		async jsonRequest (_url: string): Promise<any> { return (runtimeOnly ("jsonRequest") ()); },
+		// --- runtime-only: no-op stubs (no browser cookies/url in Node) ---
 		Cookies:
 		{
 			get: (_name: string): string | null => null,
@@ -370,16 +387,15 @@ function buildSandboxHot (
 			remove: (_name: string): void => {}
 		},
 		getUrlParam: (): string => "",
-		sanitizeHTML: (s: string): string => String (s),
-		addHtmlUnsafe: (_owner: any, s: string): string => s
+		// --- delegated to legacy HotStaq (pure, no DOM needed) ---
+		sanitizeHTML: (s: string): string => LegacyHotStaq.sanitizeHTML (s),
+		// addHtmlUnsafe touches document.querySelector — DOM-only. At
+		// build time it's usually referenced from <hot-dom> blocks for
+		// runtime DOM manipulation; a passthrough is correct here because
+		// the caller's compiled .hott uses the return value as an HTML
+		// string that later gets echoed.
+		addHtmlUnsafe: (_parent: any, html: string): string => html
 	};
-
-	// Keep Hot.echoUnsafe bound so the parser-emitted `Hot.echoUnsafe(...)`
-	// call sites don't hit undefined-this issues.
-	Hot.echoUnsafe = Hot.echoUnsafe.bind (Hot);
-	Hot.echo = Hot.echo.bind (Hot);
-	Hot.include = Hot.include.bind (Hot);
-	Hot.import = Hot.import.bind (Hot);
 
 	return (Hot);
 }

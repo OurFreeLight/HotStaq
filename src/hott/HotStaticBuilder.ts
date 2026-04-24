@@ -76,12 +76,16 @@ export interface ManifestEntry
 	sha256: string;
 }
 
+/**
+ * Build output metadata. Describes what was emitted (file hashes, entry
+ * filenames) and embeds the full HotSite that drove the build so
+ * downstream deploy tooling has a single source of truth for routes,
+ * apiClients, cssFiles, jsFiles etc. — no duplicated/derived fields.
+ */
 export interface BuildManifest
 {
 	/** Schema version for downstream deploy tooling. Bumped on shape changes. */
 	manifestVersion: 1;
-	/** HotSite.version when the build ran. */
-	version: string;
 	/** ISO timestamp. */
 	builtAt: string;
 	/** Build mode. */
@@ -96,21 +100,13 @@ export interface BuildManifest
 	};
 	/** Full list of emitted files with sizes + hashes, sorted by path. */
 	files: ManifestEntry[];
-	/** Route table the runtime registered. */
-	routes: {
-		path: string;
-		file: string;
-		preload: "eager" | "lazy" | "never";
-		staticRender: boolean;
-	}[];
-	/** API clients bundled into dist/js/ and wired into the runtime. */
-	apiClients: {
-		app: string;
-		libraryName: string;
-		apiName: string;
-		distPath: string;
-		baseUrl: string;
-	}[];
+	/**
+	 * The HotSite this build was driven from. Includes app name,
+	 * version, web.{app}.routes, web.{app}.apiClient, apis.* etc. —
+	 * consumers that need route or API-client info should walk this
+	 * rather than reading duplicated derived fields.
+	 */
+	hotSite: HotSite;
 }
 
 export interface CompiledRoute
@@ -1354,28 +1350,14 @@ export class HotStaticBuilder
 	{
 		const pkg: { version?: string } = await this.readHotStaqPackageJson ();
 
-		const apiClients: BuildManifest["apiClients"] = [];
-		for (const [appName, resolved] of this.resolvedApiClients.entries ())
-		{
-			apiClients.push ({
-				app: appName,
-				libraryName: resolved.libraryName,
-				apiName: resolved.apiName,
-				distPath: resolved.distPath,
-				baseUrl: resolved.baseUrl
-			});
-		}
-
 		const manifest: BuildManifest = {
 			manifestVersion: 1,
-			version: this.site.version || "0.0.0",
 			builtAt: new Date ().toISOString (),
 			mode: this.opts.mode,
 			hotstaqVersion: pkg.version || "unknown",
 			entry,
 			files: this.manifestFiles.slice ().sort ((a, b) => a.path.localeCompare (b.path)),
-			routes: this.routesForManifest (),
-			apiClients
+			hotSite: this.site
 		};
 
 		await this.writeOutputFile ("build-manifest.json", JSON.stringify (manifest, null, 2));
@@ -1386,24 +1368,6 @@ export class HotStaticBuilder
 	absOut (): string
 	{
 		return (ppath.resolve (this.opts.cwd, this.opts.out));
-	}
-
-	routesForManifest (): BuildManifest["routes"]
-	{
-		const out: BuildManifest["routes"] = [];
-		for (const routes of this.compiledRoutes.values ())
-		{
-			for (const cr of routes)
-			{
-				out.push ({
-					path: cr.route.path,
-					file: cr.route.file,
-					preload: (cr.route.preload || "eager") as "eager" | "lazy" | "never",
-					staticRender: !!cr.route.staticRender
-				});
-			}
-		}
-		return (out);
 	}
 
 	async writeHashedAsset (name: string, ext: string, body: string): Promise<{ path: string; hash: string; size: number }>

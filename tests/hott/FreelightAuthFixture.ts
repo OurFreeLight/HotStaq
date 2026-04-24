@@ -292,10 +292,13 @@ describe ("v0.9.0 — HS090-21 FreelightAuth-shaped pilot fixture", function ()
 	it ("manifest captures pilot shape (apiClient + all three routes)", async () =>
 	{
 		const mf = JSON.parse (await fsp.readFile (ppath.join (out, "build-manifest.json"), "utf8"));
-		expect (mf.apiClients[0]).to.include ({
+		// Manifest embeds the HotSite rather than re-exporting derived
+		// routes/apiClients — walk it the same way the builder does.
+		expect (mf.hotSite.apis.AppAPI).to.include ({
 			libraryName: "freelight_authWeb",
 			apiName: "AppAPI"
 		});
-		expect (mf.routes.map ((r: any) => r.path).sort ()).to.deep.equal (["/", "/login", "/register"]);
+		expect (mf.hotSite.web["freelight-auth-pilot"].routes.map ((r: any) => r.path).sort ())
+			.to.deep.equal (["/", "/login", "/register"]);
 	});
 });

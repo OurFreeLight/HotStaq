@@ -181,11 +181,11 @@ describe ("v0.9.0 — HS090-5/-16 lazy route chunks", function ()
 		expect ((dom.window as any).__settings).to.equal ("mounted");
 	});
 
-	it ("manifest.routes reflects preload tier per route", async () =>
+	it ("manifest.hotSite preserves the preload tier per route", async () =>
 	{
 		const mf = JSON.parse (await fsp.readFile (ppath.join (out, "build-manifest.json"), "utf8"));
 		const byPath: Record<string, any> = {};
-		for (const r of mf.routes) byPath[r.path] = r;
+		for (const r of mf.hotSite.web.lazyapp.routes) byPath[r.path] = r;
 		expect (byPath["/"].preload).to.equal ("eager");
 		expect (byPath["/admin"].preload).to.equal ("lazy");
 		expect (byPath["/settings"].preload).to.equal ("never");

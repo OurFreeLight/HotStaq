@@ -122,8 +122,11 @@ describe ("v0.9.0 — HotStaticBuilder (skeleton)", () =>
 			expect (mf.files.some ((f: any) => f.path === "index.html")).to.be.true;
 			expect (mf.files.some ((f: any) => f.path === "config.json")).to.be.true;
 			expect (mf.files.some ((f: any) => /^app\.[a-f0-9]+\.js$/.test (f.path))).to.be.true;
-			expect (mf.routes.map ((r: any) => r.path)).to.deep.equal (["/", "/login"]);
-			expect (mf.routes[0]).to.include ({ preload: "eager", staticRender: false });
+			// Manifest embeds the HotSite — routes live under
+			// hotSite.web.{app}.routes rather than a derived top-level
+			// field.
+			const mfRoutes: any = mf.hotSite.web.TinyApp.routes;
+			expect (mfRoutes.map ((r: any) => r.path)).to.deep.equal (["/", "/login"]);
 		});
 	});
 

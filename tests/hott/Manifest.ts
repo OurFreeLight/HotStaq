@@ -41,13 +41,12 @@ async function buildMinimal (): Promise<{ tmp: string; out: string; manifest: an
 
 describe ("v0.9.0 — HS090-9 build manifest", () =>
 {
-	it ("includes the required top-level fields", async () =>
+	it ("includes the required top-level fields and embeds the HotSite", async () =>
 	{
 		const { tmp, manifest } = await buildMinimal ();
 		try
 		{
 			expect (manifest.manifestVersion).to.equal (1);
-			expect (manifest.version).to.equal ("1.2.3");
 			expect (manifest.builtAt).to.match (/^\d{4}-\d{2}-\d{2}T/);
 			expect (manifest.mode).to.equal ("production");
 			expect (manifest.hotstaqVersion).to.be.a ("string");
@@ -55,6 +54,10 @@ describe ("v0.9.0 — HS090-9 build manifest", () =>
 			expect (manifest.entry.html).to.equal ("index.html");
 			expect (manifest.entry.js).to.match (/^app\.[a-f0-9]+\.js$/);
 			expect (manifest.entry.css).to.match (/^app\.[a-f0-9]+\.css$/);
+			// HotSite embedded rather than deriving routes/apiClients.
+			expect (manifest.hotSite).to.be.an ("object");
+			expect (manifest.hotSite.name).to.equal ("mftest");
+			expect (manifest.hotSite.version).to.equal ("1.2.3");
 		}
 		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
 	});
@@ -80,30 +83,32 @@ describe ("v0.9.0 — HS090-9 build manifest", () =>
 		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
 	});
 
-	it ("surfaces apiClients with libraryName/apiName/distPath/baseUrl", async () =>
+	it ("preserves HotSite.apis for consumers that need API-client info", async () =>
 	{
 		const { tmp, manifest } = await buildMinimal ();
 		try
 		{
-			expect (manifest.apiClients).to.be.an ("array").with.lengthOf (1);
-			expect (manifest.apiClients[0]).to.include ({
-				app: "mftest",
+			// Downstream tooling reads apis via manifest.hotSite.apis
+			// (single source of truth — no duplicated derived fields).
+			const apis: any = manifest.hotSite.apis;
+			expect (apis).to.be.an ("object");
+			expect (apis.AppAPI).to.include ({
 				libraryName: "demoLibWeb",
 				apiName: "AppAPI",
-				distPath: "js/demoLibWeb_AppAPI.js",
-				baseUrl: "http://x"
+				url: "http://x"
 			});
 		}
 		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
 	});
 
-	it ("surfaces the route table with preload + staticRender defaults", async () =>
+	it ("preserves HotSite.web.{app}.routes so consumers can walk them", async () =>
 	{
 		const { tmp, manifest } = await buildMinimal ();
 		try
 		{
-			expect (manifest.routes).to.deep.equal ([
-				{ path: "/", file: "./public/index.hott", preload: "eager", staticRender: false }
+			const routes: any = manifest.hotSite.web.mftest.routes;
+			expect (routes).to.deep.equal ([
+				{ path: "/", file: "./public/index.hott" }
 			]);
 		}
 		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
