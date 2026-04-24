@@ -1,7 +1,7 @@
 import express from "express";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { ListToolsRequestSchema, CallToolRequestSchema, CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import { HotAPI } from "./HotAPI";
@@ -52,11 +52,19 @@ interface MCPToolDefinition
 }
 
 /**
- * Exposes a HotAPI as an MCP (Model Context Protocol) server using SSE transport.
+ * Exposes a HotAPI as an MCP (Model Context Protocol) server using the
+ * Streamable HTTP transport in stateless mode.
  *
  * This class walks all routes and methods on a HotAPI instance and registers
- * them as MCP tools. When a tool is called via MCP, it makes an internal HTTP
- * fetch to the actual API endpoint and returns the result.
+ * them as MCP tools. When a tool is called via MCP, it makes an internal
+ * in-process call through the full HotStaq request pipeline and returns
+ * the result.
+ *
+ * Each POST to the MCP route is self-contained: a fresh Server + transport
+ * are created per request, authorization runs once, and cleanup fires when
+ * the response closes. There is no long-lived session state — which means
+ * no "Session not found" 404s when a reverse proxy reaps an idle SSE
+ * stream.
  */
 export class HotMCPServer
 {
@@ -74,49 +82,45 @@ export class HotMCPServer
 	 */
 	logger: HotLog;
 	/**
-	 * The MCP Server instances keyed by session ID.
-	 * A new Server instance is created per SSE connection because the MCP SDK
-	 * Server class only supports one active transport at a time.
-	 */
-	servers: { [sessionId: string]: Server };
-	/**
 	 * The registered tool definitions.
 	 */
 	tools: MCPToolDefinition[];
 	/**
-	 * Active SSE transports keyed by session ID.
-	 */
-	transports: { [sessionId: string]: SSEServerTransport };
-	/**
-	 * Authorized values from connection-level authorization, keyed by session ID.
-	 * Set when onServerAuthorize is used and a connection is successfully authorized.
-	 */
-	authorizedValues: { [sessionId: string]: any };
-	/**
-	 * Executes when authorizing an incoming MCP SSE connection. The value
-	 * returned from here will be stored as the connection's authorizedValue
-	 * and passed into tool call ServerRequests via bearerToken. Returning
-	 * undefined means authorization failed and the connection will be closed.
-	 * If any exceptions are thrown, the connection will be closed with an error.
+	 * Executes when authorizing an incoming MCP request. The value returned
+	 * from here is stored as the connection's authorizedValue and passed
+	 * into tool call ServerRequests via bearerToken. Returning undefined
+	 * means authorization failed and the request will be rejected with 401.
+	 * If any exceptions are thrown, the request will be rejected with 401
+	 * and the exception message in the body.
 	 *
-	 * The bearer token from the MCP connection request (query param or header)
-	 * will be passed in via request.bearerToken.
+	 * The bearer token from the request (Authorization header or `?token=`
+	 * query param) is passed via request.bearerToken.
 	 *
-	 * Set to null to skip connection-level authorization (default).
+	 * Set to null to skip authorization (default).
+	 *
+	 * Note on semantics change from pre-0.8.141: under the SSE transport
+	 * this ran once per long-lived connection. Under the Streamable HTTP
+	 * transport it runs once per tool-call request.
 	 */
 	onServerAuthorize: ServerAuthorizationFunction;
 	/**
-	 * Executes after a successful MCP SSE connection is established.
+	 * Executes after a successful MCP request is authorized.
+	 *
+	 * Note on semantics change from pre-0.8.141: under the SSE transport
+	 * this ran once per long-lived connection. Under the Streamable HTTP
+	 * transport it runs once per tool-call request. The sessionId argument
+	 * is always a freshly-generated UUID for request tracing; it does not
+	 * persist across requests.
 	 */
 	onSuccessfulConnection: ((sessionId: string, authorizedValue: any) => Promise<void>);
 	/**
 	 * Executes right when a client connects before onServerAuthorize is called.
-	 * If this returns false, the connection will be closed immediately.
+	 * If this returns false, the request will be rejected with 403 Forbidden.
 	 * Use onServerAuthorize for authorization logic, not here.
 	 */
 	onConnection: ((req: express.Request) => Promise<boolean>);
 	/**
-	 * Executes after a connection fails authorization.
+	 * Executes after a request fails authorization.
 	 */
 	onConnectionError: ((req: express.Request, errorMessage: string) => Promise<void>);
 
@@ -126,9 +130,6 @@ export class HotMCPServer
 		this.route = route;
 		this.logger = new HotLog (HotLogLevel.All);
 		this.tools = [];
-		this.transports = {};
-		this.servers = {};
-		this.authorizedValues = {};
 		this.onServerAuthorize = null;
 		this.onSuccessfulConnection = null;
 		this.onConnection = null;
@@ -205,16 +206,17 @@ export class HotMCPServer
 	}
 
 	/**
-	 * Create a fresh MCP Server instance with handlers registered.
-	 * A new instance is required per SSE connection because the MCP SDK
-	 * Server class only supports one active transport at a time.
+	 * Create a fresh MCP Server instance with handlers registered for this
+	 * request. The authorizedValue (from onServerAuthorize or the raw bearer
+	 * token) is captured in closure so tool calls can flow it through as
+	 * connection-level auth.
 	 */
-	protected createServerInstance (): Server
+	protected createServerInstance (authorizedValue: any): Server
 	{
 		let instance: Server = new Server (
 				{
 					name: "HotStaq MCP Server",
-					version: "1.0.0"
+					version: HotStaq.version
 				},
 				{
 					capabilities: {
@@ -223,16 +225,17 @@ export class HotMCPServer
 				}
 			);
 
-		this.registerHandlers (instance);
+		this.registerHandlers (instance, authorizedValue);
 
 		return (instance);
 	}
 
 	/**
 	 * Register the MCP request handlers for tools/list and tools/call on
-	 * the given Server instance.
+	 * the given Server instance. The authorizedValue is used as a fallback
+	 * bearer token when a per-call token isn't supplied via _meta.
 	 */
-	protected registerHandlers (instance: Server): void
+	protected registerHandlers (instance: Server, authorizedValue: any): void
 	{
 		instance.setRequestHandler (ListToolsRequestSchema, async () =>
 			{
@@ -267,7 +270,7 @@ export class HotMCPServer
 
 				try
 				{
-					let result = await this.executeToolCall (tool, args, request);
+					let result = await this.executeToolCall (tool, args, request, authorizedValue);
 
 					return (result);
 				}
@@ -295,7 +298,7 @@ export class HotMCPServer
 	 * the full HotStaq sanitization pipeline (validation, authorization,
 	 * pre/post execute hooks, etc).
 	 */
-	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any): Promise<CallToolResult>
+	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any, authorizedValue?: any): Promise<CallToolResult>
 	{
 		let server: HotHTTPServer = this.api.connection as HotHTTPServer;
 		let route: HotRoute = this.api.routes[tool.routeName];
@@ -324,18 +327,58 @@ export class HotMCPServer
 				bearerToken = bearerToken.substring (7);
 		}
 
+		// Fall back to the connection-level authorizedValue (from onServerAuthorize
+		// or raw header) when no per-call token was sent. We pass it through as
+		// bearerToken so processRequest's onAuthorizeUser sees it the same way
+		// it would for an HTTP request.
+		if (bearerToken === "" && authorizedValue != null &&
+			typeof (authorizedValue) === "string")
+		{
+			bearerToken = authorizedValue;
+		}
+
 		// Build the authorization header so processRequest can read it the same way
 		// it does for normal HTTP requests.
 		let authHeader: string = bearerToken !== "" ? `Bearer ${bearerToken}` : "";
 
-		// Build a synthetic Express req object. processRequest reads req.body/query
-		// for the JSON/query params, and req.headers.authorization for the bearer token —
-		// matching exactly how a real HTTP request arrives.
+		// Build a synthetic Express req object that mirrors a real Express request
+		// closely enough for route handlers, middleware, and processRequest to work.
+		// In addition to body/query/headers, handlers commonly access req.ip,
+		// req.connection.remoteAddress, req.get(), req.originalUrl, req.protocol, etc.
+		let reqHeaders: any = authHeader !== "" ? { authorization: authHeader } : {};
+
+		// MCP arguments are always sent as a JSON object. Route handlers read from
+		// req.jsonObj (which is req.body), so always populate body — regardless of
+		// the underlying route's HTTP method. Putting args in the query string for
+		// GET routes breaks object-typed params (e.g. list filters) because
+		// HotProcessInput.processInput rejects non-object values with "must be an
+		// object". Treating MCP calls as body-bearing requests avoids that.
 		let req: any = {
 				method: tool.httpMethod,
-				body: (tool.httpMethod === "GET") ? {} : args,
-				query: (tool.httpMethod === "GET") ? args : {},
-				headers: authHeader !== "" ? { authorization: authHeader } : {},
+				body: args,
+				query: {},
+				headers: reqHeaders,
+				ip: "127.0.0.1",
+				ips: [],
+				protocol: "mcp",
+				secure: false,
+				hostname: "localhost",
+				originalUrl: tool.urlPath,
+				path: tool.urlPath,
+				baseUrl: "",
+				params: {},
+				httpVersion: "1.1",
+				connection: { remoteAddress: "127.0.0.1", encrypted: false },
+				socket: { remoteAddress: "127.0.0.1", encrypted: false },
+				cookies: {},
+				get: (name: string): string | undefined =>
+					{
+						return (reqHeaders[name.toLowerCase ()]);
+					},
+				header: (name: string): string | undefined =>
+					{
+						return (reqHeaders[name.toLowerCase ()]);
+					},
 				on: (_event: string, _handler: any) => {}
 			};
 
@@ -344,6 +387,8 @@ export class HotMCPServer
 		// which creates a ServerRequest without req/res when there's no HTTP context.
 		let capturedStatus: number = 200;
 		let capturedBody: any = undefined;
+
+		let resHeaders: any = {};
 
 		let res: any = {
 				status: (code: number) =>
@@ -356,9 +401,35 @@ export class HotMCPServer
 					{
 						capturedBody = value;
 					},
+				send: (value: any) =>
+					{
+						capturedBody = value;
+					},
+				end: () => {},
 				on: (_event: string, _handler: any) => {},
-				set: (_headers: any) => {},
-				flushHeaders: () => {}
+				set: (headers: any) =>
+					{
+						if (typeof (headers) === "object")
+							Object.assign (resHeaders, headers);
+
+						return (res);
+					},
+				setHeader: (name: string, value: string) =>
+					{
+						resHeaders[name] = value;
+
+						return (res);
+					},
+				getHeader: (name: string): string | undefined =>
+					{
+						return (resHeaders[name]);
+					},
+				getHeaders: (): any =>
+					{
+						return (resHeaders);
+					},
+				flushHeaders: () => {},
+				headersSent: false
 			};
 
 		// Delegate to processRequest — this runs the full HotStaq pipeline:
@@ -391,13 +462,16 @@ export class HotMCPServer
 	}
 
 	/**
-	 * Handle an incoming SSE connection request, running the connection lifecycle:
-	 * onConnection (early gate), onServerAuthorize (auth), then establishing
-	 * the MCP SSE transport. Mirrors HotWebSocketServer's connection handling.
+	 * Handle an incoming MCP POST request via the Streamable HTTP transport.
+	 *
+	 * Each request is fully self-contained: connection gate → bearer-token
+	 * extraction → onServerAuthorize → fresh Server + transport → tool call
+	 * → response → cleanup. No state persists between requests, so there's
+	 * no session map to invalidate and no long-lived connection to reap.
 	 */
-	protected async handleSSEConnection (req: express.Request, res: express.Response, messageRoute: string): Promise<void>
+	protected async handleMCPRequest (req: express.Request, res: express.Response): Promise<void>
 	{
-		this.logger.verbose (() => `New MCP SSE connection from ${req.ip}`);
+		this.logger.verbose (() => `New MCP request from ${req.ip}`);
 
 		// Early connection gate — developer can reject before auth runs.
 		if (this.onConnection != null)
@@ -418,33 +492,37 @@ export class HotMCPServer
 
 			if (allowed === false)
 			{
-				this.logger.verbose (`MCP connection rejected by onConnection from ${req.ip}`);
+				this.logger.verbose (`MCP request rejected by onConnection from ${req.ip}`);
 				res.status (403).json ({ error: "Forbidden" });
 
 				return;
 			}
 		}
 
-		// Connection-level authorization — optional, mirrors HotWebSocketServer.onServerAuthorize.
-		let authorizedValue: any = null;
+		// Extract bearer token from Authorization header or query param.
+		// This is done regardless of whether onServerAuthorize is set, so
+		// the token can flow into tool calls even without a custom auth callback.
+		let bearerToken: string = "";
+
+		if (req.headers.authorization != null)
+		{
+			bearerToken = req.headers.authorization;
+
+			if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
+				bearerToken = bearerToken.substring (7);
+		}
+		else if ((req.query.token != null) && (typeof (req.query.token) === "string"))
+		{
+			bearerToken = req.query.token as string;
+		}
+
+		// Request-level authorization — optional. When set, the callback
+		// validates the token and returns an authorized value. When not set,
+		// the raw bearer token is stored so it can flow into tool calls.
+		let authorizedValue: any = bearerToken !== "" ? bearerToken : null;
 
 		if (this.onServerAuthorize != null)
 		{
-			// Extract bearer token from Authorization header or query param.
-			let bearerToken: string = "";
-
-			if (req.headers.authorization != null)
-			{
-				bearerToken = req.headers.authorization;
-
-				if (bearerToken.startsWith ("Bearer ") || bearerToken.startsWith ("bearer "))
-					bearerToken = bearerToken.substring (7);
-			}
-			else if ((req.query.token != null) && (typeof (req.query.token) === "string"))
-			{
-				bearerToken = req.query.token as string;
-			}
-
 			let request: ServerRequest = new ServerRequest ({
 					req: req,
 					res: null,
@@ -473,7 +551,7 @@ export class HotMCPServer
 
 			if (authorizedValue === undefined)
 			{
-				this.logger.verbose (`MCP unauthorized connection from ${req.ip}`);
+				this.logger.verbose (`MCP unauthorized request from ${req.ip}`);
 
 				if (this.onConnectionError != null)
 					await this.onConnectionError (req, "Unauthorized");
@@ -484,78 +562,97 @@ export class HotMCPServer
 			}
 		}
 
-		this.logger.verbose (() => `MCP SSE connection authorized from ${req.ip}`);
+		this.logger.verbose (() => `MCP request authorized from ${req.ip}`);
 
-		let transport = new SSEServerTransport (messageRoute, res as any);
+		// Stateless mode: sessionIdGenerator undefined → no session ID, no
+		// validation, no map to poison. Each request is independent.
+		let transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport ({
+				sessionIdGenerator: undefined
+			});
 
-		// Create a fresh Server instance per connection — the MCP SDK Server
-		// only supports one active transport at a time.
-		let sessionServer: Server = this.createServerInstance ();
+		let sessionServer: Server = this.createServerInstance (authorizedValue);
 
-		this.transports[transport.sessionId] = transport;
-		this.servers[transport.sessionId] = sessionServer;
+		try
+		{
+			await sessionServer.connect (transport);
 
-		if (authorizedValue != null)
-			this.authorizedValues[transport.sessionId] = authorizedValue;
-
-		transport.onclose = () =>
+			if (this.onSuccessfulConnection != null)
 			{
-				delete this.transports[transport.sessionId];
-				delete this.servers[transport.sessionId];
-				delete this.authorizedValues[transport.sessionId];
-			};
+				// Synthesize a per-request identifier for the callback's telemetry.
+				// This does not persist across requests — the stateless transport
+				// has no concept of a durable session.
+				let requestId: string = `${Date.now ()}-${Math.random ().toString (36).slice (2, 10)}`;
 
-		await sessionServer.connect (transport);
+				await this.onSuccessfulConnection (requestId, authorizedValue);
+			}
 
-		if (this.onSuccessfulConnection != null)
-			await this.onSuccessfulConnection (transport.sessionId, authorizedValue);
+			// The transport consumes the pre-parsed Express body so the JSON
+			// middleware that's already drained the stream doesn't leave us
+			// staring at an empty read.
+			await transport.handleRequest (req as any, res as any, req.body);
+		}
+		catch (ex)
+		{
+			this.logger.error (`MCP request error: ${ex.message}`);
+
+			if (res.headersSent === false)
+			{
+				res.status (500).json ({
+						jsonrpc: "2.0",
+						error: { code: -32603, message: "Internal server error" },
+						id: null
+					});
+			}
+		}
+		finally
+		{
+			// Clean up the per-request transport + server when the response
+			// finishes. The SDK's close() is idempotent so calling it here is
+			// safe even if the transport already closed naturally.
+			let cleanup = () =>
+				{
+					try { transport.close (); } catch (_) {}
+					try { sessionServer.close (); } catch (_) {}
+				};
+
+			if (res.writableEnded)
+				cleanup ();
+			else
+				res.on ("close", cleanup);
+		}
 	}
 
 	/**
-	 * Attach the MCP SSE endpoints to an Express application.
+	 * Attach the MCP endpoints to an Express application.
+	 *
+	 * The server speaks the Streamable HTTP transport on a single POST
+	 * route. GET and DELETE on the same route return 405 Method Not
+	 * Allowed so misbehaving clients see a clear failure instead of a
+	 * quiet hang.
 	 */
 	async attach (app: express.Express): Promise<void>
 	{
-		let sseRoute: string = `${this.route}/sse`;
-		let messageRoute: string = `${this.route}/message`;
-
-		// SSE endpoint (/mcp/sse)
-		app.get (sseRoute, async (req: express.Request, res: express.Response) =>
+		app.post (this.route, async (req: express.Request, res: express.Response) =>
 			{
-				await this.handleSSEConnection (req, res, messageRoute);
+				await this.handleMCPRequest (req, res);
 			});
 
-		// Also handle GET on the base route as SSE (/mcp)
-		app.get (this.route, async (req: express.Request, res: express.Response) =>
+		app.get (this.route, (_req: express.Request, res: express.Response) =>
 			{
-				await this.handleSSEConnection (req, res, messageRoute);
+				res.status (405).json ({
+						jsonrpc: "2.0",
+						error: { code: -32000, message: "Method not allowed. Use POST for Streamable HTTP MCP." },
+						id: null
+					});
 			});
 
-		// Message endpoint — routes MCP JSON-RPC messages to the correct session transport.
-		app.post (messageRoute, async (req: express.Request, res: express.Response) =>
+		app.delete (this.route, (_req: express.Request, res: express.Response) =>
 			{
-				let sessionId: string = req.query.sessionId as string;
-
-				if (sessionId == null)
-				{
-					res.status (400).json ({ error: "Missing sessionId query parameter" });
-
-					return;
-				}
-
-				let transport: SSEServerTransport = this.transports[sessionId];
-
-				if (transport == null)
-				{
-					res.status (404).json ({ error: "Session not found" });
-
-					return;
-				}
-
-				// Pass req.body as the pre-parsed body — Express's JSON middleware
-			// consumes the stream before this handler runs, so we must provide
-			// the already-parsed body explicitly.
-			await transport.handlePostMessage (req as any, res as any, req.body);
+				res.status (405).json ({
+						jsonrpc: "2.0",
+						error: { code: -32000, message: "Method not allowed." },
+						id: null
+					});
 			});
 	}
 }

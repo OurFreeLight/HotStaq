@@ -211,7 +211,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.8.132";
+	static version: string = "0.8.141";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -1625,7 +1625,57 @@ export class HotStaq implements IHotStaq
 		if (paramType == null || paramType === "")
 			return ("string");
 
-		return (paramType);
+		let lower: string = paramType.toLowerCase ();
+
+		// Map HotStaq validation types to valid JSON Schema types.
+		switch (lower)
+		{
+			case "string":
+			case "uuid":
+			case "text":
+			case "richtext":
+			case "objectname":
+			case "messagetexst":
+			case "date":
+			case "email":
+			case "url":
+			case "ip":
+			case "ignore":
+			case "delete":
+			case "messagetext":
+				return ("string");
+
+			case "integer":
+			case "int":
+				return ("integer");
+
+			case "number":
+			case "float":
+				return ("number");
+
+			case "boolean":
+			case "bool":
+				return ("boolean");
+
+			case "array":
+				return ("array");
+
+			case "object":
+			case "map":
+				return ("object");
+
+			case "enum":
+				return ("string");
+
+			default:
+				// Custom/reference types — treat as object.
+				// Matches interface-style names (e.g. IFreeUser, IBankAccount) and
+				// plain class names (e.g. Agreement, Expense, Relationship, Payment).
+				if (paramType.length > 0 && paramType[0] === paramType[0].toUpperCase ())
+					return ("object");
+
+				return ("string");
+		}
 	}
 
 	/**
@@ -1636,20 +1686,25 @@ export class HotStaq implements IHotStaq
 	 */
 	static convertParamToJSONSchemaProperty (param: HotRouteMethodParameter): any
 	{
+		let jsonSchemaType: string = HotStaq.convertParamTypeToJSONSchemaType (param.type);
 		let prop: any = {
-				type: HotStaq.convertParamTypeToJSONSchemaType (param.type)
+				type: jsonSchemaType
 			};
 
 		if (param.description != null)
 			prop.description = param.description;
 
-		if (param.type === "array" && param.items != null)
+		// Add enum values if the HotStaq type is Enum and values are provided.
+		if (param.type != null && param.type.toLowerCase () === "enum" && (param as any).values != null)
+			prop.enum = (param as any).values;
+
+		if (jsonSchemaType === "array" && param.items != null)
 		{
 			if (typeof (param.items) !== "function")
 				prop.items = HotStaq.convertParamToJSONSchemaProperty (param.items);
 		}
 
-		if (param.type === "object" && param.parameters != null)
+		if (jsonSchemaType === "object" && param.parameters != null)
 		{
 			prop.properties = {};
 

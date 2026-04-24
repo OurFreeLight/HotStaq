@@ -20,7 +20,25 @@ build:
       - build-web/
     expire_in: 1 hour
   rules:
-    - if: '$CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH =~ /^feat\//'
+
+# HS090-20 dual-mode compatibility gate — every commit must keep SSR
+# behaviour and v0.9.0 static-build behaviour both green. Runs on every
+# pushed branch, not just dev/main.
+test:
+  stage: build
+  image: node:22-bookworm
+  script:
+    - npm ci
+    - npm run build
+    - npm test
+  artifacts:
+    when: on_failure
+    paths:
+      - build/
+    expire_in: 1 day
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
 
 publish:
   stage: publish
@@ -29,6 +47,7 @@ publish:
     - build
   script:
     - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+    - npm ci --ignore-scripts
     - npm publish --ignore-scripts
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

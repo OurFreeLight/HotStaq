@@ -48,9 +48,82 @@ export interface HotSiteRoute
 }
 
 /**
- * A HotSite to load. This SHOULD NOT contain any private secret keys, passwords, 
- * or database connection information related to the server. As such, future 
- * versions of the HotSite interface should not contain any database related 
+ * Preload tier for a web route in the v0.9.0 static build.
+ *
+ * - `eager` — template inlined into index.html stash, preamble in app.js bundle (default)
+ * - `lazy` — template + preamble ship in app-route-{slug}.js, prefetched on hover/focus
+ * - `never` — same as lazy but no prefetch; loads on click
+ */
+export type HotSiteWebRoutePreload = "eager" | "lazy" | "never";
+
+/**
+ * A v0.9.0 static-build web route. SSR mode ignores the static-specific
+ * fields; they only take effect when `hotstaq build --static` runs.
+ */
+export interface HotSiteWebRoute
+{
+	/** URL path the route is served at, e.g. `/login`. */
+	path: string;
+	/** Path to the .hott file, relative to publicDir. */
+	file: string;
+	/** Preload tier; defaults to `eager`. */
+	preload?: HotSiteWebRoutePreload;
+	/**
+	 * When true, the compiler runs the preamble at build time against the
+	 * configured fixtures and bakes resulting HTML into the template stash.
+	 * For SEO-sensitive routes. Requires `fixtures`, `fixturesApi`, or
+	 * `fixturesScript`.
+	 */
+	staticRender?: boolean;
+	/** Static JSON fixture file used when `staticRender: true`. */
+	fixtures?: string;
+	/** Live preview API URL used when `staticRender: true`. */
+	fixturesApi?: string;
+	/** Script that returns fixture data at build time. */
+	fixturesScript?: string;
+}
+
+/**
+ * Explicit partial manifest entry for build-time Hot.include() resolution.
+ */
+export interface HotSiteWebPartial
+{
+	/** Stable stash id, typically the path minus `.hott`. */
+	id: string;
+	/** Path to the partial source file, relative to publicDir. */
+	src: string;
+}
+
+/**
+ * v0.9.0 API client bundling configuration (HS090-8). Tells the static
+ * builder how to find and wire the auto-generated Web API client into
+ * the emitted app.js so preambles can call `hotCtx.api.route.method(...)`
+ * without needing the legacy HotStaq.min.js global.
+ */
+export interface HotSiteWebApiClient
+{
+	/**
+	 * HotSite.apis key whose library we load. Defaults to the first
+	 * apis entry when only one is present.
+	 */
+	apiRef?: string;
+	/**
+	 * Path to the generated client JS file, relative to publicDir.
+	 * Defaults to `./js/${libraryName}_${apiName}.js` (the path emitted
+	 * by `hotstaq generate --api`).
+	 */
+	bundlePath?: string;
+	/**
+	 * Base URL passed to the client constructor at runtime. Defaults to
+	 * HotSite.apis[apiRef].url.
+	 */
+	baseUrl?: string;
+}
+
+/**
+ * A HotSite to load. This SHOULD NOT contain any private secret keys, passwords,
+ * or database connection information related to the server. As such, future
+ * versions of the HotSite interface should not contain any database related
  * connection info.
  */
 export interface HotSite
@@ -243,6 +316,46 @@ export interface HotSite
 				 * The maps to test in order.
 				 */
 				map?: string[];
+				/**
+				 * The root URL served by this web app. Used by the v0.9.0
+				 * static builder to emit <base href> and the SPA router's
+				 * scope. Ignored by SSR mode.
+				 */
+				mainUrl?: string;
+				/**
+				 * Extra JavaScript files to include in the static build
+				 * output. Paths are relative to publicDir. SSR mode ignores.
+				 */
+				jsFiles?: string[];
+				/**
+				 * CSS files to concatenate into dist/app.[hash].css during
+				 * `hotstaq build --static` (HS090-7). Paths are resolved
+				 * relative to cwd, so entries can reach into node_modules
+				 * (e.g. `node_modules/@hotstaq/admin-panel/public/main.css`)
+				 * or live under publicDir. Order is preserved. SSR mode
+				 * ignores.
+				 */
+				cssFiles?: string[];
+				/**
+				 * v0.9.0 static build routes. Populated for apps that opt
+				 * into `hotstaq build --static`. SSR mode ignores these —
+				 * it still discovers routes via the filesystem crawl.
+				 */
+				routes?: HotSiteWebRoute[];
+				/**
+				 * Explicit partial manifest for build-time Hot.include()
+				 * resolution (HS090-15). Required when --static --strict
+				 * is used. SSR mode ignores.
+				 */
+				partials?: HotSiteWebPartial[];
+				/**
+				 * v0.9.0 API client wiring (HS090-8). When set, the
+				 * static builder copies the referenced client script
+				 * into dist/js/, emits a <script> tag in index.html,
+				 * and calls registerApi() on `new libraryName[apiName]`
+				 * so preambles access it via `hotCtx.api`.
+				 */
+				apiClient?: HotSiteWebApiClient;
 			};
 		};
 	/**
