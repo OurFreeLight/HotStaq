@@ -39,6 +39,12 @@ export interface PartialCall
 	/** Literal args object if the call site passed one, else null. */
 	args: Record<string, any> | null;
 	/**
+	 * Verbatim source text of the args expression. Runtime-inline uses
+	 * this so caller-scope live variables (e.g. a runtime-fetched
+	 * `config`) flow into the partial naturally.
+	 */
+	argsExprText: string | null;
+	/**
 	 * Stable stash id the compiled preamble references via
 	 * hotCtx.includeStash(...). Derived from path for plain literal
 	 * includes, or path + args-hash when args are present so that two
@@ -232,33 +238,49 @@ function rewriteIncludeCall (
 			partials.push (stringLiteral);
 		}
 
-		// Check for a second-arg literal object — admin-panel, userroute
-		// etc. pass { TITLE, SIDEBAR_ITEMS } here.
+		// Capture the second-arg expression. If it's literal we also
+		// materialise the values so the builder can try build-time
+		// expansion; if that fails (or args were non-literal), the
+		// builder swaps in a runtime-inline partial call whose args
+		// use the verbatim source text so caller-scope variables flow
+		// into the partial naturally.
 		let argsValue: Record<string, any> | null = null;
+		let argsExprText: string | null = null;
 		if (args.length >= 2)
 		{
 			const second = args[1];
+			argsExprText = second.getText ();
 			if (isLiteralAst (second))
 			{
 				argsValue = materialiseLiteral (second) as Record<string, any>;
 			}
-			else
-			{
-				warnings.push ({
-					code: "hott/hot-include-dynamic-args",
-					message: "Hot.include() called with a non-literal args object; partial will not be build-time expanded.",
-					start: call.getStart (),
-					end: call.getEnd ()
-				});
-			}
 		}
 
 		const stashId: string = stashIdFor (stringLiteral, argsValue);
-		partialCalls.push ({ path: stringLiteral, args: argsValue, stashId });
-		// Wrap in hotCtx.echo so the partial HTML actually lands in the
-		// mount host. The legacy Hot.include appended to Hot.Output as a
-		// side effect; our v0.9.0 equivalent is echo-into-host.
-		call.replaceWithText (`${ctx}.echo(${ctx}.includeStash(${JSON.stringify (stashId)}))`);
+		partialCalls.push ({ path: stringLiteral, args: argsValue, argsExprText, stashId });
+
+		// Emit a placeholder the builder rewrites during entry code-gen:
+		//   → hotCtx.echo(hotCtx.includeStash('<id>'))          (argless)
+		//   → await hotCtx.__includePartial('<id>', <argsExpr>) (with args)
+		// The __includePartial placeholder carries the live args
+		// expression text so runtime-inline can invoke a local fn. When
+		// the original call is already inside an `await` expression we
+		// replace that parent so the final placeholder has exactly one
+		// leading `await`, not two.
+		if (argsExprText !== null)
+		{
+			const parent = call.getParent ();
+			const targetNode = (parent && parent.getKind () === SyntaxKind.AwaitExpression)
+				? parent
+				: call;
+			targetNode.replaceWithText (
+				`await ${ctx}.__includePartial(${JSON.stringify (stashId)}, ${argsExprText})`
+			);
+		}
+		else
+		{
+			call.replaceWithText (`${ctx}.echo(${ctx}.includeStash(${JSON.stringify (stashId)}))`);
+		}
 		return;
 	}
 
