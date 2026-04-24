@@ -30,15 +30,36 @@ export interface CompileWarning
 }
 
 /**
- * One captured literal Hot.include call. `args` is null when the site
- * passed no args or the args weren't a literal; the builder treats null
- * as "fall back to raw-template stash" and non-null as "build-time
- * expand against these args."
+ * One captured literal Hot.include call. `args` is the materialised
+ * literal args object (with `undefined` for any non-literal values),
+ * or `null` if the call site passed no args.
+ *
+ * Policy for the builder (HS090-15 + runtime-partial-inline, v0.9.1+):
+ *  - args == null:            raw-template stash inline (cheap, sync).
+ *  - args is fully literal:   try build-time expansion → bake HTML into
+ *                             the stash. Falls through to the next row
+ *                             if the partial's preamble needs runtime
+ *                             APIs (hotCtx.getJSON, cookies, etc.).
+ *  - args partially literal
+ *    OR expansion fails:      runtime-inline the partial's compiled
+ *                             preamble into the caller's preamble as
+ *                             a local async function invoked with
+ *                             argsExprText. Args destructure into the
+ *                             partial's scope; the caller's runtime
+ *                             variables flow through naturally.
  */
 export interface PartialCallRecord
 {
 	path: string;
 	args: Record<string, any> | null;
+	/**
+	 * Verbatim JavaScript source of the args object expression as it
+	 * appeared in the caller's preamble. Used by runtime-partial-inline
+	 * to emit `await __partial_N(hotCtx, <argsExprText>)` so caller's
+	 * live variables flow into the partial without losing references.
+	 * Null when no args were passed.
+	 */
+	argsExprText: string | null;
 	stashId: string;
 }
 

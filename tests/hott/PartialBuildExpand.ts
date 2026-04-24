@@ -254,4 +254,54 @@ describe ("v0.9.0 — HS090-15 build-time partial expansion (admin-panel shape)"
 		}
 		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
 	});
+
+	/**
+	 * Runtime-partial-inline.
+	 *
+	 * When build-time expansion fails (e.g. the partial reads runtime-only
+	 * values like hotCtx.getJSON or a caller-scope variable), the builder
+	 * emits the partial as a local async function in the caller's preamble
+	 * with args destructured from `__args`. Caller-scope live variables
+	 * (e.g. config fetched at runtime) flow into the partial naturally.
+	 */
+	it ("inlines the partial as a local async fn when caller passes runtime args", async () =>
+	{
+		const tmp: string = await fsp.mkdtemp (ppath.join (os.tmpdir (), "hs091-inline-"));
+		try
+		{
+			const pub: string = ppath.join (tmp, "public");
+			await fsp.mkdir (ppath.join (pub, "components"), { recursive: true });
+
+			await fsp.writeFile (ppath.join (pub, "components", "badge.hott"),
+				"<* Hot.echo(`Hello ${config.name}`); *>"
+			);
+			await fsp.writeFile (ppath.join (pub, "index.hott"),
+				"<* const config = await Hot.getJSON('/c.json');\n" +
+				"   await Hot.include('./components/badge.hott', { config: config }); *>\n" +
+				"<main></main>"
+			);
+
+			const site: HotSite = {
+				name: "rti",
+				web: { "rti": { mainUrl: "/", routes: [
+					{ path: "/p", file: "./public/index.hott", preload: "lazy" }
+				] } }
+			};
+			const out: string = ppath.join (tmp, "dist");
+			const builder = new HotStaticBuilder (site, { cwd: tmp, out, mode: "development" });
+			await builder.build ();
+
+			const files = await fsp.readdir (out);
+			const chunkFile = files.find (f => f.startsWith ("app-route-p."));
+			expect (chunkFile, `expected lazy chunk, got ${files.join (",")}`).to.be.a ("string");
+
+			const chunkJs = await fsp.readFile (ppath.join (out, chunkFile!), "utf8");
+
+			expect (chunkJs).to.match (/async function __hs_p_components_badge/);
+			expect (chunkJs).to.not.include ("await await __hs_p_");
+			expect (chunkJs).to.not.include ("__includePartial");
+			expect (chunkJs).to.match (/await __hs_p_components_badge[\w]+\(/);
+		}
+		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
+	});
 });

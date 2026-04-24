@@ -149,6 +149,13 @@ export class HotStaticBuilder
 	readonly routeChunks: Map<string, string> = new Map ();
 	/** HS090-15 build-time expansion: shared across partial expansions. */
 	private readonly moduleRegistry: Map<string, SandboxModule> = new Map ();
+	/**
+	 * v0.9.1 runtime-partial-inline: compiled source of each partial
+	 * reachable from any Hot.include(path, args) call site, keyed by
+	 * absolute file path. Reused across call sites so identical partials
+	 * don't recompile.
+	 */
+	private readonly runtimePartialSources: Map<string, HottModule> = new Map ();
 	/** HS090-15: shell-head-hoisted <link>/<script> references from modules. */
 	private readonly shellCss: string[] = [];
 	private readonly shellJs: string[] = [];
@@ -194,8 +201,9 @@ export class HotStaticBuilder
 		// 1c. copy web.{app}.jsFiles + queue them for the shell head.
 		await this.resolveJsFiles ();
 
-		// 2. resolve partials (HS090-15).
+		// 2. resolve partials (HS090-15 + v0.9.1 runtime-inline).
 		await this.resolvePartials ();
+		await this.prepareRuntimePartials ();
 
 		// 3. staticRender routes — HS090-19.
 		await this.prerenderStaticRoutes ();
@@ -593,7 +601,7 @@ export class HotStaticBuilder
 			this.warnings.push ({
 				code: "hs090-15/expand-fallback",
 				message: `Build-time expansion of ${work.src} (id="${work.stashId}") failed: ${String ((err as Error).message || err)}. ` +
-					`Falling back to raw-template inline.`,
+					`Falling back to runtime-partial-inline (caller's runtime scope supplies values).`,
 				where: `web.${work.fromApp}`
 			});
 			return (null);
@@ -926,6 +934,14 @@ export class HotStaticBuilder
 					appName, cr, templateId, preload as "lazy" | "never"
 				);
 
+				if (this.opts.verbose)
+				{
+					await fsp.writeFile (
+						ppath.resolve (this.opts.cwd, `__chunk_dump_${sluggifyPath (cr.route.path)}.js`),
+						chunkSource
+					);
+				}
+
 				// Bundle through esbuild so preamble TS/JSX/ES2023+ syntax
 				// gets downleveled consistently with app.js.
 				const result = await esbuild.build ({
@@ -968,7 +984,8 @@ export class HotStaticBuilder
 	{
 		const templateLiteral: string = JSON.stringify (cr.module.template);
 		const scripts: string = JSON.stringify (cr.module.scripts);
-		const preambleFn: string = preambleToAsyncFn (cr.module.preamble);
+		const inlinedPreamble: string = this.buildRuntimeInlinedPreamble (cr, appName);
+		const preambleFn: string = preambleToAsyncFn (inlinedPreamble);
 
 		return ([
 			`(function () {`,
@@ -998,6 +1015,129 @@ export class HotStaticBuilder
 			`  });`,
 			`})();`
 		].join ("\n"));
+	}
+
+	/**
+	 * v0.9.1 runtime-partial-inline: compile every partial referenced
+	 * by a Hot.include(path, args) call site and cache its HottModule.
+	 * generateEntrySource() splices these into each caller's preamble
+	 * as local async functions so the partial body runs at mount with
+	 * the caller's live variables in scope.
+	 *
+	 * Partials with no args (argless Hot.include) continue to use the
+	 * HS090-15 stash path — this method leaves those alone.
+	 */
+	async prepareRuntimePartials (): Promise<void>
+	{
+		for (const [appName, compiled] of this.compiledRoutes.entries ())
+		{
+			for (const cr of compiled)
+			{
+				for (const call of cr.module.partialCalls)
+				{
+					if (call.argsExprText === null)
+						continue; // argless — use stash.
+
+					const abs: string = this.resolvePartialPath (call.path, appName);
+					if (this.runtimePartialSources.has (abs))
+						continue;
+					if (!fs.existsSync (abs))
+					{
+						this.warnings.push ({
+							code: "hs091/partial-not-found",
+							message: `Runtime-inline partial ${call.path} not found at ${abs}.`,
+							where: `web.${appName}`
+						});
+						continue;
+					}
+					const source: string = await fsp.readFile (abs, "utf8");
+					const mod: HottModule = compileSource (source, { filename: abs });
+					this.runtimePartialSources.set (abs, mod);
+					for (const w of mod.warnings)
+						this.warnings.push ({ code: w.code, message: w.message, where: abs });
+				}
+			}
+		}
+	}
+
+	/**
+	 * Given a route's compiled preamble source, rewrite every
+	 * `hotCtx.__includePartial(stashId, argsExpr)` placeholder (emitted
+	 * by rewrite-preamble when Hot.include has args) into a call to a
+	 * locally-declared async function. Returns the modified body plus
+	 * the function declarations to prepend inside the preamble closure.
+	 */
+	private buildRuntimeInlinedPreamble (
+		cr: CompiledRoute,
+		appName: string,
+		ctx: string = "hotCtx"
+	): string
+	{
+		const declarations: string[] = [];
+		const declared: Set<string> = new Set ();
+		const decl = (fnName: string, compiledPartial: HottModule, argKeys: string[]): void =>
+		{
+			if (declared.has (fnName)) return;
+			declared.add (fnName);
+			// `let` (not `const`) because legacy partials often reassign
+			// their args — `if (typeof name === "undefined") name = "...";`
+			// is idiomatic .hott. Also pulled from `__args` directly
+			// (not via hotCtx) since hotCtx is the single arg of the
+			// wrapper function.
+			const destructure: string = argKeys.length > 0
+				? `let { ${argKeys.join (", ")} } = __args || {};`
+				: "";
+			// The partial's compiled preamble uses `hotCtx` too; it
+			// receives the same hotCtx the caller has, so its echoes
+			// land in the caller's buffer naturally. __args is a local
+			// on hotCtx only for the destructure above — we pass it
+			// in via a tiny shim below to avoid polluting the partial.
+			declarations.push (
+				`async function ${fnName}(hotCtx, __args) {\n` +
+				`  ${destructure}\n` +
+				`  ${compiledPartial.preamble}\n` +
+				`}`
+			);
+		};
+
+		let body: string = cr.module.preamble;
+
+		// Replace every `await hotCtx.__includePartial("<id>", <expr>)`
+		// occurrence. Paren-matching regex (non-greedy) is sufficient
+		// for the output rewrite-preamble emits — it's always one line.
+		for (const call of cr.module.partialCalls)
+		{
+			if (call.argsExprText === null)
+				continue;
+
+			const abs: string = this.resolvePartialPath (call.path, appName);
+			const partial: HottModule | undefined = this.runtimePartialSources.get (abs);
+			if (!partial)
+				continue;
+
+			const argKeys: string[] = call.args ? Object.keys (call.args) : [];
+			const fnName: string = `__hs_p_${safeFnName (call.stashId)}`;
+			decl (fnName, partial, argKeys);
+
+			// Rewrite the placeholder in body: replace the whole
+			// `await hotCtx.__includePartial("<id>", <argsExpr>)`
+			// with `await <fnName>(hotCtx, <argsExpr>)`.
+			const placeholderStart: string = `await ${ctx}.__includePartial(${JSON.stringify (call.stashId)}, `;
+			let idx: number = body.indexOf (placeholderStart);
+			while (idx !== -1)
+			{
+				const argsStart: number = idx + placeholderStart.length;
+				const argsEnd: number = findMatchingClose (body, argsStart);
+				if (argsEnd === -1)
+					break;
+				const argsExpr: string = body.substring (argsStart, argsEnd);
+				const replacement: string = `await ${fnName}(${ctx}, ${argsExpr})`;
+				body = body.substring (0, idx) + replacement + body.substring (argsEnd + 1);
+				idx = body.indexOf (placeholderStart, idx + replacement.length);
+			}
+		}
+
+		return ([ ...declarations, body ].join ("\n"));
 	}
 
 	async bundleAppJs (): Promise<{ path: string; hash: string; size: number }>
@@ -1141,7 +1281,8 @@ export class HotStaticBuilder
 				}
 
 				const templateId: string = templateIdForRoute (appName, cr.route.path);
-				const preambleFn: string = preambleToAsyncFn (cr.module.preamble);
+				const inlinedPreamble: string = this.buildRuntimeInlinedPreamble (cr, appName);
+				const preambleFn: string = preambleToAsyncFn (inlinedPreamble);
 				const scripts: string = JSON.stringify (cr.module.scripts);
 				const preloadJson: string = JSON.stringify (preload);
 
@@ -1522,6 +1663,79 @@ function sluggifyPath (routePath: string): string
 {
 	if (routePath === "/") return ("root");
 	return (routePath.replace (/^\/+/, "").replace (/\/+$/, "").replace (/[^a-zA-Z0-9_\-]/g, "-").toLowerCase () || "root");
+}
+
+/**
+ * Turn a partial stashId (e.g. `header#44136fa355`) into a JS-safe
+ * identifier for a generated function name.
+ */
+function safeFnName (stashId: string): string
+{
+	return (stashId.replace (/[^a-zA-Z0-9_]/g, "_"));
+}
+
+/**
+ * Given an open position right AFTER an opening `(`, find the index of
+ * the matching close `)`. Respects basic string literals (single/double/
+ * backtick with escapes) and nested parens. Returns -1 if no match.
+ * Used to slice the args expression out of a
+ * `hotCtx.__includePartial("id", <argsExpr>)` placeholder.
+ */
+function findMatchingClose (src: string, start: number): number
+{
+	let depth: number = 1;
+	let i: number = start;
+	const len: number = src.length;
+	while (i < len)
+	{
+		const ch: string = src.charAt (i);
+		if (ch === "\"" || ch === "'" || ch === "`")
+		{
+			i = skipStringFrom (src, i, ch);
+			continue;
+		}
+		if (ch === "(") depth++;
+		else if (ch === ")")
+		{
+			depth--;
+			if (depth === 0) return (i);
+		}
+		i++;
+	}
+	return (-1);
+}
+
+function skipStringFrom (src: string, start: number, quote: string): number
+{
+	let i: number = start + 1;
+	const len: number = src.length;
+	while (i < len)
+	{
+		const ch: string = src.charAt (i);
+		if (ch === "\\") { i += 2; continue; }
+		if (ch === quote) return (i + 1);
+		// Template literal ${ ... } interpolations — skip to matching }
+		if (quote === "`" && ch === "$" && src.charAt (i + 1) === "{")
+		{
+			i += 2;
+			let braceDepth: number = 1;
+			while (i < len && braceDepth > 0)
+			{
+				const c: string = src.charAt (i);
+				if (c === "\"" || c === "'" || c === "`")
+				{
+					i = skipStringFrom (src, i, c);
+					continue;
+				}
+				if (c === "{") braceDepth++;
+				else if (c === "}") braceDepth--;
+				i++;
+			}
+			continue;
+		}
+		i++;
+	}
+	return (len);
 }
 
 function escapeAttr (s: string): string
