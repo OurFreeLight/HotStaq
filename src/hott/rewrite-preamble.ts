@@ -254,7 +254,10 @@ function rewriteIncludeCall (
 
 		const stashId: string = stashIdFor (stringLiteral, argsValue);
 		partialCalls.push ({ path: stringLiteral, args: argsValue, stashId });
-		call.replaceWithText (`${ctx}.includeStash(${JSON.stringify (stashId)})`);
+		// Wrap in hotCtx.echo so the partial HTML actually lands in the
+		// mount host. The legacy Hot.include appended to Hot.Output as a
+		// side effect; our v0.9.0 equivalent is echo-into-host.
+		call.replaceWithText (`${ctx}.echo(${ctx}.includeStash(${JSON.stringify (stashId)}))`);
 		return;
 	}
 
@@ -268,9 +271,9 @@ function rewriteIncludeCall (
 
 	// Rewrite to ctx.includeStash so at least it doesn't reference the
 	// global Hot at runtime. The ctx implementation can fall back to a
-	// runtime lookup for dynamic ids.
+	// runtime lookup for dynamic ids. Still wrap in echo so it mounts.
 	const argText: string = first.getText ();
-	call.replaceWithText (`${ctx}.includeStash(${argText})`);
+	call.replaceWithText (`${ctx}.echo(${ctx}.includeStash(${argText}))`);
 }
 
 /**

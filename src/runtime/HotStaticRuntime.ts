@@ -191,7 +191,16 @@ export async function mount (targetPath?: string): Promise<void>
 	state.currentAbort = abort;
 
 	host.innerHTML = "";
-	host.appendChild (document.importNode (template.content, true));
+
+	// Pure-static templates have their HTML inline in the stash; we
+	// clone that first so the initial paint is free of preamble latency.
+	// Dynamic routes (.hott files that contain <* *> preambles) have an
+	// empty stash template and rely on the compiled preamble to echo all
+	// content in source order — that preserves admin-panel's header →
+	// body → footer layering.
+	const stashHtml: string = template.innerHTML || "";
+	if (stashHtml.trim () !== "")
+		host.appendChild (document.importNode (template.content, true));
 
 	const ctx: HotCtx = buildHotCtx (host, abort);
 
@@ -211,8 +220,9 @@ export async function mount (targetPath?: string): Promise<void>
 		return;
 
 	// Re-execute inline scripts: the tokenizer left empty placeholder
-	// <script data-hott-script="hott-sN"> nodes in the template; replace
-	// them with real scripts so the browser runs the bodies.
+	// <script data-hott-script="hott-sN"> nodes; replace them with real
+	// scripts so the browser runs the bodies. Works whether they
+	// landed via template clone or preamble echo.
 	executeInlineScripts (host, route.scripts || []);
 }
 
@@ -435,7 +445,44 @@ function buildHotCtx (host: HTMLElement, abort: AbortController): HotCtx
 		},
 		async import (pkg: string): Promise<any>
 		{
-			return (import (/* webpackIgnore: true */ pkg));
+			// 1) If a legacy-compat bootstrap has populated the
+			//    processor's module map (via the <script src> load
+			//    of hotstaq_modules/{name}/index.js), just return
+			//    the cached HotModule.
+			const w: any = (typeof window !== "undefined" ? window : null);
+			if (w && w.Hot && w.Hot.CurrentPage && w.Hot.CurrentPage.processor)
+			{
+				const proc: any = w.Hot.CurrentPage.processor;
+				if (typeof proc.getModule === "function")
+				{
+					const cached: any = proc.getModule (pkg);
+					if (cached) return (cached);
+				}
+			}
+
+			// 2) Fetch + eval hotstaq_modules/{pkg}/index.js the way
+			//    legacy Hot.import does. The file expects a
+			//    HotStaqWeb.HotModule global already on the page.
+			try
+			{
+				const res: Response = await fetch (`./hotstaq_modules/${pkg}/index.js`);
+				if (res.ok && w)
+				{
+					const body: string = await res.text ();
+					// eslint-disable-next-line no-new-func
+					const fn: Function = new Function (body);
+					const mod: any = fn.call (w);
+					if (w.Hot && w.Hot.CurrentPage && w.Hot.CurrentPage.processor &&
+						typeof w.Hot.CurrentPage.processor.addModule === "function")
+					{
+						w.Hot.CurrentPage.processor.addModule (pkg, mod);
+					}
+					return (mod);
+				}
+			}
+			catch { /* fall through */ }
+
+			return ({});
 		},
 		includeStash (id: string): string
 		{

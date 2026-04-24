@@ -5,7 +5,7 @@ import { compileSource } from "../../src/hott/compile";
 
 describe ("v0.9.0 parser — compile", () =>
 {
-	it ("extracts template, preamble, scripts, partials from a realistic .hott file", () =>
+	it ("extracts preamble (interleaved), scripts, partials from a realistic .hott file", () =>
 	{
 		const src = `
 <* await Hot.include('./partials/header.hott');
@@ -26,16 +26,17 @@ describe ("v0.9.0 parser — compile", () =>
 		expect (mod.scripts).to.have.lengthOf (1);
 		expect (mod.scripts[0]).to.equal ("console.log('mounted');");
 
-		// Template should contain the HTML with a placeholder <script> for
-		// the inline body.
-		expect (mod.template).to.include ("<h1>Welcome</h1>");
-		expect (mod.template).to.include ("data-hott-script=\"hott-s0\"");
-		expect (mod.template).to.not.include ("console.log");
-
-		// Preamble should have Hot.* rewrites + includeStash calls.
+		// Routes with preamble blocks use interleaved compile — the
+		// template stash entry is empty; source order is preserved in
+		// the compiled preamble by mixing echo(staticHtml) calls with
+		// the rewritten preamble code.
+		expect (mod.template).to.equal ("");
 		expect (mod.preamble).to.include ("hotCtx.getJSON(");
-		expect (mod.preamble).to.include ("hotCtx.includeStash(\"partials/header\")");
-		expect (mod.preamble).to.include ("hotCtx.includeStash(\"partials/footer\")");
+		expect (mod.preamble).to.include ("hotCtx.echo(hotCtx.includeStash(\"partials/header\"))");
+		expect (mod.preamble).to.include ("hotCtx.echo(hotCtx.includeStash(\"partials/footer\"))");
+		expect (mod.preamble).to.include ("<h1>Welcome</h1>");
+		expect (mod.preamble).to.include ("data-hott-script=\\\"hott-s0\\\"");
+		expect (mod.preamble).to.not.include ("console.log");
 	});
 
 	it ("produces an empty preamble for template-only files", () =>

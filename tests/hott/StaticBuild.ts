@@ -22,14 +22,15 @@ async function withTempApp (build: (cwd: string) => Promise<void>): Promise<void
 	{
 		const pub: string = ppath.join (tmp, "public");
 		await fsp.mkdir (pub, { recursive: true });
+		// Pure-static templates (no <* *> preamble): template HTML lands
+		// directly in the <template> stash so this test asserts against
+		// the on-disk index.html.
 		await fsp.writeFile (
 			ppath.join (pub, "index.hott"),
-			"<* const cfg = await Hot.getJSON('/config.json'); *>\n" +
-			"<main><h1>Welcome</h1><p>${cfg.env}</p></main>\n"
+			"<main><h1>Welcome</h1><p>home</p></main>\n"
 		);
 		await fsp.writeFile (
 			ppath.join (pub, "login.hott"),
-			"<* /* no preamble references */ *>\n" +
 			"<section><h2>Sign In</h2>\n" +
 			"<script>window.__onMount='login';</script>\n" +
 			"</section>\n"
