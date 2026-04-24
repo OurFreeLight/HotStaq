@@ -71,6 +71,7 @@ const SIMPLE_REWRITES: Record<string, AccessRewriter | null> =
 {
 	// API / fetch helpers.
 	getJSON: (ctx) => `${ctx}.getJSON`,
+	jsonRequest: (ctx) => `${ctx}.jsonRequest`,
 	echoUnsafe: (ctx) => `${ctx}.echo`,
 	echo: (ctx) => `${ctx}.echo`,
 	import: (ctx) => `${ctx}.import`,

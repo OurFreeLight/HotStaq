@@ -497,6 +497,23 @@ function buildHotCtx (host: HTMLElement, abort: AbortController): HotCtx
 		{
 			host.insertAdjacentHTML ("beforeend", html);
 		},
+		async jsonRequest (url: string, body: any, auth?: string): Promise<any>
+		{
+			const headers: Record<string, string> = {
+				"Accept": "application/json",
+				"Content-Type": "application/json"
+			};
+			if (auth) headers["Authorization"] = "Bearer " + auth;
+			const res: Response = await fetch (url, {
+				method: "POST",
+				headers,
+				body: JSON.stringify (body),
+				signal: abort.signal
+			});
+			const text: string = await res.text ();
+			try { return (JSON.parse (text)); }
+			catch { return (text); }
+		},
 		async includeJS (url: string, args: any[] = []): Promise<any>
 		{
 			// Legacy-compat helper: Hot.includeJS("./js/foo.js", [arg1, arg2])

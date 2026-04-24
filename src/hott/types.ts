@@ -105,4 +105,10 @@ export interface HotCtx
 	 * using Hot.includeJS() in SSR mode for bootstrap helpers.
 	 */
 	includeJS (url: string, args?: any[]): Promise<any>;
+	/**
+	 * POST a JSON object to a URL and return the parsed JSON response.
+	 * Legacy Hot.jsonRequest(url, body, auth?) → same signature on
+	 * hotCtx so preambles migrate 1:1.
+	 */
+	jsonRequest (url: string, body: any, auth?: string): Promise<any>;
 }
