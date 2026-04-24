@@ -1241,22 +1241,22 @@ export class HotStaticBuilder
 		const componentRegScript: string = this.shellComponents.length === 0
 			? ""
 			: "  <script>\n" +
-			  "    window.addEventListener('DOMContentLoaded', function () {\n" +
-			  "      // HS090 legacy-client bootstrap: when an app ships HotStaq.min.js\n" +
-			  "      // via jsFiles (to get HotStaqWeb.HotComponent and the processor),\n" +
-			  "      // wire up a minimal CurrentPage so addComponent can register the\n" +
-			  "      // <admin-*> custom elements.\n" +
-			  "      if (typeof HotStaqWeb !== 'undefined') {\n" +
-			  "        if (typeof window.Hot === 'undefined') window.Hot = HotStaqWeb.Hot || {};\n" +
-			  "        if (!Hot.CurrentPage) {\n" +
-			  "          try {\n" +
-			  "            var proc = new HotStaqWeb.HotStaq();\n" +
-			  "            Hot.CurrentPage = new HotStaqWeb.HotPage(proc);\n" +
-			  "            Hot.CurrentPage.processor = proc;\n" +
-			  "          } catch (e) { console.warn('[hs090] legacy bootstrap failed:', e); }\n" +
-			  "        }\n" +
+			  "    // HS090 legacy-client bootstrap. Runs SYNCHRONOUSLY at parse time\n" +
+			  "    // (NOT wrapped in DOMContentLoaded) so Hot.CurrentPage.processor is\n" +
+			  "    // in place before app.js's runtime mount() executes the compiled\n" +
+			  "    // preamble. document.addEventListener vs window.addEventListener\n" +
+			  "    // ordering on DOMContentLoaded would otherwise race.\n" +
+			  "    (function () {\n" +
+			  "      if (typeof HotStaqWeb === 'undefined') return;\n" +
+			  "      if (typeof window.Hot === 'undefined') window.Hot = HotStaqWeb.Hot || {};\n" +
+			  "      if (!Hot.CurrentPage) {\n" +
+			  "        try {\n" +
+			  "          var proc = new HotStaqWeb.HotStaq();\n" +
+			  "          Hot.CurrentPage = new HotStaqWeb.HotPage(proc);\n" +
+			  "          Hot.CurrentPage.processor = proc;\n" +
+			  "        } catch (e) { console.warn('[hs090] legacy bootstrap failed:', e); }\n" +
 			  "      }\n" +
-			  "      if (typeof Hot === 'undefined' || !Hot.CurrentPage || !Hot.CurrentPage.processor) return;\n" +
+			  "      if (!Hot.CurrentPage || !Hot.CurrentPage.processor) return;\n" +
 			  this.shellComponents.flatMap (({ library, names }) =>
 			  {
 				  const libPrefix: string = library ? library + "." : "";
@@ -1265,7 +1265,7 @@ export class HotStaticBuilder
 					  `Hot.CurrentPage.processor.addComponent(${libPrefix}${n}); } catch (e) {}`
 				  ));
 			  }).join ("\n") + "\n" +
-			  "    });\n" +
+			  "    })();\n" +
 			  "  </script>";
 
 		const lines: string[] = [
