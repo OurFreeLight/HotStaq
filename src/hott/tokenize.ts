@@ -91,6 +91,19 @@ function findPreambleClose (src: string, bodyStart: number): number
 {
 	const len: number = src.length;
 	let i: number = bodyStart;
+	// Tracks the last non-whitespace, non-comment byte seen. Used to
+	// disambiguate `/` between division (after ident/number/`)`) and
+	// regex literal (after operator / keyword / opening delim). Without
+	// this, regexes like `value.replace(/\"/g, ...)` — where the `"`
+	// inside the regex looks like a string start — corrupt the preamble
+	// close scan.
+	let prevSignificant: string = "";
+
+	const markSig = (c: string): void =>
+	{
+		if (c === " " || c === "\t" || c === "\n" || c === "\r") return;
+		prevSignificant = c;
+	};
 
 	while (i < len)
 	{
@@ -99,6 +112,7 @@ function findPreambleClose (src: string, bodyStart: number): number
 		if (ch === "\"" || ch === "'" || ch === "`")
 		{
 			i = skipStringLiteral (src, i, ch);
+			prevSignificant = ch;
 			continue;
 		}
 
@@ -108,14 +122,22 @@ function findPreambleClose (src: string, bodyStart: number): number
 
 			if (n === "/")
 			{
-				// Line comment.
 				i = skipUntil (src, i + 2, "\n");
 				continue;
 			}
 			if (n === "*")
 			{
-				// Block comment.
 				i = skipBlockComment (src, i + 2);
+				continue;
+			}
+
+			// Regex literal vs division. Regex is valid when the
+			// preceding significant char is an operator, delimiter, or
+			// empty (start of body).
+			if (isRegexAllowedAfter (prevSignificant))
+			{
+				i = skipRegexLiteral (src, i);
+				prevSignificant = "/";
 				continue;
 			}
 		}
@@ -123,10 +145,43 @@ function findPreambleClose (src: string, bodyStart: number): number
 		if (ch === "*" && src.charAt (i + 1) === ">")
 			return (i);
 
+		markSig (ch);
 		i++;
 	}
 
 	return (-1);
+}
+
+function isRegexAllowedAfter (c: string): boolean
+{
+	if (c === "") return (true);
+	// Identifier chars / digits / ) ] → division context.
+	if (/[A-Za-z0-9_$)\]]/.test (c)) return (false);
+	return (true);
+}
+
+function skipRegexLiteral (src: string, start: number): number
+{
+	const len: number = src.length;
+	let i: number = start + 1;
+	let inClass: boolean = false;
+	while (i < len)
+	{
+		const ch: string = src.charAt (i);
+		if (ch === "\\") { i += 2; continue; }
+		if (ch === "[") inClass = true;
+		else if (ch === "]") inClass = false;
+		else if (ch === "/" && !inClass)
+		{
+			// Consume flags.
+			let j: number = i + 1;
+			while (j < len && /[gimsuy]/.test (src.charAt (j))) j++;
+			return (j);
+		}
+		else if (ch === "\n") return (i); // unterminated; bail.
+		i++;
+	}
+	return (len);
 }
 
 function skipStringLiteral (src: string, start: number, quote: string): number
