@@ -960,7 +960,7 @@ export class HotStaticBuilder
 					sourcemap: this.opts.mode === "development" ? "inline" : false,
 					legalComments: "none",
 					logLevel: "silent",
-					banner: { js: `/* HotStaq v0.9.1 lazy chunk: ${cr.route.path} */` }
+					banner: { js: `/* HotStaq v0.9.0 lazy chunk: ${cr.route.path} */` }
 				});
 
 				const body: string = result.outputFiles && result.outputFiles.length > 0
@@ -1177,7 +1177,7 @@ export class HotStaticBuilder
 				)
 			},
 			banner: {
-				js: "/* HotStaq v0.9.1 static build (HS090). */"
+				js: "/* HotStaq v0.9.0 static build (HS090). */"
 			},
 			logLevel: "silent",
 			alias: {
@@ -1352,7 +1352,7 @@ export class HotStaticBuilder
 		if (chunks.length === 0)
 		{
 			return (this.writeHashedAsset ("app", "css",
-				"/* HotStaq v0.9.1 — no cssFiles configured. */\n"));
+				"/* HotStaq v0.9.0 — no cssFiles configured. */\n"));
 		}
 
 		const combined: string = chunks.join ("\n\n");
@@ -1450,7 +1450,7 @@ export class HotStaticBuilder
 			"</head>",
 			"<body>",
 			"  <div id=\"app\"></div>",
-			"  <!-- HotStaq v0.9.1 template stash -->",
+			"  <!-- HotStaq v0.9.0 template stash -->",
 			stash,
 			apiShim,
 			...apiClientTags,

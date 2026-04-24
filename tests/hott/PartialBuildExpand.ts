@@ -256,7 +256,7 @@ describe ("v0.9.0 — HS090-15 build-time partial expansion (admin-panel shape)"
 	});
 
 	/**
-	 * v0.9.1 — runtime-partial-inline.
+	 * Runtime-partial-inline.
 	 *
 	 * When build-time expansion fails (e.g. the partial reads runtime-only
 	 * values like hotCtx.getJSON or a caller-scope variable), the builder
@@ -264,7 +264,7 @@ describe ("v0.9.0 — HS090-15 build-time partial expansion (admin-panel shape)"
 	 * with args destructured from `__args`. Caller-scope live variables
 	 * (e.g. config fetched at runtime) flow into the partial naturally.
 	 */
-	it ("inlines the partial as a local async fn when caller passes runtime args (v0.9.1)", async () =>
+	it ("inlines the partial as a local async fn when caller passes runtime args", async () =>
 	{
 		const tmp: string = await fsp.mkdtemp (ppath.join (os.tmpdir (), "hs091-inline-"));
 		try
