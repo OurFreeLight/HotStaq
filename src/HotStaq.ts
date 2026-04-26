@@ -142,6 +142,33 @@ export interface IHotValidReturn
 	value?: any;
 }
 
+/**
+ * Options for `HotStaq.installFetchInterceptors`. All fields are optional —
+ * the bare-minimum install (with no options) just gives you the per-nav
+ * AbortController, which is the universally-useful piece. The 401 hook is
+ * opinionated session-out UX and is left to each app to wire up.
+ */
+export interface IHotFetchInterceptorOptions
+{
+	/**
+	 * Request URLs that should bypass both the per-nav AbortController and
+	 * the 401 hook. A request is skipped if its URL starts with any string
+	 * here. Use this for endpoints that must survive SPA navigation (the
+	 * canonical case is OIDC's `/token` — silent token refresh shouldn't
+	 * die just because the user clicked a sidebar link mid-flight).
+	 */
+	skipUrls?: string[];
+	/**
+	 * Called when an authenticated `fetch(...)` returns a 401 response.
+	 * The handler runs after the response resolves; the response itself is
+	 * still returned to the original caller, so existing error-handling
+	 * paths in app code keep working. Use this to clear local credentials
+	 * and surface "your session expired" UX. Skipped for URLs in
+	 * `skipUrls` (those 401s are the responsibility of the refresh path).
+	 */
+	on401?: (response: Response, request: RequestInfo, init: RequestInit) => void;
+}
+
 export interface ParsedInterface
 {
 	type: string;
@@ -211,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.1";
+	static version: string = "0.9.2";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -273,6 +300,33 @@ export class HotStaq implements IHotStaq
 	 * Event fired after SPA navigation completes.
 	 */
 	static onAfterNavigate: (path: string) => void | Promise<void> = null;
+	/**
+	 * If true (the default), `enableSPA` automatically wires up fetch
+	 * interceptors that abort the previous page's pending requests when
+	 * the user navigates between SPA routes. Set this to false BEFORE the
+	 * `<hotstaq>` element runs (e.g. in a <script> earlier in <head>) to
+	 * opt out — useful if your frontend already wraps `window.fetch` and
+	 * doesn't want HotStaq to compose with it.
+	 */
+	static autoInstallFetchInterceptors: boolean = true;
+	/**
+	 * The current page's AbortController. Aborted on every SPA navigation
+	 * so previous-page fetches die before the new page's requests go out.
+	 * `installFetchInterceptors` populates this.
+	 */
+	static navAbort: AbortController = null;
+	/**
+	 * Internal: tracks whether `installFetchInterceptors` has wrapped
+	 * `window.fetch` and `onBeforeNavigate`. Exposed for tests; do not
+	 * toggle from app code.
+	 */
+	protected static fetchInterceptorsInstalled: boolean = false;
+	/**
+	 * Internal: most recent options passed to `installFetchInterceptors`,
+	 * read by the wrapped fetch on every call so apps can update
+	 * `skipUrls` / `on401` after install without re-wrapping.
+	 */
+	protected static fetchInterceptorOptions: IHotFetchInterceptorOptions = {};
 	/**
 	 * Errors to execute when something goes wrong.
 	 */
@@ -3070,6 +3124,16 @@ export class HotStaq implements IHotStaq
 		// Restore SPA data from window backup if class properties were reset.
 		HotStaq.restoreSpaData ();
 
+		// Wire up the per-nav AbortController unless the app opted out.
+		// Without this, rapid SPA clicks leave each old page's fetches
+		// running against an already-swapped target, and saturate the
+		// browser's per-origin connection cap so the new page's requests
+		// queue indefinitely behind abandoned ones. Apps can re-call
+		// installFetchInterceptors later with `on401` / `skipUrls` to
+		// layer in session-out UX without re-wrapping fetch.
+		if (HotStaq.autoInstallFetchInterceptors === true)
+			HotStaq.installFetchInterceptors ();
+
 		// Set up link interception.
 		document.addEventListener ("click", (e: MouseEvent) =>
 			{
@@ -3134,6 +3198,117 @@ export class HotStaq implements IHotStaq
 
 		// Prefetch all route .hott files in the background for instant SPA navigation.
 		HotStaq.prefetchRoutes ();
+	}
+
+	/**
+	 * Install fetch interceptors for SPA-mode frontends. Two pieces:
+	 *
+	 *   (a) Per-navigation `AbortController`. Every `window.fetch(...)`
+	 *       that doesn't already pass its own `signal` gets attached to
+	 *       `HotStaq.navAbort.signal`. On every SPA navigation the
+	 *       controller is aborted and replaced, so the previous page's
+	 *       in-flight requests die cleanly before the new page makes its
+	 *       own. Without this, rapid clicks accumulate abandoned fetches
+	 *       that occupy the browser's 6-per-origin connection cap and
+	 *       block subsequent page loads.
+	 *
+	 *   (b) Optional 401 hook. If `options.on401` is provided, any 401
+	 *       response from a non-skipped URL invokes the hook so the app
+	 *       can clear local credentials and surface "session expired"
+	 *       UX. The response is still returned to the original caller —
+	 *       the hook is purely additive.
+	 *
+	 * Idempotent: re-calling updates `skipUrls` / `on401` in place
+	 * without re-wrapping `window.fetch` or `onBeforeNavigate`. Called
+	 * automatically by `enableSPA` when
+	 * `HotStaq.autoInstallFetchInterceptors === true` (the default); set
+	 * that flag to `false` before the `<hotstaq>` element processes if
+	 * your app needs to manage fetch wrapping itself.
+	 *
+	 * @param options Skip-list and 401 hook. May be re-passed later to
+	 *                update either field.
+	 */
+	static installFetchInterceptors (options: IHotFetchInterceptorOptions = {}): void
+	{
+		// Merge so multiple callers can each contribute (e.g. one app
+		// adds a skipUrl, another wires up on401).
+		HotStaq.fetchInterceptorOptions = {
+			...HotStaq.fetchInterceptorOptions,
+			...options,
+			skipUrls: [
+				...((HotStaq.fetchInterceptorOptions || {}).skipUrls || []),
+				...(options.skipUrls || [])
+			]
+		};
+
+		if (HotStaq.fetchInterceptorsInstalled === true)
+			return;
+
+		HotStaq.fetchInterceptorsInstalled = true;
+
+		if (typeof window === "undefined" || typeof window.fetch !== "function")
+			return;
+
+		HotStaq.navAbort = new AbortController ();
+
+		const origFetch = window.fetch.bind (window);
+
+		window.fetch = function (input: RequestInfo, init?: RequestInit): Promise<Response>
+		{
+			const opts: IHotFetchInterceptorOptions = HotStaq.fetchInterceptorOptions || {};
+			const url: string = (typeof input === "string")
+				? input
+				: ((input && (input as Request).url) || "");
+
+			let isSkipUrl: boolean = false;
+			const skipUrls: string[] = opts.skipUrls || [];
+
+			for (let iIdx = 0; iIdx < skipUrls.length; iIdx++)
+			{
+				if (url.indexOf (skipUrls[iIdx]) === 0)
+				{
+					isSkipUrl = true;
+					break;
+				}
+			}
+
+			let finalInit: RequestInit = init;
+
+			// (a) Attach the per-nav signal when the caller didn't supply one.
+			if (!isSkipUrl)
+			{
+				finalInit = init || {};
+				if (finalInit.signal == null)
+					finalInit = Object.assign ({}, finalInit, { signal: HotStaq.navAbort.signal });
+			}
+
+			return origFetch (input, finalInit).then ((resp: Response) =>
+				{
+					// (b) 401 hook.
+					if (resp.status === 401 && !isSkipUrl && typeof opts.on401 === "function")
+					{
+						try { opts.on401 (resp, input, finalInit); }
+						catch (ex) { /* don't let app errors break the response chain */ }
+					}
+
+					return (resp);
+				});
+		};
+
+		// Wrap onBeforeNavigate so the previous page's pending fetches
+		// die before the new page renders. Compose with any existing
+		// hook the app may have set — we don't own that global.
+		const prevHook = HotStaq.onBeforeNavigate;
+		HotStaq.onBeforeNavigate = (path: string): boolean | Promise<boolean> =>
+			{
+				try { HotStaq.navAbort.abort (); } catch (ex) { /* nothing in flight */ }
+				HotStaq.navAbort = new AbortController ();
+
+				if (typeof prevHook === "function")
+					return (prevHook (path));
+
+				return (true);
+			};
 	}
 
 	/**
