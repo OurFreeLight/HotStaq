@@ -1643,6 +1643,19 @@ export class HotHTTPServer extends HotServer
 						this.logger.info (`MCP server listening on route "${this.mcpServer.route}"`);
 					}
 
+					// Track whether a shutdown is already in progress so a
+					// second Ctrl-C / SIGTERM can hard-quit instead of
+					// waiting on a hung close().
+					let shutdownInFlight: boolean = false;
+					let forceQuitTimer: NodeJS.Timeout = null;
+
+					// Hard-quit after this many ms even if listener.close()
+					// hasn't returned. Default 5s; override via the
+					// HOTSTAQ_SHUTDOWN_FORCE_MS env var (any positive int)
+					// or set to 0 to wait forever (the old behaviour).
+					const forceQuitMsRaw: number = parseInt (process.env["HOTSTAQ_SHUTDOWN_FORCE_MS"] || "5000", 10);
+					const forceQuitMs: number = (Number.isFinite (forceQuitMsRaw) && forceQuitMsRaw >= 0) ? forceQuitMsRaw : 5000;
+
 					let requestReporter = () =>
 					{
 						let numRequests: number = Object.keys(this.activeRequests).length;
@@ -1653,14 +1666,52 @@ export class HotHTTPServer extends HotServer
 
 							this.logger.info (`Finished processing all requests...`);
 
-							return;
+							// listener.close() resolved AND the in-flight
+							// counter is empty. We're done — let the
+							// process exit instead of hanging on stray
+							// keep-alive sockets / DB clients / etc.
+							if (forceQuitTimer != null)
+								clearTimeout (forceQuitTimer);
+
+							process.exit (0);
 						}
 
 						this.logger.info (`Still processing ${numRequests} requests...`);
 					};
 					let sigHandler = (typeReceived: string, serverType: string, listener: any) =>
 						{
+							// Second Ctrl-C / SIGTERM during a shutdown that
+							// the framework can't drain on its own — give
+							// the developer an escape hatch instead of
+							// stranding them in the terminal.
+							if (shutdownInFlight === true)
+							{
+								this.logger.info (`${typeReceived} received again; forcing immediate exit.`);
+								process.exit (130);
+							}
+
+							shutdownInFlight = true;
+
 							this.logger.info (`${typeReceived} signal received: Stopping ${serverType} server. Data loss and partial database writes can occur if this is stopped prematurely.`);
+
+							// Force-quit if graceful shutdown stalls. Common
+							// cause is open HTTP/1.1 keep-alive sockets that
+							// listener.close() refuses to terminate, but it
+							// also catches DB clients, Garnet pub/sub,
+							// websocket holds, etc.
+							if (forceQuitMs > 0)
+							{
+								forceQuitTimer = setTimeout (() =>
+								{
+									this.logger.info (`Graceful shutdown exceeded ${forceQuitMs}ms; forcing exit.`);
+									process.exit (1);
+								}, forceQuitMs);
+								// Don't keep the event loop alive just for
+								// this timer — if the only thing left is
+								// the timer, we want Node to exit naturally.
+								if (typeof forceQuitTimer.unref === "function")
+									forceQuitTimer.unref ();
+							}
 
 							listener.close (() => {
 								this.logger.info(`${serverType} server stopped. No longer listening for any new incoming requests...`);
@@ -1670,6 +1721,14 @@ export class HotHTTPServer extends HotServer
 									requestReporter ();
 								}, 2000);
 							});
+
+							// Aggressive: immediately destroy any open
+							// keep-alive sockets that haven't been claimed
+							// by an in-flight request. listener.close()
+							// politely waits for them to time out (default
+							// 65s); we'd rather drop them and exit on time.
+							if (typeof listener.closeIdleConnections === "function")
+								listener.closeIdleConnections ();
 						};
 
 					if (this.ssl.cert === "")
