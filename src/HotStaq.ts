@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.2";
+	static version: string = "0.9.3";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -300,6 +300,24 @@ export class HotStaq implements IHotStaq
 	 * Event fired after SPA navigation completes.
 	 */
 	static onAfterNavigate: (path: string) => void | Promise<void> = null;
+	/**
+	 * Override the framework's default 404 rendering.
+	 *
+	 * Called from `HotStaqWebStart` when the current URL doesn't match
+	 * any registered `<route>`, no `path="404"` or `path="*"` fallback
+	 * exists in the router, and the page boot would otherwise throw
+	 * "The hotstaq tag must have a src, HTML contents inside it, or a
+	 * router set."
+	 *
+	 * Set this to render a custom 404 (e.g. redirect to a branded page,
+	 * or call `HotStaq.useOutput` with your own HTML). When set, the
+	 * default fallback in `HotStaq.displayDefault404` is suppressed.
+	 *
+	 * Most apps should prefer registering a `path="404"` route in their
+	 * `<hotstaq-router>` instead — this hook is for cases where you
+	 * need to make a runtime decision (e.g. dispatch on the path).
+	 */
+	static onRouteNotFound: (path: string) => void = null;
 	/**
 	 * If true (the default), `enableSPA` automatically wires up fetch
 	 * interceptors that abort the previous page's pending requests when
@@ -2763,6 +2781,53 @@ export class HotStaq implements IHotStaq
 	static onReady (readyFunc: (output: string) => void): void
 	{
 		HotStaq.onReadyEvent = readyFunc;
+	}
+
+	/**
+	 * Render a minimal "Page not found" page when no registered route
+	 * matches the current URL and no `path="404"` / `path="*"` fallback
+	 * is configured. Called by HotStaqWebStart's boot path; can also be
+	 * invoked directly.
+	 *
+	 * Apps that want a branded 404 should register a `<route path="404"
+	 * src="./404.hott">` (or `path="*"`) in their `<hotstaq-router>` —
+	 * the framework picks it up before falling back to this. For
+	 * runtime-decision 404 logic, set `HotStaq.onRouteNotFound`.
+	 */
+	static displayDefault404 (path: string): void
+	{
+		const safePath: string = String (path || "")
+			.replace (/&/g, "&amp;")
+			.replace (/</g, "&lt;")
+			.replace (/>/g, "&gt;")
+			.replace (/"/g, "&quot;");
+
+		const html: string = "<!DOCTYPE html><html lang=\"en\"><head>" +
+			"<meta charset=\"UTF-8\">" +
+			"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
+			"<title>Page not found</title>" +
+			"<style>" +
+				"html,body{height:100%;margin:0;}" +
+				"body{display:flex;align-items:center;justify-content:center;" +
+					"font-family:system-ui,-apple-system,sans-serif;" +
+					"color:#1f2937;background:#f9fafb;}" +
+				".fl-404{text-align:center;padding:2rem;}" +
+				".fl-404 h1{font-size:4rem;margin:0 0 0.5rem;color:#4f46e5;}" +
+				".fl-404 p{margin:0.25rem 0;color:#6b7280;}" +
+				".fl-404 code{background:#e5e7eb;padding:0.125rem 0.375rem;" +
+					"border-radius:0.25rem;font-size:0.875rem;}" +
+				".fl-404 a{color:#4f46e5;text-decoration:none;font-weight:500;" +
+					"display:inline-block;margin-top:1rem;}" +
+				".fl-404 a:hover{text-decoration:underline;}" +
+			"</style></head><body>" +
+			"<div class=\"fl-404\">" +
+				"<h1>404</h1>" +
+				"<p>Page not found.</p>" +
+				"<p><code>" + safePath + "</code> doesn't match any registered route.</p>" +
+				"<a href=\"/\">&larr; Go home</a>" +
+			"</div></body></html>";
+
+		HotStaq.useOutput (html);
 	}
 
 	/**
