@@ -393,7 +393,45 @@ export function hotStaqWebStart ()
 				if (hasHtmlSource === false)
 				{
 					if (loadPage === "")
-						throw new Error (`The hotstaq tag must have a src, HTML contents inside it, or a router set.`);
+					{
+						// No route matched the current URL. Try, in order:
+						//   1. An explicit `path="404"` route.
+						//   2. An explicit `path="*"` catch-all route. (The
+						//      wildcard scanner above already tries to match
+						//      `*`-containing paths via indexOf — this is a
+						//      belt-and-suspenders direct lookup.)
+						//   3. A user-supplied `HotStaq.onRouteNotFound` hook.
+						//   4. The framework's default "page not found" body
+						//      (no throw, no blank screen).
+						const notFoundPath: string = window.location.pathname;
+
+						let fallbackSrc: string = "";
+
+						if ((routerManager["404"] != null) && (routerManager["404"].src != null))
+							fallbackSrc = routerManager["404"].src;
+						else if ((routerManager["*"] != null) && (routerManager["*"].src != null))
+							fallbackSrc = routerManager["*"].src;
+
+						if (fallbackSrc !== "")
+						{
+							loadPage = fallbackSrc;
+						}
+						else if (typeof HotStaq.onRouteNotFound === "function")
+						{
+							HotStaq.onRouteNotFound (notFoundPath);
+							return;
+						}
+						else
+						{
+							HotStaq.displayDefault404 (notFoundPath);
+							return;
+						}
+					}
+
+					if (loadPage.indexOf ("hstqserve") < 0)
+						loadPage += "?hstqserve=nahfam";
+
+					options.url = loadPage;
 
 					HotStaq.displayUrl (options);
 				}
