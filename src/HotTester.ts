@@ -148,11 +148,32 @@ export abstract class HotTester
 
 	/**
 	 * Waits for the API to finish loading all data.
+	 *
+	 * `finishedLoading` flips to true when the test page POSTs its test
+	 * paths to HotTesterAPI. If the browser never gets there — page-side
+	 * JS error, missing register call, anything — this used to spin
+	 * forever and the CI job ran all the way to its 15-30 minute
+	 * wallclock limit. Bound the wait so we get a clear error instead.
+	 * Override the cap with HOTSTAQ_WAIT_FOR_DATA_TIMEOUT_MS.
 	 */
 	async waitForData (): Promise<void>
 	{
+		const timeoutMs: number = parseInt (
+			process.env["HOTSTAQ_WAIT_FOR_DATA_TIMEOUT_MS"] || "120000", 10) || 120000;
+		const start: number = Date.now ();
+
 		while (this.finishedLoading === false)
+		{
+			if (Date.now () - start > timeoutMs)
+				throw new Error (
+					`HotTester: waitForData timed out after ${timeoutMs}ms — ` +
+					`the test page never registered its test paths with HotTesterAPI. ` +
+					`Check that HotStaq.min.js loaded, the page didn't error before ` +
+					`Hot.CurrentPage.createTestPath, and testerAPIUrl in HotSite.yaml ` +
+					`points at this server. Override the cap with ` +
+					`HOTSTAQ_WAIT_FOR_DATA_TIMEOUT_MS.`);
 			await HotStaq.wait (10);
+		}
 	}
 
 	/**
