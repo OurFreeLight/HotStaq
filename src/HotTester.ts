@@ -277,8 +277,12 @@ export abstract class HotTester
 		if (route == null)
 			throw new Error (`HotTester: API does not have route ${destination.api}!`);
 
-		// Iterate through each path in the destination until complete.
-		for (let iIdx = 0; iIdx < destination.paths.length; iIdx += 2)
+		// Iterate through each (path, testName) pair in the destination. The
+		// list is encoded as [path0, test0, path1, test1, ...]; bound on
+		// `iIdx + 1 < length` so an odd-length tail can't dereference an
+		// undefined `nextStop` (the bug that surfaced as
+		// `Cannot read properties of undefined (reading 'path')` at runtime).
+		for (let iIdx = 0; iIdx + 1 < destination.paths.length; iIdx += 2)
 		{
 			let stop: HotTestStop = destination.paths[iIdx];
 			let pathName: string = stop.path;
