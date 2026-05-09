@@ -2355,26 +2355,34 @@ export class HotCLI
 
 			dotenv.config ();
 
-			if (process.env["LOGGING_LEVEL"] != null)
+			// Accept either LOG_LEVEL or LOGGING_LEVEL — every existing CI
+			// config in the FreeLight org uses LOG_LEVEL, but the legacy
+			// internal name is LOGGING_LEVEL. Rather than rewrite every
+			// .env, accept both with LOG_LEVEL winning when both are set
+			// (it's the more common form).
+			const logLevelRaw: string | undefined =
+				process.env["LOG_LEVEL"] ?? process.env["LOGGING_LEVEL"];
+
+			if (logLevelRaw != null)
 			{
-				let logLevel: string = process.env["LOGGING_LEVEL"];
+				const logLevel: string = logLevelRaw.toLowerCase ();
 
 				if (logLevel === "info")
 					this.globalLogLevel = HotLogLevel.Info;
 
-				if (logLevel === "warning")
+				if (logLevel === "warning" || logLevel === "warn")
 					this.globalLogLevel = HotLogLevel.Warning;
 
 				if (logLevel === "error")
 					this.globalLogLevel = HotLogLevel.Error;
 
-				if (logLevel === "verbose")
+				if (logLevel === "verbose" || logLevel === "debug")
 					this.globalLogLevel = HotLogLevel.Verbose;
 
 				if (logLevel === "all")
 					this.globalLogLevel = HotLogLevel.All;
 
-				if (logLevel === "none")
+				if (logLevel === "none" || logLevel === "silent")
 					this.globalLogLevel = HotLogLevel.None;
 			}
 

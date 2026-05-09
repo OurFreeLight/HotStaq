@@ -179,6 +179,28 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 			this.processor.logger.verbose (`HotTestSeleniumDriver: Using Chrome with options`);
 
+			// CHROMEDRIVER_PATH lets the caller pin the driver binary so
+			// Selenium Manager doesn't try to download it at runtime — that
+			// download is the prime suspect for the 30-minute test-web hangs
+			// in CI runners with constrained egress. CHROME_BINARY_PATH
+			// pairs with it for environments where the chromium executable
+			// is also non-default (Debian's `chromium` rather than `google-
+			// chrome`). Both are no-ops when unset.
+			const chromedriverPath: string | undefined = process.env["CHROMEDRIVER_PATH"];
+			if (chromedriverPath != null && chromedriverPath !== "")
+			{
+				const svc = new chrome.ServiceBuilder (chromedriverPath);
+				builder = builder.setChromeService (svc);
+				this.processor.logger.verbose (`  * chromedriver path: ${chromedriverPath}`);
+			}
+
+			const chromeBinaryPath: string | undefined = process.env["CHROME_BINARY_PATH"];
+			if (chromeBinaryPath != null && chromeBinaryPath !== "")
+			{
+				options.setChromeBinaryPath (chromeBinaryPath);
+				this.processor.logger.verbose (`  * chrome binary: ${chromeBinaryPath}`);
+			}
+
 			if (this.disableGPUAndSandbox === true)
 			{
 				options.addArguments ("--disable-gpu", "--no-sandbox");
@@ -228,7 +250,26 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		}
 
 		this.processor.logger.verbose (`HotTestSeleniumDriver: Starting session...`);
-		this.driver = await builder.build ();
+
+		// Bound builder.build() with a hard timeout. In CI runners with
+		// constrained egress, Selenium Manager's auto-download of
+		// chromedriver can hang silently — turning a "tests can't start"
+		// failure into the full 30-minute job timeout. Cap at 60s (override
+		// with SELENIUM_BUILD_TIMEOUT_MS) so the failure is fast and the
+		// log says exactly what happened.
+		const buildTimeoutMs: number = parseInt (
+			process.env["SELENIUM_BUILD_TIMEOUT_MS"] || "60000", 10) || 60000;
+
+		const buildPromise = builder.build ();
+		const timeoutPromise = new Promise<never> ((_, reject) =>
+			setTimeout (
+				() => reject (new Error (
+					`HotTestSeleniumDriver: Selenium driver did not start within ${buildTimeoutMs}ms. ` +
+					`Set CHROMEDRIVER_PATH and CHROME_BINARY_PATH to skip Selenium Manager's auto-download, ` +
+					`or raise SELENIUM_BUILD_TIMEOUT_MS to wait longer.`)),
+				buildTimeoutMs));
+
+		this.driver = await Promise.race ([buildPromise, timeoutPromise]) as WebDriver;
 		this.session = await this.driver.getSession ();
 		this.processor.logger.verbose (`HotTestSeleniumDriver: Session started...`);
 	}

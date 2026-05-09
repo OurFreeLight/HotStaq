@@ -182,10 +182,19 @@ export class HotTesterMocha extends HotTester
 
 				this.processor.logger.verbose (`HotTesterMocha: Starting Mocha and running tests...`);
 
-				this.mocha.run ((failures: number) =>
+				// Mocha installs `uncaughtException` and `unhandledRejection`
+				// listeners on the `process` object every time .run() is
+				// invoked. Without disposing the runner, each test
+				// destination leaks two listeners — and after ~5 destinations
+				// the EventEmitter MaxListenersExceededWarning fires (default
+				// limit is 10), tests start hanging on mocha's 10s timeout,
+				// and CI runs all the way to the job timeout. dispose()
+				// removes the listeners cleanly.
+				const runner = this.mocha.run ((failures: number) =>
 					{
 						this.numFailures += failures;
 						this.processor.logger.verbose (`HotTesterMocha: Tests complete!`);
+						try { runner.dispose (); } catch (e) { /* mocha < 8 lacks dispose */ }
 						resolve ();
 					});
 			}));

@@ -205,10 +205,17 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 
 				this.processor.logger.verbose (`HotTesterMochaSelenium: Starting Mocha/Selenium and running tests...`);
 
-				this.mocha.run ((failures: number) =>
+				// Same listener-leak fix as HotTesterMocha.onTestEnd:
+				// mocha.run() registers uncaughtException + unhandledRejection
+				// listeners on `process`; without runner.dispose() each test
+				// destination leaks two of them, the EventEmitter limit is
+				// hit after a handful, and tests stall on the 10s mocha
+				// timeout until the whole job times out.
+				const runner = this.mocha.run ((failures: number) =>
 					{
 						this.numFailures += failures;
 						this.processor.logger.verbose (`HotTesterMochaSelenium: Tests complete!`);
+						try { runner.dispose (); } catch (e) { /* mocha < 8 lacks dispose */ }
 						resolve ();
 					});
 			}));
