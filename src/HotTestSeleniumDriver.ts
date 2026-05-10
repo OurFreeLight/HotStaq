@@ -455,9 +455,41 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	}
 
 	/**
+	 * Assert that a named test element exists in the DOM. Used by .hott
+	 * test paths that just need to verify a control rendered (e.g. an
+	 * error message, a confirmation banner) without comparing its value.
+	 *
+	 * Throws when the element is missing — same shape as
+	 * `assertElementValue` so test paths can mix the two freely.
+	 */
+	async assertElementExists (name: string | HotTestElement,
+		errorMessage: string = "",
+		options: HotTestElementOptions = new HotTestElementOptions ()): Promise<WebElement>
+	{
+		let elm: WebElement = await this.findTestElement (name, options);
+
+		if (elm == null)
+		{
+			let realName: string = "";
+			if (typeof (name) === "string") realName = name;
+			else                            realName = name.name;
+
+			if (options.ignoreMissingElementError === true)
+				return (null);
+
+			throw new Error (errorMessage !== ""
+				? `${errorMessage} (test element ${realName} not found)`
+				: `Unable to find test element ${realName}`);
+		}
+
+		this.processor.logger.verbose (`HotTestSeleniumDriver: assertElementExists - Found ${typeof name === "string" ? name : name.name}`);
+		return (elm);
+	}
+
+	/**
 	 * An expression to test.
 	 */
-	async assertElementValue (name: string | HotTestElement, value: any, 
+	async assertElementValue (name: string | HotTestElement, value: any,
 		errorMessage: string = "", 
 		options: HotTestElementOptions = new HotTestElementOptions ()): Promise<any>
 	{
