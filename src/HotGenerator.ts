@@ -1179,6 +1179,14 @@ class ${data.routeName}${routeExtends}
 				{
 					let outputParams: string = "";
 
+					// Guard against the recursive `tempParam.parameters` call passing
+					// undefined when an "object"-typed param is missing its nested
+					// schema. The 0.9.1 generator silently emitted nothing in that
+					// case; the modern generator dereferences `param.type` and
+					// throws TypeError before reaching the existing null-check below.
+					if (param == null)
+						return ("");
+
 					if (param.type != null)
 					{
 						if (param.type === "object")
