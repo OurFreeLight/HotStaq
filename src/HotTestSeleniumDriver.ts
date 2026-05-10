@@ -418,7 +418,10 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			}
 		}
 
-		this.processor.logger.verbose (`HotTestSeleniumDriver: findTestElement - Found ${nameStr}`);
+		if (foundElm != null)
+			this.processor.logger.verbose (`HotTestSeleniumDriver: findTestElement - Found ${nameStr}`);
+		else
+			this.processor.logger.verbose (`HotTestSeleniumDriver: findTestElement - Not found ${nameStr}`);
 
 		return (foundElm);
 	}
