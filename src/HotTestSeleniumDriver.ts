@@ -308,6 +308,28 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	}
 
 	/**
+	 * Test-friendly alias for navigateToUrl. Accepts either a fully
+	 * qualified URL or a path that's resolved against the driver's
+	 * current origin — that way `.hott` test paths can write
+	 * `await driver.navigate("/account")` instead of having to know
+	 * the test server's host:port.
+	 */
+	async navigate (urlOrPath: string): Promise<void>
+	{
+		let target: string = urlOrPath;
+		if (urlOrPath.startsWith ("/"))
+		{
+			try
+			{
+				const cur: string = await this.driver.getCurrentUrl ();
+				target = new URL (urlOrPath, cur).toString ();
+			}
+			catch (e) { /* fall through with the bare path */ }
+		}
+		await this.navigateToUrl (target);
+	}
+
+	/**
 	 * Wait for a test element using Selenium Webdriver.
 	 */
 	async waitForTestElement (name: string | HotTestElement, 
