@@ -90,9 +90,22 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 	/**
 	 * Load the selenium driver.
+	 *
+	 * If a WebDriver session already exists, return without spinning up a
+	 * fresh one — every destination would otherwise call this and get its
+	 * own browser, dropping cookies (refreshToken, session) set by an
+	 * earlier destination's login flow. Reusing the session lets a multi-
+	 * step suite (login → /account → /change-password) keep the
+	 * authentication state. Override with HOTSTAQ_FORCE_NEW_SESSION=1.
 	 */
 	async loadSeleniumDriver (): Promise<void>
 	{
+		if (this.driver != null && process.env["HOTSTAQ_FORCE_NEW_SESSION"] !== "1")
+		{
+			this.processor.logger.verbose (`HotTestSeleniumDriver: Reusing existing session...`);
+			return;
+		}
+
 		let createWindowSize = () =>
 			{
 				if (this.windowSize == null)
