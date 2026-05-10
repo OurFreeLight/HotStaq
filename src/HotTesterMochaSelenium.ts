@@ -198,15 +198,48 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 		{
 			// Snapshot cookies before quitting the WebDriver so loadSeleniumDriver
 			// can restore them on the next destination's fresh session.
+			//
+			// WebDriver's getCookies returns cookies visible to the *current* URL.
+			// Cookies with restrictive paths (e.g. an auth refreshToken set with
+			// path=/v1/users) won't show up if the current URL is "/" or
+			// "/login". Try common deeper paths so path-restricted auth cookies
+			// surface, then merge by name.
 			try
 			{
 				const wd: any = (this.driver as any).driver;
 				if (wd != null)
 				{
-					this.savedCookies = await wd.manage ().getCookies ();
 					this.savedCookiesUrl = await wd.getCurrentUrl ();
+					const seen: { [k: string]: any } = {};
+
+					const collect = async () =>
+						{
+							try
+							{
+								const cs: any[] = await wd.manage ().getCookies ();
+								for (const c of cs)
+									seen[c.name] = c;
+							}
+							catch (e) { /* skip */ }
+						};
+
+					await collect ();
+
+					try
+					{
+						const origin: string = new URL (this.savedCookiesUrl).origin;
+						for (const probe of ["/v1/users", "/v1", "/api"])
+						{
+							try { await wd.get (origin + probe); }
+							catch (e) { continue; }
+							await collect ();
+						}
+					}
+					catch (e) { /* origin parse failed */ }
+
+					this.savedCookies = Object.values (seen);
 					this.processor.logger.verbose (
-						`HotTesterMochaSelenium: snapshotted ${this.savedCookies.length} cookies from ${this.savedCookiesUrl}`);
+						`HotTesterMochaSelenium: snapshotted ${this.savedCookies.length} cookies (from ${this.savedCookiesUrl} + path probes)`);
 				}
 			}
 			catch (e) { /* best-effort */ }
