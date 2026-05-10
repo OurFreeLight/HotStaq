@@ -567,6 +567,33 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	}
 
 	/**
+	 * Read a test element's current value. Returns the input's `value`
+	 * attribute if present, falling back to the element's text content —
+	 * mirrors the lookup order in assertElementValue so test paths that
+	 * just need the value (e.g. to check the field was pre-populated)
+	 * don't have to drop down to executeScript.
+	 */
+	async getTestElementValue (name: string | HotTestElement,
+		options: HotTestElementOptions = new HotTestElementOptions ()): Promise<string>
+	{
+		const elm: WebElement = await this.findTestElement (name, options);
+
+		if (elm == null)
+		{
+			if (options.ignoreMissingElementError === true)
+				return ("");
+			const realName: string = (typeof name === "string") ? name : name.name;
+			throw new Error (`HotTestSeleniumDriver: getTestElementValue - element ${realName} not found`);
+		}
+
+		const attrValue: string = await elm.getAttribute ("value");
+		if (attrValue != null && attrValue !== "")
+			return (attrValue);
+
+		return (await elm.getText ());
+	}
+
+	/**
 	 * An expression to test.
 	 */
 	async assertElementValue (name: string | HotTestElement, value: any,
