@@ -112,9 +112,46 @@ export class HotTesterMochaSelenium extends HotTesterMocha
  
 			this.finishedLoading = false;
 			await driver.get (url);
-			await this.waitForData ();
 
-			this.processor.logger.verbose (`HotTesterMochaSelenium: Received data...`);
+			try
+			{
+				await this.waitForData ();
+				this.processor.logger.verbose (`HotTesterMochaSelenium: Received data...`);
+			}
+			catch (ex)
+			{
+				// Drain the browser console + page source so the CI log shows
+				// *what the browser actually saw* rather than just "we never
+				// heard from it." A page-side JS error before
+				// Hot.CurrentPage.createTestPath is the most common reason
+				// the tester never registers test paths and waitForData
+				// hits its cap.
+				try
+				{
+					const logs = await (driver.manage () as any).logs ().get ("browser");
+					const lines: string[] = (logs as any[]).map ((e: any) =>
+						`[${e.level?.name || e.level || "?"}] ${e.message}`);
+					this.processor.logger.error (
+						`HotTesterMochaSelenium: browser console (${lines.length} entries):\n` +
+						(lines.length === 0 ? "  (empty)" : lines.map ((l) => `  ${l}`).join ("\n")));
+				}
+				catch (logEx)
+				{
+					this.processor.logger.error (
+						`HotTesterMochaSelenium: could not pull browser logs — ${(logEx as Error).message}`);
+				}
+
+				try
+				{
+					const html: string = await driver.getPageSource ();
+					const head: string = html.length > 4000 ? html.slice (0, 4000) + "\n[…truncated]" : html;
+					this.processor.logger.error (
+						`HotTesterMochaSelenium: rendered page source (first 4kB):\n${head}`);
+				}
+				catch (srcEx) { /* ignore */ }
+
+				throw ex;
+			}
 		}
 		else
 			this.processor.logger.verbose (`HotTesterMochaSelenium: Not retreiving url.`);

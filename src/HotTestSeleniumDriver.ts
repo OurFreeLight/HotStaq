@@ -3,7 +3,7 @@ import { HotTestDriver } from "./HotTestDriver";
 import { HotTestPage } from "./HotTestPage";
 import { HotStaq } from "./HotStaq";
 
-import { By, until, WebDriver, WebElement, Session, Builder } from "selenium-webdriver";
+import { By, until, WebDriver, WebElement, Session, Builder, logging } from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome";
 import firefox from "selenium-webdriver/firefox";
 
@@ -101,6 +101,18 @@ export class HotTestSeleniumDriver extends HotTestDriver
 
 		let builder: Builder = new Builder ();
 		builder = builder.forBrowser (this.browser);
+
+		// Capture browser console + driver logs so a failed waitForData
+		// can dump them (see HotTesterMochaSelenium.setup). Without this
+		// the WebDriver logging API returns nothing on Chrome.
+		try
+		{
+			const prefs = new logging.Preferences ();
+			prefs.setLevel (logging.Type.BROWSER, logging.Level.ALL);
+			prefs.setLevel (logging.Type.DRIVER,  logging.Level.WARNING);
+			builder = builder.setLoggingPrefs (prefs);
+		}
+		catch (e) { /* older selenium-webdriver — skip */ }
 
 		if (process.env["SELENIUM_REMOTE_SERVER"] != null)
 			this.remoteServer = process.env["SELENIUM_REMOTE_SERVER"];
