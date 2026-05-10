@@ -12,6 +12,14 @@ export class HotTestDriver
 	 */
 	processor: HotStaq;
 	/**
+	 * The HotTester that owns this driver. Set when the tester
+	 * attaches the driver to itself; navigating to a new URL needs
+	 * this so we can flip `finishedLoading` back to false and the
+	 * next executeTestPagePath waits for the new page's pageLoaded
+	 * event instead of reading stale paths from the previous page.
+	 */
+	tester: any;
+	/**
 	 * The current page.
 	 */
 	page: HotTestPage;
@@ -33,6 +41,7 @@ export class HotTestDriver
 	constructor (processor: HotStaq, page: HotTestPage | null = null)
 	{
 		this.processor = processor;
+		this.tester = null;
 		this.page = page;
 		this.commandDelay = 20;
 		this.pageTestDelay = 700;

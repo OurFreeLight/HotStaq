@@ -71,6 +71,13 @@ export abstract class HotTester
 		this.baseUrl = baseUrl;
 		this.testMaps = testMaps;
 		this.driver = driver;
+		// Back-reference so the driver can flip our `finishedLoading`
+		// to false on cross-page navigations — without it, navigate("/foo")
+		// returns immediately with the previous page's stale paths cached
+		// and the next executeTestPagePath fails with "Test path X does
+		// not have a function".
+		if (this.driver != null)
+			this.driver.tester = this;
 		this.finishedLoading = false;
 		this.hasBeenSetup = false;
 		this.hasBeenDestroyed = false;

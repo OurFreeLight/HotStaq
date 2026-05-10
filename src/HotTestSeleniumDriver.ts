@@ -326,6 +326,13 @@ export class HotTestSeleniumDriver extends HotTestDriver
 			}
 			catch (e) { /* fall through with the bare path */ }
 		}
+		// Reset the tester's finishedLoading so the next executeTestPagePath
+		// blocks on the *new* page's pageLoaded event, not the previous
+		// page's already-fired one — otherwise the runner immediately
+		// looks up the next test path against stale caches and fails
+		// with "Test path X does not have a function".
+		if (this.tester != null)
+			this.tester.finishedLoading = false;
 		await this.navigateToUrl (target);
 	}
 
