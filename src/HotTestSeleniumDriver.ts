@@ -465,7 +465,42 @@ export class HotTestSeleniumDriver extends HotTestDriver
 		{
 			if (func !== "")
 			{
-				if (value != null)
+				// Click hardening: layouts with sticky footers, fixed
+				// banners, or BotBlocker overlays routinely intercept the
+				// raw `elm.click()`. Scroll the target into the centre of
+				// the viewport first; if Selenium still rejects the click
+				// as intercepted, fall back to a JS click which bypasses
+				// hit-testing entirely.
+				if (func === "click")
+				{
+					try
+					{
+						await this.driver.executeScript (
+							"arguments[0].scrollIntoView({block:'center', inline:'center'});",
+							elm);
+					}
+					catch (_e) { /* best-effort scroll */ }
+
+					try
+					{
+						result = await elm.click ();
+					}
+					catch (clickErr)
+					{
+						const msg: string = (clickErr && (clickErr as any).message) || String (clickErr);
+						if (msg.indexOf ("intercepted") > -1 || msg.indexOf ("not clickable") > -1)
+						{
+							this.processor.logger.verbose (
+								`HotTestSeleniumDriver: click intercepted on ${name}; ` +
+								`falling back to JS click.`);
+							result = await this.driver.executeScript (
+								"arguments[0].click();", elm);
+						}
+						else
+							throw clickErr;
+					}
+				}
+				else if (value != null)
 				{
 					/// @ts-ignore
 					result = await elm[func] (value);
