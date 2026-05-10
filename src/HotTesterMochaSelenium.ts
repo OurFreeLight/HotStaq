@@ -73,6 +73,28 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 
 		await testDriver.loadSeleniumDriver ();
 		let driver: WebDriver = testDriver.driver;
+
+		// Restore cookies snapshotted by destroy() — without this, login
+		// state (refreshToken, session) set in a previous destination is
+		// lost when HotTester quits the WebDriver between destinations.
+		if (this.savedCookies != null && this.savedCookies.length > 0 && url !== "")
+		{
+			try
+			{
+				const targetOrigin: string = new URL (url).origin;
+				await driver.get (targetOrigin + "/");
+				for (const c of this.savedCookies)
+				{
+					try { await driver.manage ().addCookie (c as any); }
+					catch (e) { /* skip cookies that addCookie rejects (e.g. domain mismatch) */ }
+				}
+				this.processor.logger.verbose (
+					`HotTesterMochaSelenium: restored ${this.savedCookies.length} cookies to ${targetOrigin}`);
+			}
+			catch (e) { /* best-effort */ }
+			this.savedCookies = [];
+			this.savedCookiesUrl = "";
+		}
 		let loadDriverUrl: boolean = true;
 
 		if (this.onSetup != null)
@@ -158,12 +180,39 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 	}
 
 	/**
+	 * Cookies snapshotted on destroy() so the next setup() can re-add
+	 * them to a fresh WebDriver session. HotTester calls destroy()
+	 * after every destination, which would otherwise wipe auth cookies
+	 * (refreshToken, session) set during a previous destination's
+	 * login flow.
+	 */
+	private savedCookies: any[] = [];
+	private savedCookiesUrl: string = "";
+
+	/**
 	 * Executed when destroying this tester.
 	 */
 	async destroy (): Promise<void>
 	{
 		if (this.driver != null)
+		{
+			// Snapshot cookies before quitting the WebDriver so loadSeleniumDriver
+			// can restore them on the next destination's fresh session.
+			try
+			{
+				const wd: any = (this.driver as any).driver;
+				if (wd != null)
+				{
+					this.savedCookies = await wd.manage ().getCookies ();
+					this.savedCookiesUrl = await wd.getCurrentUrl ();
+					this.processor.logger.verbose (
+						`HotTesterMochaSelenium: snapshotted ${this.savedCookies.length} cookies from ${this.savedCookiesUrl}`);
+				}
+			}
+			catch (e) { /* best-effort */ }
+
 			await this.driver.destroy ();
+		}
 	}
 
 	/**
