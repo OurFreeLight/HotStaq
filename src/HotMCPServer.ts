@@ -208,10 +208,15 @@ export class HotMCPServer
 	/**
 	 * Create a fresh MCP Server instance with handlers registered for this
 	 * request. The authorizedValue (from onServerAuthorize or the raw bearer
-	 * token) is captured in closure so tool calls can flow it through as
-	 * connection-level auth.
+	 * token) and the raw connection-level bearer token are captured in closure
+	 * so tool calls can flow them through as connection-level auth.
+	 *
+	 * Both values are threaded because onServerAuthorize commonly returns a
+	 * non-string (e.g. a user object). When it does, the original bearer would
+	 * otherwise be unavailable to downstream tool-call route handlers and
+	 * write-tools would fail with "jwt must be provided".
 	 */
-	protected createServerInstance (authorizedValue: any): Server
+	protected createServerInstance (authorizedValue: any, connectionBearerToken: string = ""): Server
 	{
 		let instance: Server = new Server (
 				{
@@ -225,17 +230,21 @@ export class HotMCPServer
 				}
 			);
 
-		this.registerHandlers (instance, authorizedValue);
+		this.registerHandlers (instance, authorizedValue, connectionBearerToken);
 
 		return (instance);
 	}
 
 	/**
 	 * Register the MCP request handlers for tools/list and tools/call on
-	 * the given Server instance. The authorizedValue is used as a fallback
-	 * bearer token when a per-call token isn't supplied via _meta.
+	 * the given Server instance. authorizedValue is the result of
+	 * onServerAuthorize (or the raw bearer if no callback is set). The
+	 * connectionBearerToken parameter is the raw Bearer string extracted from
+	 * the original HTTP request — used as a fallback bearer for tool calls
+	 * when a per-call _meta.authorization isn't supplied AND the
+	 * authorizedValue isn't a string.
 	 */
-	protected registerHandlers (instance: Server, authorizedValue: any): void
+	protected registerHandlers (instance: Server, authorizedValue: any, connectionBearerToken: string = ""): void
 	{
 		instance.setRequestHandler (ListToolsRequestSchema, async () =>
 			{
@@ -270,7 +279,7 @@ export class HotMCPServer
 
 				try
 				{
-					let result = await this.executeToolCall (tool, args, request, authorizedValue);
+					let result = await this.executeToolCall (tool, args, request, authorizedValue, connectionBearerToken);
 
 					return (result);
 				}
@@ -297,8 +306,19 @@ export class HotMCPServer
 	 * Execute a tool call by calling processRequest directly, going through
 	 * the full HotStaq sanitization pipeline (validation, authorization,
 	 * pre/post execute hooks, etc).
+	 *
+	 * Bearer-token resolution order (first non-empty wins):
+	 *   1. Per-call: `request.params._meta.authorization` from the MCP client.
+	 *   2. Connection-level raw Bearer captured before `onServerAuthorize` ran.
+	 *   3. Legacy fallback: `authorizedValue` if it happens to be a string.
+	 *
+	 * Step 2 is the fix for HS-1: when `onServerAuthorize` returns a non-string
+	 * (e.g. a user object) the legacy fallback in step 3 doesn't fire, and
+	 * before this change the route handler saw no JWT — every admin-only write
+	 * tool failed with "jwt must be provided" even though the connection-level
+	 * Bearer authenticated fine.
 	 */
-	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any, authorizedValue?: any): Promise<CallToolResult>
+	protected async executeToolCall (tool: MCPToolDefinition, args: any, mcpRequest?: any, authorizedValue?: any, connectionBearerToken: string = ""): Promise<CallToolResult>
 	{
 		let server: HotHTTPServer = this.api.connection as HotHTTPServer;
 		let route: HotRoute = this.api.routes[tool.routeName];
@@ -313,7 +333,7 @@ export class HotMCPServer
 
 		let methodName: string = method.getRouteUrl ();
 
-		// Extract bearer token from MCP request metadata if provided.
+		// 1. Extract bearer token from MCP request metadata if provided.
 		// MCP clients pass auth via request.params._meta.authorization.
 		let bearerToken: string = "";
 
@@ -327,10 +347,17 @@ export class HotMCPServer
 				bearerToken = bearerToken.substring (7);
 		}
 
-		// Fall back to the connection-level authorizedValue (from onServerAuthorize
-		// or raw header) when no per-call token was sent. We pass it through as
-		// bearerToken so processRequest's onAuthorizeUser sees it the same way
-		// it would for an HTTP request.
+		// 2. Fall back to the raw Bearer that came in on the original HTTP
+		// request. This is what authenticated the MCP connection itself and is
+		// the right token for route-level onAuthorizeUser to verify.
+		if (bearerToken === "" && connectionBearerToken !== "")
+		{
+			bearerToken = connectionBearerToken;
+		}
+
+		// 3. Legacy fallback: connection-level authorizedValue when it's a
+		// string. Kept for backward compat with consumers that have an
+		// onServerAuthorize callback returning a Bearer string directly.
 		if (bearerToken === "" && authorizedValue != null &&
 			typeof (authorizedValue) === "string")
 		{
@@ -570,7 +597,11 @@ export class HotMCPServer
 				sessionIdGenerator: undefined
 			});
 
-		let sessionServer: Server = this.createServerInstance (authorizedValue);
+		// Pass the raw connection-level bearer alongside authorizedValue so
+		// tool calls can authenticate against route-level onAuthorizeUser
+		// even when onServerAuthorize returned a non-string (e.g. a user
+		// object). See HS-1.
+		let sessionServer: Server = this.createServerInstance (authorizedValue, bearerToken);
 
 		try
 		{
