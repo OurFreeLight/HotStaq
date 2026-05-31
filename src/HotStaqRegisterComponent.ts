@@ -121,12 +121,22 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 						htmlHandler = HotStaq.fixHTML (str);
 
 					let childrenToReadd: Node[] = [];
-		
+
 					// Save the children from being replaced.
-					for (let iIdx = (this.children.length - 1); iIdx > -1; iIdx--)
+					//
+					// Snapshot .children first (it's a live HTMLCollection that
+					// shrinks as we removeChild). Iterating the snapshot forward
+					// preserves source order in childrenToReadd, which the
+					// re-append loop below relies on. The previous reverse-index
+					// loop pushed nodes in reverse, then the forward-iterating
+					// re-append produced reversed children in the rendered DOM —
+					// e.g. <admin-form-field>s declared as [name, points, key]
+					// ended up rendered as [key, points, name].
+					const originalChildren: Node[] = Array.from (this.children);
+					for (let iIdx = 0; iIdx < originalChildren.length; iIdx++)
 					{
-						let child: Node = this.children[iIdx];
-		
+						let child: Node = originalChildren[iIdx];
+
 						childrenToReadd.push (this.removeChild (child));
 					}
 		

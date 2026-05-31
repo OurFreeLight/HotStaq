@@ -72,6 +72,31 @@ describe ("Local Preprocessor Tests", () =>
 
 				for (let iIdx = 0; iIdx < falses.length; iIdx++)
 					expect (HotStaq.parseBoolean (falses[iIdx])).to.equal (false);
+
+				// Regression: parseBoolean(true) used to return false
+				// because the function had no typeof "boolean" branch
+				// and fell through to the trailing `return (false)`. The
+				// "boolean" validator routes every value through this
+				// function, so JSON-bool route params were silently
+				// dropped — `expanded: true` in fetch bodies became
+				// false and DAO list/get responses came back with bare
+				// UUIDs instead of expanded {id,name} objects.
+				expect (HotStaq.parseBoolean (true as any)).to.equal (true);
+				expect (HotStaq.parseBoolean (false as any)).to.equal (false);
+
+				// Number / bigint pass-through.
+				expect (HotStaq.parseBoolean (1 as any)).to.equal (true);
+				expect (HotStaq.parseBoolean (0 as any)).to.equal (false);
+				expect (HotStaq.parseBoolean (42 as any)).to.equal (true);
+
+				// Nullish → false.
+				expect (HotStaq.parseBoolean (null as any)).to.equal (false);
+				expect (HotStaq.parseBoolean (undefined as any)).to.equal (false);
+
+				// Case-insensitive string parsing.
+				expect (HotStaq.parseBoolean ("TRUE")).to.equal (true);
+				expect (HotStaq.parseBoolean ("False")).to.equal (false);
+				expect (HotStaq.parseBoolean ("")).to.equal (false);
 			});
 		it ("should test HotStaq.getParamUnsafe", async () =>
 			{

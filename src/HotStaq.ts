@@ -1022,12 +1022,29 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
-	 * Parse a boolean value.
+	 * Parse a boolean value. Accepts:
+	 *   - boolean (returned as-is — the previously-missing branch was
+	 *     dropping `true` to `false` because the function fell through
+	 *     to the bottom `return (false)` for `typeof value === "boolean"`)
+	 *   - number / bigint (0 → false, anything else → true)
+	 *   - string (case-insensitive "true"/"yes"/"yep" → true,
+	 *     "false"/"no"/"nah" / "" → false)
+	 *   - null / undefined → false
+	 *   - anything else → false
 	 */
-	static parseBoolean (value: string): boolean
+	static parseBoolean (value: any): boolean
 	{
 		if (value == null)
 			return (false);
+
+		// `typeof true === "boolean"` — without this branch the function
+		// fell through past the number/string arms to the trailing
+		// `return (false)` on a literal boolean true. That silently
+		// stripped boolean params validated through HotStaq.valids["boolean"]
+		// because the validator calls parseBoolean on every value, including
+		// JSON-booleans that arrive already-typed correctly.
+		if (typeof (value) === "boolean")
+			return (value);
 
 		if ((typeof(value) === "number") || (typeof(value) === "bigint"))
 		{
