@@ -343,6 +343,41 @@ export interface TestCaseObject
 }
 
 /**
+ * Backwards-compat alias for the validator-name string. Re-introduced
+ * after 725eab8 removed it — `@hotstaq/userroute` and `@hotstaq/dataroute`
+ * still ship .d.ts files that import this name, so removing it breaks
+ * the TS build of every downstream package even when only the type
+ * surface changed and the runtime kept working.
+ *
+ * The enum values mirror the keys registered in HotStaq.valids[…]; any
+ * additional validator type can also be passed as a plain string.
+ */
+export enum HotValidationType
+{
+	UUID = "UUID",
+	Boolean = "boolean",
+	Number = "number",
+	Integer = "Integer",
+	Float = "Float",
+	Text = "Text",
+	Email = "Email",
+	Phone = "Phone",
+	URL = "URL",
+	IPv4 = "IPv4",
+	IP = "IP",
+	IPv6 = "IPv6",
+	Date = "Date",
+	Object = "Object",
+	Array = "Array",
+	Map = "Map",
+	Enum = "Enum",
+	JSON = "JSON",
+	JS = "JS",
+	Undefined = "undefined",
+	Null = "null"
+}
+
+/**
  * Is chained together to create a validation chain.
  */
 export interface HotValidation
@@ -351,7 +386,7 @@ export interface HotValidation
 	 * The type of validation to perform.
 	 * @default Text
 	 */
-	type?: string;
+	type?: string | HotValidationType;
 	/**
 	 * The default value to set if the incoming input is null or undefined.
 	 */

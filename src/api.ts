@@ -14,9 +14,9 @@ import { ValidationError, FalsyOptions, ValidationOptions } from "./HotProcessIn
 // Server stuff
 import { HotAPI, EventExecutionType, APItoLoad } from "./HotAPI";
 import { HotRoute } from "./HotRoute";
-import { HotRouteMethod, IHotRouteMethod, HotEventMethod, HotRouteMethodParameter, 
-		ServerAuthorizationFunction, ServerExecutionFunction, PassType, 
-		ServerRequest, IServerRequest, HotValidation } from "./HotRouteMethod";
+import { HotRouteMethod, IHotRouteMethod, HotEventMethod, HotRouteMethodParameter,
+		ServerAuthorizationFunction, ServerExecutionFunction, PassType,
+		ServerRequest, IServerRequest, HotValidation, HotValidationType } from "./HotRouteMethod";
 import { HotServer, HotServerType } from "./HotServer";
 import { StaticRoute, HTTPHeader, ServableFileExtension, HotHTTPServer } from "./HotHTTPServer";
 import { HotMCPServer } from "./HotMCPServer";
@@ -95,7 +95,7 @@ export {
 		HotEventMethod, HotRouteMethodParameter, PassType, 
 		ServerAuthorizationFunction,
 		ServerExecutionFunction,
-		IServerRequest, HotValidation,
+		IServerRequest, HotValidation, HotValidationType,
 		ServerRequest,
 		HotServer,
 		HotServerType,
