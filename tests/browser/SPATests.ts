@@ -125,6 +125,53 @@ describe ("SPA Navigation Tests", () =>
 				expect (value).to.equal ("page2-loaded", "Inline scripts should execute after SPA navigation");
 			});
 
+		it ("should tag executed scripts with data-hotstaq-executed (dedup marker)", async () =>
+			{
+				// We're on Page 2 from the prior test. Its inline <script> should
+				// have been executed and marked, so a second execution pass skips it.
+				let tagged: boolean = await common.driver.executeScript (`
+					var t = document.querySelector ('#spa-target script');
+					return (t != null && t.getAttribute ('data-hotstaq-executed') === '1');
+				`);
+				expect (tagged).to.equal (true, "Executed inline scripts should carry the data-hotstaq-executed marker");
+			});
+
+		it ("should NOT execute scripts when onAfterNavigate returns false (gate)", async () =>
+			{
+				// Go to Page 1, clear the shared marker, then arm a gate that opts
+				// out of HotStaq's script execution.
+				await common.driver.executeAsyncScript (`
+					var done = arguments[arguments.length - 1];
+					HotStaqWeb.HotStaq.onAfterNavigate = null;
+					HotStaqWeb.HotStaq.navigateTo ('/tests/browser/SPAPage1').then (function () { done (); });
+				`);
+				await HotStaq.wait (800);
+
+				await common.driver.executeScript (`
+					var m = document.getElementById ('page2Script'); if (m) m.innerHTML = '';
+					HotStaqWeb.HotStaq.onAfterNavigate = function (path) { return false; };
+				`);
+
+				// Navigate to Page 2 — content swaps in, but its inline script must
+				// NOT run because the gate returned false.
+				await common.driver.executeAsyncScript (`
+					var done = arguments[arguments.length - 1];
+					HotStaqWeb.HotStaq.navigateTo ('/tests/browser/SPAPage2').then (function () { done (); });
+				`);
+				await HotStaq.wait (1000);
+
+				// Page 2 content is present...
+				let title = await common.driver.findElement (By.id ("page2Title"));
+				expect (await title.getAttribute ("innerHTML")).to.equal ("SPA Page 2", "navigation still happens; only script execution is gated");
+
+				// ...but its script did not run.
+				let scriptElm = await common.driver.findElement (By.id ("page2Script"));
+				expect (await scriptElm.getAttribute ("innerHTML")).to.equal ("", "scripts must be skipped when onAfterNavigate returns false");
+
+				// Cleanup.
+				await common.driver.executeScript (`HotStaqWeb.HotStaq.onAfterNavigate = null;`);
+			});
+
 		it ("should handle browser back button via popstate", async () =>
 			{
 				// We're on Page 2. Go back to Page 1.

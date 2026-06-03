@@ -297,9 +297,23 @@ export class HotStaq implements IHotStaq
 	 */
 	static onBeforeNavigate: (path: string) => boolean | Promise<boolean> = null;
 	/**
-	 * Event fired after SPA navigation completes.
+	 * Event fired after an SPA navigation has rendered the new content,
+	 * but before HotStaq executes that content's inline <script> tags.
+	 *
+	 * Return `false` to take ownership of running those scripts yourself —
+	 * HotStaq will then skip its own execution pass. Returning `true`,
+	 * `undefined`, or having no handler at all lets HotStaq execute them
+	 * (the default), which is what makes inline page scripts run on SPA
+	 * navigation. See `onAfterUseOutput` for the full-render equivalent.
 	 */
-	static onAfterNavigate: (path: string) => void | Promise<void> = null;
+	static onAfterNavigate: (path: string) => void | boolean | Promise<void | boolean> = null;
+	/**
+	 * Event fired after `useOutput` has rendered a full document, but before
+	 * HotStaq executes that document's inline <script> tags. Same return-value
+	 * gate as `onAfterNavigate`: return `false` to run the scripts yourself;
+	 * otherwise HotStaq executes them.
+	 */
+	static onAfterUseOutput: (output: string) => void | boolean | Promise<void | boolean> = null;
 	/**
 	 * Override the framework's default 404 rendering.
 	 *
@@ -2848,6 +2862,85 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Execute the <script> elements found within `root`.
+	 *
+	 * A <script> inserted into the DOM via `innerHTML` is inert — the HTML
+	 * spec only runs a script when it is *inserted into the document with
+	 * its content already present*. So after we swap new markup in (full
+	 * render or SPA partial swap), its inline scripts never ran. For each
+	 * not-yet-executed <script>, build a fresh element, copy `type`/`src`
+	 * and — for inline scripts — set `.text` BEFORE insertion, then swap it
+	 * in so the browser runs it.
+	 *
+	 * Each executed script is tagged `data-hotstaq-executed` and skipped on
+	 * any later pass, so calling this twice (or alongside an app that runs
+	 * some scripts itself) never double-fires one.
+	 */
+	protected static async executeInlineScripts (root: Document | HTMLElement): Promise<void>
+	{
+		let tmpScripts = root.getElementsByTagName ("script");
+
+		if (tmpScripts.length < 1)
+			return;
+
+		// Snapshot first — the loop mutates the DOM while iterating.
+		let scripts: HTMLScriptElement[] = [];
+
+		for (let i = 0; i < tmpScripts.length; i++)
+			scripts.push (tmpScripts[i]);
+
+		for (let i = 0; i < scripts.length; i++)
+		{
+			let orig: HTMLScriptElement = scripts[i];
+
+			if (orig.getAttribute ("data-hotstaq-executed") != null)
+				continue;
+
+			let src: string = orig.getAttribute ("src");
+			let hasSrc: boolean = (src != null) && (src !== "");
+			let content: string = orig.textContent || "";
+
+			// Nothing to run — just mark it so we don't revisit it.
+			if ((hasSrc === false) && (content === ""))
+			{
+				orig.setAttribute ("data-hotstaq-executed", "1");
+
+				continue;
+			}
+
+			let s: HTMLScriptElement = document.createElement ("script");
+			let type: string = orig.getAttribute ("type");
+
+			if ((type != null) && (type !== ""))
+				s.setAttribute ("type", type);
+
+			if (hasSrc === true)
+				s.setAttribute ("src", src);
+			else
+				// MUST be set before insertion, otherwise the script is inert.
+				s.text = content;
+
+			s.setAttribute ("data-hotstaq-executed", "1");
+
+			await new Promise<void> ((resolve2, reject2) =>
+				{
+					s.onload  = () => { resolve2 (); };
+					s.onerror = () => { resolve2 (); };
+
+					if (orig.parentNode != null)
+						orig.parentNode.replaceChild (s, orig);
+					else
+						document.head.appendChild (s);
+
+					// Inline scripts execute synchronously on insertion; only
+					// src scripts need to wait for onload.
+					if (hasSrc === false)
+						resolve2 ();
+				});
+		}
+	}
+
+	/**
 	 * Replace the current HTML page with the output.
 	 * This is meant for web browser use only.
 	 */
@@ -2862,59 +2955,6 @@ export class HotStaq implements IHotStaq
 
 		htmlObj.innerHTML = child.getElementsByTagName('html')[0].innerHTML;
 
-		// Thanks to newfurniturey at: 
-		// https://stackoverflow.com/questions/22945884/domparser-appending-script-tags-to-head-body-but-not-executing
-		let tmpScripts = document.getElementsByTagName('script');
-		if (tmpScripts.length > 0) {
-			// push all of the document's script tags into an array
-			// (to prevent dom manipulation while iterating over dom nodes)
-			let scripts: HTMLScriptElement[] = [];
-			for (let i = 0; i < tmpScripts.length; i++) {
-				scripts.push(tmpScripts[i]);
-			}
-
-			// iterate over all script tags and create duplicate tags for each
-			for (let i = 0; i < scripts.length; i++) {
-				let s: HTMLScriptElement = document.createElement('script');
-
-				// add the new node to the page
-				scripts[i].parentNode.appendChild(s);
-
-				// remove the original (non-executing) node from the page
-				scripts[i].parentNode.removeChild(scripts[i]);
-
-				await new Promise<void> ((resolve2, reject2) =>
-					{
-						s.onload = () =>
-							{
-								resolve2 ();
-							};
-
-						let hasSrc: boolean = false;
-
-						if (scripts[i].getAttribute ("src") != null)
-						{
-							if (scripts[i].getAttribute ("src") !== "")
-							{
-								s.setAttribute ("src", scripts[i].getAttribute ("src"));
-								hasSrc = true;
-							}
-						}
-
-						if (scripts[i].getAttribute ("type") != null)
-						{
-							if (scripts[i].getAttribute ("type") !== "")
-								s.setAttribute ("type", scripts[i].getAttribute ("type"));
-						}
-
-						s.innerHTML = scripts[i].innerHTML;
-
-						if (hasSrc === false)
-							resolve2 ();
-					});
-			}
-		}
-
 		if (HotStaq.dispatchReadyEvents === true)
 		{
 			document.dispatchEvent (new Event ("DOMContentLoaded"));
@@ -2923,6 +2963,27 @@ export class HotStaq implements IHotStaq
 
 		if (HotStaq.onReadyEvent != null)
 			HotStaq.onReadyEvent (output);
+
+		// Run the rendered document's inline scripts last — and let the app
+		// gate it. onAfterUseOutput returning false means the app will run
+		// them itself, so HotStaq stands down. Otherwise HotStaq executes
+		// them (the default), which is what makes inline scripts in a
+		// useOutput-rendered page actually run.
+		let runScripts: boolean = true;
+
+		if (HotStaq.onAfterUseOutput != null)
+		{
+			let result: any = HotStaq.onAfterUseOutput (output);
+
+			if (result instanceof Promise)
+				result = await result;
+
+			if (result === false)
+				runScripts = false;
+		}
+
+		if (runScripts === true)
+			await HotStaq.executeInlineScripts (document);
 	}
 
 	/**
@@ -3091,55 +3152,6 @@ export class HotStaq implements IHotStaq
 		// Replace only the target content.
 		targetEl.innerHTML = contentHTML;
 
-		// Execute any script tags that were in the new content.
-		let tmpScripts = targetEl.getElementsByTagName ('script');
-
-		if (tmpScripts.length > 0)
-		{
-			let scripts: HTMLScriptElement[] = [];
-
-			for (let i = 0; i < tmpScripts.length; i++)
-				scripts.push (tmpScripts[i]);
-
-			for (let i = 0; i < scripts.length; i++)
-			{
-				let s: HTMLScriptElement = document.createElement ('script');
-
-				scripts[i].parentNode.appendChild (s);
-				scripts[i].parentNode.removeChild (scripts[i]);
-
-				await new Promise<void> ((resolve2, reject2) =>
-					{
-						s.onload = () =>
-							{
-								resolve2 ();
-							};
-
-						let hasSrc: boolean = false;
-
-						if (scripts[i].getAttribute ("src") != null)
-						{
-							if (scripts[i].getAttribute ("src") !== "")
-							{
-								s.setAttribute ("src", scripts[i].getAttribute ("src"));
-								hasSrc = true;
-							}
-						}
-
-						if (scripts[i].getAttribute ("type") != null)
-						{
-							if (scripts[i].getAttribute ("type") !== "")
-								s.setAttribute ("type", scripts[i].getAttribute ("type"));
-						}
-
-						s.innerHTML = scripts[i].innerHTML;
-
-						if (hasSrc === false)
-							resolve2 ();
-					});
-			}
-		}
-
 		if (HotStaq.dispatchReadyEvents === true)
 		{
 			document.dispatchEvent (new Event ("DOMContentLoaded"));
@@ -3149,14 +3161,26 @@ export class HotStaq implements IHotStaq
 		if (HotStaq.onReadyEvent != null)
 			HotStaq.onReadyEvent (output);
 
-		// Fire onAfterNavigate hook.
+		// Fire onAfterNavigate hook, then execute the new content's inline
+		// scripts — unless the hook returned false, in which case the app is
+		// running them itself and HotStaq stands down. Running them after the
+		// hook lets the app prep the DOM first; running them at all is the
+		// fix for inline page scripts silently failing on SPA navigation.
+		let runScripts: boolean = true;
+
 		if (HotStaq.onAfterNavigate != null)
 		{
-			let result = HotStaq.onAfterNavigate (path);
+			let result: any = HotStaq.onAfterNavigate (path);
 
 			if (result instanceof Promise)
-				await result;
+				result = await result;
+
+			if (result === false)
+				runScripts = false;
 		}
+
+		if (runScripts === true)
+			await HotStaq.executeInlineScripts (targetEl);
 	}
 
 	/**
