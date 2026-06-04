@@ -66,6 +66,10 @@ export function hotStaqWebStart ()
 				let router: string = getAttr (hotstaqElm, ["router"]) || "";
 				let spaTarget: string = getAttr (hotstaqElm, ["spa-target", "spaTarget"]) || null;
 				let outlet: string = getAttr (hotstaqElm, ["outlet", "spa-outlet", "spaOutlet"]) || null;
+				// In layout mode the `src` is the shell page (rendered once); the
+				// route is resolved separately from the URL. Capture it before the
+				// router match below overwrites `loadPage` with the route's src.
+				let shellSrc: string = getAttr (hotstaqElm, ["src"]) || "";
 				let name: string = getAttr (hotstaqElm, ["name"]) || "default";
 				let args: string = getAttr (hotstaqElm, ["args"]) || null;
 				let apiJSUrl: string = getAttr (hotstaqElm, ["api-js-url", "apiJSUrl"]) || null;
@@ -411,14 +415,18 @@ export function hotStaqWebStart ()
 				if (spaTarget != null || outlet != null)
 					HotStaq.enableSPA (spaTarget || outlet, processor);
 
-				// Layout (app-shell) mode: the shell (chrome + <hot-outlet>) is the
-				// static host HTML, already rendered by the browser. Load the
-				// current route's content into the outlet through the same
-				// navigateTo path used for every later navigation, so initial
-				// paint and subsequent navs are identical (pushState=false so we
-				// don't add a duplicate history entry). If the current URL matches
-				// no route (e.g. opening the shell host file directly in a test),
-				// nothing is injected yet — navigation will populate the outlet.
+				// Layout (app-shell) mode. The shell (chrome + <hot-outlet>) comes
+				// from one of three sources, then the current route's content is
+				// injected into the outlet via navigateTo (pushState=false so the
+				// initial paint doesn't add a duplicate history entry):
+				//   1. a rendered shell .hott (the `src` attribute) — rendered once
+				//      via useOutput, for apps whose chrome is dynamic;
+				//   2. inline <hotstaq> content — same, rendered via displayContent;
+				//   3. a static host-HTML shell (no src) — the outlet is already in
+				//      the DOM, so just inject the route.
+				// If the current URL matches no route (e.g. opening the shell host
+				// directly in a test), nothing is injected yet — navigation will
+				// populate the outlet.
 				if (outlet != null)
 				{
 					let initialPath: string = window.location.pathname + window.location.search;
@@ -438,8 +446,45 @@ export function hotStaqWebStart ()
 						}
 					}
 
-					if (initialMatched === true)
-						HotStaq.navigateTo (initialPath, false);
+					let injectInitialRoute = function (): void
+					{
+						if (initialMatched === true)
+							HotStaq.navigateTo (initialPath, false);
+					};
+
+					if (shellSrc !== "")
+					{
+						// Rendered shell: render the shell page once, then inject
+						// the route into its outlet once that render resolves.
+						let shellUrl: string = shellSrc;
+
+						if (shellUrl.indexOf ("hstqserve") < 0)
+							shellUrl += "?hstqserve=nahfam";
+
+						options.url = shellUrl;
+
+						let shellRender: any = HotStaq.displayUrl (options);
+
+						if ((shellRender != null) && (typeof (shellRender.then) === "function"))
+							shellRender.then (injectInitialRoute);
+						else
+							injectInitialRoute ();
+					}
+					else if (hasHtmlSource === true)
+					{
+						// Shell provided as inline <hotstaq> content.
+						let shellRender: any = HotStaq.displayContent (options);
+
+						if ((shellRender != null) && (typeof (shellRender.then) === "function"))
+							shellRender.then (injectInitialRoute);
+						else
+							injectInitialRoute ();
+					}
+					else
+					{
+						// Static host-HTML shell: the outlet is already present.
+						injectInitialRoute ();
+					}
 				}
 				else if (hasHtmlSource === false)
 				{

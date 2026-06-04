@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Rendered Shell Host</title>
+</head>
+
+<body>
+	<!-- Minimal host. In rendered-shell mode the chrome comes from the shell
+	     .hott (the `src` below), rendered once via useOutput, then routes are
+	     injected into its <hot-outlet>. This lets apps with DYNAMIC chrome keep
+	     their existing .hott logic instead of a static host shell. -->
+	<div id="rendered-host-placeholder">booting…</div>
+
+	<hotstaq src="./ShellRendered.hott" outlet="#hot-outlet" router="shellRenderedRouter"></hotstaq>
+
+	<hotstaq-router name="shellRenderedRouter" serve-local="false">
+		<route path="/tests/browser/ShellPageA" src="./ShellPageA.hott"></route>
+		<route path="/tests/browser/ShellPageB" src="./ShellPageB.hott"></route>
+	</hotstaq-router>
+</body>
+
+<script type="text/javascript" src="/build-web/HotStaq.js"></script>
+
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Rendered Shell</title>
+</head>
+<body>
+	<!-- This shell .hott is rendered ONCE (useOutput) on boot. Its chrome
+	     persists; routes are injected into <hot-outlet>. A real app's dynamic
+	     chrome (data fetches, ${} interpolation, dep loading) would live here. -->
+	<div id="rendered-shell-chrome">
+		<nav id="rendered-nav">
+			<a id="navRenderedA" href="/tests/browser/ShellPageA">Page A</a>
+			<a id="navRenderedB" href="/tests/browser/ShellPageB">Page B</a>
+		</nav>
+
+		<hot-outlet id="hot-outlet"></hot-outlet>
+	</div>
+
+	<!-- Body-level chrome (regression canary): must stay at one copy. -->
+	<div id="rendered-modal">rendered shell modal</div>
+
+	<!-- Increments once per shell render — proves the shell renders exactly
+	     once and is not re-processed on navigation. -->
+	<script type="text/javascript">
+		window.__renderedShellRuns = (window.__renderedShellRuns || 0) + 1;
+	</script>
+</body>
+</html>
