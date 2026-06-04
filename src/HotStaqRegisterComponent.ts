@@ -296,7 +296,17 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 
 						if (parentNode == null)
 							throw new Error (`Unable to find document node with selector '${output.documentSelector}'`);
-		
+
+						// Placing via documentSelector lands this element OUTSIDE
+						// its own <tag> (e.g. admin-edit appends its modal to
+						// <body>). On SPA navigation the tag upgrades again and
+						// would leave the previous copy behind as a duplicate-id
+						// orphan that id lookups resolve to instead of this fresh
+						// one — the root cause of stale-modal bugs that pages
+						// otherwise work around by rebinding. Clear the orphans
+						// before placing the new copy.
+						HotStaq.removeStaleDuplicateIds (compHtmlElement2);
+
 						compHtmlElement2.parentElement.removeChild (compHtmlElement2);
 						parentNode.appendChild (compHtmlElement2);
 		

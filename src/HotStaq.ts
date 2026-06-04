@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.22";
+	static version: string = "0.9.23";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -777,9 +777,7 @@ export class HotStaq implements IHotStaq
 
 				HotStaq.baseValidator (options, key, validation, value, 100);
 
-				const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
-
-				if (uuidRegex.test (value) === false)
+				if (HotStaq.isUUID (value) === false)
 					throw new HttpError(`UUID parameter '${key}' must be a valid UUID.`, 400);
 
 				return ({ value: value });
@@ -1095,6 +1093,82 @@ export class HotStaq implements IHotStaq
 		}
 
 		return (false);
+	}
+
+	/**
+	 * Check whether a value is a valid RFC-4122 UUID (versions 1-5).
+	 *
+	 * This is the same strict check the `UUID` validator enforces, exposed as
+	 * a reusable boolean helper so client code can validate ids (e.g. a
+	 * `?id=` URL parameter) without catching the validator's thrown HttpError.
+	 */
+	static isUUID (value: any): boolean
+	{
+		if (typeof (value) !== "string")
+			return (false);
+
+		return (HotStaq.uuidRegex.test (value));
+	}
+
+	/**
+	 * The strict RFC-4122 (versions 1-5) UUID pattern shared by `isUUID` and
+	 * the `UUID` validator.
+	 */
+	static uuidRegex: RegExp = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+
+	/**
+	 * Remove elements already in the document that share an id with `subtree`
+	 * (or any of its descendants).
+	 *
+	 * A component placed via `documentSelector` lands OUTSIDE its own <tag> —
+	 * e.g. <admin-edit> appends its modal to <body>. On SPA navigation the
+	 * <tag> upgrades again and appends a SECOND copy with the same id, leaving
+	 * a stale orphan that id-based lookups (document.getElementById,
+	 * querySelector('#id'), bootstrap.Modal.getInstance('#id')) resolve to
+	 * instead of the live one. Call this with the incoming subtree BEFORE it is
+	 * inserted so only the fresh copy survives.
+	 *
+	 * `subtree` is expected to still be detached at call time; the contains()
+	 * guard keeps it (and anything inside it) safe regardless.
+	 */
+	static removeStaleDuplicateIds (subtree: HTMLElement): void
+	{
+		if ((subtree == null) || (typeof (document) === "undefined"))
+			return;
+
+		let ids: string[] = [];
+
+		if ((subtree.id != null) && (subtree.id !== ""))
+			ids.push (subtree.id);
+
+		let descendants: NodeListOf<Element> = subtree.querySelectorAll ("[id]");
+
+		for (let iIdx = 0; iIdx < descendants.length; iIdx++)
+		{
+			let id: string = descendants[iIdx].getAttribute ("id");
+
+			if ((id != null) && (id !== ""))
+				ids.push (id);
+		}
+
+		for (let iIdx = 0; iIdx < ids.length; iIdx++)
+		{
+			let id: string = ids[iIdx];
+			// getElementById returns the first match in document order; loop so
+			// multiple accumulated orphans all get cleared. The guard bounds it.
+			let guard: number = 0;
+			let existing: HTMLElement = document.getElementById (id);
+
+			while ((existing != null) && (existing !== subtree) &&
+				(subtree.contains (existing) === false) && (guard < 100))
+			{
+				if (existing.parentNode != null)
+					existing.parentNode.removeChild (existing);
+
+				existing = document.getElementById (id);
+				guard++;
+			}
+		}
 	}
 
 	/**
