@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Shell SPA Test Page</title>
+</head>
+
+<body>
+	<!-- Persistent app-shell chrome. In layout mode this is rendered ONCE (it's
+	     the static host HTML) and is NEVER re-processed on navigation. -->
+	<div id="shell-chrome">
+		<nav id="shell-nav">
+			<a id="navShellA" href="/tests/browser/ShellPageA">Page A</a>
+			<a id="navShellB" href="/tests/browser/ShellPageB">Page B</a>
+		</nav>
+
+		<!-- The content outlet: route content is injected here on navigation. -->
+		<hot-outlet id="hot-outlet"></hot-outlet>
+	</div>
+
+	<!-- Body-level element (the regression canary). The old greedy
+	     doc.body.innerHTML fallback used to duplicate body-level chrome like
+	     this into the swapped region; in layout mode it must stay at exactly
+	     one copy no matter how many times we navigate. -->
+	<div id="shell-modal">shell modal (body-level)</div>
+
+	<hotstaq outlet="#hot-outlet" router="shellRouter"></hotstaq>
+
+	<hotstaq-router name="shellRouter" serve-local="false">
+		<route path="/tests/browser/ShellPageA" src="./ShellPageA.hott"></route>
+		<route path="/tests/browser/ShellPageB" src="./ShellPageB.hott"></route>
+	</hotstaq-router>
+</body>
+
+<script type="text/javascript" src="/build-web/HotStaq.js"></script>
+
+</html>

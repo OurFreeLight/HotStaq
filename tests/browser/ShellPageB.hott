@@ -1,0 +1,11 @@
+<!-- Content-only route with an inline <script>, to prove route scripts run on
+     each entry (and re-run when re-navigated to) while the shell runs once. -->
+<div id="shellPageB">
+	<h1 id="shellPageBTitle">Shell Page B</h1>
+	<span id="shellPageBScript"></span>
+	<a id="linkToShellA" href="/tests/browser/ShellPageA">Go to Page A</a>
+	<script type="text/javascript">
+		if (document.getElementById ('shellPageBScript'))
+			document.getElementById ('shellPageBScript').innerHTML = 'shellB-loaded';
+	</script>
+</div>

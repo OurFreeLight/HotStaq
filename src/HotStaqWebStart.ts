@@ -65,6 +65,7 @@ export function hotStaqWebStart ()
 				let startDelay: string = getAttr (hotstaqElm, ["start-delay", "startDelay"]) || null;
 				let router: string = getAttr (hotstaqElm, ["router"]) || "";
 				let spaTarget: string = getAttr (hotstaqElm, ["spa-target", "spaTarget"]) || null;
+				let outlet: string = getAttr (hotstaqElm, ["outlet", "spa-outlet", "spaOutlet"]) || null;
 				let name: string = getAttr (hotstaqElm, ["name"]) || "default";
 				let args: string = getAttr (hotstaqElm, ["args"]) || null;
 				let apiJSUrl: string = getAttr (hotstaqElm, ["api-js-url", "apiJSUrl"]) || null;
@@ -386,11 +387,61 @@ export function hotStaqWebStart ()
 				// @ts-ignore
 				window.__hotstaqSpaProcessor = processor;
 
-				// Enable SPA mode if spa-target attribute was provided.
-				if (spaTarget != null)
-					HotStaq.enableSPA (spaTarget, processor);
+				// Layout (app-shell) mode: when an `outlet` is declared, this
+				// page IS the shell — it renders once and each route is
+				// content-only, injected into the outlet by navigateTo. Set the
+				// statics + window backups (the latter survive useOutput's
+				// <html>.innerHTML swap so the first navigateTo still takes the
+				// layout path).
+				if (outlet != null)
+				{
+					HotStaq.spaOutlet = outlet;
+					HotStaq.layoutEnabled = true;
 
-				if (hasHtmlSource === false)
+					// @ts-ignore
+					window.__hotstaqSpaOutlet = outlet;
+					// @ts-ignore
+					window.__hotstaqLayoutEnabled = true;
+				}
+
+				// Enable SPA mode if a spa-target or an outlet was provided. In
+				// layout mode the outlet doubles as the link-interception target
+				// (navigateTo branches on layoutEnabled, not spaTarget, so this
+				// is harmless).
+				if (spaTarget != null || outlet != null)
+					HotStaq.enableSPA (spaTarget || outlet, processor);
+
+				// Layout (app-shell) mode: the shell (chrome + <hot-outlet>) is the
+				// static host HTML, already rendered by the browser. Load the
+				// current route's content into the outlet through the same
+				// navigateTo path used for every later navigation, so initial
+				// paint and subsequent navs are identical (pushState=false so we
+				// don't add a duplicate history entry). If the current URL matches
+				// no route (e.g. opening the shell host file directly in a test),
+				// nothing is injected yet — navigation will populate the outlet.
+				if (outlet != null)
+				{
+					let initialPath: string = window.location.pathname + window.location.search;
+					let initialCheck: string = initialPath.split ("?")[0];
+					let initialMatched: boolean = (routerManager[initialCheck] != null);
+
+					if (initialMatched === false)
+					{
+						for (let wIdx = 0; wIdx < routerWildcards.length; wIdx++)
+						{
+							if (initialCheck.indexOf (routerWildcards[wIdx].replace ("*", "")) > -1)
+							{
+								initialMatched = true;
+
+								break;
+							}
+						}
+					}
+
+					if (initialMatched === true)
+						HotStaq.navigateTo (initialPath, false);
+				}
+				else if (hasHtmlSource === false)
 				{
 					if (loadPage === "")
 					{

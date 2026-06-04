@@ -1,0 +1,7 @@
+<!-- Content-only route. No shell/chrome, no header/footer includes — just the
+     page content, which layout mode injects into the live <hot-outlet>. -->
+<div id="shellPageA">
+	<h1 id="shellPageATitle">Shell Page A</h1>
+	<p id="shellPageAText">This is content-only Page A.</p>
+	<a id="linkToShellB" href="/tests/browser/ShellPageB">Go to Page B</a>
+</div>

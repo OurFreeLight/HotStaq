@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.23";
+	static version: string = "0.9.24";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -291,6 +291,21 @@ export class HotStaq implements IHotStaq
 	 * If true, SPA link interception is active.
 	 */
 	static spaEnabled: boolean = false;
+	/**
+	 * Layout (app-shell) mode outlet selector. When set, the shell page (the
+	 * one hosting <hotstaq>) renders ONCE on full load and each route .hott is
+	 * content-only, injected into the element matching this selector. This
+	 * removes the need for app-side "bail if chrome already rendered" guards.
+	 * When null, the legacy spaTarget extraction mode is used. CSS selector,
+	 * e.g. "hot-outlet", "#main".
+	 */
+	static spaOutlet: string = null;
+	/**
+	 * True when an `outlet` was declared on <hotstaq> — selects the layout
+	 * (content-injection) navigation path instead of the legacy region
+	 * extraction. navigateTo branches on this, not on spaTarget.
+	 */
+	static layoutEnabled: boolean = false;
 	/**
 	 * Event fired before SPA navigation starts.
 	 * Return false to cancel the navigation.
@@ -3061,6 +3076,32 @@ export class HotStaq implements IHotStaq
 	}
 
 	/**
+	 * Inject a content-only route render into the live layout outlet.
+	 *
+	 * Used by `navigateTo` in layout (app-shell) mode. `output` is the processed
+	 * HTML of a content-only route .hott, so `DOMParser(output).body.innerHTML`
+	 * IS exactly the content — there's no region to extract and no fallback that
+	 * could pull in body-level chrome. Returns the live outlet element, or null
+	 * if no element matches `outletSelector` (caller falls back to a full render).
+	 *
+	 * @param output Processed content-only route HTML.
+	 * @param outletSelector CSS selector for the outlet element in the live shell.
+	 */
+	protected static injectIntoOutlet (output: string, outletSelector: string): HTMLElement
+	{
+		let outletEl: HTMLElement = document.querySelector (outletSelector);
+
+		if (outletEl == null)
+			return (null);
+
+		let doc: Document = new DOMParser ().parseFromString (output, "text/html");
+
+		outletEl.innerHTML = doc.body.innerHTML;
+
+		return (outletEl);
+	}
+
+	/**
 	 * Navigate to a route using SPA mode. Fetches and processes the .hott file
 	 * for the given path, then replaces only the SPA target element's content.
 	 * If SPA mode is not enabled (spaTarget is null), falls back to full page navigation.
@@ -3199,6 +3240,61 @@ export class HotStaq implements IHotStaq
 			output = await HotStaq.processUrl (options);
 		}
 
+		// Layout (app-shell) mode: the route output is content-only, so inject
+		// it straight into the live outlet. The shell is never re-processed —
+		// there's no region to extract and no greedy doc.body.innerHTML
+		// fallback that could scoop body-level chrome (e.g. modals) into the
+		// swapped region. This is what lets apps drop their "bail if chrome
+		// already rendered" guards entirely.
+		if (HotStaq.layoutEnabled === true)
+		{
+			let outletEl: HTMLElement = HotStaq.injectIntoOutlet (output, HotStaq.spaOutlet);
+
+			if (outletEl == null)
+			{
+				// Outlet missing — fall back to a full render so the user isn't
+				// stranded (content-only output, so degraded but not broken).
+				if (typeof (console) !== "undefined")
+					console.warn (`HotStaq: layout outlet '${HotStaq.spaOutlet}' not found in the live DOM; falling back to a full page render.`);
+
+				await HotStaq.useOutput (output);
+
+				return;
+			}
+
+			if (HotStaq.dispatchReadyEvents === true)
+			{
+				document.dispatchEvent (new Event ("DOMContentLoaded"));
+				window.dispatchEvent (new Event ("load"));
+			}
+
+			if (HotStaq.onReadyEvent != null)
+				HotStaq.onReadyEvent (output);
+
+			// Same onAfterNavigate gate as legacy mode: returning false lets the
+			// app run the new content's scripts itself.
+			let runLayoutScripts: boolean = true;
+
+			if (HotStaq.onAfterNavigate != null)
+			{
+				let result: any = HotStaq.onAfterNavigate (path);
+
+				if (result instanceof Promise)
+					result = await result;
+
+				if (result === false)
+					runLayoutScripts = false;
+			}
+
+			// Scope script execution to the outlet: the shell's scripts already
+			// ran (and were marked data-hotstaq-executed) on the full-load
+			// render, so only the freshly-injected route scripts run here.
+			if (runLayoutScripts === true)
+				await HotStaq.executeInlineScripts (outletEl);
+
+			return;
+		}
+
 		// Find the SPA target element in the current DOM.
 		let targetEl: HTMLElement = document.querySelector (HotStaq.spaTarget);
 
@@ -3283,6 +3379,23 @@ export class HotStaq implements IHotStaq
 		{
 			// @ts-ignore
 			HotStaq.spaProcessor = window.__hotstaqSpaProcessor;
+		}
+
+		// Layout mode is set up on the shell's full-load render; useOutput then
+		// replaces <html>.innerHTML, which resets these statics. Rehydrate them
+		// from the window backups so the first navigateTo still takes the
+		// content-injection path.
+		// @ts-ignore
+		if (HotStaq.spaOutlet == null && window.__hotstaqSpaOutlet != null)
+		{
+			// @ts-ignore
+			HotStaq.spaOutlet = window.__hotstaqSpaOutlet;
+		}
+
+		// @ts-ignore
+		if (HotStaq.layoutEnabled === false && window.__hotstaqLayoutEnabled === true)
+		{
+			HotStaq.layoutEnabled = true;
 		}
 	}
 
