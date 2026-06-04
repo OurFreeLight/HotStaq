@@ -69,6 +69,27 @@ describe ("HotStaq.injectIntoOutlet", () =>
 				expect (doc.querySelector ("#outlet #shell-modal")).to.equal (null);
 			});
 
+		it ("preserves a LEADING <script> the HTML parser parks in <head>", () =>
+			{
+				const doc = dom.window.document;
+				doc.body.innerHTML = `<div id="outlet"></div>`;
+
+				// A content-only route whose FIRST node is a <script> (e.g. the
+				// OIDC auth-callback). The HTML parser moves a leading <script>
+				// into <head>, so an injector that only uses body.innerHTML
+				// silently drops it and the script never runs. It must survive
+				// into the outlet so executeInlineScripts can re-run it.
+				const output =
+					`<script id="lead" type="text/javascript">window.__ranLead = 1;</script>` +
+					`<h2 id="heading">Authenticating</h2>`;
+
+				(HotStaq as any).injectIntoOutlet (output, "#outlet");
+
+				expect (doc.querySelector ("#outlet #heading"), "markup injected").to.not.equal (null);
+				expect (doc.querySelector ("#outlet #lead"),
+					"a leading <script> must not be dropped").to.not.equal (null);
+			});
+
 		it ("returns null when the outlet is absent", () =>
 			{
 				const doc = dom.window.document;

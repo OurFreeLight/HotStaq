@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.29";
+	static version: string = "0.9.30";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -3096,7 +3096,14 @@ export class HotStaq implements IHotStaq
 
 		let doc: Document = new DOMParser ().parseFromString (output, "text/html");
 
-		outletEl.innerHTML = doc.body.innerHTML;
+		// The HTML parser parks any LEADING <script>/<style>/<link> (a node
+		// before the first flow content) into <head>, not <body>. Injecting
+		// only body.innerHTML would silently drop those — most painfully a
+		// route whose first node is its <script> (the content never runs). So
+		// prepend head.innerHTML: for a normal route <head> is empty (no-op);
+		// for a script-first route it restores the script ahead of the markup,
+		// in source order, where executeInlineScripts can re-run it.
+		outletEl.innerHTML = doc.head.innerHTML + doc.body.innerHTML;
 
 		return (outletEl);
 	}
