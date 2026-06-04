@@ -1,4 +1,4 @@
-import { Hot } from "./Hot";
+import { Hot, DeveloperMode } from "./Hot";
 import { HotClient } from "./HotClient";
 import { HotFile } from "./HotFile";
 import { HotLog } from "./HotLog";
@@ -308,6 +308,27 @@ export function hotStaqWebStart ()
 						args: args
 					};
 
+				// Dev/test tester bootstrap for layout (app-shell) mode. Under the
+				// SPA-index fallback the server hands back a static index.html with
+				// none of the generateContent tester wrap, so the dev/test web-api
+				// server marks the response with window.__hotstaqDevTester instead.
+				// Honor it here: flip the processor into Development mode and create
+				// the tester API client so the route's test paths can be reported to
+				// HotTesterAPI after the initial navigation (HotStaq.reportTestPaths,
+				// kicked below once the outlet has the route).
+				// @ts-ignore — set by the SPA-index dev bootstrap script.
+				let devTester: any = (typeof (window) !== "undefined") ? window["__hotstaqDevTester"] : null;
+				let devTesterEnabled: boolean = false;
+
+				if ((devTester != null) && (devTester.testerAPIUrl != null) && (devTester.testerAPIUrl !== ""))
+				{
+					devTesterEnabled = true;
+					processor.mode = DeveloperMode.Development;
+					options.testerAPIBaseUrl = devTester.testerAPIUrl;
+
+					HotStaq.setupTesters (processor, options);
+				}
+
 				if (loadPage !== "")
 				{
 					if (passRawUrl === false)
@@ -448,8 +469,22 @@ export function hotStaqWebStart ()
 
 					let injectInitialRoute = function (): void
 					{
-						if (initialMatched === true)
-							HotStaq.navigateTo (initialPath, false);
+						if (initialMatched === false)
+							return;
+
+						let nav: any = HotStaq.navigateTo (initialPath, false);
+
+						// After the route lands in the outlet, Hot.CurrentPage is the
+						// route page — report its test paths to HotTesterAPI so the
+						// HotTester suite can drive them (layout-mode replacement for
+						// the suppressed shell auto-POST).
+						if (devTesterEnabled === true)
+						{
+							if ((nav != null) && (typeof (nav.then) === "function"))
+								nav.then (() => HotStaq.reportTestPaths (processor));
+							else
+								HotStaq.reportTestPaths (processor);
+						}
 					};
 
 					if (shellSrc !== "")

@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.26";
+	static version: string = "0.9.27";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -3691,6 +3691,16 @@ if (Hot.Mode === HotStaqWeb.DeveloperMode.Development)
 {
 let func = function ()
 	{
+		// Layout (app-shell) mode: the shell renders once and has no test
+		// paths of its own. Its auto-POST would register an empty page with
+		// HotTesterAPI and race the post-navigation report. Stand down here —
+		// HotStaq.reportTestPaths fires after navigateTo injects the route,
+		// when Hot.CurrentPage holds the route's test paths. (Read the window
+		// backup, not the static: useOutput's <html>.innerHTML swap resets the
+		// class statics, but the window backup survives it.)
+		if (window["__hotstaqLayoutEnabled"] === true)
+			return;
+
 		if (Hot.TesterAPI != null)
 		{
 			window.addEventListener ("beforeunload",
@@ -3756,7 +3766,73 @@ hotstaq_isDocumentReady ();
 	}
 
 	/**
-	 * When the window has finished loading, execute the function. This 
+	 * Report the current page's test paths to the HotTesterAPI.
+	 *
+	 * Layout (app-shell) mode counterpart to setupClientTesters' auto-POST:
+	 * the shell renders once (with no test paths), so the per-route paths must
+	 * be reported *after* navigateTo injects the route into the outlet — at
+	 * that point HotFile has set Hot.CurrentPage / Hot.TesterAPI to the route
+	 * page, so its createTestPath registrations are reachable here. This mirrors
+	 * the body of the setupClientTesters script, but runs from the boot path
+	 * (HotStaqWebStart) instead of an injected <script>. Meant for browser use.
+	 */
+	static async reportTestPaths (processor: HotStaq): Promise<void>
+	{
+		if (processor == null)
+			return;
+
+		if (processor.mode !== DeveloperMode.Development)
+			return;
+
+		// @ts-ignore — Hot is the browser-global runtime facade.
+		if ((typeof (Hot) === "undefined") || (Hot.TesterAPI == null) || (Hot.CurrentPage == null))
+			return;
+
+		window.addEventListener ("beforeunload", () =>
+			{
+				HotStaq.isReadyForTesting = false;
+
+				(Hot.TesterAPI as any).tester.pageUnloaded ({
+						testerName: Hot.CurrentPage.testerName
+					}).then ((resp: any) =>
+						{
+							if (resp.error != null)
+							{
+								if (resp.error !== "")
+									throw new Error (resp.error);
+							}
+						});
+			}, { once: true });
+
+		let testPaths: { [name: string]: string; } = {};
+		let testElements: string = JSON.stringify (Hot.CurrentPage.testElements);
+
+		for (let key in Hot.CurrentPage.testPaths)
+		{
+			let testPath: any = Hot.CurrentPage.testPaths[key];
+
+			testPaths[key] = testPath.toString ();
+		}
+
+		let testPathsStr: string = JSON.stringify (testPaths);
+
+		let resp: any = await (Hot.TesterAPI as any).tester.pageLoaded ({
+				testerName: Hot.CurrentPage.testerName,
+				testElements: testElements,
+				testPaths: testPathsStr
+			});
+
+		if (resp.error != null)
+		{
+			if (resp.error !== "")
+				throw new Error (resp.error);
+		}
+
+		HotStaq.isReadyForTesting = true;
+	}
+
+	/**
+	 * When the window has finished loading, execute the function. This
 	 * is meant to start executing HotStaq.
 	 */
 	static onInitalLoad (readyFunc: () => void): void

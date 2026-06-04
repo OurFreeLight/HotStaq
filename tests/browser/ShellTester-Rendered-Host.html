@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Shell Tester Rendered Host</title>
+</head>
+
+<body>
+	<!-- Host for the dev-tester-under-shell e2e. Mirrors the DAO: a rendered
+	     shell (`src`) + content-only routes injected into <hot-outlet>. Served
+	     by the SPA-index fallback, which (in Development) injects the
+	     window.__hotstaqDevTester marker so the boot enables the tester client
+	     and reports the route's test paths after the initial navigation. -->
+	<div id="shell-tester-host-placeholder">booting…</div>
+
+	<hotstaq src="./ShellTesterShell.hott" outlet="#hot-outlet" router="shellTesterRouter"></hotstaq>
+
+	<hotstaq-router name="shellTesterRouter" serve-local="false">
+		<route path="/tests/browser/ShellTesterRoute" src="./ShellTesterRoute.hott"></route>
+	</hotstaq-router>
+</body>
+
+<script type="text/javascript" src="/build-web/HotStaq.js"></script>
+
+</html>

@@ -1,0 +1,14 @@
+<!-- Content-only route. Its <* *> preamble registers a test path on
+     Hot.CurrentPage; under the shell model that registration must reach
+     HotTesterAPI via HotStaq.reportTestPaths after navigateTo injects this
+     content into the outlet. -->
+<div id="shellTesterRoute">
+	<h1 id="shellTesterRouteTitle">Shell Tester Route</h1>
+</div>
+
+<*
+	Hot.CurrentPage.createTestPath ("ShellTester_RouteLoaded", async (driver) =>
+		{
+			await driver.wait (50);
+		});
+*>

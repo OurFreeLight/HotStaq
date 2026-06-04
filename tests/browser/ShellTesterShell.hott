@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Shell Tester Shell</title>
+</head>
+<body>
+	<!-- Rendered ONCE on boot (useOutput). Its setupClientTesters auto-POST must
+	     be suppressed in layout mode (it has no test paths of its own) so it
+	     doesn't race / overwrite the route's post-navigation report. -->
+	<div id="shell-tester-chrome">
+		<nav id="shell-tester-nav">shell tester chrome</nav>
+		<hot-outlet id="hot-outlet"></hot-outlet>
+	</div>
+</body>
+</html>

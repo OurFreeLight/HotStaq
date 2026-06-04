@@ -16,6 +16,7 @@ import * as swaggerUI from "swagger-ui-express";
 
 import { HotServer, HotServerType } from "./HotServer";
 import { HotStaq } from "./HotStaq";
+import { DeveloperMode } from "./Hot";
 import { HotRoute } from "./HotRoute";
 import { HotRouteMethod, HotEventMethod } from "./HotRouteMethod";
 import { processRequest } from "./HotHTTPServerProcessRequest";
@@ -1283,6 +1284,43 @@ export class HotHTTPServer extends HotServer
 														idxPath = ppath.normalize (`${process.cwd ()}/${idxPath}`);
 
 													res.setHeader ("Content-Type", "text/html");
+
+													// In Development mode with a web tester configured, the static
+													// index.html carries none of the dev-mode / tester-client setup
+													// that a generateContent page would (the route is never processed
+													// server-side under SPA-index). Inject a tiny bootstrap so the
+													// client-side <hotstaq> boot enables Development mode + the tester
+													// client; without it the HotTester never receives the page's test
+													// paths and waitForData times out.
+													let testerUrl: string = null;
+
+													if (this.processor.mode === DeveloperMode.Development)
+														testerUrl = HotStaq.getValueFromHotSiteObj (
+															this.processor.hotSite, ["testing", "web", "testerAPIUrl"]);
+
+													if ((testerUrl != null) && (testerUrl !== ""))
+													{
+														let html: string = "";
+
+														try { html = fs.readFileSync (idxPath, "utf8"); }
+														catch (ex) { html = ""; }
+
+														if (html !== "")
+														{
+															let boot: string = `\n<script type="text/javascript">window.__hotstaqDevTester = { testerAPIUrl: ${JSON.stringify (testerUrl)} };</script>\n`;
+
+															if (html.indexOf ("</head>") > -1)
+																html = html.replace ("</head>", boot + "</head>");
+															else
+																html = boot + html;
+
+															this.logger.verbose (() => `SPA-index (dev): serving ${idxPath} + tester bootstrap for navigation ${route}`);
+															res.status (200).send (html);
+
+															return;
+														}
+													}
+
 													this.logger.verbose (() => `SPA-index: serving ${idxPath} for navigation ${route}`);
 													res.status (200).sendFile (idxPath);
 
