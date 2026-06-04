@@ -318,6 +318,55 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	{
 		await this.driver.get (url);
 		this.processor.logger.verbose (`HotTestSeleniumDriver: navigateToUrl - ${url}`);
+
+		await this.waitForAppReady ();
+	}
+
+	/**
+	 * After a full-page navigation, wait for the app to finish booting before
+	 * returning. Under the app-shell / SPA-index (layout) model a navigation GET
+	 * serves a static shell host that boots the app — rendering the chrome and
+	 * injecting the route — ASYNCHRONOUSLY after the document `load` event. The
+	 * legacy server-rendered page had its content present on load, so test
+	 * bodies that do `navigate(x)` then immediately assert an element used to be
+	 * safe; under the shell they race the boot. The browser sets
+	 * `HotStaq.isReadyForTesting` (true) once the route has rendered + reported
+	 * its test paths, so block on that here. Only applies when a tester is
+	 * attached (dev/test); bounded so a page that never signals readiness falls
+	 * through to the caller's own assertion (a clear error) instead of hanging.
+	 */
+	async waitForAppReady (timeoutMs: number = 30000): Promise<void>
+	{
+		if (this.tester == null)
+			return;
+
+		const start: number = Date.now ();
+
+		while ((Date.now () - start) < timeoutMs)
+		{
+			let ready: boolean = false;
+
+			try
+			{
+				ready = await this.driver.executeScript (
+					"return (typeof (window.HotStaqWeb) !== 'undefined') " +
+					"&& (window.HotStaqWeb.HotStaq != null) " +
+					"&& (window.HotStaqWeb.HotStaq.isReadyForTesting === true);") as boolean;
+			}
+			catch (ex)
+			{
+				// Page mid-navigation / context destroyed — retry.
+				ready = false;
+			}
+
+			if (ready === true)
+				return;
+
+			await HotStaq.wait (100);
+		}
+
+		this.processor.logger.verbose (
+			`HotTestSeleniumDriver: waitForAppReady - app did not signal readiness within ${timeoutMs}ms; proceeding.`);
 	}
 
 	/**

@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.27";
+	static version: string = "0.9.28";
 	/**
 	 * Indicates if this is a web build.
 	 */
@@ -3788,20 +3788,18 @@ hotstaq_isDocumentReady ();
 		if ((typeof (Hot) === "undefined") || (Hot.TesterAPI == null) || (Hot.CurrentPage == null))
 			return;
 
+		// On navigation away, reset only the browser-local readiness flag (so the
+		// Selenium driver's post-navigate wait blocks on the NEXT page's render).
+		// Deliberately do NOT POST pageUnloaded here in layout mode: that POST
+		// races the next page's pageLoaded and, if it lands after, stomps the
+		// tester's finishedLoading back to false — the next page then waits the
+		// full waitForData cap and times out. The HotTester-driven flow resets
+		// finishedLoading server-side synchronously before every navigation
+		// (driver.navigate / the MochaSelenium setup's driver.get), so the unload
+		// POST is redundant as well as harmful here.
 		window.addEventListener ("beforeunload", () =>
 			{
 				HotStaq.isReadyForTesting = false;
-
-				(Hot.TesterAPI as any).tester.pageUnloaded ({
-						testerName: Hot.CurrentPage.testerName
-					}).then ((resp: any) =>
-						{
-							if (resp.error != null)
-							{
-								if (resp.error !== "")
-									throw new Error (resp.error);
-							}
-						});
 			}, { once: true });
 
 		let testPaths: { [name: string]: string; } = {};
