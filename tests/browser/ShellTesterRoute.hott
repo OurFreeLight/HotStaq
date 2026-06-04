@@ -1,4 +1,4 @@
-<!-- Content-only route. Its <* *> preamble registers a test path on
+<!-- Content-only route. Its <* *> preamble registers test paths on
      Hot.CurrentPage; under the shell model that registration must reach
      HotTesterAPI via HotStaq.reportTestPaths after navigateTo injects this
      content into the outlet. -->
@@ -10,5 +10,19 @@
 	Hot.CurrentPage.createTestPath ("ShellTester_RouteLoaded", async (driver) =>
 		{
 			await driver.wait (50);
+		});
+
+	// Re-navigation race check: a full driver.navigate back to this route, then
+	// an IMMEDIATE assert of this route's STATIC content. Under the app-shell
+	// model the navigation boots asynchronously; if the driver returns from
+	// navigate() before the route is injected (e.g. reading a stale readiness
+	// flag from the previous load), this single-shot assert fails — the same
+	// way the DAO's anon page-load tests flaked. navigateToUrl's waitForAppReady
+	// must hold until THIS navigation's route lands.
+	Hot.CurrentPage.createTestPath ("ShellTester_RenavStaticContent", async (driver) =>
+		{
+			await driver.navigate ("/tests/browser/ShellTesterRoute");
+			await driver.assertElementExists (">#shellTesterRouteTitle",
+					"Route static content missing immediately after navigate.");
 		});
 *>

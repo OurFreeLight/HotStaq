@@ -42,6 +42,12 @@ export class HotTesterMochaSelenium extends HotTesterMocha
 		super (processor, name, baseUrl, testMaps, beforeAll, afterAll);
 
 		this.driver = new HotTestSeleniumDriver (processor);
+		// Back-reference: HotTester's constructor (super, above) sets
+		// driver.tester = this, but our driver doesn't exist yet at that point,
+		// so wire it here. Without this, the driver's tester is null and
+		// navigate()'s finishedLoading reset + navigateToUrl's waitForAppReady
+		// (both gated on `this.tester != null`) silently no-op.
+		this.driver.tester = this;
         this.mocha = null;
         this.timeout = 10000;
 		this.suite = null;

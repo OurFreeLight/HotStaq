@@ -316,6 +316,23 @@ export class HotTestSeleniumDriver extends HotTestDriver
 	 */
 	async navigateToUrl(url: string): Promise<void>
 	{
+		// Clear the readiness flag on the OUTGOING page before navigating. Without
+		// this, waitForAppReady can observe a stale `isReadyForTesting === true`
+		// left by the previous load (driver.get to the same URL, or a poll that
+		// lands before the new document's fresh statics initialize) and return
+		// immediately — the caller then asserts route content that hasn't been
+		// injected yet. Best-effort: ignore if there's no page/runtime yet.
+		if (this.tester != null)
+		{
+			try
+			{
+				await this.driver.executeScript (
+					"if ((typeof (window.HotStaqWeb) !== 'undefined') && (window.HotStaqWeb.HotStaq != null)) " +
+					"{ window.HotStaqWeb.HotStaq.isReadyForTesting = false; }");
+			}
+			catch (ex) { /* no page / runtime yet — fine */ }
+		}
+
 		await this.driver.get (url);
 		this.processor.logger.verbose (`HotTestSeleniumDriver: navigateToUrl - ${url}`);
 
