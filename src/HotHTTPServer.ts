@@ -1262,7 +1262,35 @@ export class HotHTTPServer extends HotServer
 										if (sendContentFlag === true)
 										{
 											if (generateContent === true)
+											{
+												// SPA-index fallback. When `server.indexFile` is set, a
+												// full-page navigation to a .hott (a browser GET without the
+												// `hstqserve` param — that param is stripped by the early
+												// `result === "nahfam"` guard) serves the configured shell
+												// host (index.html) instead of the per-route page. The
+												// client then boots the app shell and fetches the route's
+												// content (with ?hstqserve, served raw) into its outlet.
+												// This mirrors nginx's `try_files $uri /index.html` so the
+												// dev/test server matches production for layout-mode apps.
+												let spaIndexFile: string = HotStaq.getValueFromHotSiteObj (
+													this.processor.hotSite, ["server", "indexFile"]);
+
+												if ((spaIndexFile != null) && (spaIndexFile !== ""))
+												{
+													let idxPath: string = spaIndexFile;
+
+													if (ppath.isAbsolute (idxPath) === false)
+														idxPath = ppath.normalize (`${process.cwd ()}/${idxPath}`);
+
+													res.setHeader ("Content-Type", "text/html");
+													this.logger.verbose (() => `SPA-index: serving ${idxPath} for navigation ${route}`);
+													res.status (200).sendFile (idxPath);
+
+													return;
+												}
+
 												await sendHottContent (url, route);
+											}
 											else
 											{
 												sendFileContent (
