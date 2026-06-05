@@ -80,6 +80,14 @@ export interface IHotComponent
 	 */
 	inner: any;
 	/**
+	 * When false, HotStaq does NOT re-append the component's original element
+	 * children after rendering — for components that render their body via
+	 * `${this.inner}` in `output()`. Leaving it true (the default) renders those
+	 * children twice: once inside `inner` and again as stray re-appended nodes.
+	 * Slot-based components (children with hot-place-parent) keep it true.
+	 */
+	placeChildren?: boolean;
+	/**
 	 * The events to trigger.
 	 */
 	events?: {
@@ -176,6 +184,12 @@ export abstract class HotComponent implements IHotComponent
 	 */
 	inner: any;
 	/**
+	 * When false, HotStaq skips re-appending the component's original element
+	 * children after rendering (for components that emit `${this.inner}` in
+	 * `output()`). Default true preserves slot-based composition.
+	 */
+	placeChildren: boolean;
+	/**
 	 * The events to trigger.
 	 */
 	events: {
@@ -240,6 +254,7 @@ export abstract class HotComponent implements IHotComponent
 			this.type = "";
 			this.value = null;
 			this.inner = null;
+			this.placeChildren = true;
 			this.events = {};
 		}
 		else
@@ -254,6 +269,7 @@ export abstract class HotComponent implements IHotComponent
 			this.type = copy.type || "";
 			this.value = copy.value || null;
 			this.inner = copy.inner || null;
+			this.placeChildren = (typeof (copy.placeChildren) === "boolean") ? copy.placeChildren : true;
 			this.events = {};
 		}
 

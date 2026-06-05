@@ -122,7 +122,14 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 
 					let childrenToReadd: Node[] = [];
 
-					// Save the children from being replaced.
+					// Save the children from being replaced — UNLESS the component
+					// opts out via placeChildren=false, which it does when it emits
+					// its body itself via ${this.inner} in output(). Without that
+					// opt-out, an element child (e.g. an inline <strong> inside an
+					// <admin-disclaimer>) renders twice: once inside `inner` and
+					// again as a stray re-appended node. Leaving childrenToReadd
+					// empty makes the re-append loop below a no-op; the originals
+					// stay on `this` and are discarded by replaceWith().
 					//
 					// Snapshot .children first (it's a live HTMLCollection that
 					// shrinks as we removeChild). Iterating the snapshot forward
@@ -132,12 +139,15 @@ export function registerComponent (tag: string, elementOptions: ElementDefinitio
 					// re-append produced reversed children in the rendered DOM —
 					// e.g. <admin-form-field>s declared as [name, points, key]
 					// ended up rendered as [key, points, name].
-					const originalChildren: Node[] = Array.from (this.children);
-					for (let iIdx = 0; iIdx < originalChildren.length; iIdx++)
+					if (this.component.placeChildren !== false)
 					{
-						let child: Node = originalChildren[iIdx];
+						const originalChildren: Node[] = Array.from (this.children);
+						for (let iIdx = 0; iIdx < originalChildren.length; iIdx++)
+						{
+							let child: Node = originalChildren[iIdx];
 
-						childrenToReadd.push (this.removeChild (child));
+							childrenToReadd.push (this.removeChild (child));
+						}
 					}
 		
 					let newDOM: Document = null;
