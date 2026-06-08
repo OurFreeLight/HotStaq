@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Include Partial Route</title>
+</head>
+<body>
+	<div id="spa-shell">
+		<div id="spa-target">
+			<* await Hot.include ("./IncludePartialChild.hott"); *>
+			<h1 id="routeTitle">Include Partial Route</h1>
+		</div>
+	</div>
+</body>
+</html>

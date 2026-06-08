@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Include Partial Test Page</title>
+</head>
+<body>
+	<div id="spa-shell">
+		<div id="spa-target">
+			<div id="spa-initial-content">Initial content.</div>
+		</div>
+	</div>
+
+	<hotstaq src="/tests/browser/IncludePartialRoute.hott" spa-target="#spa-target" router="ipRouter"></hotstaq>
+
+	<hotstaq-router name="ipRouter" serve-local="false">
+		<route path="/tests/browser/IncludePartialRoute" src="./IncludePartialRoute.hott"></route>
+	</hotstaq-router>
+</body>
+
+<script type="text/javascript" src="/build-web/HotStaq.js"></script>
+
+</html>

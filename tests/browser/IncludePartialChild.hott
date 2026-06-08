@@ -1,0 +1,4 @@
+<div id="partialContent">Partial content from Hot.include.</div>
+<script type="text/javascript">
+	window.__partialInlineRan = "yes";
+</script>
