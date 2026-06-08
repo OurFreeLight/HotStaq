@@ -589,6 +589,29 @@ function executeInlineScripts (host: HTMLElement, bodies: string[]): void
 
 		placeholder.replaceWith (real);
 	}
+
+	// HS-22: inline <script>s that came from a Hot.include() PARTIAL arrive as
+	// raw <script> tags carrying their own body (the build tags them
+	// data-hott-partial-script). innerHTML leaves those inert, and they are NOT
+	// in the route's `bodies` array, so the placeholder pass above can't revive
+	// them. Re-create each one so the browser runs it. The freshly created
+	// scripts drop the marker attribute, so a second mount/pass won't
+	// double-execute them.
+	const partialScripts: NodeListOf<HTMLScriptElement> =
+		host.querySelectorAll<HTMLScriptElement> ("script[data-hott-partial-script]");
+
+	for (const tagged of Array.from (partialScripts))
+	{
+		const real: HTMLScriptElement = document.createElement ("script");
+		for (const attr of Array.from (tagged.attributes))
+		{
+			if (attr.name === "data-hott-partial-script") continue;
+			real.setAttribute (attr.name, attr.value);
+		}
+		real.textContent = tagged.textContent || "";
+
+		tagged.replaceWith (real);
+	}
 }
 
 function cookieGet (name: string): string | null

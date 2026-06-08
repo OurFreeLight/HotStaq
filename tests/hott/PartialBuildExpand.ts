@@ -304,4 +304,46 @@ describe ("v0.9.0 — HS090-15 build-time partial expansion (admin-panel shape)"
 		}
 		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
 	});
+
+	// HS-22: a Hot.include()'d partial's inline <script> arrives raw in the
+	// stash; innerHTML leaves it inert, so the build must tag it
+	// (data-hott-partial-script) for the runtime to re-execute. Regression
+	// test for the "header onclick handler does nothing" class of bug.
+	it ("HS-22: tags a partial's inline <script> so the runtime re-executes it", async () =>
+	{
+		const tmp: string = await fsp.mkdtemp (ppath.join (os.tmpdir (), "hs090-hs22-"));
+		try
+		{
+			const pub: string = ppath.join (tmp, "public");
+			await fsp.mkdir (ppath.join (pub, "components"), { recursive: true });
+
+			await fsp.writeFile (ppath.join (pub, "components", "header.hott"),
+				"<header>${TITLE}</header>\n" +
+				"<script>window.__partialRan = (window.__partialRan || 0) + 1;</script>\n" +
+				"<script src=\"/js/keep-me.js\"></script>\n"
+			);
+			await fsp.writeFile (ppath.join (pub, "index.hott"),
+				"<* await Hot.include('./components/header.hott', { TITLE: \"Hi\" }); *>\n" +
+				"<main></main>\n"
+			);
+
+			const site: HotSite = {
+				name: "hs22",
+				web: { "hs22": { mainUrl: "/", routes: [{ path: "/", file: "./public/index.hott" }] } }
+			};
+			const out: string = ppath.join (tmp, "dist");
+			await new HotStaticBuilder (site, { cwd: tmp, out, mode: "development" }).build ();
+
+			const html: string = await fsp.readFile (ppath.join (out, "index.html"), "utf8");
+
+			// The partial's INLINE js script is tagged for runtime revival...
+			expect (html).to.match (/data-hott-partial-script[^>]*>\s*window\.__partialRan/);
+			// ...and its body survives verbatim.
+			expect (html).to.include ("window.__partialRan = (window.__partialRan || 0) + 1;");
+			// A <script src=…> in the partial is NOT tagged (external, handled
+			// separately) — guards against over-tagging.
+			expect (html).to.not.match (/data-hott-partial-script[^>]*src=/i);
+		}
+		finally { await fsp.rm (tmp, { recursive: true, force: true }); }
+	});
 });

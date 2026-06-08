@@ -566,7 +566,7 @@ export class HotStaticBuilder
 		}
 
 		for (const [id, html] of idToHtml.entries ())
-			this.resolvedPartials.set (id, html);
+			this.resolvedPartials.set (id, tagPartialInlineScripts (html));
 	}
 
 	private async tryExpand (
@@ -1746,6 +1746,41 @@ function escapeAttr (s: string): string
 function escapeText (s: string): string
 {
 	return (s.replace (/&/g, "&amp;").replace (/</g, "&lt;").replace (/>/g, "&gt;"));
+}
+
+/**
+ * HS-22: mark a resolved partial's INLINE <script> tags so the client runtime
+ * re-executes them after the partial mounts. A Hot.include()'d partial's
+ * scripts arrive as raw <script>…</script> in the stash HTML; once that HTML is
+ * dropped into the host via innerHTML the browser treats those scripts as inert
+ * (HTML spec) and they never run. Tagging them with `data-hott-partial-script`
+ * lets HotStaticRuntime.executeInlineScripts find and re-create them.
+ *
+ * Left untouched: <script src=…> (external — handled separately), empty bodies,
+ * non-JS types (e.g. type="text/html" partial stash, application/json data),
+ * and anything already carrying a hott script marker (route placeholders).
+ */
+function tagPartialInlineScripts (html: string): string
+{
+	return (html.replace (/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi,
+		(match: string, attrs: string, body: string): string =>
+		{
+			const a: string = attrs || "";
+
+			if (/\bsrc\s*=/i.test (a)) return (match);
+			if (body.trim () === "") return (match);
+			if (/data-hott-(partial-)?script/i.test (a)) return (match);
+
+			const typeMatch: RegExpMatchArray | null = a.match (/\btype\s*=\s*["']?([^"'\s>]+)/i);
+			if (typeMatch)
+			{
+				const t: string = typeMatch[1].toLowerCase ();
+				if (t !== "text/javascript" && t !== "application/javascript" && t !== "module")
+					return (match);
+			}
+
+			return (`<script data-hott-partial-script${attrs}>${body}</script>`);
+		}));
 }
 
 /**
