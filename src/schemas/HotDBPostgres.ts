@@ -17,6 +17,72 @@ export interface PostgresResults
 }
 
 /**
+ * A database transaction bound to a single client checked out from the pool.
+ *
+ * Unlike {@link HotDBPostgres.query}, which swallows query errors into the
+ * returned {@link PostgresResults.error}, the query methods here **throw** when
+ * the underlying query fails. This is intentional: inside a transaction a failed
+ * statement must abort the surrounding callback so the transaction rolls back
+ * rather than silently committing a partial write.
+ *
+ * You do not construct this directly — obtain one via {@link HotDBPostgres.transaction}.
+ */
+export class HotDBTransaction
+{
+	/**
+	 * The single client this transaction runs all of its queries on.
+	 */
+	protected client: pg.PoolClient;
+
+	constructor (client: pg.PoolClient)
+	{
+		this.client = client;
+	}
+
+	/**
+	 * Run a query on this transaction's client. Throws on error so the
+	 * surrounding transaction rolls back.
+	 */
+	async query (queryString: string, values: any[] = []): Promise<PostgresResults>
+	{
+		const result = await this.client.query (queryString, values);
+
+		return ({
+			error: null,
+			results: result.rows,
+			rawResults: result,
+			fields: result.fields
+		});
+	}
+
+	/**
+	 * Run a query and return the first row (or null if there are none). Throws
+	 * on error so the surrounding transaction rolls back.
+	 */
+	async queryOne (queryString: string, values: any[] = []): Promise<PostgresResults>
+	{
+		const result = await this.client.query (queryString, values);
+		let tempResults = null;
+
+		if (result != null)
+		{
+			if (result.rows != null)
+			{
+				if (result.rows.length > 0)
+					tempResults = result.rows[0];
+			}
+		}
+
+		return ({
+			error: null,
+			results: tempResults,
+			rawResults: result,
+			fields: result.fields
+		});
+	}
+}
+
+/**
  * The Postgres database connection.
  */
 export class HotDBPostgres extends HotDB<pg.Pool, PostgresResults, PostgresSchema>
@@ -282,6 +348,64 @@ return (migration.version);
 				rawResults: null,
 				fields: []
 			});
+		}
+	}
+
+	/**
+	 * Run a series of queries inside a single database transaction.
+	 *
+	 * A dedicated client is checked out from the pool and `BEGIN` is issued, then
+	 * the callback runs with a {@link HotDBTransaction} bound to that client. If
+	 * the callback resolves, the transaction is committed; if it throws, the
+	 * transaction is rolled back and the error is re-thrown. The client is always
+	 * released back to the pool.
+	 *
+	 * All queries that should participate in the transaction MUST be run through
+	 * the {@link HotDBTransaction} passed to the callback (not `this.query`), so
+	 * that they share the one client. Because those queries throw on error, a
+	 * failed statement automatically aborts the callback and triggers a rollback.
+	 *
+	 * @example
+	 * await db.transaction (async (tx) =>
+	 * {
+	 *     await tx.query ("INSERT INTO campaigns (id, name) VALUES ($1, $2)", [id, name]);
+	 *     await tx.query ("INSERT INTO campaign_members (campaign_id, user_id) VALUES ($1, $2)", [id, ownerId]);
+	 * });
+	 */
+	async transaction<T> (callback: (tx: HotDBTransaction) => Promise<T>): Promise<T>
+	{
+		this.dbCheck ();
+
+		const client: pg.PoolClient = await this.db.connect ();
+
+		try
+		{
+			await client.query ("BEGIN");
+
+			const tx: HotDBTransaction = new HotDBTransaction (client);
+			const result: T = await callback (tx);
+
+			await client.query ("COMMIT");
+
+			return (result);
+		}
+		catch (err)
+		{
+			try
+			{
+				await client.query ("ROLLBACK");
+			}
+			catch (rollbackErr)
+			{
+				// Preserve and surface the original error below; the rollback
+				// failure (e.g. a dead connection) should not mask it.
+			}
+
+			throw err;
+		}
+		finally
+		{
+			client.release ();
 		}
 	}
 
