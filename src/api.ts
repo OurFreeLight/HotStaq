@@ -49,7 +49,7 @@ import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
 import { HotDBGenerationType, HotDBSchema } from "./schemas/HotDBSchema";
 
 // MySQL specific database stuff
-import { HotDBMySQL, MySQLResults } from "./schemas/HotDBMySQL";
+import { HotDBMySQL, HotDBMySQLTransaction, MySQLResults } from "./schemas/HotDBMySQL";
 import { HotDBMigration } from "./schemas/HotDBMigration";
 import { MySQLSchema } from "./schemas/mysql/MySQLSchema";
 import { MySQLSchemaFieldResult, MySQLSchemaField } from "./schemas/mysql/MySQLSchemaField";
@@ -127,6 +127,7 @@ export {
 		HotDBConnectionInterface,
 		HotDBSchema,
 		HotDBMySQL,
+		HotDBMySQLTransaction,
 		HotDBMigration,
 		MySQLResults,
 		MySQLSchema,

@@ -95,4 +95,17 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
      * Disconnect from the server.
      */
     abstract disconnect (): Promise<void>;
+	/**
+	 * Run a unit of work inside a single database transaction. The callback is
+	 * given a transaction executor bound to ONE checked-out connection; use its
+	 * `query`/`queryOne` for every write so the whole unit commits or rolls back
+	 * atomically (the executor throws on error to trigger a rollback).
+	 *
+	 * The base implementation throws — each database type that supports
+	 * transactions overrides this (see HotDBPostgres and HotDBMySQL).
+	 */
+	async transaction<T> (callback: (tx: any) => Promise<T>): Promise<T>
+	{
+		throw new Error (`Transactions are not supported for this database type: ${this.type}`);
+	}
 }

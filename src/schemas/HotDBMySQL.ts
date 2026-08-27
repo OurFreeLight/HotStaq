@@ -16,6 +16,79 @@ export interface MySQLResults
 }
 
 /**
+ * A MySQL transaction bound to a single checked-out connection. Unlike
+ * HotDBMySQL.query, the query methods here THROW on error so a failed statement
+ * aborts the surrounding transaction and triggers a rollback rather than
+ * silently committing a partial write. Obtain one via HotDBMySQL.transaction.
+ */
+export class HotDBMySQLTransaction
+{
+	/**
+	 * The single connection this transaction runs all of its queries on.
+	 */
+	protected connection: mysql.PoolConnection;
+
+	constructor (connection: mysql.PoolConnection)
+	{
+		this.connection = connection;
+	}
+
+	/**
+	 * Run a query on this transaction's connection. Throws on error so the
+	 * surrounding transaction rolls back.
+	 */
+	async query (queryString: string, values: any[] = []): Promise<MySQLResults>
+	{
+		return (await new Promise<MySQLResults> ((resolve, reject) =>
+			{
+				this.connection.query (queryString, values,
+					(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
+					{
+						if (err)
+						{
+							reject (err);
+
+							return;
+						}
+
+						resolve ({ error: null, results: results, fields: fields });
+					});
+			}));
+	}
+
+	/**
+	 * Run a query and return the first row (or null). Throws on error so the
+	 * surrounding transaction rolls back.
+	 */
+	async queryOne (queryString: string, values: any[] = []): Promise<MySQLResults>
+	{
+		return (await new Promise<MySQLResults> ((resolve, reject) =>
+			{
+				this.connection.query (queryString, values,
+					(err: mysql.QueryError, results: any, fields: mysql.FieldPacket[]) =>
+					{
+						if (err)
+						{
+							reject (err);
+
+							return;
+						}
+
+						let tempResults = null;
+
+						if (results != null)
+						{
+							if (results.length > 0)
+								tempResults = results[0];
+						}
+
+						resolve ({ error: null, results: tempResults, fields: fields });
+					});
+			}));
+	}
+}
+
+/**
  * The MySQL database connection.
  */
 export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
@@ -422,5 +495,77 @@ return (migration.version);
 					resolve ();
 				});
 		}));
+	}
+
+	/**
+	 * Run a series of queries inside a single database transaction.
+	 *
+	 * A dedicated connection is checked out from the pool and `START TRANSACTION`
+	 * is issued, then the callback runs with a HotDBMySQLTransaction bound to that
+	 * connection. If the callback resolves the transaction is committed; if it
+	 * throws it is rolled back and the error re-thrown. The connection is always
+	 * released. All queries that must be atomic MUST run through the
+	 * HotDBMySQLTransaction passed to the callback (not `this.query`).
+	 */
+	async transaction<T> (callback: (tx: HotDBMySQLTransaction) => Promise<T>): Promise<T>
+	{
+		this.dbCheck ();
+
+		const connection: mysql.PoolConnection = await new Promise<mysql.PoolConnection> ((resolve, reject) =>
+			{
+				this.db.getConnection ((err: NodeJS.ErrnoException, connection: mysql.PoolConnection) =>
+					{
+						if (err)
+						{
+							reject (err);
+
+							return;
+						}
+
+						resolve (connection);
+					});
+			});
+
+		const run = (sql: string): Promise<void> =>
+			new Promise<void> ((resolve, reject) =>
+				{
+					connection.query (sql, (err: mysql.QueryError) =>
+						{
+							if (err)
+								reject (err);
+							else
+								resolve ();
+						});
+				});
+
+		try
+		{
+			await run ("START TRANSACTION");
+
+			const tx: HotDBMySQLTransaction = new HotDBMySQLTransaction (connection);
+			const result: T = await callback (tx);
+
+			await run ("COMMIT");
+
+			return (result);
+		}
+		catch (err)
+		{
+			try
+			{
+				await run ("ROLLBACK");
+			}
+			catch (rollbackErr)
+			{
+				// Preserve and surface the original error below; a rollback
+				// failure should not mask it.
+			}
+
+			throw err;
+		}
+		finally
+		{
+			connection.release ();
+		}
 	}
 }
