@@ -1,6 +1,6 @@
 import * as mysql from "mysql2";
 
-import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
+import { ConnectionStatus, HotDB, HotDBType, IHotDBExecutor } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { MySQLSchema } from "./mysql/MySQLSchema";
 import { HotIO } from "../HotIO";
@@ -21,7 +21,7 @@ export interface MySQLResults
  * aborts the surrounding transaction and triggers a rollback rather than
  * silently committing a partial write. Obtain one via HotDBMySQL.transaction.
  */
-export class HotDBMySQLTransaction
+export class HotDBMySQLTransaction implements IHotDBExecutor<MySQLResults>
 {
 	/**
 	 * The database type (MySQL or MariaDB), carried over from the parent
@@ -110,7 +110,7 @@ export class HotDBMySQLTransaction
 /**
  * The MySQL database connection.
  */
-export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema>
+export class HotDBMySQL extends HotDB<mysql.Pool, MySQLResults, MySQLSchema> implements IHotDBExecutor<MySQLResults>
 {
 	constructor (db: mysql.Pool = null, type: HotDBType = HotDBType.MySQL, schema: MySQLSchema = null)
 	{

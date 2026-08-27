@@ -44,7 +44,7 @@ import { HotTestPage } from "./HotTestPage";
 import { HotTestSeleniumDriver } from "./HotTestSeleniumDriver";
 
 // Database stuff
-import { HotDB, HotDBType, ConnectionStatus } from "./HotDB";
+import { HotDB, HotDBType, ConnectionStatus, IHotDBExecutor } from "./HotDB";
 import { HotDBConnectionInterface } from "./HotDBConnectionInterface";
 import { HotDBGenerationType, HotDBSchema } from "./schemas/HotDBSchema";
 
@@ -88,6 +88,7 @@ export {
 		ValidationError, FalsyOptions, ValidationOptions,
 		HotIO,
 		HotDB,
+		IHotDBExecutor,
 		HotDBType,
 		ConnectionStatus,
 		HotRoute,

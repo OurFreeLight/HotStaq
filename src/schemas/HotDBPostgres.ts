@@ -1,6 +1,6 @@
 import * as pg from "pg";
 
-import { ConnectionStatus, HotDB, HotDBType } from "../HotDB";
+import { ConnectionStatus, HotDB, HotDBType, IHotDBExecutor } from "../HotDB";
 import { HotDBConnectionInterface } from "../HotDBConnectionInterface";
 import { PostgresSchema } from "./postgres/PostgresSchema";
 import { HotIO } from "../HotIO";
@@ -27,7 +27,7 @@ export interface PostgresResults
  *
  * You do not construct this directly — obtain one via {@link HotDBPostgres.transaction}.
  */
-export class HotDBTransaction
+export class HotDBTransaction implements IHotDBExecutor<PostgresResults>
 {
 	/**
 	 * The database type. Always Postgres for a HotDBTransaction. Exposed so code
@@ -102,7 +102,7 @@ export class HotDBTransaction
 /**
  * The Postgres database connection.
  */
-export class HotDBPostgres extends HotDB<pg.Pool, PostgresResults, PostgresSchema>
+export class HotDBPostgres extends HotDB<pg.Pool, PostgresResults, PostgresSchema> implements IHotDBExecutor<PostgresResults>
 {
 	constructor (db: pg.Pool = null, type: HotDBType = HotDBType.Postgres, schema: PostgresSchema = null)
 	{

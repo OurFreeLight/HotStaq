@@ -25,6 +25,35 @@ export enum HotDBType
 }
 
 /**
+ * The minimal surface for running queries and grouping them into a transaction.
+ *
+ * Both the pooled connections (HotDBPostgres, HotDBMySQL) and the per-transaction
+ * executors (HotDBTransaction, HotDBMySQLTransaction) satisfy this, so a live
+ * transaction can be handed to any code that only needs to run queries and open
+ * (or join) a transaction — e.g. a library given a transaction-scoped `db`.
+ */
+export interface IHotDBExecutor<DBResultType = any>
+{
+	/**
+	 * The database type, so callers can pick the correct SQL dialect.
+	 */
+	type: HotDBType;
+	/**
+	 * Run a query.
+	 */
+	query (queryString: string, values?: any[]): Promise<DBResultType>;
+	/**
+	 * Run a query and return the first row.
+	 */
+	queryOne (queryString: string, values?: any[]): Promise<DBResultType>;
+	/**
+	 * Run a callback inside a transaction. On a pooled connection this opens a
+	 * new transaction; on a live transaction it JOINs the current one.
+	 */
+	transaction<T> (callback: (tx: IHotDBExecutor<DBResultType>) => Promise<T>): Promise<T>;
+}
+
+/**
  * The server-side database connection. This may be deprecated and removed in a future version soon.
  */
 export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSchema>
@@ -104,7 +133,7 @@ export abstract class HotDB<DBType = any, DBResultType = any, DBSchema = HotDBSc
 	 * The base implementation throws — each database type that supports
 	 * transactions overrides this (see HotDBPostgres and HotDBMySQL).
 	 */
-	async transaction<T> (callback: (tx: any) => Promise<T>): Promise<T>
+	async transaction<T> (callback: (tx: IHotDBExecutor<DBResultType>) => Promise<T>): Promise<T>
 	{
 		throw new Error (`Transactions are not supported for this database type: ${this.type}`);
 	}
