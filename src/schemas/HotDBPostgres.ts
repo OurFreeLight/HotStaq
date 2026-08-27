@@ -80,6 +80,17 @@ export class HotDBTransaction
 			fields: result.fields
 		});
 	}
+
+	/**
+	 * Run a callback within THIS transaction. There is NO nested BEGIN — the
+	 * callback simply reuses the current transaction. This lets code that expects
+	 * a `transaction()` method (e.g. a library handed this transaction as its
+	 * `db`) JOIN the caller's transaction instead of opening a new one.
+	 */
+	async transaction<T> (callback: (tx: HotDBTransaction) => Promise<T>): Promise<T>
+	{
+		return (callback (this));
+	}
 }
 
 /**

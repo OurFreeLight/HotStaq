@@ -86,6 +86,18 @@ export class HotDBMySQLTransaction
 					});
 			}));
 	}
+
+	/**
+	 * Run a callback within THIS transaction. There is NO nested START
+	 * TRANSACTION — the callback simply reuses the current transaction. This lets
+	 * code that expects a `transaction()` method (e.g. a library handed this
+	 * transaction as its `db`) JOIN the caller's transaction instead of opening a
+	 * new one.
+	 */
+	async transaction<T> (callback: (tx: HotDBMySQLTransaction) => Promise<T>): Promise<T>
+	{
+		return (callback (this));
+	}
 }
 
 /**

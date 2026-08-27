@@ -238,7 +238,7 @@ export class HotStaq implements IHotStaq
 	/**
 	 * The current version of HotStaq.
 	 */
-	static version: string = "0.9.34";
+	static version: string = "0.9.35";
 	/**
 	 * Indicates if this is a web build.
 	 */

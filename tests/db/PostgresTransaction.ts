@@ -127,4 +127,29 @@ describe ("HotDBPostgres - Transactions", () =>
 				expect (ret).to.equal (0);
 				expect (client.calls).to.deep.equal (["BEGIN", "COMMIT"]);
 			});
+
+		it ("HotDBTransaction.transaction JOINs the current transaction (no nested BEGIN)", async () =>
+			{
+				const client = makeFakeClient ();
+				const db = new HotDBPostgres (makePool (client));
+
+				await db.transaction (async (tx: HotDBTransaction) =>
+					{
+						await tx.query ("INSERT a");
+
+						// Something handed `tx` as its db calls .transaction() on it —
+						// it must reuse the SAME transaction, not open a new one.
+						const inner = await tx.transaction (async (tx2: HotDBTransaction) =>
+							{
+								await tx2.query ("INSERT b");
+
+								return (tx2);
+							});
+
+						expect (inner).to.equal (tx); // same transaction, joined
+					});
+
+				// Only ONE BEGIN/COMMIT — the inner call did not open a nested one.
+				expect (client.calls).to.deep.equal (["BEGIN", "INSERT a", "INSERT b", "COMMIT"]);
+			});
 	});
