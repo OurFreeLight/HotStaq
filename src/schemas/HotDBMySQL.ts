@@ -24,13 +24,20 @@ export interface MySQLResults
 export class HotDBMySQLTransaction
 {
 	/**
+	 * The database type (MySQL or MariaDB), carried over from the parent
+	 * connection. Exposed so code handed this transaction as its `db` can detect
+	 * the SQL dialect just like it would from a HotDBMySQL.
+	 */
+	type: HotDBType;
+	/**
 	 * The single connection this transaction runs all of its queries on.
 	 */
 	protected connection: mysql.PoolConnection;
 
-	constructor (connection: mysql.PoolConnection)
+	constructor (connection: mysql.PoolConnection, type: HotDBType = HotDBType.MySQL)
 	{
 		this.connection = connection;
+		this.type = type;
 	}
 
 	/**
@@ -554,7 +561,7 @@ return (migration.version);
 		{
 			await run ("START TRANSACTION");
 
-			const tx: HotDBMySQLTransaction = new HotDBMySQLTransaction (connection);
+			const tx: HotDBMySQLTransaction = new HotDBMySQLTransaction (connection, this.type);
 			const result: T = await callback (tx);
 
 			await run ("COMMIT");

@@ -30,6 +30,12 @@ export interface PostgresResults
 export class HotDBTransaction
 {
 	/**
+	 * The database type. Always Postgres for a HotDBTransaction. Exposed so code
+	 * handed this transaction as its `db` can detect the SQL dialect just like it
+	 * would from a HotDBPostgres.
+	 */
+	type: HotDBType = HotDBType.Postgres;
+	/**
 	 * The single client this transaction runs all of its queries on.
 	 */
 	protected client: pg.PoolClient;
