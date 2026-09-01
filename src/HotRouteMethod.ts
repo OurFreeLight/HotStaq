@@ -589,12 +589,21 @@ export interface IHotRouteMethod
 	onServerAuthorize?: ServerAuthorizationFunction;
 
 	/**
-	 * Executes when executing a called method from the server side. 
-	 * This will stringify any JSON object and send it as a JSON response. 
-	 * If undefined is returned no response will be sent to the server. 
+	 * Executes before executing onServerExecute. Anything that returns
+	 * from this will be passed onto onServerExecute via request.previousJsonObj.
+	 * Commonly used for authorization guards, so it MUST be carried through
+	 * HotRouteMethod.create() alongside onServerExecute — omitting it here
+	 * silently drops any guard supplied via addMethod({ ... }).
+	 */
+	onServerPreExecute?: ServerExecutionFunction;
+
+	/**
+	 * Executes when executing a called method from the server side.
+	 * This will stringify any JSON object and send it as a JSON response.
+	 * If undefined is returned no response will be sent to the server.
 	 * So the developer would have to send a response using "res".
-	 * If any exceptions are thrown from this function, they will be sent 
-	 * to the server as an { error: string; } object with the exception 
+	 * If any exceptions are thrown from this function, they will be sent
+	 * to the server as an { error: string; } object with the exception
 	 * message as the error.
 	 */
 	onServerExecute?: ServerExecutionFunction;
@@ -766,6 +775,7 @@ export class HotRouteMethod implements IHotRouteMethod
 		this.onPostRegister = null;
 
 		this.onServerAuthorize = null;
+		this.onServerPreExecute = null;
 		this.onServerExecute = null;
 		this.onClientExecute = null;
 		this.onValidateQueryInput = null;
@@ -888,6 +898,9 @@ export class HotRouteMethod implements IHotRouteMethod
 
 			if (route.onPostRegister != null)
 				newMethod.onPostRegister = route.onPostRegister;
+
+			if (route.onServerPreExecute != null)
+				newMethod.onServerPreExecute = route.onServerPreExecute;
 
 			if (route.onServerExecute != null)
 				newMethod.onServerExecute = route.onServerExecute;
