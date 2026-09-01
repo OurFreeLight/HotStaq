@@ -26,10 +26,9 @@ build:
 # behaviour and v0.9.0 static-build behaviour both green. Runs on every
 # pushed branch, not just dev/main.
 #
-# Scope: hott/* tests only. The legacy full suite (`npm test`) has
-# unrelated failures (browser-only tests in node context, fetch URL
-# expectations, etc.) that predate HS090 and would block every publish.
-# Fixing those belongs in its own branch.
+# Scope: hott/* tests only. This is the fast, focused dual-mode gate and is
+# kept as its own job so a regression there is obvious at a glance. The full
+# suite (test-full, below) also covers these, but this gate stays intact.
 test:
   stage: build
   image: node:22-bookworm
@@ -37,6 +36,32 @@ test:
     - npm ci
     - npm run build
     - npx mocha --timeout 30000 --colors './build/tests/hott/*.js'
+  artifacts:
+    when: on_failure
+    paths:
+      - build/
+    expire_in: 1 day
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+# Full test suite (`npm test`). Runs every unit/API/generator/hott suite in a
+# plain headless node container. Tests that require external infrastructure not
+# present in CI are guarded (see tests/TestEnv.ts) and skip cleanly here:
+#
+#   - Browser/Selenium tests   -> set RUN_BROWSER_TESTS=1 with Chrome available
+#   - Database tests (MySQL/PG/Influx) -> set RUN_DB_TESTS=1 with a DB available
+#   - App-generation/Docker tests      -> set RUN_INTEGRATION_TESTS=1
+#
+# With none of those flags set, the gated suites report as pending and the job
+# is green. The 60s mocha timeout accommodates runtime TypeScript interface
+# parsing (convertInterfaceToRouteParameters), which takes several seconds.
+test-full:
+  stage: build
+  image: node:22-bookworm
+  script:
+    - npm ci
+    - npm run build
+    - npm test
   artifacts:
     when: on_failure
     paths:

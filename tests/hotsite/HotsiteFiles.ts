@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect, should } from "chai";
 import { By, until, WebDriver } from "selenium-webdriver";
 
@@ -7,7 +8,7 @@ import { Common } from "../Common";
 import { DeveloperMode, HotHTTPServer, HotLogLevel, HotStaq, HotTester, HotTesterMochaSelenium, HotTesterServer, HotTestMap } from "../../src/api";
 import { HelloWorldAPI } from "../server/HelloWorldAPI";
 
-describe ("Hotsite Files Tests", () =>
+describeBrowser ("Hotsite Files Tests", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;

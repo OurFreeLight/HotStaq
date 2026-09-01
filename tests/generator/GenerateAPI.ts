@@ -16,12 +16,26 @@ describe ("API Generator Tests", () =>
 		let generator: HotGenerator = null;
 		let apis: { [name: string]: APItoLoad; } = {};
 
+		let previousHttpPort: string = undefined;
+
 		before (async () =>
 			{
+				// The generated API client embeds the API's base URL, whose port
+				// is derived from the HTTP_PORT env var (defaulting to 5000). The
+				// expected SHA-256 hashes below were computed against port 3123,
+				// so pin it here to make these tests hermetic and independent of
+				// whether a local .env happens to be loaded (CI has none).
+				previousHttpPort = process.env["HTTP_PORT"];
+				process.env["HTTP_PORT"] = "3123";
+
 				processor = new HotStaq ();
 			});
 		after (async () =>
 			{
+				if (previousHttpPort === undefined)
+					delete process.env["HTTP_PORT"];
+				else
+					process.env["HTTP_PORT"] = previousHttpPort;
 			});
 
 		it ("should load the HotSite and the generator", async () =>

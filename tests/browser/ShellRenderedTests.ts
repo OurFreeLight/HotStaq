@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect } from "chai";
 import { By, until } from "selenium-webdriver";
 
@@ -13,7 +14,7 @@ import { HotStaq } from "../../src/api";
  * the shell renders exactly once, persists across navigation, and never
  * duplicates body-level chrome into the outlet.
  */
-describe ("Rendered-Shell SPA Navigation Tests", () =>
+describeBrowser ("Rendered-Shell SPA Navigation Tests", () =>
 	{
 		let common: Common = null;
 

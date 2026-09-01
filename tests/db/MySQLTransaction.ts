@@ -1,4 +1,5 @@
 import "mocha";
+import { describeDb } from "../TestEnv";
 import { expect } from "chai";
 
 import { HotDBMySQL, HotDBMySQLTransaction } from "../../src/schemas/HotDBMySQL";
@@ -41,7 +42,7 @@ function makePool (connection: any): any
 	return ({ getConnection: (cb: any) => cb (null, connection) });
 }
 
-describe ("HotDBMySQL - Transactions", () =>
+describeDb ("HotDBMySQL - Transactions", () =>
 	{
 		it ("commits and returns the callback result on success", async () =>
 			{

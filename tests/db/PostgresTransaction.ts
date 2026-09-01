@@ -1,4 +1,5 @@
 import "mocha";
+import { describeDb } from "../TestEnv";
 import { expect } from "chai";
 
 import { HotDBPostgres, HotDBTransaction } from "../../src/schemas/HotDBPostgres";
@@ -34,7 +35,7 @@ function makePool (client: any): any
 	return ({ connect: async () => client });
 }
 
-describe ("HotDBPostgres - Transactions", () =>
+describeDb ("HotDBPostgres - Transactions", () =>
 	{
 		it ("commits and returns the callback result on success", async () =>
 			{

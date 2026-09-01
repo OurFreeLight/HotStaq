@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect } from "chai";
 
 import { Common } from "../Common";
@@ -21,7 +22,7 @@ import { HotTestPage } from "../../src/HotTestPage";
  * Asserts the tester server actually received the route's test path — i.e. the
  * exact data waitForData blocks on.
  */
-describe ("Shell Tester From Web - SPA-index + rendered shell (Development)", () =>
+describeBrowser ("Shell Tester From Web - SPA-index + rendered shell (Development)", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;

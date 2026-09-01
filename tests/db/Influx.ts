@@ -1,4 +1,5 @@
 import "mocha";
+import { describeDb } from "../TestEnv";
 import { expect, should } from "chai";
 
 import { Common } from "../Common";
@@ -14,7 +15,7 @@ import { FluxTableColumn, FluxTableMetaData, Point } from "@influxdata/influxdb-
  * 
  * It needs to test adding, removing, moving, renaming, and more.
  */
-describe ("Database - Influx Tests", () =>
+describeDb ("Database - Influx Tests", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;

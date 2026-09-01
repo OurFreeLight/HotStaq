@@ -1,4 +1,5 @@
 import "mocha";
+import { describeIntegration } from "../TestEnv";
 import { expect, should } from "chai";
 import { By, until, WebDriver } from "selenium-webdriver";
 
@@ -8,7 +9,7 @@ import { APItoLoad, DeveloperMode, HotHTTPServer, HotIO, HotLogLevel, HotStaq,
 	HotTester, HotTesterMochaSelenium, HotTesterServer, HotTestMap } from "../../src/api";
 import { HotCreator } from "../../src/HotCreator";
 
-describe ("Create App Tests", function ()
+describeIntegration ("Create App Tests", function ()
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;

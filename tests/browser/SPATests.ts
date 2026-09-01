@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect } from "chai";
 import { By, until } from "selenium-webdriver";
 
@@ -6,7 +7,7 @@ import { Common } from "../Common";
 
 import { HotStaq } from "../../src/api";
 
-describe ("SPA Navigation Tests", () =>
+describeBrowser ("SPA Navigation Tests", () =>
 	{
 		let common: Common = null;
 

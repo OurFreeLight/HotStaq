@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect, should } from "chai";
 import { By, until } from "selenium-webdriver";
 
@@ -6,7 +7,7 @@ import { Common } from "../Common";
 
 import { HotStaq } from "../../src/api";
 
-describe ("Browser Tests - Development Mode", () =>
+describeBrowser ("Browser Tests - Development Mode", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;
