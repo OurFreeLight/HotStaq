@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect } from "chai";
 import { By, until } from "selenium-webdriver";
 
@@ -13,7 +14,7 @@ import { HotStaq } from "../../src/api";
  * duplicated into the outlet (the regression that motivated the feature), and
  * content-only route scripts run on each entry.
  */
-describe ("Shell/Outlet SPA Navigation Tests", () =>
+describeBrowser ("Shell/Outlet SPA Navigation Tests", () =>
 	{
 		let common: Common = null;
 

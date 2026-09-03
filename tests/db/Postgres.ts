@@ -1,4 +1,5 @@
 import "mocha";
+import { describeDb } from "../TestEnv";
 import { expect, should } from "chai";
 
 import { Common } from "../Common";
@@ -13,7 +14,7 @@ import { HotDBPostgres } from "../../src/schemas/HotDBPostgres";
  * 
  * It needs to test adding, removing, moving, renaming, and more.
  */
-describe ("Database - Postgres Tests", () =>
+describeDb ("Database - Postgres Tests", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;

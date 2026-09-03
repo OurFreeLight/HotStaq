@@ -1,4 +1,5 @@
 import "mocha";
+import { describeBrowser } from "../TestEnv";
 import { expect } from "chai";
 
 import { Common } from "../Common";
@@ -17,7 +18,7 @@ import { HotTestMap } from "../../src/HotTestMap";
  * Driven through the real boot path (server-served shell host + the tester's
  * own driver.get), so it exercises navigateToUrl exactly as the DAO does.
  */
-describe ("Shell Tester re-navigation race (Development)", () =>
+describeBrowser ("Shell Tester re-navigation race (Development)", () =>
 	{
 		let common: Common = null;
 		let processor: HotStaq = null;
